@@ -1,0 +1,281 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+model Company {
+  id                  Int       @id @default(autoincrement())
+  name                String    @map("name")
+  registrationNo      String    @unique @map("registration_no")
+  representative      String?   @map("representative")
+  registrationCountry String?   @map("registration_country")
+  establishedDate     DateTime? @map("established_date")
+  capitalAmount       Decimal?  @map("capital_amount")
+  paidInCapital       Decimal?  @map("paid_in_capital")
+  capitalRanking      Int?      @map("capital_ranking")
+  address             String?   @map("address")
+  websiteUrl          String?   @map("website_url")
+  logoUrl             String?   @map("logo_url")
+  lastUpdateTime      DateTime? @map("last_update_time")
+  registrationAgency  String?   @map("registration_agency")
+  status              String?   @map("status")
+  organizationType    String?   @map("organization_type")
+  businessItems       String?   @map("business_items")
+  contributions       Json?     @map("contributions")
+
+  industryCodes            IndustryCode[]     @relation("CompanyIndustry")
+  investors                CompanyInvestor[]
+  histories                CompanyHistory[]
+  relatedCompaniesAsSource RelatedCompany[]   @relation("CompanyToRelatedCompany")
+  relatedCompaniesAsTarget RelatedCompany[]   @relation("CompanyToRelatedCompanyTarget")
+  stockPrices              StockPrice[]
+  marketIndicators         MarketIndicator[]
+  riskFlags                RiskFlag[]
+  importExportData         ImportExportData[]
+  governmentTenders        GovernmentTender[]
+  trademarks               Trademark[]
+  patents                  Patent[]
+  financialReports         FinancialReport[]
+  announcements            Announcement[]
+  comments                 Comment[]
+  businessScopes           BusinessScope[]
+  news                     News[]
+
+  @@map("company")
+}
+
+model Investor {
+  id              Int     @id @default(autoincrement())
+  name            String  @map("name")
+  title           String? @map("title")
+  shareholderType String? @map("shareholder_type")
+
+  companyInvestors CompanyInvestor[]
+
+  @@map("investor")
+}
+
+model CompanyInvestor {
+  id                            Int       @id @default(autoincrement())
+  companyId                     Int       @map("company_id")
+  investorId                    Int       @map("investor_id")
+  position                      String?   @map("position")
+  shareRatio                    Decimal?  @map("share_ratio")
+  representativeJuridicalPerson String?   @map("representative_juridical_person")
+  investmentDate                DateTime? @map("investment_date")
+
+  company  Company  @relation(fields: [companyId], references: [id])
+  investor Investor @relation(fields: [investorId], references: [id])
+
+  @@unique([companyId, investorId])
+  @@map("company_investor")
+}
+
+model CompanyHistory {
+  id           Int      @id @default(autoincrement())
+  companyId    Int      @map("company_id")
+  changeDate   DateTime @map("change_date")
+  changeType   String   @map("change_type")
+  changeDetail Json     @map("change_detail")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("company_history")
+}
+
+model RelatedCompany {
+  id                Int     @id @default(autoincrement())
+  companyId         Int     @map("company_id")
+  relatedCompanyId  Int     @map("related_company_id")
+  relationType      String? @map("relation_type")
+  relatedBusinessId String? @map("related_business_id")
+
+  company        Company @relation("CompanyToRelatedCompany", fields: [companyId], references: [id])
+  relatedCompany Company @relation("CompanyToRelatedCompanyTarget", fields: [relatedCompanyId], references: [id])
+
+  @@unique([companyId, relatedCompanyId])
+  @@map("related_company")
+}
+
+model StockPrice {
+  id         Int      @id @default(autoincrement())
+  companyId  Int      @map("company_id")
+  date       DateTime @map("date")
+  openPrice  Decimal? @map("open_price")
+  highPrice  Decimal? @map("high_price")
+  lowPrice   Decimal? @map("low_price")
+  closePrice Decimal? @map("close_price")
+  volume     Int?     @map("volume")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, date])
+  @@map("stock_price")
+}
+
+model MarketIndicator {
+  id                Int      @id @default(autoincrement())
+  companyId         Int      @map("company_id")
+  date              DateTime @map("date")
+  marketCap         Decimal? @map("market_cap")
+  peRatio           Decimal? @map("pe_ratio")
+  dividendYield     Decimal? @map("dividend_yield")
+  investorSentiment Json?    @map("investor_sentiment")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, date])
+  @@map("market_indicator")
+}
+
+model RiskFlag {
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  flagType    String   @map("flag_type")
+  flagValue   Int      @map("flag_value")
+  flaggedDate DateTime @map("flagged_date")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("risk_flag")
+}
+
+model IndustryCode {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique @map("code")
+  description String? @map("description")
+
+  companies Company[] @relation("CompanyIndustry")
+
+  @@map("industry_code")
+}
+
+model ImportExportData {
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  year        Int      @map("year")
+  month       String?  @map("month")
+  totalImport Decimal? @map("total_import")
+  totalExport Decimal? @map("total_export")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("import_export_data")
+}
+
+model GovernmentTender {
+  id           Int       @id @default(autoincrement())
+  companyId    Int       @map("company_id")
+  projectTitle String    @map("project_title")
+  agencyName   String?   @map("agency_name")
+  awardDate    DateTime? @map("award_date")
+  awardAmount  Decimal?  @map("award_amount")
+  awarded      Boolean?  @map("awarded")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("government_tender")
+}
+
+model Trademark {
+  id          Int     @id @default(autoincrement())
+  companyId   Int     @map("company_id")
+  imageUrl    String? @map("image_url")
+  name        String  @map("name")
+  description String? @map("description")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("trademark")
+}
+
+model Patent {
+  id          Int     @id @default(autoincrement())
+  companyId   Int     @map("company_id")
+  name        String  @map("name")
+  description String? @map("description")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("patent")
+}
+
+model FinancialReport {
+  id         Int      @id @default(autoincrement())
+  companyId  Int      @map("company_id")
+  reportType String   @map("report_type")
+  period     DateTime @map("period")
+  data       Json     @map("data")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, reportType, period])
+  @@map("financial_report")
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  companyId Int      @map("company_id")
+  title     String   @map("title")
+  date      DateTime @map("date")
+  content   String?  @map("content")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("announcement")
+}
+
+// 新增表格: Business Scope
+model BusinessScope {
+  id          Int     @id @default(autoincrement())
+  companyId   Int     @map("company_id")
+  code        String  @map("code")
+  description String? @map("description")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, code])
+  @@map("business_scope")
+}
+
+// 新增表格: News
+model News {
+  id        Int      @id @default(autoincrement())
+  companyId Int      @map("company_id")
+  title     String   @map("title")
+  content   String?  @map("content")
+  date      DateTime @map("date")
+  imageUrl  String?  @map("image_url")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, date])
+  @@map("news")
+}
+
+// 討論串與留言
+model Comment {
+  id         Int       @id @default(autoincrement())
+  companyId  Int       @map("company_id")
+  userName   String?   @map("user_name")
+  userAvatar String?   @map("user_avatar")
+  content    String
+  createdAt  DateTime  @default(now()) @map("created_at")
+  likes      Int       @default(0)
+  comments   Int       @default(0)
+  shares     Int       @default(0)
+  parentId   Int?      @map("parent_id")
+  company    Company   @relation(fields: [companyId], references: [id])
+  replies    Comment[] @relation("CommentReplies")
+  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+
+  @@index([companyId, createdAt])
+}
