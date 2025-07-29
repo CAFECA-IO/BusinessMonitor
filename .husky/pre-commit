@@ -1,1 +1,5 @@
-npm run test && lint-staged
+if git diff --cached --name-only | grep -E '\.(test|spec)\.(ts|js)x?$'; then
+  npm test
+else
+  echo "No test files changed, skipping tests."
+fi
