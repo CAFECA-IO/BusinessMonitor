@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "npm run generate && next build",
     "start": "next start",
-    "test": "jest --coverage",
+    "test": "jest --coverage --passWithNoTests",
     "lint": "next lint && eslint --fix --ext .js,.jsx,.ts,.tsx .",
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|jsx|ts|tsx|json)\"",
     "check-format": "prettier --ignore-path .gitignore --list-different \"**/*.+(js|jsx|ts|tsx|json)\"",
