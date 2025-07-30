@@ -1,8 +1,9 @@
 interface Props {
-  searchParams: { q?: string }
+  searchParams: Promise<{ q?: string }>
 }
 
-export default async function SearchPage({ searchParams }: Props) {
+export default async function SearchPage(props: Props) {
+  const searchParams = await props.searchParams;
   await Promise.resolve()
   const q = searchParams.q ?? ''
 
