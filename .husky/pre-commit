@@ -1,7 +1,3 @@
-#!/bin/sh
-set -euo pipefail
-. "$(dirname "$0")/_/husky.sh"
-
 # Info: (20250730 - Tzuhan) 1. 檢查 staged 檔案格式
 npx lint-staged
 
