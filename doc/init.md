@@ -129,9 +129,8 @@ BusinessMonitor/
 ├─ src/
 │   ├─ app/
 │   │   ├─ api/            # App Router API Route Handlers
-│   │   │   └─ v1/company/
-│   │   │       ├─ route.ts
-│   │   │       └─ [id]/route.ts
+│   │   │   └─ v1/hello/
+│   │   │       └─ route.ts
 │   │   ├─ landing/        # Landing Page
 │   │   │   └─ page.tsx
 │   │   ├─ search/         # Search Page
@@ -194,10 +193,6 @@ BusinessMonitor/
 
 ```bash
 # .husky/pre-commit
-#!/usr/bin/env sh
-set -euo pipefail
-. "$(dirname -- "$0")/_/husky.sh"
-
 npx lint-staged
 npm test
 npm run update-version
@@ -214,4 +209,4 @@ npm run update-version
 
 ---
 
-如有任何問題或建議，歡迎隨時提出！
+如有任何問題或建議，歡迎隨時提出～
