@@ -58,33 +58,60 @@
 
 ---
 
-## 🗄️ 資料庫初始化 (Prisma)
+## 🗄️ 本地資料庫準備
+1. **安裝 PostgreSQL**（依作業系統）：
 
-### 本地開發
+   * macOS（Homebrew）：
 
-1. 透過 `migrate dev` 同步 schema 並建立 migration：
+     ```bash
+     brew install postgresql
+     brew services start postgresql
+     ```
+   * Ubuntu：
 
-   ```bash
-   npx prisma migrate dev --name init
-   ```
-2. 產生 Prisma Client：
+     ```bash
+     sudo apt update
+     sudo apt install postgresql
+     sudo systemctl start postgresql
+     ```
 
-   ```bash
-   npx prisma generate
-   ```
-
-### CI / 生產環境
-
-1. 部署現有的 migration：
-
-   ```bash
-   npx prisma migrate deploy
-   ```
-2. 產生 Prisma Client：
+2. **建立使用者與資料庫**：將 `myuser`、`mypassword`、`business_monitor` 改成你想要的名稱
 
    ```bash
-   npx prisma generate
+   export PGUSER=postgres
+   export PGPASSWORD=       # 如果 postgres 無密碼，可留空
+   psql -h localhost -p 5432 -U $PGUSER <<EOF
+   CREATE ROLE myuser WITH LOGIN PASSWORD 'mypassword';
+   CREATE DATABASE business_monitor OWNER myuser;
+   EOF
    ```
+
+3. **更新 .env**：填入你剛剛建立的資訊
+
+   ```env
+   DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/business_monitor?schema=public"
+   ```
+---
+
+## 🗄️ 資料庫操作 (Prisma)
+
+### 資料庫初始化
+
+在你拉取 (clone) 下來、且 `prisma/migrations` 已經含有所有版本檔後，只需 **套用現有 migration** 並產生 Client：
+
+```bash
+npx prisma migrate deploy      # 執行尚未套用的 migration
+npx prisma generate         # 產生 Prisma Client
+```
+
+### 資料庫更新
+
+當你修改了 `schema.prisma` 並需要**新增一個 migration** 時：
+
+```bash
+npx prisma migrate dev --name <migration_name>
+npx prisma generate
+```
 
 ---
 
@@ -102,8 +129,9 @@ BusinessMonitor/
 ├─ src/
 │   ├─ app/
 │   │   ├─ api/            # App Router API Route Handlers
-│   │   │   └─ v1/hello/
-│   │   │       └─ route.ts
+│   │   │   └─ v1/company/
+│   │   │       ├─ route.ts
+│   │   │       └─ [id]/route.ts
 │   │   ├─ landing/        # Landing Page
 │   │   │   └─ page.tsx
 │   │   ├─ search/         # Search Page
@@ -166,6 +194,10 @@ BusinessMonitor/
 
 ```bash
 # .husky/pre-commit
+#!/usr/bin/env sh
+set -euo pipefail
+. "$(dirname -- "$0")/_/husky.sh"
+
 npx lint-staged
 npm test
 npm run update-version
@@ -182,4 +214,4 @@ npm run update-version
 
 ---
 
-如有任何問題或建議，歡迎隨時提出～
+如有任何問題或建議，歡迎隨時提出！
