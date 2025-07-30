@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "generate": "DISABLE_ERD=true prisma generate",
+    "generate:erd": "DISABLE_ERD=false prisma generate",
     "build": "npm run generate && next build",
     "start": "next start",
     "test": "jest --coverage --passWithNoTests",
@@ -11,7 +13,6 @@
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|jsx|ts|tsx|json)\"",
     "check-format": "prettier --ignore-path .gitignore --list-different \"**/*.+(js|jsx|ts|tsx|json)\"",
     "validate": "prettier --ignore-path .gitignore --write \"**/*.+(js|jsx|ts|tsx|json|css)\" && next lint && eslint --fix --ext .js,.jsx,.ts,.tsx . && npm run test",
-    "generate": "prisma generate --skip-erd",
     "prepare": "husky"
   },
   "dependencies": {

@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -10,7 +9,10 @@ datasource db {
 
 generator erd {
   provider = "prisma-erd-generator"
+  output   = "ERD.svg"
+  disabled = env("DISABLE_ERD")
 }
+
 model Company {
   id                  Int       @id @default(autoincrement())
   name                String    @map("name")
