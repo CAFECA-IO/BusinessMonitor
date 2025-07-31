@@ -57,6 +57,73 @@
   --color-grey-grey-100: #dbdbebff;
   --color-grey-grey-50: #f5f5f7ff;
   --color-grey-grey-000: #ffffffff;
+
+  /* Design Tokens */
+  --text-text-primary: var(--color-grey-grey-900);
+  --text-text-secondary: var(--color-grey-grey-500);
+  --text-text-note: var(--color-grey-grey-300);
+  --text-text-brand: var(--color-brand-brand-purple-500);
+  --text-text-invert: var(--color-grey-grey-50);
+  --surface-surface-background: var(--color-grey-grey-50);
+  --text-text-success: var(--color-state-safe);
+  --surface-surface-primary: var(--color-grey-grey-000);
+  --surface-surface-secondary: var(--color-grey-grey-100);
+  --text-text-warning: var(--color-state-warn);
+  --surface-surface-invert: var(--color-grey-grey-900);
+  --text-text-error: var(--color-state-danger);
+  --surface-surface-brand: var(--color-brand-brand-purple-500);
+  --button-button-primary: var(--color-brand-brand-purple-500);
+  --button-button-secondary: var(--color-grey-grey-600);
+  --button-button-accent: var(--color-brand-brand-blud-500);
+  --button-button-disable: var(--color-grey-grey-300);
+  --button-button-primary-hover: var(--color-brand-brand-purple-300);
+  --button-button-secondary-hover: var(--color-grey-grey-500);
+  --button-button-accent-hover: var(--color-brand-brand-blud-300);
+  --button-link: var(--color-state-link);
+  --button-link-hover: var(--color-state-link-hover);
+  --border-border-primary: var(--color-grey-grey-900);
+  --border-border-secondary: var(--color-grey-grey-300);
+  --border-border-brand: var(--color-brand-brand-purple-500);
+  --spacing-spacing-none: 0px;
+  --spacing-spacing-3xs: var(--spacing-1);
+  --spacing-spacing-2xs: var(--spacing-2);
+  --spacing-spacing-xs: var(--spacing-3);
+  --spacing-spacing-s: var(--spacing-4);
+  --spacing-spacing-m: var(--spacing-5);
+  --spacing-spacing-l: var(--spacing-6);
+  --spacing-spacing-xl: var(--spacing-7);
+  --spacing-spacing-2xl: var(--spacing-8);
+  --spacing-spacing-3xl: var(--spacing-9);
+  --spacing-spacing-4xl: var(--spacing-10);
+  --radius-radius-none: 0px;
+  --radius-radius-xs: var(--radius-1);
+  --radius-radius-s: var(--radius-2);
+  --radius-radius-m: var(--radius-3);
+  --radius-radius-l: var(--radius-4);
+  --radius-radius-rounded: var(--radius-5);
+  --border-border-success: var(--color-state-safe);
+  --border-border-warning: var(--color-state-warn);
+  --border-border-error: var(--color-state-danger);
+}
+
+.dark {
+  /* Primitives - Dark */
+  --color-brand-brand-purple-500: #b531fdff;
+  --color-brand-brand-purple-300: #d07afeff;
+  --color-brand-brand-blud-500: #00b4feff;
+  --color-brand-brand-blud-300: #00b4feff;
+  --color-state-safe: #3dd08cff;
+  --color-state-warn: #ffa600ff;
+  --color-state-danger: #ff5959ff;
+  --color-state-link: #ffffffff;
+  --color-state-link--hover: #ffffffff;
+  --color-grey-grey-900: #2f2f3eff;
+  --color-grey-grey-600: #5d5d7bff;
+  --color-grey-grey-500: #8181a0ff;
+  --color-grey-grey-300: #aaaabfff;
+  --color-grey-grey-100: #e8e8edff;
+  --color-grey-grey-50: #f5f5f7ff;
+  --color-grey-grey-000: #ffffffff;
 }
 
 .cta-bg {
@@ -66,50 +133,13 @@
   background-size: cover;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-
-    /* Primitives - Dark */
-    --Color-Brand-Brand-Purple-500: #b531fdff;
-    --Color-Brand-Brand-Purple-300: #d07afeff;
-    --Color-Brand-Brand-Blud-500: #00b4feff;
-    --Color-Brand-Brand-Blud-300: #00b4feff;
-    --Color-State-Safe: #3dd08cff;
-    --Color-State-Warn: #ffa600ff;
-    --Color-State-Danger: #ff5959ff;
-    --Color-State-Link: #ffffffff;
-    --Color-State-Link--hover: #ffffffff;
-    --Color-Grey-Grey-900: #2f2f3eff;
-    --Color-Grey-Grey-600: #5d5d7bff;
-    --Color-Grey-Grey-500: #8181a0ff;
-    --Color-Grey-Grey-300: #aaaabfff;
-    --Color-Grey-Grey-100: #e8e8edff;
-    --Color-Grey-Grey-50: #f5f5f7ff;
-    --Color-Grey-Grey-000: #ffffffff;
-    --Spacing-1: 8px;
-    --Spacing-2: 16px;
-    --Spacing-3: 24px;
-    --Spacing-4: 32px;
-    --Spacing-5: 40px;
-    --Spacing-6: 56px;
-    --Spacing-7: 72px;
-    --Spacing-8: 80px;
-    --Spacing-9: 96px;
-    --Spacing-10: 120px;
-    --Radius-1: 5px;
-    --Radius-2: 10px;
-    --Radius-3: 15px;
-    --Radius-4: 20px;
-    --Radius-5: 500px;
   }
 }
 
