@@ -18,6 +18,7 @@ const Cta: React.FC = () => {
         </div>
 
         {/* Info: (20250730 - Julian) Image */}
+        {/* ToDo: (20250731 - Luphia) use variables instead of hard-coded values */}
         <Image
           src="/elements/hand_holding_phone.png"
           width={574}
