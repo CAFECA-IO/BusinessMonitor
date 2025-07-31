@@ -17,6 +17,7 @@ model Company {
   id                  Int       @id @default(autoincrement())
   name                String    @map("name")
   registrationNo      String    @unique @map("registration_no")
+  parentRegNo         String?   @map("parent_reg_no") // 有值表示分公司
   representative      String?   @map("representative")
   registrationCountry String?   @map("registration_country")
   establishedDate     DateTime? @map("established_date")
@@ -30,8 +31,19 @@ model Company {
   registrationAgency  String?   @map("registration_agency")
   status              String?   @map("status")
   organizationType    String?   @map("organization_type")
-  businessItems       String?   @map("business_items")
+  businessItems       Json?     @map("business_items")
   contributions       Json?     @map("contributions")
+
+  lastChangeDate       DateTime? @map("last_change_date")           // 最近異動日期（商業登記）
+  lastApprovedChange   DateTime? @map("last_approved_change")       // 最後核准變更日期（公司登記）
+  statusDate           DateTime? @map("status_date")                // 公司狀況日期
+  statusDocNo          String?   @map("status_doc_no")              // 公司狀況文號
+  foreignCompanyName   String?   @map("foreign_company_name")       // 章程所訂外文公司名稱
+  directors            Json?     @map("directors")                  // 董監事名單
+  managers             Json?     @map("managers")                   // 經理人名單
+  suspensionStartDate  DateTime? @map("suspension_start_date")      // 停業起日
+  suspensionEndDate    DateTime? @map("suspension_end_date")        // 停業迄日
+  oldBusinessItemsUrl  String?   @map("old_business_items_url")     // 舊營業項目資料 URL
 
   industryCodes            IndustryCode[]     @relation("CompanyIndustry")
   investors                CompanyInvestor[]
@@ -50,9 +62,29 @@ model Company {
   comments                 Comment[]
   businessScopes           BusinessScope[]
   news                     News[]
+  relationsAsParent        CompanyRelation[] @relation("ParentRelations")
+  relationsAsChild         CompanyRelation[] @relation("ChildRelations")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
 
   @@map("company")
 }
+
+model CompanyRelation {
+  id          Int      @id @default(autoincrement())
+  parentRegNo String   @map("parent_reg_no")
+  childRegNo  String   @map("child_reg_no")
+  relation    String?  @map("relation")
+
+  parentCompany Company @relation("ParentRelations", fields: [parentRegNo], references: [registrationNo])
+  childCompany  Company @relation("ChildRelations", fields: [childRegNo], references: [registrationNo])
+
+  @@unique([parentRegNo, childRegNo])
+  @@map("company_relation")
+}
+
+
 
 model Investor {
   id              Int     @id @default(autoincrement())
@@ -61,6 +93,9 @@ model Investor {
   shareholderType String? @map("shareholder_type")
 
   companyInvestors CompanyInvestor[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
 
   @@map("investor")
 }
@@ -77,6 +112,9 @@ model CompanyInvestor {
   company  Company  @relation(fields: [companyId], references: [id])
   investor Investor @relation(fields: [investorId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@unique([companyId, investorId])
   @@map("company_investor")
 }
@@ -90,6 +128,9 @@ model CompanyHistory {
 
   company Company @relation(fields: [companyId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@map("company_history")
 }
 
@@ -102,6 +143,9 @@ model RelatedCompany {
 
   company        Company @relation("CompanyToRelatedCompany", fields: [companyId], references: [id])
   relatedCompany Company @relation("CompanyToRelatedCompanyTarget", fields: [relatedCompanyId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
 
   @@unique([companyId, relatedCompanyId])
   @@map("related_company")
@@ -119,6 +163,9 @@ model StockPrice {
 
   company Company @relation(fields: [companyId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@index([companyId, date])
   @@map("stock_price")
 }
@@ -134,6 +181,9 @@ model MarketIndicator {
 
   company Company @relation(fields: [companyId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@index([companyId, date])
   @@map("market_indicator")
 }
@@ -147,6 +197,9 @@ model RiskFlag {
 
   company Company @relation(fields: [companyId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@map("risk_flag")
 }
 
@@ -156,6 +209,9 @@ model IndustryCode {
   description String? @map("description")
 
   companies Company[] @relation("CompanyIndustry")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
 
   @@map("industry_code")
 }
@@ -169,6 +225,9 @@ model ImportExportData {
   totalExport Decimal? @map("total_export")
 
   company Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
 
   @@map("import_export_data")
 }
@@ -184,6 +243,9 @@ model GovernmentTender {
 
   company Company @relation(fields: [companyId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@map("government_tender")
 }
 
@@ -196,6 +258,9 @@ model Trademark {
 
   company Company @relation(fields: [companyId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@map("trademark")
 }
 
@@ -206,6 +271,9 @@ model Patent {
   description String? @map("description")
 
   company Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
 
   @@map("patent")
 }
@@ -218,6 +286,9 @@ model FinancialReport {
   data       Json     @map("data")
 
   company Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
 
   @@index([companyId, reportType, period])
   @@map("financial_report")
@@ -232,10 +303,12 @@ model Announcement {
 
   company Company @relation(fields: [companyId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@map("announcement")
 }
 
-// 新增表格: Business Scope
 model BusinessScope {
   id          Int     @id @default(autoincrement())
   companyId   Int     @map("company_id")
@@ -244,11 +317,13 @@ model BusinessScope {
 
   company Company @relation(fields: [companyId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@index([companyId, code])
   @@map("business_scope")
 }
 
-// 新增表格: News
 model News {
   id        Int      @id @default(autoincrement())
   companyId Int      @map("company_id")
@@ -259,11 +334,13 @@ model News {
 
   company Company @relation(fields: [companyId], references: [id])
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
   @@index([companyId, date])
   @@map("news")
 }
 
-// 討論串與留言
 model Comment {
   id         Int       @id @default(autoincrement())
   companyId  Int       @map("company_id")
@@ -271,6 +348,7 @@ model Comment {
   userAvatar String?   @map("user_avatar")
   content    String
   createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt      @map("updated_at")
   likes      Int       @default(0)
   comments   Int       @default(0)
   shares     Int       @default(0)
@@ -280,4 +358,21 @@ model Comment {
   parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
 
   @@index([companyId, createdAt])
+  @@map("comment")
+}
+
+model ImportLog {
+  id           Int       @id @default(autoincrement())
+  folderPath   String    @map("folder_path")
+  fileName     String    @map("file_name")
+  totalCount   Int       @map("total_count")
+  successCount Int       @map("success_count")
+  status       String    @map("status") // pending, in_progress, completed, failed
+  startedAt    DateTime? @map("started_at")
+  finishedAt   DateTime? @map("finished_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt      @map("updated_at")
+
+  @@unique([folderPath, fileName], name: "folder_file_unique")
+  @@map("import_log")
 }
