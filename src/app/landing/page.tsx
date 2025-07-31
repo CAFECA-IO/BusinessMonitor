@@ -1,9 +1,12 @@
+import Navbar from '@/components/common/navbar';
+import Cta from '@/components/landing_page/cta';
+
 export default function LandingPage() {
   return (
-    <main className="flex h-screen items-center justify-center bg-gradient-to-br from-violet-50 to-white">
-      <h1 className="text-6xl font-extrabold text-violet-600">
-        CAFECA
-      </h1>
+    <main className="flex h-screen flex-col items-center">
+      <Navbar />
+
+      <Cta />
     </main>
-  )
+  );
 }
