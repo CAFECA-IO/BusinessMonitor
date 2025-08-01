@@ -31,7 +31,7 @@ const MessageBubble: React.FC<{ avatarScr: string; text: string; isLeft?: boolea
 
 const Cta: React.FC = () => {
   return (
-    <div className="relative h-1200px w-full bg-cta bg-cover bg-top bg-no-repeat">
+    <div className="relative h-800px w-full bg-cta bg-cover bg-top bg-no-repeat">
       {/* Info: (20250730 - Julian) Main Title */}
       <div className="mx-auto mt-54px flex w-2/3 flex-col text-9xl font-bold">
         <h2 className="text-left text-grey-600">Redefine</h2>
@@ -54,7 +54,7 @@ const Cta: React.FC = () => {
       </div>
 
       {/* Info: (20250730 - Julian) Holding a phone Image */}
-      <div className="absolute left-1/5 top-1/3">
+      <div className="absolute left-1/5 top-1/4">
         <Image
           src="/elements/hand_holding_phone.png"
           width={500}
