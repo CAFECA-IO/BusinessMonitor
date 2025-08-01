@@ -1,10 +1,9 @@
-@import 'tailwindcss';
-/* ToDo: (20250731 - Julian) Dark Mode */
-/* @custom-variant dark (&:where(.dark, .dark *)); */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
+:root {
   /* Info: (20250801 - Julian) Screens */
-  --breakpoint-*: initial;
   --breakpoint-mobile: 320px;
   --breakpoint-tablet: 768px;
   --breakpoint-desktop: 1024px;
@@ -36,6 +35,14 @@
   --text-h4: 32px;
   --text-h5: 24px;
   --text-h6: 20px;
+
+  /* Info: (20250801 - Julian) Line Height */
+  --line-height-h1: 61px;
+  --line-height-h2: 52px;
+  --line-height-h3: 44px;
+  --line-height-h4: 35px;
+  --line-height-h5: 26px;
+  --line-height-h6: 22px;
 
   /* Info: (20250801 - Julian) Background Image */
 
@@ -134,18 +141,29 @@
   background-size: cover;
 }
 
-:root {
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Info: (20250801 - Julian) Primitives - Dark */
+    --color-brand-brand-purple-500: #b531fdff;
+    --color-brand-brand-purple-300: #d07afeff;
+    --color-brand-brand-blud-500: #00b4feff;
+    --color-brand-brand-blud-300: #00b4feff;
+    --color-state-safe: #3dd08cff;
+    --color-state-warn: #ffa600ff;
+    --color-state-danger: #ff5959ff;
+    --color-state-link: #ffffffff;
+    --color-state-link--hover: #ffffffff;
+    --color-grey-grey-900: #2f2f3eff;
+    --color-grey-grey-600: #5d5d7bff;
+    --color-grey-grey-500: #8181a0ff;
+    --color-grey-grey-300: #aaaabfff;
+    --color-grey-grey-100: #e8e8edff;
+    --color-grey-grey-50: #f5f5f7ff;
+    --color-grey-grey-000: #ffffffff;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
