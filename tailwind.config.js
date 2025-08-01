@@ -61,8 +61,11 @@ module.exports = {
         '72px': '72px',
         '80px': '80px',
         '96px': '96px',
-
+        '100px': '100px',
         '500px': '500px',
+        '1200px': '1200px',
+
+        '1/5': ' 20%',
       },
       colors: {
         'text-primary': 'var(--color-grey-grey-900)',
