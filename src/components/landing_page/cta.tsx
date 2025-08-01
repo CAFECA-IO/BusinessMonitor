@@ -3,21 +3,24 @@ import React from 'react';
 
 const Cta: React.FC = () => {
   return (
-    <div className="cta-bg relative h-screen w-full">
+    <div className="relative h-screen w-full bg-cta bg-cover bg-top bg-no-repeat">
       {/* Info: (20250730 - Julian) Main Title */}
       <div className="mx-auto flex w-1/2 flex-col text-9xl font-bold">
-        <h2 className="text-grey-grey-600 text-left">Redefine</h2>
-        <h2 className="text-brand-brand-blud-500 text-center">your</h2>
-        <h2 className="text-grey-grey-600 text-right">identity</h2>
+        <h2 className="text-left text-grey-600">Redefine</h2>
+        <h2 className="text-center text-brand-blud-500">your</h2>
+        <h2 className="text-right text-grey-600">identity</h2>
       </div>
 
-      <div className="absolute bottom-20 right-40 flex w-[500px] flex-col items-start gap-[40px]">
+      <div className="absolute bottom-20 right-40 flex w-500px flex-col items-start gap-40px">
         <p className="text-lg font-bold">
           CAFECA is a decentralized identity platform using blockchain and zero-knowledge proofs to
           enable secure, private, and portable self-sovereign identity (SSI).
         </p>
         {/* ToDo: (20250731 - Julian) Style */}
-        <button type="button" className="rounded-full bg-button-primary px-[54px] py-[18px]">
+        <button
+          type="button"
+          className="rounded-full bg-button-primary px-54px py-18px hover:bg-button-primary-hover"
+        >
           Go to CAFECA
         </button>
       </div>
