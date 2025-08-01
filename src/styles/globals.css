@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  /* Screens */
+  /* Info: (20250801 - Julian) Screens */
   --breakpoint-mobile: 320px;
   --breakpoint-tablet: 768px;
   --breakpoint-desktop: 1024px;
   --breakpoint-desktop_HD: 1440px;
 
-  /* Spacing */
+  /* Info: (20250801 - Julian) Spacing */
   --spacing-1: 8px;
   --spacing-2: 16px;
   --spacing-3: 24px;
@@ -21,14 +21,14 @@
   --spacing-9: 96px;
   --spacing-10: 120px;
 
-  /* Radius */
+  /* Info: (20250801 - Julian) Radius */
   --radius-1: 5px;
   --radius-2: 10px;
   --radius-3: 15px;
   --radius-4: 20px;
   --radius-5: 500px;
 
-  /* Fonts Size */
+  /* Info: (20250801 - Julian) Fonts Size */
   --text-h1: 56px;
   --text-h2: 48px;
   --text-h3: 40px;
@@ -36,10 +36,10 @@
   --text-h5: 24px;
   --text-h6: 20px;
 
-  /* Background Image */
+  /* Info: (20250801 - Julian) Background Image */
 
-  /* Primitives - Light */
-  /* Colors */
+  /* Info: (20250801 - Julian) Primitives - Light */
+  /* Info: (20250801 - Julian) Colors */
   --color-brand-brand-purple-500: #b531fdff;
   --color-brand-brand-purple-300: #d07afeff;
   --color-brand-brand-blud-500: #00b4feff;
@@ -60,7 +60,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Primitives - Dark */
+    /* Info: (20250801 - Julian) Primitives - Dark */
     --color-brand-brand-purple-500: #b531fdff;
     --color-brand-brand-purple-300: #d07afeff;
     --color-brand-brand-blud-500: #00b4feff;
