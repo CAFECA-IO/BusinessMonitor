@@ -200,6 +200,12 @@ npm run update-version
 
 ---
 
+## 資料更新指令
+
+```
+node --loader ts-node/esm scripts/import_data.ts <data_folder>
+```
+
 ## 📖 文件連結
 
 * Next.js App Router doc: [https://nextjs.org/docs/app](https://nextjs.org/docs/app)

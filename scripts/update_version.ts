@@ -1,6 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Info: (20250730 - Tzuhan) 1. 取得上一個 commit 的 package.json 版本
 function getLastCommittedVersion(): string | null {
