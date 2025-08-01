@@ -11,13 +11,13 @@ const Cta: React.FC = () => {
         <h2 className="text-grey-grey-600 text-right">identity</h2>
       </div>
 
-      <div className="absolute right-40 bottom-20 flex w-[500px] flex-col items-start gap-[40px]">
+      <div className="absolute bottom-20 right-40 flex w-[500px] flex-col items-start gap-[40px]">
         <p className="text-lg font-bold">
           CAFECA is a decentralized identity platform using blockchain and zero-knowledge proofs to
           enable secure, private, and portable self-sovereign identity (SSI).
         </p>
         {/* ToDo: (20250731 - Julian) Style */}
-        <button type="button" className="bg-button-button-primary rounded-full px-[54px] py-[18px]">
+        <button type="button" className="rounded-full bg-button-primary px-[54px] py-[18px]">
           Go to CAFECA
         </button>
       </div>
