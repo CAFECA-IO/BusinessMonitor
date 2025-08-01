@@ -23,6 +23,7 @@ module.exports = {
       },
       backgroundImage: {
         cta: 'url("/elements/cta_bg.png")',
+        ready: 'url("/elements/purple_linear_bg.png")',
       },
       spacing: {
         'spacing-none': '0px',
@@ -109,6 +110,9 @@ module.exports = {
         'radius-m': 'var(--radius-3)',
         'radius-l': 'var(--radius-4)',
         'radius-rounded': 'var(--radius-5)',
+      },
+      boxShadow: {
+        'drop-L': '0px 10px 20px 0px #5D5D7B33',
       },
     },
   },

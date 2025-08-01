@@ -3,7 +3,9 @@ import React from 'react';
 // ToDo: (20250731 - Julian) Navbar Component
 const Navbar: React.FC = () => {
   return (
-    <nav className="flex h-64px w-full items-center justify-center bg-black text-white">Navbar</nav>
+    <nav className="flex h-100px w-full items-center justify-center bg-black text-white">
+      Navbar
+    </nav>
   );
 };
 

@@ -2,6 +2,8 @@ import Head from 'next/head';
 import Navbar from '@/components/common/navbar';
 import Cta from '@/components/landing_page/cta';
 import IntroCard from '@/components/landing_page/intro_card';
+import ReadyToCafeca from '@/components/landing_page/ready_to_cafeca';
+import Footer from '@/components/common/footer';
 
 export default function LandingPage() {
   return (
@@ -47,6 +49,10 @@ export default function LandingPage() {
             description="Privacy Protection: Personal data is encrypted and stored securely, inaccessible to unauthorized parties and protected from misuse."
           />
         </div>
+
+        <ReadyToCafeca />
+
+        <Footer />
       </main>
     </>
   );
