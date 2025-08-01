@@ -14,26 +14,29 @@ generator erd {
 }
 
 model Company {
-  id                  Int       @id @default(autoincrement())
-  name                String    @map("name")
-  registrationNo      String    @unique @map("registration_no")
-  parentRegNo         String?   @map("parent_reg_no") // 有值表示分公司
-  representative      String?   @map("representative")
-  registrationCountry String?   @map("registration_country")
-  establishedDate     DateTime? @map("established_date")
-  capitalAmount       Decimal?  @map("capital_amount")
-  paidInCapital       Decimal?  @map("paid_in_capital")
-  capitalRanking      Int?      @map("capital_ranking")
-  address             String?   @map("address")
-  websiteUrl          String?   @map("website_url")
-  logoUrl             String?   @map("logo_url")
-  lastUpdateTime      DateTime? @map("last_update_time")
-  registrationAgency  String?   @map("registration_agency")
-  status              String?   @map("status")
-  organizationType    String?   @map("organization_type")
-  businessItems       Json?     @map("business_items")
-  contributions       Json?     @map("contributions")
-
+  id                   Int       @id @default(autoincrement())
+  name                 String    @map("name")
+  registrationNo       String    @unique @map("registration_no")
+  parentRegNo          String?   @map("parent_reg_no") // 有值表示分公司
+  representative       String?   @map("representative")
+  registrationCountry  String?   @map("registration_country")
+  establishedDate      DateTime? @map("established_date")
+  capitalAmount        Decimal?  @db.Decimal(30,8) @map("capital_amount")
+  paidInCapital        Decimal?  @db.Decimal(30,8) @map("paid_in_capital")
+  capitalRanking       Int?      @map("capital_ranking")
+  address              String?   @map("address")
+  websiteUrl           String?   @map("website_url")
+  logoUrl              String?   @map("logo_url")
+  registrationAgency   String?   @map("registration_agency")
+  status               String?   @map("status")
+  organizationType     String?   @map("organization_type")
+  businessItems        Json?     @map("business_items")
+  contributions        Json?     @map("contributions")
+  shareholdingStatus   String?   @map("shareholding_status")        // 股權狀況
+  sharePrice           Decimal?  @db.Decimal(30,8) @map("share_price")                // 每股金額
+  totalIssuedShares    BigInt?      @map("total_issued_shares")        // 已發行股份總數
+  multipleVotingRights String?   @map("multiple_voting_rights")     // 複數表決權特別股
+  specialVotingRights  String?   @map("special_voting_rights")        // 對於特定事項具否決權特別股
   lastChangeDate       DateTime? @map("last_change_date")           // 最近異動日期（商業登記）
   lastApprovedChange   DateTime? @map("last_approved_change")       // 最後核准變更日期（公司登記）
   statusDate           DateTime? @map("status_date")                // 公司狀況日期
@@ -43,6 +46,7 @@ model Company {
   managers             Json?     @map("managers")                   // 經理人名單
   suspensionStartDate  DateTime? @map("suspension_start_date")      // 停業起日
   suspensionEndDate    DateTime? @map("suspension_end_date")        // 停業迄日
+  suspensionAgency     String?   @map("suspension_agency")          // 停業機關
   oldBusinessItemsUrl  String?   @map("old_business_items_url")     // 舊營業項目資料 URL
 
   industryCodes            IndustryCode[]     @relation("CompanyIndustry")
@@ -155,10 +159,10 @@ model StockPrice {
   id         Int      @id @default(autoincrement())
   companyId  Int      @map("company_id")
   date       DateTime @map("date")
-  openPrice  Decimal? @map("open_price")
-  highPrice  Decimal? @map("high_price")
-  lowPrice   Decimal? @map("low_price")
-  closePrice Decimal? @map("close_price")
+  openPrice  Decimal? @db.Decimal(30,8) @map("open_price")
+  highPrice  Decimal? @db.Decimal(30,8) @map("high_price")
+  lowPrice   Decimal? @db.Decimal(30,8) @map("low_price")
+  closePrice Decimal? @db.Decimal(30,8) @map("close_price")
   volume     Int?     @map("volume")
 
   company Company @relation(fields: [companyId], references: [id])
