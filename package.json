@@ -1,11 +1,12 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+7",
+  "version": "0.1.0+9",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
     "generate": "DISABLE_ERD=true prisma generate",
     "generate:erd": "DISABLE_ERD=false prisma generate",
+    "dev": "next dev --turbopack",
     "build": "npm run generate && next build",
     "start": "next start",
     "test": "jest --coverage --passWithNoTests",
@@ -13,11 +14,12 @@
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|jsx|ts|tsx|json)\"",
     "check-format": "prettier --ignore-path .gitignore --list-different \"**/*.+(js|jsx|ts|tsx|json)\"",
     "validate": "prettier --ignore-path .gitignore --write \"**/*.+(js|jsx|ts|tsx|json|css)\" && next lint && eslint --fix --ext .js,.jsx,.ts,.tsx . && npm run test",
-    "update-version": "ts-node -r tsconfig-paths/register --compiler-options '{\"module\":\"CommonJS\"}' scripts/update_version.ts && git add package.json",
+    "update-version": "tsx scripts/update_version.ts && git add package.json",
+    "import-data": "tsx scripts/import_data.ts",
     "prepare": "husky"
   },
   "dependencies": {
-    "@prisma/client": "^6.12.0",
+    "@prisma/client": "^6.13.0",
     "next": "15.4.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -50,6 +52,7 @@
     "tailwindcss": "^4.1.11",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
   }
 }
