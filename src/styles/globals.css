@@ -36,9 +36,18 @@
   --text-h5: 24px;
   --text-h6: 20px;
 
+  /* Info: (20250801 - Julian) Line Height */
+  --line-height-h1: 61px;
+  --line-height-h2: 52px;
+  --line-height-h3: 44px;
+  --line-height-h4: 35px;
+  --line-height-h5: 26px;
+  --line-height-h6: 22px;
+
   /* Info: (20250801 - Julian) Background Image */
 
   /* Info: (20250801 - Julian) Primitives - Light */
+
   /* Info: (20250801 - Julian) Colors */
   --color-brand-brand-purple-500: #b531fdff;
   --color-brand-brand-purple-300: #d07afeff;
@@ -80,15 +89,7 @@
   }
 }
 
-.cta-bg {
-  background-position: top center;
-  background-image: url('/elements/cta_bg.png');
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }

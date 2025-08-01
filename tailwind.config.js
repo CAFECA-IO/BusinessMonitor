@@ -7,6 +7,24 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        mobile: '320px',
+        tablet: '768px',
+        desktop: '1024px',
+        desktop_HD: '1440px',
+      },
+      fontSize: {
+        h1: ['var(--text-h1)', { lineHeight: 'var(--line-height-h1)' }],
+        h2: ['var(--text-h2)', { lineHeight: 'var(--line-height-h2)' }],
+        h3: ['var(--text-h3)', { lineHeight: 'var(--line-height-h3)' }],
+        h4: ['var(--text-h4)', { lineHeight: 'var(--line-height-h4)' }],
+        h5: ['var(--text-h5)', { lineHeight: 'var(--line-height-h5)' }],
+        h6: ['var(--text-h6)', { lineHeight: 'var(--line-height-h6)' }],
+      },
+      backgroundImage: {
+        cta: 'url("/elements/cta_bg.png")',
+        ready: 'url("/elements/purple_linear_bg.png")',
+      },
       spacing: {
         'spacing-none': '0px',
         'spacing-3xs': 'var(--spacing-1)',
@@ -19,6 +37,38 @@ module.exports = {
         'spacing-2xl': 'var(--spacing-8)',
         'spacing-3xl': 'var(--spacing-9)',
         'spacing-4xl': 'var(--spacing-10)',
+
+        '1px': '1px',
+        '2px': '2px',
+        '3px': '3px',
+        '4px': '4px',
+        '5px': '5px',
+        '6px': '6px',
+        '8px': '8px',
+        '10px': '10px',
+        '12px': '12px',
+        '14px': '14px',
+        '16px': '16px',
+        '18px': '18px',
+        '20px': '20px',
+        '24px': '24px',
+        '28px': '28px',
+        '32px': '32px',
+        '36px': '36px',
+        '40px': '40px',
+        '48px': '48px',
+        '54px': '54px',
+        '64px': '64px',
+        '72px': '72px',
+        '80px': '80px',
+        '96px': '96px',
+        '100px': '100px',
+        '120px': '120px',
+        '500px': '500px',
+        '800px': '800px',
+        '1200px': '1200px',
+
+        '1/5': ' 20%',
       },
       colors: {
         'text-primary': 'var(--color-grey-grey-900)',
@@ -49,6 +99,9 @@ module.exports = {
         'border-success': 'var(--color-state-safe)',
         'border-warning': 'var(--color-state-warn)',
         'border-error': 'var(--color-state-danger)',
+
+        'grey-600': ' var(--color-grey-grey-600)',
+        'brand-blud-500': 'var(--color-brand-brand-blud-500)',
       },
       borderRadius: {
         'radius-none': '0px',
@@ -57,6 +110,9 @@ module.exports = {
         'radius-m': 'var(--radius-3)',
         'radius-l': 'var(--radius-4)',
         'radius-rounded': 'var(--radius-5)',
+      },
+      boxShadow: {
+        'drop-L': '0px 10px 20px 0px #5D5D7B33',
       },
     },
   },
