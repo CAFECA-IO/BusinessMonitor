@@ -12,7 +12,7 @@ export default function LandingPage() {
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon/favicon.ico" />
-        <title>CAFECA - Landing Page</title>
+        <title>CAFECA - Own Your Identity</title>
       </Head>
 
       <main className="flex min-h-screen flex-col items-center">
