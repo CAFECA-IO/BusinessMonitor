@@ -10,7 +10,7 @@ const MostViewedList: React.FC<IMostViewedListProps> = ({ businessList }) => {
   return (
     <div className="flex flex-col items-start gap-16px">
       <p className="text-h6 font-bold text-text-secondary">Most Viewed</p>
-      <div className="grid grid-cols-5 gap-12px">
+      <div className="grid grid-cols-3 gap-12px desktop:grid-cols-5">
         {businessList.map((business) => (
           <BusinessBriefCard key={business.id} business={business} />
         ))}

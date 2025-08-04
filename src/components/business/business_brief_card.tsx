@@ -33,6 +33,7 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
   );
 
   return (
+    // ToDo: (20250804 - Julian) 到 Business Detail Page
     <div className="flex w-220px flex-col gap-24px rounded-radius-m border border-transparent bg-surface-primary px-16px py-12px shadow-drop-L hover:cursor-pointer hover:border-border-brand">
       {/* Info: (20250804 - Julian) Business Info */}
       <div className="flex gap-8px">
