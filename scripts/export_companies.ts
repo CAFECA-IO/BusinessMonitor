@@ -1,4 +1,3 @@
-// scripts/export_companies.ts
 import fs from 'fs';
 import path from 'path';
 import { PrismaClient, Company } from '@prisma/client';
@@ -8,7 +7,7 @@ import { pipeline } from 'stream/promises';
 
 const prisma = new PrismaClient();
 
-// 1. CSV 欄位定義（同前）
+// Info: (20250804 - Tzuhan) 1. CSV 欄位定義（同前）
 const fields = [
   { label: 'ID', value: 'id' },
   { label: '公司名稱', value: 'name' },
@@ -110,29 +109,29 @@ async function exportWithChunksAndGzip() {
 
   let fileIndex = 1;
   for (let offset = 0; offset < total; offset += CHUNK_SIZE) {
-    // 1. 讀 batch
+    // Info: (20250804 - Tzuhan) 1. 讀 batch
     const batch = await prisma.company.findMany({
       skip: offset,
       take: CHUNK_SIZE,
       orderBy: { id: 'asc' },
     });
 
-    // 2. 轉 CSV
+    // Info: (20250804 - Tzuhan) 2. 轉 CSV
     const parser = new Parser<Company>({
       fields,
       withBOM: fileIndex === 1,
     });
     const csv = parser.parse(batch);
 
-    // 3. 建 Gzip 串流 寫入檔案
+    // Info: (20250804 - Tzuhan) 3. 建 Gzip 串流 寫入檔案
     const gzip = createGzip();
     const filename = `company_chunk_${fileIndex}.csv.gz`;
     const filepath = path.join(exportDir, filename);
     const outStream = fs.createWriteStream(filepath);
 
-    // pipeline: 把 csv 字串餵給 gzip，再寫檔
+    // Info: (20250804 - Tzuhan) pipeline: 把 csv 字串餵給 gzip，再寫檔
     await pipeline(
-      // 將字串轉 Buffer
+      // Info: (20250804 - Tzuhan) 將字串轉 Buffer
       (async function* () {
         yield Buffer.from(csv, 'utf8');
       })(),
