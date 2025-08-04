@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { FaChevronRight } from 'react-icons/fa6';
 import Button from '@/components/common/button';
 
 const MessageBubble: React.FC<{ avatarScr: string; text: string; isLeft?: boolean }> = ({
@@ -47,8 +48,8 @@ const Cta: React.FC = () => {
         </p>
         {/* ToDo: (20250731 - Julian) Style */}
         <Link href="/">
-          <Button type="button" variant="primary">
-            Go to CAFECA
+          <Button type="button" variant="primary" className="gap-8px">
+            Go to CAFECA <FaChevronRight size={20} />
           </Button>
         </Link>
       </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { forwardRef } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-const buttonVariants = cva('rounded-full font-bold', {
+const buttonVariants = cva('rounded-full font-bold flex items-center', {
   variants: {
     variant: {
       primary:

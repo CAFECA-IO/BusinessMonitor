@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { FaChevronRight } from 'react-icons/fa6';
 import Button from '@/components/common/button';
 
 const ReadyToCafeca: React.FC = () => {
@@ -15,8 +16,8 @@ const ReadyToCafeca: React.FC = () => {
         </h2>
 
         <Link href="/">
-          <Button type="button" variant="secondary" className="w-fit shadow-drop-L">
-            Go to CAFECA
+          <Button type="button" variant="secondary" className="w-fit gap-8px shadow-drop-L">
+            Go to CAFECA <FaChevronRight size={20} />
           </Button>
         </Link>
       </div>
