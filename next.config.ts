@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /* Info: (20250804 - Julian) config options here */
   env: {
     CAFECA_COPYRIGHT: process.env.CAFECA_COPYRIGHT,
     CAFECA_LOCATION_EN: process.env.CAFECA_LOCATION_EN,
