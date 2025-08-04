@@ -31,7 +31,7 @@ export default function LandingPage() {
           </div>
 
           {/* Info: (20250804 - Julian) Business Lists */}
-          <div className="flex flex-col items-center gap-56px">
+          <div className="flex w-full flex-col items-center gap-56px">
             {/* Info: (20250804 - Julian) New Business List */}
             <NewBusinessList />
             {/* Info: (20250804 - Julian) Most Viewed List */}
