@@ -2,30 +2,13 @@ import React from 'react';
 import Image from 'next/image';
 import { IoTriangle } from 'react-icons/io5';
 import { PiFlagPennantFill } from 'react-icons/pi';
+import { IBusinessBrief } from '@/interfaces/business';
 
-interface IBusinessBrief {
-  id: number;
-  name: string;
-  imgSrc: string;
-  businessTaxId: string;
-  countOfGreenFlags: number;
-  countOfRedFlags: number;
-  stockPrice: number;
-  stockPriceChange: number;
+interface IBusinessBriefCardProps {
+  business: IBusinessBrief;
 }
 
-const dummyBusiness: IBusinessBrief = {
-  id: 1,
-  name: 'Business Name here with second line',
-  imgSrc: '/fake_avatar/business_img_1.jpg',
-  businessTaxId: '1234567890',
-  countOfGreenFlags: 5,
-  countOfRedFlags: 2,
-  stockPrice: 150.75,
-  stockPriceChange: 0.0043, // 0.43%
-};
-
-const BusinessBriefCard: React.FC = () => {
+const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
   const {
     name,
     imgSrc,
@@ -34,7 +17,7 @@ const BusinessBriefCard: React.FC = () => {
     countOfRedFlags,
     stockPrice,
     stockPriceChange,
-  } = dummyBusiness;
+  } = business;
 
   const changePercentage = (stockPriceChange * 100).toFixed(2);
   const isPositive = stockPriceChange >= 0;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { FiSearch } from 'react-icons/fi';
 
-const SearchInput: React.FC = () => {
+const SearchArea: React.FC = () => {
   const dummyTag = ['Business', 'Search', 'Input', 'Component'];
 
   const tags = dummyTag.map((tag) => (
@@ -32,4 +32,4 @@ const SearchInput: React.FC = () => {
   );
 };
 
-export default SearchInput;
+export default SearchArea;
