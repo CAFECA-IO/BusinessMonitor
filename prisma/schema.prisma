@@ -32,22 +32,22 @@ model Company {
   organizationType     String?   @map("organization_type")
   businessItems        Json?     @map("business_items")
   contributions        Json?     @map("contributions")
-  shareholdingStatus   String?   @map("shareholding_status")        // 股權狀況
-  sharePrice           Decimal?  @db.Decimal(30,8) @map("share_price")                // 每股金額
-  totalIssuedShares    BigInt?      @map("total_issued_shares")        // 已發行股份總數
-  multipleVotingRights String?   @map("multiple_voting_rights")     // 複數表決權特別股
-  specialVotingRights  String?   @map("special_voting_rights")        // 對於特定事項具否決權特別股
-  lastChangeDate       DateTime? @map("last_change_date")           // 最近異動日期（商業登記）
-  lastApprovedChange   DateTime? @map("last_approved_change")       // 最後核准變更日期（公司登記）
-  statusDate           DateTime? @map("status_date")                // 公司狀況日期
-  statusDocNo          String?   @map("status_doc_no")              // 公司狀況文號
-  foreignCompanyName   String?   @map("foreign_company_name")       // 章程所訂外文公司名稱
-  directors            Json?     @map("directors")                  // 董監事名單
-  managers             Json?     @map("managers")                   // 經理人名單
-  suspensionStartDate  DateTime? @map("suspension_start_date")      // 停業起日
-  suspensionEndDate    DateTime? @map("suspension_end_date")        // 停業迄日
-  suspensionAgency     String?   @map("suspension_agency")          // 停業機關
-  oldBusinessItemsUrl  String?   @map("old_business_items_url")     // 舊營業項目資料 URL
+  shareholdingStatus   String?   @map("shareholding_status")
+  sharePrice           Decimal?  @db.Decimal(30,8) @map("share_price")
+  totalIssuedShares    BigInt?   @map("total_issued_shares")
+  multipleVotingRights String?   @map("multiple_voting_rights")
+  specialVotingRights  String?   @map("special_voting_rights")
+  lastChangeDate       DateTime? @map("last_change_date")
+  lastApprovedChange   DateTime? @map("last_approved_change")
+  statusDate           DateTime? @map("status_date")
+  statusDocNo          String?   @map("status_doc_no")
+  foreignCompanyName   String?   @map("foreign_company_name")
+  directors            Json?     @map("directors")
+  managers             Json?     @map("managers")
+  suspensionStartDate  DateTime? @map("suspension_start_date")
+  suspensionEndDate    DateTime? @map("suspension_end_date")
+  suspensionAgency     String?   @map("suspension_agency")
+  oldBusinessItemsUrl  String?   @map("old_business_items_url")
 
   industryCodes            IndustryCode[]     @relation("CompanyIndustry")
   investors                CompanyInvestor[]
