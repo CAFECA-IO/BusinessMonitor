@@ -19,8 +19,11 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
     stockPriceChange,
   } = business;
 
-  const changePercentage = (stockPriceChange * 100).toFixed(2);
   const isPositive = stockPriceChange >= 0;
+  const isShowGreenFlag = countOfGreenFlags > 0;
+  const isShowRedFlag = countOfRedFlags > 0;
+
+  const changePercentage = (stockPriceChange * 100).toFixed(2);
 
   const changeColor = isPositive ? 'text-text-success' : 'text-text-error';
   const changeSign = isPositive ? (
@@ -48,15 +51,19 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8px text-xs font-normal">
             {/* Info: (20250804 - Julian) Green Flag */}
-            <div className="flex items-center gap-2px text-text-success">
-              <PiFlagPennantFill size={12} />
-              {countOfGreenFlags}
-            </div>
+            {isShowGreenFlag && (
+              <div className="flex items-center gap-2px text-text-success">
+                <PiFlagPennantFill size={12} />
+                {countOfGreenFlags}
+              </div>
+            )}
             {/* Info: (20250804 - Julian) Red Flag */}
-            <div className="flex items-center gap-2px text-text-error">
-              <PiFlagPennantFill size={12} />
-              {countOfRedFlags}
-            </div>
+            {isShowRedFlag && (
+              <div className="flex items-center gap-2px text-text-error">
+                <PiFlagPennantFill size={12} />
+                {countOfRedFlags}
+              </div>
+            )}
           </div>
           <div className={`flex items-center gap-4px font-medium ${changeColor}`}>
             <p className="text-sm">{stockPrice}</p>
