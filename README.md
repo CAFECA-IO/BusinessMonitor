@@ -1,218 +1,214 @@
-# BusinessMonitor 專案使用說明
+# BusinessMonitor
 
-本文件說明如何在本專案中快速啟動、開發、部署與測試。
-
----
-
-## 🚀 專案概覽
-
-* **框架**：Next.js 15 (App Router)
-* **語言**：TypeScript
-* **樣式**：Tailwind CSS
-* **資料庫**：PostgreSQL + Prisma ORM
-* **測試**：Jest
-* **Git Hook**：Husky + lint-staged
-* **版號管理**：metadata+遞增 (0.1.0 → 0.1.0+1)
+企業觀測站 · 以 Next.js + PostgreSQL 打造的財務資料可視化平台
 
 ---
 
-## 📦 環境安裝
-
-1. 克隆專案並切換到目錄：
-
-   ```bash
-   git clone <repo-url>
-   cd BusinessMonitor
-   ```
-2. 安裝相依套件：
-
-   ```bash
-   npm install
-   ```
-3. 複製環境變數範本並設定：
-
-   ```bash
-   cp .env.example .env
-   # 編輯 .env，填入你的 DATABASE_URL
-   ```
-4. 設定 Node 版本（可選）：
-
-   * 建議在專案根目錄新增 `.nvmrc`，內容填寫：
-
-     ```text
-     20
-     ```
-
-     或使用 LTS：
-
-     ```text
-     lts/*
-     ```
-   * 本地執行：
-
-     ```bash
-     nvm install
-     nvm use
-     ```
-   * 推薦使用 Node.js v20（Next.js LTS）
+## 📌 專案概覽
+|                       | 技術棧 |
+|-----------------------|---------------------------------------------------------------|
+| 前端 / SSR             | **Next.js 15**（App Router, Turbopack） |
+| 後端 / ORM             | **Prisma** 6 + PostgreSQL |
+| 語言                   | TypeScript |
+| UI  &nbsp; / CSS      | Tailwind CSS 3 |
+| 測試                   | Jest 30 + Testing Library |
+| 程式碼品質              | ESLint 9 · Prettier 3 · Husky + lint-staged |
+| 版號管理                | `0.1.0+build`（`npm run update-version` 自動遞增） |
 
 ---
 
-## 🗄️ 本地資料庫準備
-1. **安裝 PostgreSQL**（依作業系統）：
-
-   * macOS（Homebrew）：
-
-     ```bash
-     brew install postgresql
-     brew services start postgresql
-     ```
-   * Ubuntu：
-
-     ```bash
-     sudo apt update
-     sudo apt install postgresql
-     sudo systemctl start postgresql
-     ```
-
-2. **建立使用者與資料庫**：將 `myuser`、`mypassword`、`business_monitor` 改成你想要的名稱
-
-   ```bash
-   export PGUSER=postgres
-   export PGPASSWORD=       # 如果 postgres 無密碼，可留空
-   psql -h localhost -p 5432 -U $PGUSER <<EOF
-   CREATE ROLE myuser WITH LOGIN PASSWORD 'mypassword';
-   CREATE DATABASE business_monitor OWNER myuser;
-   EOF
-   ```
-
-3. **更新 .env**：填入你剛剛建立的資訊
-
-   ```env
-   DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/business_monitor?schema=public"
-   ```
----
-
-## 🗄️ 資料庫操作 (Prisma)
-
-### 資料庫初始化
-
-在你拉取 (clone) 下來、且 `prisma/migrations` 已經含有所有版本檔後，只需 **套用現有 migration** 並產生 Client：
+## ⚡ 快速開始
 
 ```bash
-npx prisma migrate deploy      # 執行尚未套用的 migration
-npx prisma generate         # 產生 Prisma Client
-```
+git clone <repo-url>
+cd BusinessMonitor
+npm install
 
-### 資料庫更新
+# 建立環境變數
+cp .env.example .env  # 編輯 DATABASE_URL
 
-當你修改了 `schema.prisma` 並需要**新增一個 migration** 時：
-
-```bash
-npx prisma migrate dev --name <migration_name>
+# 套用資料庫 migration 並產生 Prisma Client
+npx prisma migrate deploy
 npx prisma generate
-```
+
+npm run dev           # http://localhost:3000
+````
+
+> **Node 版本**：建議 v20 LTS，在專案根目錄建立 `.nvmrc` 可自動切換。
 
 ---
 
-## 📂 檔案結構
+## 📂 專案目錄結構
 
 ```
 BusinessMonitor/
-├─ .husky/                  # Git hook
-├─ prisma/
-│   ├─ schema.prisma       # Prisma schema
-│   ├─ ERD.svg             # 資料表 ER 圖檔
-│   └─ migrations/         # 資料庫 migration
-├─ scripts/
-│   └─ update_version.ts   # 版號遞增腳本
-├─ src/
-│   ├─ app/
-│   │   ├─ api/            # App Router API Route Handlers
-│   │   │   └─ v1/hello/
-│   │   │       └─ route.ts
-│   │   ├─ landing/        # Landing Page
-│   │   │   └─ page.tsx
-│   │   ├─ search/         # Search Page
-│   │   │   └─ page.tsx
-│   │   ├─ layout.tsx      # 根 Layout
-│   │   └─ page.tsx        # 首頁
-│   ├─ components/         # 共用元件
-│   │   └─ Button.tsx      # 範例按鈕
-│   ├─ lib/                # 工具函式
-│   └─ styles/
-│       └─ globals.css
-├─ __tests__/              # 測試檔案
-│   └─ api/hello.test.ts   # API 範例測試
-├─ jest.config.ts          # Jest 設定
-├─ tsconfig.json           # TypeScript 設定
-├─ package.json            # 專案設定
-└─ next.config.js          # Next.js 設定
+├─ .github/                # CI / ISSUE_TEMPLATE / PR_TEMPLATE
+├─ .husky/                 # Git hooks（pre-commit 觸發 lint-staged + Jest + 版號遞增）
+│  └─ pre-commit
+├─ .vscode/                # 編輯器建議設定（工作區層級）
+│  └─ settings.json
+├─ coverage/               # Jest coverage 輸出
+├─ docs/                   # 架構圖、流程圖、API 規格…(markdown / mermaid)
+├─ exports/                # CLI 匯出資料 (e.g. CSV、JSON)
+├─ node_modules/
+├─ prisma/                 # ★ 資料庫 Schema 與 Migration
+│  ├─ migrations/
+│  │   └─ 000_init/        # 首次 migration
+│  ├─ ERD.svg              # prisma-erd-generator 產生的 ER 圖
+│  ├─ migration_lock.toml  # Migrate deploy 鎖
+│  └─ schema.prisma
+├─ public/                 # 靜態資源 (Next.js 自動對應 /)
+│  ├─ elements/            # UI icon/svgs
+│  ├─ fake_avatar/         # 假頭像範例
+│  ├─ file.svg
+│  ├─ globe.svg
+│  ├─ next.svg
+│  ├─ vercel.svg
+│  └─ window.svg
+├─ scripts/                # Node / TS CLI 工具
+│  ├─ logs/                # 系統排程或 CLI log 輸出
+│  ├─ export_companies.ts  # 企業資料匯出 → exports/
+│  ├─ import_data.ts       # 擷取 & 匯入政府開放資料 (ETL)
+│  └─ update_version.ts    # 版號 build metadata 自動 +1
+├─ src/                    # 應用程式核心
+│  ├─ __tests__/api/       # Jest + RTL 測試
+│  │   └─ hello.test.ts
+│  ├─ app/                 # Next.js 15 App Router
+│  │   ├─ api/
+│  │   │   └─ v1/hello/route.ts
+│  │   ├─ landing/page.tsx
+│  │   ├─ search/          # (路由夾)
+│  │   ├─ layout.tsx       # Root layout
+│  │   └─ page.tsx         # Home
+│  ├─ components/          # 共用 React 元件
+│  ├─ constants/           # 枚舉、常量
+│  ├─ interfaces/          # TypeScript 型別定義
+│  ├─ lib/                 # util / service（ex: prisma client wrapper）
+│  └─ styles/
+│      └─ globals.css
+├─ .env                    # 本機環境變數
+├─ .env.example            # 範例環境變數
+├─ .eslintrc.js            # ESLint rule 入口（延伸 eslint.config.mjs）
+├─ .lintstagedrc.json      # lint-staged 設定
+├─ .nvmrc                  # 建議 Node 版本 (v20)
+├─ eslint.config.mjs       # 使用 Flat Config
+├─ jest.config.ts
+├─ jest.setup.ts           # RTL / jest-extended 全域設定
+├─ LICENSE
+├─ next-env.d.ts           # Next.js 自動生成，型別輔助
+├─ next.config.ts
+├─ package.json
+├─ package-lock.json
+├─ postcss.config.mjs
+├─ README.md
+├─ tailwind.config.js
+└─ tsconfig.json
 ```
 
 ---
 
-## 🏃‍♂️ 啟動專案
+## 🗄️ 資料庫流程
 
-* 開發伺服器
-
-  ```bash
-  npm run dev
-  ```
-* production build
-
-  ```bash
-  npm run build
-  npm run start
-  ```
-* code lint
-
-  ```bash
-  npm run lint
-  ```
-* code format
-
-  ```bash
-  npm run format
-  ```
-* 測試
-
-  ```bash
-  npm run test
-  ```
-
----
-
-## 🔧 Git Hook (Husky) (Husky)
-
-每次 commit 前會自動：
-
-1. `npx lint-staged` → 只檢查 staged 檔案的格式與 lint
-2. `npm test` → 跑所有 Jest 測試，失敗則阻擋 commit
-3. `npm run update-version` → 自動遞增 metadata，並 `git add package.json`
+### 初始化（僅第一次）
 
 ```bash
-# .husky/pre-commit
-npx lint-staged
-npm test
-npm run update-version
+# 已有 migrations：直接套用
+npx prisma migrate deploy
+npx prisma generate
+```
+
+### 建立新 migration
+
+```bash
+# 修改 schema.prisma 後
+npx prisma migrate dev --name <feat_or_fix>
+npx prisma generate
+```
+
+> **ERD 更新**：`npm run generate:erd` 會額外輸出 `prisma/ERD.svg`（需安裝 Graphviz）。
+
+---
+
+## 🔨 NPM Scripts
+
+| 指令                       | 說明                                          |
+| ------------------------ | ------------------------------------------- |
+| `npm run dev`            | 本機開發（Turbopack）                             |
+| `npm run build`          | 產出 Production Build；自動先執行 `prisma generate` |
+| `npm start`              | 以 Node 啟動 production server                 |
+| `npm run generate`       | **僅生成** Prisma Client                       |
+| `npm run generate:erd`   | 生成 Client + ERD.svg                         |
+| `npm test`               | Jest + coverage                             |
+| `npm run lint`           | ESLint + Next.js ESLint                     |
+| `npm run format`         | Prettier 全專案格式化                             |
+| `npm run validate`       | format → lint → test（CI 本地完整驗證）             |
+| `npm run import-data`    | 以 TypeScript 執行 `scripts/import_data.ts`    |
+| `npm run update-version` | `scripts/update_version.ts`：metadata 自動遞增   |
+
+---
+
+## ✅ 品質檢查（Husky）
+
+`pre-commit` 流程 ⬇️
+
+1. **lint-staged**：只檢查已 staged 檔案格式 + Lint
+2. **jest**：單元/整合測試，若失敗阻擋 commit
+3. **update-version**：`package.json` build 版號 `+1`
+
+---
+
+## 🧪 測試範例
+
+```ts
+// __tests__/api/hello.test.ts
+import { render, screen } from '@testing-library/react';
+import Hello from '@/app/api/v1/hello/route';
+
+describe('GET /api/v1/hello', () => {
+  it('returns 200 & message', () => {
+    const res = Hello();
+    expect(res.status).toBe(200);
+    expect(res.body).toMatch(/Hello BusinessMonitor/);
+  });
+});
+```
+
+```bash
+npm test                    # 執行全部
+npm test -- <pattern>       # 只跑部分測試
 ```
 
 ---
 
-## 資料更新指令
+## 🚀 部署
 
+> 本專案可直接部署至 **Vercel**；或以 Docker / PM2 自管。
+
+```bash
+# Docker 範例
+docker build -t business-monitor .
+docker run -d -p 3000:3000 --env-file .env business-monitor
 ```
-node --loader ts-node/esm scripts/import_data.ts <data_folder>
-```
-
-## 📖 文件連結
-
-* Next.js App Router doc: [https://nextjs.org/docs/app](https://nextjs.org/docs/app)
-* Prisma: [https://www.prisma.io/docs](https://www.prisma.io/docs)
-* Jest: [https://jestjs.io/docs/getting-started](https://jestjs.io/docs/getting-started)
-* Tailwind CSS: [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
 
 ---
 
-如有任何問題或建議，歡迎隨時提出～
+## ✏️ 貢獻 & Issue
+
+1. Fork → 新分支 → PR
+2. PR 需通過 `npm run validate`
+3. Commit 訊息建議遵循 **Conventional Commits** (`feat:`, `fix:`…)
+
+如有任何問題或改進建議，請開 Issue 或直接在 Slack/@Tzuhan 提醒 🙌
+
+---
+
+## 📚 參考資源
+
+* Next.js   [https://nextjs.org/docs/app](https://nextjs.org/docs/app)
+* Prisma   [https://www.prisma.io/docs](https://www.prisma.io/docs)
+* Tailwind CSS [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
+* Jest    [https://jestjs.io](https://jestjs.io)
+
+---
+
+> © 2025 BusinessMonitor. MIT License.
