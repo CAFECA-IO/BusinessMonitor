@@ -1,77 +1,218 @@
-# 企業觀測站專案 (BusinessMonitor)
+# BusinessMonitor
 
-## 一、專案願景
+企業觀測站是一個專注於企業監測與風險評估的資料平台，透過串聯證交所、商業司、法務部、智慧財產局、地政局、中選會、勞動部、環境部等政府開放資料，全面建構企業的多維度公開資訊輪廓。
 
-打造一個聚焦「企業價值揭露」的資訊平台，讓使用者（主要是投資人與新創公司）能透明且即時掌握企業的經營狀況與異動資訊。
+平台整合企業登記、負責人異動、土地資產、訴訟紀錄、環境違規、選舉捐贈、智慧財產等核心資訊，並導入智慧分析模型，自動識別潛在風險、揭露營運透明度，進一步推估企業的相對價值與市場信評。
 
-- **產品定位**  
-  以企業工商資料為基礎，結合 AI 預測公司價值與股價（後續階段開發），作為投資人教育與決策的參考工具，同時協助新創公司提升資本市場能見度。
-
-- **目標用戶**  
-  - 投資人：透過資料透明化與預測，輔助投資判斷。  
-  - 新創公司：提升公司資訊公開與市場曝光，促進「上司上櫃」。
-
-- **技術策略**  
-  採用 Next.js + TypeScript 打造前後端，後端資料庫使用 PostgreSQL，搭配彈性結構以應對複雜資料。
+企業觀測站致力於提升資料透明度與決策效率，協助投資人、媒體、研究機構及公民社會快速掌握企業真實樣貌，建立一個更負責任、可信賴的商業環境。
 
 ---
 
-## 二、現階段目標
-
-- 建立企業基本資料及異動歷史的資料庫設計與初版建置。  
-- 設計並實作企業資料與異動紀錄的基礎 API，配合前端 UI 需求。  
-- 測試並導入 jsonl 爬取的工商資料，確保資料正確性。  
-- 明確規劃 AI 預測相關欄位的預留，但暫不開發 AI 功能。  
-
----
-
-## 三、未來計劃與階段里程碑
-
-### 1. AI 預測模型開發階段  
-- **目標**：訓練可用於企業價值與股價預測的 AI 模型。  
-- **里程碑**：  
-  - 收集並標註訓練資料  
-  - 完成模型初版訓練與驗證  
-  - 與產品驗收模型準確度和可用性  
-- **需求檢視**：每次模型迭代完成後，召開評估會議，更新需求與優化方向。
-
-### 2. 金融監理沙盒申請階段  
-- **目標**：依據 AI 預測模型成果，準備並提交金融監理沙盒申請。  
-- **里程碑**：  
-  - 完成法規合規文件整理與風險評估  
-  - 與監管單位溝通，調整產品功能以符合法規要求  
-  - 獲得監理沙盒試行許可  
-- **需求檢視**：定期與法務、風控及監管溝通，確認申請文件與產品符合監管需求。
-
-### 3. 可投資標的（集資）上架階段  
-- **目標**：通過監理沙盒後，推出支持投資與股權集資的特殊標的（房地產、新創公司等）。  
-- **里程碑**：  
-  - 完成集資流程設計與系統開發  
-  - 上架首批可投資標的並開始募集資金  
-  - 建立股權管理及投資人關係管理機制  
-- **需求檢視**：每階段功能上線均需回顧，紀錄需求變更與優先度調整。
-
-### 4. 持續優化與擴展階段  
-- **目標**：結合區塊鏈等技術，提升透明度與安全性，擴大標的類型與用戶群。  
-- **里程碑**：  
-  - 區塊鏈溯源與智能合約功能上線  
-  - 增加多元標的支持（例如其他行業、新金融產品）  
-  - 持續改進 AI 預測模型，提升準確度與可解釋性  
-- **需求檢視**：建立跨部門需求管理與版本控制機制，確保長期目標一致。
+## 📌 專案概覽
+|                       | 技術棧 |
+|-----------------------|---------------------------------------------------------------|
+| 前端 / SSR             | **Next.js 15**（App Router, Turbopack） |
+| 後端 / ORM             | **Prisma** 6 + PostgreSQL |
+| 語言                   | TypeScript |
+| UI  &nbsp; / CSS      | Tailwind CSS 3 |
+| 測試                   | Jest 30 + Testing Library |
+| 程式碼品質              | ESLint 9 · Prettier 3 · Husky + lint-staged |
+| 版號管理                | `0.1.0+build`（`npm run update-version` 自動遞增） |
 
 ---
 
-## 四、需求管理與紀錄規範
+## ⚡ 快速開始
 
-- **每次會議與開發階段必須記錄需求變更與討論決議**，包含：  
-  - 變更原因  
-  - 影響範圍  
-  - 新增/調整優先度  
-  - 負責人與完成期限  
+```bash
+git clone <repo-url>
+cd BusinessMonitor
+npm install
 
-- **設立定期需求回顧會議（如每月或每階段結束）**，評估專案進度與需求一致性。
+# 建立環境變數
+cp .env.example .env  # 編輯 DATABASE_URL
+
+# 套用資料庫 migration 並產生 Prisma Client
+npx prisma migrate deploy
+npx prisma generate
+
+npm run dev           # http://localhost:3000
+````
+
+> **Node 版本**：建議 v20 LTS，在專案根目錄建立 `.nvmrc` 可自動切換。
 
 ---
 
-## 附錄
-[設計稿](https://www.figma.com/design/Fnur8pE3XDsIJHWUDwdYZe/CAFECA-Official-Web?node-id=1745-16849&m=dev)
+## 📂 專案目錄結構
+
+```
+BusinessMonitor/
+├─ .github/                # CI / ISSUE_TEMPLATE / PR_TEMPLATE
+├─ .husky/                 # Git hooks（pre-commit 觸發 lint-staged + Jest + 版號遞增）
+│  └─ pre-commit
+├─ .vscode/                # 編輯器建議設定（工作區層級）
+│  └─ settings.json
+├─ coverage/               # Jest coverage 輸出
+├─ docs/                   # 架構圖、流程圖、API 規格…(markdown / mermaid)
+├─ exports/                # CLI 匯出資料 (e.g. CSV、JSON)
+├─ node_modules/
+├─ prisma/                 # ★ 資料庫 Schema 與 Migration
+│  ├─ migrations/
+│  │   └─ 000_init/        # 首次 migration
+│  ├─ ERD.svg              # prisma-erd-generator 產生的 ER 圖
+│  ├─ migration_lock.toml  # Migrate deploy 鎖
+│  └─ schema.prisma
+├─ public/                 # 靜態資源 (Next.js 自動對應 /)
+│  ├─ elements/            # UI icon/svgs
+│  ├─ fake_avatar/         # 假頭像範例
+│  ├─ file.svg
+│  ├─ globe.svg
+│  ├─ next.svg
+│  ├─ vercel.svg
+│  └─ window.svg
+├─ scripts/                # Node / TS CLI 工具
+│  ├─ logs/                # 系統排程或 CLI log 輸出
+│  ├─ export_companies.ts  # 企業資料匯出 → exports/
+│  ├─ import_data.ts       # 擷取 & 匯入政府開放資料 (ETL)
+│  └─ update_version.ts    # 版號 build metadata 自動 +1
+├─ src/                    # 應用程式核心
+│  ├─ __tests__/api/       # Jest + RTL 測試
+│  │   └─ hello.test.ts
+│  ├─ app/                 # Next.js 15 App Router
+│  │   ├─ api/
+│  │   │   └─ v1/hello/route.ts
+│  │   ├─ landing/page.tsx
+│  │   ├─ search/          # (路由夾)
+│  │   ├─ layout.tsx       # Root layout
+│  │   └─ page.tsx         # Home
+│  ├─ components/          # 共用 React 元件
+│  ├─ constants/           # 枚舉、常量
+│  ├─ interfaces/          # TypeScript 型別定義
+│  ├─ lib/                 # util / service（ex: prisma client wrapper）
+│  └─ styles/
+│      └─ globals.css
+├─ .env                    # 本機環境變數
+├─ .env.example            # 範例環境變數
+├─ .eslintrc.js            # ESLint rule 入口（延伸 eslint.config.mjs）
+├─ .lintstagedrc.json      # lint-staged 設定
+├─ .nvmrc                  # 建議 Node 版本 (v20)
+├─ eslint.config.mjs       # 使用 Flat Config
+├─ jest.config.ts
+├─ jest.setup.ts           # RTL / jest-extended 全域設定
+├─ LICENSE
+├─ next-env.d.ts           # Next.js 自動生成，型別輔助
+├─ next.config.ts
+├─ package.json
+├─ package-lock.json
+├─ postcss.config.mjs
+├─ README.md
+├─ tailwind.config.js
+└─ tsconfig.json
+```
+
+---
+
+## 🗄️ 資料庫流程
+
+### 初始化（僅第一次）
+
+```bash
+# 已有 migrations：直接套用
+npx prisma migrate deploy
+npx prisma generate
+```
+
+### 建立新 migration
+
+```bash
+# 修改 schema.prisma 後
+npx prisma migrate dev --name <feat_or_fix>
+npx prisma generate
+```
+
+> **ERD 更新**：`npm run generate:erd` 會額外輸出 `prisma/ERD.svg`（需安裝 Graphviz）。
+
+---
+
+## 🔨 NPM Scripts
+
+| 指令                       | 說明                                          |
+| ------------------------ | ------------------------------------------- |
+| `npm run dev`            | 本機開發（Turbopack）                             |
+| `npm run build`          | 產出 Production Build；自動先執行 `prisma generate` |
+| `npm start`              | 以 Node 啟動 production server                 |
+| `npm run generate`       | **僅生成** Prisma Client                       |
+| `npm run generate:erd`   | 生成 Client + ERD.svg                         |
+| `npm test`               | Jest + coverage                             |
+| `npm run lint`           | ESLint + Next.js ESLint                     |
+| `npm run format`         | Prettier 全專案格式化                             |
+| `npm run validate`       | format → lint → test（CI 本地完整驗證）             |
+| `npm run import-data`    | 以 TypeScript 執行 `scripts/import_data.ts`    |
+| `npm run update-version` | `scripts/update_version.ts`：metadata 自動遞增   |
+
+---
+
+## ✅ 品質檢查（Husky）
+
+`pre-commit` 流程 ⬇️
+
+1. **lint-staged**：只檢查已 staged 檔案格式 + Lint
+2. **jest**：單元/整合測試，若失敗阻擋 commit
+3. **update-version**：`package.json` build 版號 `+1`
+
+---
+
+## 🧪 測試範例
+
+```ts
+// __tests__/api/hello.test.ts
+import { render, screen } from '@testing-library/react';
+import Hello from '@/app/api/v1/hello/route';
+
+describe('GET /api/v1/hello', () => {
+  it('returns 200 & message', () => {
+    const res = Hello();
+    expect(res.status).toBe(200);
+    expect(res.body).toMatch(/Hello BusinessMonitor/);
+  });
+});
+```
+
+```bash
+npm test                    # 執行全部
+npm test -- <pattern>       # 只跑部分測試
+```
+
+---
+
+## 🚀 部署
+
+> 本專案可直接部署至 **Vercel**；或以 Docker / PM2 自管。
+
+```bash
+# Docker 範例
+docker build -t business-monitor .
+docker run -d -p 3000:3000 --env-file .env business-monitor
+```
+
+---
+
+## ✏️ 貢獻 & Issue
+
+1. Fork → 新分支 → PR
+2. PR 需通過 `npm run validate`
+3. Commit 訊息建議遵循 **Conventional Commits** (`feat:`, `fix:`…)
+
+如有任何問題或改進建議，請開 Issue 或直接在 Slack/@Tzuhan 提醒 🙌
+
+---
+
+## 📚 參考資源
+
+* Next.js   [https://nextjs.org/docs/app](https://nextjs.org/docs/app)
+* Prisma   [https://www.prisma.io/docs](https://www.prisma.io/docs)
+* Tailwind CSS [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
+* Jest    [https://jestjs.io](https://jestjs.io)
+
+---
+
+> © 2025 BusinessMonitor. MIT License.
