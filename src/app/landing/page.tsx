@@ -1,8 +1,8 @@
 import Head from 'next/head';
 import Navbar from '@/components/common/navbar';
-import Cta from '@/components/landing_page/cta';
+import Kv from '@/components/landing_page/kv';
 import IntroCard from '@/components/landing_page/intro_card';
-import ReadyToCafeca from '@/components/landing_page/ready_to_cafeca';
+import Cta from '@/components/landing_page/cta';
 import Footer from '@/components/common/footer';
 
 export default function LandingPage() {
@@ -18,7 +18,7 @@ export default function LandingPage() {
       <main className="flex min-h-screen flex-col items-center">
         <Navbar />
 
-        <Cta />
+        <Kv />
 
         <div className="flex flex-col items-center">
           <IntroCard
@@ -48,7 +48,7 @@ export default function LandingPage() {
           />
         </div>
 
-        <ReadyToCafeca />
+        <Cta />
 
         <Footer />
       </main>
