@@ -20,7 +20,7 @@ const SearchResultList: React.FC<ISearchResultListProps> = ({ countOfTotal, curr
     );
 
   return (
-    <div className="flex w-3/4 flex-col items-stretch gap-8px">
+    <div className="flex flex-col items-stretch gap-8px">
       {/* Info: (20250805 - Julian) Count of Total / Current Row */}
       <p className="text-right text-sm font-normal text-text-secondary">
         Results: {currentRow.start} - {currentRow.end} of {countOfTotal}
