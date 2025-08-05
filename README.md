@@ -1,77 +1,218 @@
-# 企業觀測站專案 (BusinessMonitor)
+# BusinessMonitor 專案使用說明
 
-## 一、專案願景
-
-打造一個聚焦「企業價值揭露」的資訊平台，讓使用者（主要是投資人與新創公司）能透明且即時掌握企業的經營狀況與異動資訊。
-
-- **產品定位**  
-  以企業工商資料為基礎，結合 AI 預測公司價值與股價（後續階段開發），作為投資人教育與決策的參考工具，同時協助新創公司提升資本市場能見度。
-
-- **目標用戶**  
-  - 投資人：透過資料透明化與預測，輔助投資判斷。  
-  - 新創公司：提升公司資訊公開與市場曝光，促進「上司上櫃」。
-
-- **技術策略**  
-  採用 Next.js + TypeScript 打造前後端，後端資料庫使用 PostgreSQL，搭配彈性結構以應對複雜資料。
+本文件說明如何在本專案中快速啟動、開發、部署與測試。
 
 ---
 
-## 二、現階段目標
+## 🚀 專案概覽
 
-- 建立企業基本資料及異動歷史的資料庫設計與初版建置。  
-- 設計並實作企業資料與異動紀錄的基礎 API，配合前端 UI 需求。  
-- 測試並導入 jsonl 爬取的工商資料，確保資料正確性。  
-- 明確規劃 AI 預測相關欄位的預留，但暫不開發 AI 功能。  
-
----
-
-## 三、未來計劃與階段里程碑
-
-### 1. AI 預測模型開發階段  
-- **目標**：訓練可用於企業價值與股價預測的 AI 模型。  
-- **里程碑**：  
-  - 收集並標註訓練資料  
-  - 完成模型初版訓練與驗證  
-  - 與產品驗收模型準確度和可用性  
-- **需求檢視**：每次模型迭代完成後，召開評估會議，更新需求與優化方向。
-
-### 2. 金融監理沙盒申請階段  
-- **目標**：依據 AI 預測模型成果，準備並提交金融監理沙盒申請。  
-- **里程碑**：  
-  - 完成法規合規文件整理與風險評估  
-  - 與監管單位溝通，調整產品功能以符合法規要求  
-  - 獲得監理沙盒試行許可  
-- **需求檢視**：定期與法務、風控及監管溝通，確認申請文件與產品符合監管需求。
-
-### 3. 可投資標的（集資）上架階段  
-- **目標**：通過監理沙盒後，推出支持投資與股權集資的特殊標的（房地產、新創公司等）。  
-- **里程碑**：  
-  - 完成集資流程設計與系統開發  
-  - 上架首批可投資標的並開始募集資金  
-  - 建立股權管理及投資人關係管理機制  
-- **需求檢視**：每階段功能上線均需回顧，紀錄需求變更與優先度調整。
-
-### 4. 持續優化與擴展階段  
-- **目標**：結合區塊鏈等技術，提升透明度與安全性，擴大標的類型與用戶群。  
-- **里程碑**：  
-  - 區塊鏈溯源與智能合約功能上線  
-  - 增加多元標的支持（例如其他行業、新金融產品）  
-  - 持續改進 AI 預測模型，提升準確度與可解釋性  
-- **需求檢視**：建立跨部門需求管理與版本控制機制，確保長期目標一致。
+* **框架**：Next.js 15 (App Router)
+* **語言**：TypeScript
+* **樣式**：Tailwind CSS
+* **資料庫**：PostgreSQL + Prisma ORM
+* **測試**：Jest
+* **Git Hook**：Husky + lint-staged
+* **版號管理**：metadata+遞增 (0.1.0 → 0.1.0+1)
 
 ---
 
-## 四、需求管理與紀錄規範
+## 📦 環境安裝
 
-- **每次會議與開發階段必須記錄需求變更與討論決議**，包含：  
-  - 變更原因  
-  - 影響範圍  
-  - 新增/調整優先度  
-  - 負責人與完成期限  
+1. 克隆專案並切換到目錄：
 
-- **設立定期需求回顧會議（如每月或每階段結束）**，評估專案進度與需求一致性。
+   ```bash
+   git clone <repo-url>
+   cd BusinessMonitor
+   ```
+2. 安裝相依套件：
+
+   ```bash
+   npm install
+   ```
+3. 複製環境變數範本並設定：
+
+   ```bash
+   cp .env.example .env
+   # 編輯 .env，填入你的 DATABASE_URL
+   ```
+4. 設定 Node 版本（可選）：
+
+   * 建議在專案根目錄新增 `.nvmrc`，內容填寫：
+
+     ```text
+     20
+     ```
+
+     或使用 LTS：
+
+     ```text
+     lts/*
+     ```
+   * 本地執行：
+
+     ```bash
+     nvm install
+     nvm use
+     ```
+   * 推薦使用 Node.js v20（Next.js LTS）
 
 ---
 
-## 附錄
-[設計稿](https://www.figma.com/design/Fnur8pE3XDsIJHWUDwdYZe/CAFECA-Official-Web?node-id=1745-16849&m=dev)
+## 🗄️ 本地資料庫準備
+1. **安裝 PostgreSQL**（依作業系統）：
+
+   * macOS（Homebrew）：
+
+     ```bash
+     brew install postgresql
+     brew services start postgresql
+     ```
+   * Ubuntu：
+
+     ```bash
+     sudo apt update
+     sudo apt install postgresql
+     sudo systemctl start postgresql
+     ```
+
+2. **建立使用者與資料庫**：將 `myuser`、`mypassword`、`business_monitor` 改成你想要的名稱
+
+   ```bash
+   export PGUSER=postgres
+   export PGPASSWORD=       # 如果 postgres 無密碼，可留空
+   psql -h localhost -p 5432 -U $PGUSER <<EOF
+   CREATE ROLE myuser WITH LOGIN PASSWORD 'mypassword';
+   CREATE DATABASE business_monitor OWNER myuser;
+   EOF
+   ```
+
+3. **更新 .env**：填入你剛剛建立的資訊
+
+   ```env
+   DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/business_monitor?schema=public"
+   ```
+---
+
+## 🗄️ 資料庫操作 (Prisma)
+
+### 資料庫初始化
+
+在你拉取 (clone) 下來、且 `prisma/migrations` 已經含有所有版本檔後，只需 **套用現有 migration** 並產生 Client：
+
+```bash
+npx prisma migrate deploy      # 執行尚未套用的 migration
+npx prisma generate         # 產生 Prisma Client
+```
+
+### 資料庫更新
+
+當你修改了 `schema.prisma` 並需要**新增一個 migration** 時：
+
+```bash
+npx prisma migrate dev --name <migration_name>
+npx prisma generate
+```
+
+---
+
+## 📂 檔案結構
+
+```
+BusinessMonitor/
+├─ .husky/                  # Git hook
+├─ prisma/
+│   ├─ schema.prisma       # Prisma schema
+│   ├─ ERD.svg             # 資料表 ER 圖檔
+│   └─ migrations/         # 資料庫 migration
+├─ scripts/
+│   └─ update_version.ts   # 版號遞增腳本
+├─ src/
+│   ├─ app/
+│   │   ├─ api/            # App Router API Route Handlers
+│   │   │   └─ v1/hello/
+│   │   │       └─ route.ts
+│   │   ├─ landing/        # Landing Page
+│   │   │   └─ page.tsx
+│   │   ├─ search/         # Search Page
+│   │   │   └─ page.tsx
+│   │   ├─ layout.tsx      # 根 Layout
+│   │   └─ page.tsx        # 首頁
+│   ├─ components/         # 共用元件
+│   │   └─ Button.tsx      # 範例按鈕
+│   ├─ lib/                # 工具函式
+│   └─ styles/
+│       └─ globals.css
+├─ __tests__/              # 測試檔案
+│   └─ api/hello.test.ts   # API 範例測試
+├─ jest.config.ts          # Jest 設定
+├─ tsconfig.json           # TypeScript 設定
+├─ package.json            # 專案設定
+└─ next.config.js          # Next.js 設定
+```
+
+---
+
+## 🏃‍♂️ 啟動專案
+
+* 開發伺服器
+
+  ```bash
+  npm run dev
+  ```
+* production build
+
+  ```bash
+  npm run build
+  npm run start
+  ```
+* code lint
+
+  ```bash
+  npm run lint
+  ```
+* code format
+
+  ```bash
+  npm run format
+  ```
+* 測試
+
+  ```bash
+  npm run test
+  ```
+
+---
+
+## 🔧 Git Hook (Husky) (Husky)
+
+每次 commit 前會自動：
+
+1. `npx lint-staged` → 只檢查 staged 檔案的格式與 lint
+2. `npm test` → 跑所有 Jest 測試，失敗則阻擋 commit
+3. `npm run update-version` → 自動遞增 metadata，並 `git add package.json`
+
+```bash
+# .husky/pre-commit
+npx lint-staged
+npm test
+npm run update-version
+```
+
+---
+
+## 資料更新指令
+
+```
+node --loader ts-node/esm scripts/import_data.ts <data_folder>
+```
+
+## 📖 文件連結
+
+* Next.js App Router doc: [https://nextjs.org/docs/app](https://nextjs.org/docs/app)
+* Prisma: [https://www.prisma.io/docs](https://www.prisma.io/docs)
+* Jest: [https://jestjs.io/docs/getting-started](https://jestjs.io/docs/getting-started)
+* Tailwind CSS: [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
+
+---
+
+如有任何問題或建議，歡迎隨時提出～
