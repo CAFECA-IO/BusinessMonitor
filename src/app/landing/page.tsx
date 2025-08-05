@@ -20,8 +20,6 @@ export default function LandingPage() {
 
         <Cta />
 
-        {/* ToDo: (20250801 - Julian) 這裡有個波浪狀的遮擋 */}
-
         <div className="flex flex-col items-center">
           <IntroCard
             imgSrc="/elements/identity.png"
