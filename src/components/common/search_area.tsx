@@ -15,7 +15,7 @@ const SearchArea: React.FC = () => {
   ));
 
   return (
-    <div className="flex flex-col items-start gap-16px">
+    <div className="flex w-full flex-col items-start gap-16px">
       {/* Info: (20250804 - Julian) Search Input */}
       <div className="flex h-56px w-full items-center gap-8px rounded-radius-s border border-border-secondary bg-surface-primary p-spacing-2xs text-base font-normal text-text-primary">
         <FiSearch size={24} />

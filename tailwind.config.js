@@ -23,7 +23,6 @@ module.exports = {
       },
       backgroundImage: {
         cta: 'url("/elements/cta_bg.png")',
-        ready: 'url("/elements/purple_linear_bg.png")',
       },
       spacing: {
         'spacing-none': '0px',
@@ -66,6 +65,7 @@ module.exports = {
         '96px': '96px',
         '100px': '100px',
         '150px': '150px',
+        '160px': '160px',
         '200px': '200px',
         '220px': '220px',
         '120px': '120px',
