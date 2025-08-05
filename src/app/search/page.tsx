@@ -16,10 +16,10 @@ export default function LandingPage() {
         <title>Business Monitor - Search</title>
       </Head>
 
-      <main className="flex min-h-screen flex-col items-center bg-surface-background">
+      <main className="flex flex-col items-center bg-surface-background">
         <Navbar />
 
-        <div className="flex w-full flex-col items-center gap-60px px-80px pb-32px pt-60px">
+        <div className="flex min-h-screen w-full flex-col items-center gap-60px px-80px pb-32px pt-60px">
           <div className="flex w-1/2 flex-col items-stretch gap-40px">
             {/* Info: (20250804 - Julian) Main Title and Subtitle */}
             <div className="flex flex-col items-center">

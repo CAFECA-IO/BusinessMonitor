@@ -2,13 +2,13 @@ import React from 'react';
 import Image from 'next/image';
 import { IoTriangle } from 'react-icons/io5';
 import { PiFlagPennantFill } from 'react-icons/pi';
-import { IBusinessBrief } from '@/interfaces/business';
+import { IBusinessDetail } from '@/interfaces/business';
 
-interface IBusinessBriefCardProps {
-  business: IBusinessBrief;
+interface IBusinessDetailCardProps {
+  business: IBusinessDetail;
 }
 
-const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
+const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) => {
   const {
     name,
     imgSrc,
@@ -17,6 +17,7 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
     countOfRedFlags,
     stockPrice,
     stockPriceChange,
+    address,
   } = business;
 
   const isPositive = stockPriceChange >= 0;
@@ -33,23 +34,20 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
   );
 
   return (
-    // ToDo: (20250804 - Julian) 到 Business Detail Page
-    <div className="flex w-220px flex-col gap-24px rounded-radius-m border border-transparent bg-surface-primary px-16px py-12px shadow-drop-L hover:cursor-pointer hover:border-border-brand">
-      {/* Info: (20250804 - Julian) Business Info */}
-      <div className="flex gap-8px">
+    // ToDo: (20250805 - Julian) 連結至 Business Detail Page
+    <div className="flex w-full gap-24px rounded-radius-m border border-border-secondary bg-surface-primary px-16px py-12px hover:cursor-pointer hover:border-border-brand">
+      <div className="flex flex-1 gap-8px">
+        {/* Info: (20250804 - Julian) Business Image */}
         <div className="h-40px w-40px shrink-0 overflow-hidden rounded-full">
           <Image src={imgSrc} width={40} height={40} alt="business_avatar" />
         </div>
-        <div className="flex flex-col items-start gap-4px">
-          <p className="text-sm font-bold text-text-secondary">{name}</p>
-          <p className="text-xs font-medium text-text-note">{businessTaxId}</p>
-        </div>
-      </div>
-      {/* Info: (20250804 - Julian) Candlestick Chart */}
-      <div className="flex flex-col gap-12px">
-        {/* ToDo: (20250804 - Julian) Candlestick Chart */}
-        <div className="h-40px w-full bg-lime-600"></div>
-        <div className="flex items-center justify-between">
+        {/* Info: (20250804 - Julian) Business Info */}
+        <div className="flex flex-col gap-12px">
+          <div className="flex flex-col items-start gap-4px">
+            <p className="text-sm font-bold text-text-secondary">{name}</p>
+            <p className="text-xs font-medium text-text-note">{businessTaxId}</p>
+          </div>
+          <p className="text-xs font-medium text-text-primary">{address}</p>
           <div className="flex items-center gap-8px text-xs font-normal">
             {/* Info: (20250804 - Julian) Green Flag */}
             {isShowGreenFlag && (
@@ -66,12 +64,17 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
               </div>
             )}
           </div>
-          <div className={`flex items-center gap-4px font-medium ${changeColor}`}>
-            <p className="text-sm">{stockPrice}</p>
-            <div className="flex items-center gap-4px text-xs">
-              {changeSign}
-              <p>{changePercentage}%</p>
-            </div>
+        </div>
+      </div>
+      {/* Info: (20250804 - Julian) Candlestick Chart */}
+      <div className="flex flex-col items-end gap-12px">
+        {/* ToDo: (20250804 - Julian) Candlestick Chart */}
+        <div className="h-40px w-160px bg-lime-600"></div>
+        <div className={`flex items-center gap-4px font-medium ${changeColor}`}>
+          <p className="text-sm">{stockPrice}</p>
+          <div className="flex items-center gap-4px text-xs">
+            {changeSign}
+            <p>{changePercentage}%</p>
           </div>
         </div>
       </div>
@@ -79,4 +82,4 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
   );
 };
 
-export default BusinessBriefCard;
+export default BusinessDetailCard;
