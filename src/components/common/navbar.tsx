@@ -10,8 +10,10 @@ import { RiComputerLine } from 'react-icons/ri';
 import Button from '@/components/common/button';
 import I18n from '@/components/common/i18n';
 import { BM_URL } from '@/constants/url';
+import { useTranslation } from 'react-i18next';
 
 const Navbar: React.FC = () => {
+  const { t } = useTranslation(['common']);
   const pathname = usePathname();
 
   const isActiveHome = pathname === BM_URL.HOME;
@@ -37,7 +39,7 @@ const Navbar: React.FC = () => {
               size={24}
               className={isActiveHome ? '' : 'text-text-secondary group-hover:text-text-brand'}
             />
-            <p>Home</p>
+            <p>{t('common:HOME')}</p>
           </Button>
         </Link>
 
@@ -53,7 +55,7 @@ const Navbar: React.FC = () => {
                 isActiveBusinessMonitor ? '' : 'text-text-secondary group-hover:text-text-brand'
               }
             />
-            <p>Business Monitor</p>
+            <p>{t('common:BUSINESS_MONITOR')}</p>
           </Button>
         </Link>
 
