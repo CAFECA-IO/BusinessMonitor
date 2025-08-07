@@ -21,7 +21,7 @@ const Layout: React.FC<ILayoutProps> = ({ children, crumbsItems = [], isSearchBa
           {crumbsItems && crumbsItems.length > 0 && <Breadcrumb items={crumbsItems} />}
           {isSearchBar && (
             <div className="flex items-center">
-              {/* Placeholder for Search Bar Component */}
+              {/* Info: (20250805 - Julian) Placeholder for Search Bar Component */}
               <input type="text" placeholder="Search..." className="rounded border px-3 py-2" />
             </div>
           )}
