@@ -3,7 +3,6 @@ import type { Config } from 'jest';
 const transformConfig: [string, unknown] = ['ts-jest', { useESM: true }];
 
 const common: Config = {
-  preset: 'ts-jest',
   transform: { '^.+\\.(ts|tsx)$': transformConfig },
   moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
