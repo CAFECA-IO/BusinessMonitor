@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Button from '@/components/common/button';
 import { AiOutlineGlobal } from 'react-icons/ai';
 import useOuterClick from '@/lib/hooks/use_outer_click';
@@ -14,12 +15,20 @@ const I18n: React.FC = () => {
   ];
 
   const { targetRef, componentVisible, setComponentVisible } = useOuterClick<HTMLDivElement>(false);
+  const currentPath = usePathname();
 
   const toggleLangMenu = () => setComponentVisible((prev) => !prev);
 
   const langs = langOptions.map((lang) => {
     return (
-      <Link key={lang.value} href={``} className="p-16px hover:bg-surface-secondary">
+      <Link
+        key={lang.value}
+        href={currentPath}
+        scroll={false}
+        locale={lang.value}
+        onClick={toggleLangMenu}
+        className="p-16px hover:bg-surface-secondary"
+      >
         {lang.label}
       </Link>
     );

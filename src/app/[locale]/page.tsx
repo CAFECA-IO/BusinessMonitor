@@ -18,7 +18,8 @@ interface ILandingPageProps {
   };
 }
 
-export default async function LandingPage({ params: { locale } }: ILandingPageProps) {
+export default async function LandingPage({ params }: ILandingPageProps) {
+  const { locale } = params;
   const { resources } = await initTranslations(locale, I18N_NAMESPACES);
 
   return (

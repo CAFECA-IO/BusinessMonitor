@@ -70,7 +70,7 @@ const Navbar: React.FC = () => {
 
       {/* Info: (20250807 - Julian) Login Button */}
       <Button type="button" size="medium">
-        Log In
+        {t('common:LOGIN')}
       </Button>
     </nav>
   );
