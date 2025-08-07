@@ -4,11 +4,11 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AiOutlineGlobal } from 'react-icons/ai';
 import { FiHeadphones } from 'react-icons/fi';
 import { GrHomeRounded } from 'react-icons/gr';
 import { RiComputerLine } from 'react-icons/ri';
 import Button from '@/components/common/button';
+import I18n from '@/components/common/i18n';
 import { BM_URL } from '@/constants/url';
 
 const Navbar: React.FC = () => {
@@ -58,9 +58,7 @@ const Navbar: React.FC = () => {
         </Link>
 
         {/* Info: (20250807 - Julian) i18n */}
-        <Button type="button" variant="secondaryBorderless" size="icon">
-          <AiOutlineGlobal size={24} />
-        </Button>
+        <I18n />
 
         {/* Info: (20250807 - Julian) Listen to page */}
         <Button type="button" variant="secondaryBorderless" size="icon">
