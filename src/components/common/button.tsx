@@ -2,7 +2,7 @@ import React from 'react';
 import { forwardRef } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-const buttonVariants = cva('rounded-full font-bold flex items-center', {
+const buttonVariants = cva('group rounded-full font-bold flex items-center', {
   variants: {
     variant: {
       primary:
@@ -22,6 +22,7 @@ const buttonVariants = cva('rounded-full font-bold flex items-center', {
       small: 'px-24px py-12px text-sm',
       medium: 'px-48px py-16px text-base',
       large: 'px-54px py-18px text-lg',
+      icon: 'p-18px',
     },
   },
   defaultVariants: {

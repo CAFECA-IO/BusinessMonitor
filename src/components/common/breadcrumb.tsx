@@ -1,12 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { FaChevronRight } from 'react-icons/fa6';
+import { IBreadcrumbItem } from '@/interfaces/breadcrumb';
 
 interface IBreadcrumbProps {
-  items: {
-    name: string;
-    link: string;
-  }[];
+  items: IBreadcrumbItem[];
 }
 
 const Breadcrumb: React.FC<IBreadcrumbProps> = ({ items }) => {

@@ -4,6 +4,7 @@ import SearchArea from '@/components/common/search_area';
 import SearchResultList from '@/components/search/search_result_list';
 import Breadcrumb from '@/components/common/breadcrumb';
 import { dummyBusinesses } from '@/interfaces/business';
+import { BM_URL } from '@/constants/url';
 
 export const metadata = {
   title: 'CAFECA - Searching Result',
@@ -24,8 +25,8 @@ export default function SearchingResultPage() {
         {/* Info: (20250804 - Julian) Breadcrumb  */}
         <Breadcrumb
           items={[
-            { name: 'Home', link: '/' },
-            { name: 'Searching Result', link: '/search/result' },
+            { name: 'Home', link: BM_URL.HOME },
+            { name: 'Searching Result', link: BM_URL.SEARCH },
           ]}
         />
 
