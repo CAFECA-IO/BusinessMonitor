@@ -111,6 +111,15 @@ BusinessMonitor/
 │  ├─ constants/
 │  ├─ interfaces/
 │  ├─ lib/
+│  │   ├─ prisma.ts
+│  │   ├─ status.ts
+│  │   ├─ response.ts
+│  │   ├─ error.ts
+│  │   └─ auth.ts
+│  ├─  __tests__/
+│  │   └─ lib/
+│  │    ├─ response.test.ts
+│  │    └─ error.test.ts
 │  └─ styles/
 ├─ .env / .env.example
 ├─ eslint.config.mjs / .eslintrc.js

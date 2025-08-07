@@ -1,0 +1,21 @@
+export enum ApiCode {
+  OK = 'OK',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  UNAUTHENTICATED = 'UNAUTHENTICATED',
+  FORBIDDEN = 'FORBIDDEN',
+  NOT_FOUND = 'NOT_FOUND',
+  CONFLICT = 'CONFLICT',
+  RATE_LIMIT = 'RATE_LIMIT',
+  SERVER_ERROR = 'SERVER_ERROR',
+}
+
+export const HttpMap: Record<ApiCode, number> = {
+  [ApiCode.OK]: 200,
+  [ApiCode.VALIDATION_ERROR]: 400,
+  [ApiCode.UNAUTHENTICATED]: 401,
+  [ApiCode.FORBIDDEN]: 403,
+  [ApiCode.NOT_FOUND]: 404,
+  [ApiCode.CONFLICT]: 409,
+  [ApiCode.RATE_LIMIT]: 429,
+  [ApiCode.SERVER_ERROR]: 500,
+};
