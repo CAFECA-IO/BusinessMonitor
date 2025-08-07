@@ -1,10 +1,77 @@
-import React from 'react';
+'use client';
 
-// ToDo: (20250731 - Julian) Navbar Component
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { AiOutlineGlobal } from 'react-icons/ai';
+import { FiHeadphones } from 'react-icons/fi';
+import { GrHomeRounded } from 'react-icons/gr';
+import { RiComputerLine } from 'react-icons/ri';
+import Button from '@/components/common/button';
+import { BM_URL } from '@/constants/url';
+
 const Navbar: React.FC = () => {
+  const pathname = usePathname();
+
+  const isActiveHome = pathname === BM_URL.HOME;
+  // Info: (20250807 - Julian) 路徑中須包含 /business_monitor
+  const isActiveBusinessMonitor = pathname.includes(BM_URL.BUSINESS_MONITOR);
+
   return (
-    <nav className="z-50 flex h-100px w-full items-center justify-center bg-black text-white">
-      Navbar
+    <nav className="z-50 flex w-full items-center justify-between gap-40px bg-surface-background px-80px py-16px">
+      {/* Info: (20250807 - Julian) Logo */}
+      <Link href={BM_URL.HOME}>
+        <Image src="/logos/cafeca_logo.svg" alt="Cafeca_Logo" width={120} height={36} />
+      </Link>
+
+      {/* Info: (20250807 - Julian) Navigation Links */}
+      <div className="flex flex-1 items-center justify-end">
+        <Link href={BM_URL.HOME}>
+          <Button
+            type="button"
+            variant={isActiveHome ? 'primaryBorderless' : 'secondaryBorderless'}
+            className="gap-8px"
+          >
+            <GrHomeRounded
+              size={24}
+              className={isActiveHome ? '' : 'text-text-secondary group-hover:text-text-brand'}
+            />
+            <p>Home</p>
+          </Button>
+        </Link>
+
+        <Link href={BM_URL.BUSINESS_MONITOR}>
+          <Button
+            type="button"
+            variant={isActiveBusinessMonitor ? 'primaryBorderless' : 'secondaryBorderless'}
+            className="gap-8px"
+          >
+            <RiComputerLine
+              size={24}
+              className={
+                isActiveBusinessMonitor ? '' : 'text-text-secondary group-hover:text-text-brand'
+              }
+            />
+            <p>Business Monitor</p>
+          </Button>
+        </Link>
+
+        {/* Info: (20250807 - Julian) i18n */}
+        <Button type="button" variant="secondaryBorderless" size="icon">
+          <AiOutlineGlobal size={24} />
+        </Button>
+
+        {/* Info: (20250807 - Julian) Listen to page */}
+        <Button type="button" variant="secondaryBorderless" size="icon">
+          <FiHeadphones size={24} />
+        </Button>
+      </div>
+
+      {/* Info: (20250807 - Julian) Login Button */}
+      <Button type="button" size="medium">
+        Log In
+      </Button>
     </nav>
   );
 };

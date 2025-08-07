@@ -1,27 +1,51 @@
-import Link from 'next/link';
+import Navbar from '@/components/common/navbar';
+import Kv from '@/components/landing_page/kv';
+import IntroCard from '@/components/landing_page/intro_card';
+import Cta from '@/components/landing_page/cta';
+import Footer from '@/components/common/footer';
 
-export default function HomePage() {
+export const metadata = {
+  title: 'CAFECA - Own Your Identity',
+};
+
+export default function LandingPage() {
   return (
-    <main className="flex flex-col items-center justify-center h-screen bg-gray-50 space-y-6">
-      <h1 className="text-5xl font-extrabold text-violet-600">
-        Business Monitor
-      </h1>
+    <main className="flex min-h-screen flex-col items-center">
+      <Navbar />
 
-      <div className="space-x-4">
-        <Link
-          href="/landing"
-          className="px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700"
-        >
-          Landing
-        </Link>
+      <Kv />
 
-        <Link
-          href="/search"
-          className="px-6 py-3 border border-violet-600 text-violet-600 rounded-lg hover:bg-violet-100"
-        >
-          Search
-        </Link>
+      <div className="flex flex-col items-center">
+        <IntroCard
+          imgSrc="/elements/identity.png"
+          title="Verify your **identity** without relying on third parties."
+          description="Decentralized Verification: No intermediaries needed. Identity authorization is achieved through blockchain smart contract interactions."
+        />
+        <IntroCard
+          imgSrc="/elements/phone.png"
+          title="**Prove** who you are without revealing who you are."
+          description="Zero-Knowledge Proof: Uses mobile biometric authentication and the FIDO2 protocol to verify identity without revealing personal information."
+        />
+        <IntroCard
+          imgSrc="/elements/service.png"
+          title="Easily connect your identity across **apps** and **services**."
+          description="Multi-Platform Integration: Supports OAuth2 protocol, allowing easy integration across various services and applications."
+        />
+        <IntroCard
+          imgSrc="/elements/global.png"
+          title="Create once. Use **anywhere**. Stay in control."
+          description="Portable Identity: Create your identity once and use it across multiple platforms. All authentication data is stored on the user's mobile device, free from platform lock-in."
+        />
+        <IntroCard
+          imgSrc="/elements/private.png"
+          title="Your data stays yours—**private**, **encrypted**, and **protected**."
+          description="Privacy Protection: Personal data is encrypted and stored securely, inaccessible to unauthorized parties and protected from misuse."
+        />
       </div>
+
+      <Cta />
+
+      <Footer />
     </main>
   );
 }
