@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { Noto_Sans_TC, Jost } from 'next/font/google';
 import '@/styles/globals.css';
+import TranslationsProvider from '@/components/translation/translations_provider';
+import initTranslations from '@/lib/i18n';
+
+// Info: (20250808 - Julian) 應寫入所有 i18n namespace
+const I18N_NAMESPACES = ['common', 'landing_page'];
 
 const notoSansTC = Noto_Sans_TC({
   subsets: ['latin'],
@@ -31,14 +36,24 @@ export const metadata: Metadata = {
   // openGraph: {},
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+interface IRootLayoutProps {
+  params: {
+    locale: string;
+  };
   children: React.ReactNode;
-}>) {
+}
+
+export default async function RootLayout({ children, params }: Readonly<IRootLayoutProps>) {
+  const { locale } = await params;
+  const { resources } = await initTranslations(locale, I18N_NAMESPACES);
+
   return (
     <html lang="tw">
-      <body className={`${notoSansTC.className} ${jost.className} antialiased`}>{children}</body>
+      <body className={`${notoSansTC.className} ${jost.className} antialiased`}>
+        <TranslationsProvider locale={locale} resources={resources} namespaces={I18N_NAMESPACES}>
+          {children}
+        </TranslationsProvider>
+      </body>
     </html>
   );
 }
