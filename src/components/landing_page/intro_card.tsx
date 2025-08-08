@@ -14,7 +14,7 @@ const IntroCard: React.FC<IIntroCardProps> = ({ imgSrc, title, description }) =>
   const { t } = useTranslation(['landing_page']);
 
   // Info: (20250801 - Julian) 將 **粗體字** 拆出來
-  const titleArr = t(title).split(/(\*\*\w+\*\*)/);
+  const titleArr = t(title).split(/(\*\*.+?\*\*)/u);
   const formattedTitle = titleArr.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       const curedPart = part.slice(2, -2); // Info: (20250801 - Julian) 移除 ** 符號
