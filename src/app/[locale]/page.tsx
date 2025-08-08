@@ -5,12 +5,17 @@ import Cta from '@/components/landing_page/cta';
 import Footer from '@/components/common/footer';
 import TranslationsProvider from '@/components/translation/translations_provider';
 import initTranslations from '@/lib/i18n';
+import { i18nConfig } from '@/../i18n-config';
 
 export const metadata = {
   title: 'CAFECA - Own Your Identity',
 };
 
 const I18N_NAMESPACES = ['landing_page', 'common'];
+
+export async function generateStaticParams() {
+  return i18nConfig.locales.map((locale) => ({ locale }));
+}
 
 interface ILandingPageProps {
   params: {
@@ -19,7 +24,7 @@ interface ILandingPageProps {
 }
 
 export default async function LandingPage({ params }: ILandingPageProps) {
-  const { locale } = params;
+  const { locale } = await params;
   const { resources } = await initTranslations(locale, I18N_NAMESPACES);
 
   return (

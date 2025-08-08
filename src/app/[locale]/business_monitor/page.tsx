@@ -4,10 +4,15 @@ import SearchArea from '@/components/common/search_area';
 import NewBusinessList from '@/components/business/new_business_list';
 import MostViewedList from '@/components/business/most_viewed_list';
 import { dummyBusinesses } from '@/interfaces/business';
+import { i18nConfig } from '@/../i18n-config';
 
 export const metadata = {
   title: 'CAFECA - Searching Businesses',
 };
+
+export async function generateStaticParams() {
+  return i18nConfig.locales.map((locale) => ({ locale }));
+}
 
 export default function SearchPage() {
   return (
