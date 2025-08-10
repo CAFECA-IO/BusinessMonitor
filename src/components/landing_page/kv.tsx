@@ -1,6 +1,9 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { FaChevronRight } from 'react-icons/fa6';
 import Button from '@/components/common/button';
 
@@ -31,6 +34,8 @@ const MessageBubble: React.FC<{ avatarScr: string; text: string; isLeft?: boolea
 };
 
 const Kv: React.FC = () => {
+  const { t } = useTranslation(['landing_page']);
+
   return (
     <div
       className="relative w-full"
@@ -50,21 +55,20 @@ const Kv: React.FC = () => {
       <div className="absolute top-0 z-10 h-800px w-full">
         {/* Info: (20250730 - Julian) Main Title */}
         <div className="mx-auto mt-8 flex w-2/3 flex-col text-9xl font-bold">
-          <h2 className="text-left text-grey-600">Redefine</h2>
-          <h2 className="text-center text-brand-blud-500">your</h2>
-          <h2 className="text-right text-grey-600">identity</h2>
+          <h2 className="text-left text-grey-600">{t('landing_page:KV_1')}</h2>
+          <h2 className="text-center text-brand-blud-500">{t('landing_page:KV_2')}</h2>
+          <h2 className="text-right text-grey-600">{t('landing_page:KV_3')}</h2>
         </div>
 
         {/* Info: (20250730 - Julian) Subtitle */}
         <div className="absolute bottom-20 right-40 flex w-500px flex-col items-start gap-40px">
           <p className="text-lg font-bold text-text-secondary">
-            CAFECA is a decentralized identity platform using blockchain and zero-knowledge proofs
-            to enable secure, private, and portable self-sovereign identity (SSI).
+            {t('landing_page:CTA_DESCRIPTION')}
           </p>
           {/* ToDo: (20250731 - Julian) Style */}
           <Link href="/">
             <Button type="button" variant="primary" className="gap-8px">
-              Go to CAFECA <FaChevronRight size={20} />
+              {t('landing_page:CTA_BTN')} <FaChevronRight size={20} />
             </Button>
           </Link>
         </div>
@@ -83,15 +87,12 @@ const Kv: React.FC = () => {
         <div className="absolute right-64px top-64px">
           <MessageBubble
             avatarScr="/fake_avatar/avatar_1.png"
-            text="Wait... I didn’t even need a password!"
+            text={t('landing_page:COMMENT_1')}
             isLeft
           />
         </div>
         <div className="absolute left-64px top-64">
-          <MessageBubble
-            avatarScr="/fake_avatar/avatar_2.png"
-            text="Feels way safer than usual logins"
-          />
+          <MessageBubble avatarScr="/fake_avatar/avatar_2.png" text={t('landing_page:COMMENT_2')} />
         </div>
       </div>
     </div>
