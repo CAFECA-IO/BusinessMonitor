@@ -5,10 +5,15 @@ import SearchResultList from '@/components/search/search_result_list';
 import Breadcrumb from '@/components/common/breadcrumb';
 import { dummyBusinesses } from '@/interfaces/business';
 import { BM_URL } from '@/constants/url';
+import { i18nConfig } from '@/../i18n-config';
 
 export const metadata = {
   title: 'CAFECA - Searching Result',
 };
+
+export async function generateStaticParams() {
+  return i18nConfig.locales.map((locale) => ({ locale }));
+}
 
 export default function SearchingResultPage() {
   const dummyData = {

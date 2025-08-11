@@ -15,17 +15,20 @@ const I18n: React.FC = () => {
   ];
 
   const { targetRef, componentVisible, setComponentVisible } = useOuterClick<HTMLDivElement>(false);
-  const currentPath = usePathname();
+  const pathname = usePathname();
 
   const toggleLangMenu = () => setComponentVisible((prev) => !prev);
 
   const langs = langOptions.map((lang) => {
+    // Info: (20250808 - Julian) 移除路徑中的語言部分，再添加目標語言前綴
+    const currentPath = pathname.replace(/^\/(en|tw|cn)/, '');
+    const currentHref = `/${lang.value}${currentPath}`;
+
     return (
       <Link
         key={lang.value}
-        href={currentPath}
+        href={currentHref}
         scroll={false}
-        locale={lang.value}
         onClick={toggleLangMenu}
         className="p-16px hover:bg-surface-secondary"
       >
