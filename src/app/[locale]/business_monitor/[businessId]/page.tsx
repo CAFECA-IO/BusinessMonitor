@@ -1,30 +1,33 @@
-import { i18nConfig } from '@/../i18n-config';
-import TranslationsProvider from '@/components/translation/translations_provider';
-import initTranslations from '@/lib/i18n';
+import TabBar from '@/components/business/tab_bar';
+import Layout from '@/components/common/layout';
+import { BM_URL } from '@/constants/url';
 
 export const metadata = {
   title: 'CAFECA - Business Detail',
 };
-
-const I18N_NAMESPACES = ['business_detail', 'common'];
-
-export async function generateStaticParams() {
-  return i18nConfig.locales.map((locale) => ({ locale }));
-}
-
 interface IBusinessDetailPageProps {
   params: {
-    locale: string;
+    businessId: string;
   };
 }
 
 export default async function BusinessDetailPage({ params }: IBusinessDetailPageProps) {
-  const { locale } = await params;
-  const { resources } = await initTranslations(locale, I18N_NAMESPACES);
+  const { businessId } = await params;
+
+  const crumbsItems = [
+    { name: 'Home', link: BM_URL.HOME },
+    { name: 'Searching Result', link: BM_URL.SEARCH },
+    { name: businessId, link: '' }, // ToDo: (20250811 - Julian) 應改為 Business name
+  ];
 
   return (
-    <TranslationsProvider resources={resources} locale={locale} namespaces={I18N_NAMESPACES}>
-      <div></div>
-    </TranslationsProvider>
+    <Layout
+      crumbsItems={crumbsItems}
+      pageBgColor="bg-surface-background"
+      className="gap-60px px-80px"
+    >
+      {/* Info: (20250811 - Julian) Tab Bar */}
+      <TabBar />
+    </Layout>
   );
 }
