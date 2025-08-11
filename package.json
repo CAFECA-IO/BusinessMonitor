@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+36",
+  "version": "0.1.0+37",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,7 +14,7 @@
     "db:logs": "docker compose logs -f postgres",
     "smoke:db_health": "tsx scripts/db_health.ts",
     "dev": "next dev --turbopack",
-    "build": "npm run generate && next build",
+    "build": "npm run gen:prisma && next build",
     "start": "next start",
     "test": "jest --coverage --passWithNoTests",
     "test:coverage": "jest --coverage",
