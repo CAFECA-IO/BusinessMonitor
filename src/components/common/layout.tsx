@@ -8,27 +8,43 @@ interface ILayoutProps {
   children: React.ReactNode;
   crumbsItems?: IBreadcrumbItem[];
   isSearchBar?: boolean;
+  className?: string;
+  pageBgColor?: string;
+  isLandingPage?: boolean;
 }
 
-const Layout: React.FC<ILayoutProps> = ({ children, crumbsItems = [], isSearchBar = false }) => {
+const Layout: React.FC<ILayoutProps> = ({
+  children,
+  crumbsItems = [],
+  isSearchBar = false,
+  className = '',
+  pageBgColor = '',
+  isLandingPage = false,
+}) => {
+  const isShowCrumbs = crumbsItems && crumbsItems.length > 0;
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
 
-      <main className="flex flex-grow flex-col gap-60px">
+      <main
+        className={`flex flex-grow flex-col gap-60px ${pageBgColor} ${isLandingPage ? '' : 'py-80px'}`}
+      >
         {/* Info: (20250805 - Julian) Breadcrumbs & Search bar */}
-        <div className="flex items-center justify-between">
-          {crumbsItems && crumbsItems.length > 0 && <Breadcrumb items={crumbsItems} />}
-          {isSearchBar && (
-            <div className="flex items-center">
-              {/* Info: (20250805 - Julian) Placeholder for Search Bar Component */}
-              <input type="text" placeholder="Search..." className="rounded border px-3 py-2" />
-            </div>
-          )}
-        </div>
+        {isShowCrumbs && (
+          <div className="flex items-center justify-between px-80px">
+            <Breadcrumb items={crumbsItems} />
+            {isSearchBar && (
+              <div className="flex items-center">
+                {/* Info: (20250805 - Julian) Placeholder for Search Bar Component */}
+                <input type="text" placeholder="Search..." className="rounded border px-3 py-2" />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Info: (20250805 - Julian) Page Content */}
-        {children}
+        <div className={`flex min-h-screen w-full flex-col ${className}`}>{children}</div>
       </main>
 
       <Footer />
