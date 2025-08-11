@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  extensions = [pg_trgm]
 }
 
 generator erd {
@@ -71,6 +73,11 @@ model Company {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt      @map("updated_at")
+
+  // Info: (20250811 - Tzuhan) name 的 trigram GIN 索引
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_company_name_trgm")
+  // Info: (20250811 - Tzuhan) registrationNo 的前綴查詢最佳化，在非 C collation 下，用 text_pattern_ops 保證 LIKE 'xxx%' 穩定吃到索引
+  @@index([registrationNo(ops: raw("text_pattern_ops"))], map: "idx_company_regno_pattern")
 
   @@map("company")
 }
@@ -380,3 +387,4 @@ model ImportLog {
   @@unique([folderPath, fileName], name: "folder_file_unique")
   @@map("import_log")
 }
+
