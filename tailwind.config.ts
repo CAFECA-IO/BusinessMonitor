@@ -75,7 +75,7 @@ module.exports = {
         '800px': '800px',
         '1200px': '1200px',
 
-        '1/5': ' 20%',
+        '1/5': '20%',
       },
       colors: {
         'text-primary': 'var(--color-grey-grey-900)',

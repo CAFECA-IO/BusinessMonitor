@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { ApiCode } from '@/lib/status';
 
 export interface ApiResponse<T> {
@@ -25,3 +26,29 @@ export const fail = (code: ApiCode, message: string): ApiResponse<null> => ({
   message,
   payload: null,
 });
+
+export const jsonOk = <T>(payload: T, message = 'OK', init?: ResponseInit) =>
+  NextResponse.json<ApiResponse<T>>(ok(payload, message), init);
+
+export const jsonFail = (code: ApiCode, message: string, init?: ResponseInit) =>
+  NextResponse.json<ApiResponse<null>>(fail(code, message), {
+    status: httpStatusOf(code),
+    ...init,
+  });
+
+function httpStatusOf(code: ApiCode): number {
+  switch (code) {
+    case ApiCode.OK:
+      return 200;
+    case ApiCode.VALIDATION_ERROR:
+      return 400;
+    case ApiCode.UNAUTHENTICATED:
+      return 401;
+    case ApiCode.FORBIDDEN:
+      return 403;
+    case ApiCode.NOT_FOUND:
+      return 404;
+    default:
+      return 500;
+  }
+}
