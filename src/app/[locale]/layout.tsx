@@ -5,7 +5,7 @@ import TranslationsProvider from '@/components/translation/translations_provider
 import initTranslations from '@/lib/i18n';
 
 // Info: (20250808 - Julian) 應寫入所有 i18n namespace
-const I18N_NAMESPACES = ['common', 'landing_page'];
+const I18N_NAMESPACES = ['common', 'landing_page', 'business_detail'];
 
 const notoSansTC = Noto_Sans_TC({
   subsets: ['latin'],
