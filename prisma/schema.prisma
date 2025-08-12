@@ -17,7 +17,7 @@ model Company {
   id                   Int       @id @default(autoincrement())
   name                 String    @map("name")
   registrationNo       String    @unique @map("registration_no")
-  parentRegNo          String?   @map("parent_reg_no") // 有值表示分公司
+  parentRegNo          String?   @map("parent_reg_no") // Info: (20250812 - Tzuhan) 有值表示分公司
   representative       String?   @map("representative")
   registrationCountry  String?   @map("registration_country")
   establishedDate      DateTime? @map("established_date")
@@ -371,7 +371,7 @@ model ImportLog {
   fileName     String    @map("file_name")
   totalCount   Int       @map("total_count")
   successCount Int       @map("success_count")
-  status       String    @map("status") // pending, in_progress, completed, failed
+  status       String    @map("status") // Info: (20250812 - Tzuhan) pending, in_progress, completed, failed
   startedAt    DateTime? @map("started_at")
   finishedAt   DateTime? @map("finished_at")
   createdAt    DateTime  @default(now()) @map("created_at")

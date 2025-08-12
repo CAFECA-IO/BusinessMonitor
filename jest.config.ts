@@ -8,6 +8,9 @@ const common: Config = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/.next/'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
+  coveragePathIgnorePatterns: ['/node_modules/', '/src/types/', '/src/config/'],
 };
 
 const config: Config = {
@@ -17,12 +20,18 @@ const config: Config = {
       testEnvironment: 'node',
       testMatch: ['**/__tests__/**/*.server.test.ts', '**/__tests__/lib/**/*.test.ts'],
       ...common,
+      coverageThreshold: {
+        global: { branches: 70, functions: 80, lines: 85, statements: 85 },
+      },
     },
     {
       displayName: 'client',
       testEnvironment: 'jsdom',
       testMatch: ['**/__tests__/**/*.client.test.tsx'],
       ...common,
+      coverageThreshold: {
+        global: { branches: 50, functions: 60, lines: 70, statements: 70 },
+      },
     },
   ],
 };
