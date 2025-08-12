@@ -7,6 +7,11 @@ import { ApiCode } from '@/lib/status';
 const API_PREFIX = '/api/';
 const PUBLIC_API_PATHS: (string | RegExp)[] = ['/api/health', /^\/api\/v1\/public(\/.*)?$/];
 
+const PUBLIC_GET_PATHS: RegExp[] = [
+  /^\/api\/v1\/companies\/search$/,
+  // Info: (20250812 - Tzuhan) 之後還有 /api/v1/autocomplete 等，再加在這裡
+];
+
 const ALLOW_ORIGIN = process.env.NEXT_PUBLIC_WEB_ORIGIN ?? '*';
 const ALLOW_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
 const ALLOW_HEADERS = 'Content-Type,Authorization,X-Requested-With,X-Request-Id';
@@ -14,6 +19,7 @@ const EXPOSE_HEADERS = 'X-Request-Id';
 
 const isPublicApi = (pathname: string): boolean =>
   PUBLIC_API_PATHS.some((p) => (typeof p === 'string' ? pathname.startsWith(p) : p.test(pathname)));
+const isPublicGet = (pathname: string): boolean => PUBLIC_GET_PATHS.some((re) => re.test(pathname));
 
 function withCors(res: NextResponse, requestId?: string): NextResponse {
   res.headers.set('Access-Control-Allow-Origin', ALLOW_ORIGIN);
@@ -40,7 +46,7 @@ export function middleware(req: NextRequest) {
     nextHeaders.set('x-request-id', requestId);
 
     // Info:（20250808 - Tzuhan）公開 API 直接放行（附 CORS + requestId）
-    if (isPublicApi(pathname)) {
+    if (isPublicApi(pathname) || (req.method === 'GET' && isPublicGet(pathname))) {
       return withCors(NextResponse.next({ request: { headers: nextHeaders } }), requestId);
     }
 

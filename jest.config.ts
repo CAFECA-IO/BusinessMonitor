@@ -5,7 +5,7 @@ const transformConfig: [string, unknown] = ['ts-jest', { useESM: true }];
 const common: Config = {
   transform: { '^.+\\.(ts|tsx)$': transformConfig },
   moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  setupFiles: ['dotenv/config'],
   testPathIgnorePatterns: ['/node_modules/', '/.next/'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   coverageDirectory: 'coverage',
@@ -18,7 +18,14 @@ const config: Config = {
     {
       displayName: 'server',
       testEnvironment: 'node',
-      testMatch: ['**/__tests__/**/*.server.test.ts', '**/__tests__/lib/**/*.test.ts'],
+      globalSetup: '<rootDir>/jest.global-setup.ts',
+      globalTeardown: '<rootDir>/jest.global-teardown.ts',
+      testMatch: [
+        '**/__tests__/unit/**/*.server.test.ts', // Info: (20250812 - Tzuhan) 單元（不連 DB）
+        '**/__tests__/integration/**/*.server.test.ts', // Info: (20250812 - Tzuhan) 整合（Supertest + DB）
+        '**/__tests__/lib/**/*.test.ts',
+      ],
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.server.ts'],
       ...common,
       coverageThreshold: {
         global: { branches: 70, functions: 80, lines: 85, statements: 85 },
@@ -28,6 +35,7 @@ const config: Config = {
       displayName: 'client',
       testEnvironment: 'jsdom',
       testMatch: ['**/__tests__/**/*.client.test.tsx'],
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.client.ts'],
       ...common,
       coverageThreshold: {
         global: { branches: 50, functions: 60, lines: 70, statements: 70 },

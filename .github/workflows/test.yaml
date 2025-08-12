@@ -12,55 +12,41 @@ on:
       - main
 
 jobs:
-  # Your job configurations here
-  # Label of the container job
-  backend-unit-tests:
-    # Containers must run in Linux based operating systems
+  backend-integration-tests:
     runs-on: ubuntu-latest
-    # Docker Hub image that `container-job` executes in
     container: node:20-slim
-
-    # Service containers to run with `container-job`
     services:
-      # Label used to access the service container
       postgres:
-        # Docker Hub image
-        image: postgres
-        # Provide the password for postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-        # Set health checks to wait until postgres has started
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres }
         options: >-
-          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-        ports:
-          # Maps tcp port 5432 on service container to the host
-          - 5432:5432
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+        ports: [ "5432:5432" ]
 
     steps:
-      - name: Set up openssl
-        run: apt-get update -y && apt-get install -y openssl
-      # Downloads a copy of the code in your repository before running CI tests
-      - name: Check out repository code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - run: npm ci
 
-      # Performs a clean installation of all dependencies in the `package.json` file
-      # For more information, see https://docs.npmjs.com/cli/ci.html
-      - name: Install dependencies
-        run: npm i
+      - name: Choose DB (prefer real)
+        id: setdb
+        run: |
+          if [ -n "${{ secrets.IT_DATABASE_URL }}" ]; then
+            echo "DATABASE_URL=${{ secrets.IT_DATABASE_URL }}" >> $GITHUB_ENV
+            echo "mode=real" >> $GITHUB_OUTPUT
+          else
+            echo "DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres" >> $GITHUB_ENV
+            echo "mode=container" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Connect to PostgreSQL
-        # Runs a script that creates a PostgreSQL table, populates
-        # the table with data, and then retrieves the data.
-        run: npx prisma migrate deploy && npx prisma db seed
+      - name: Migrate & seed (container only)
+        if: steps.setdb.outputs.mode == 'container'
+        run: |
+          npx prisma migrate deploy
+          npx prisma db seed
+
+      - name: Run integration tests
         env:
-          # The database URL to connect to the PostgreSQL database
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
-
-      - name: Run unit tests & integration tests
-        run: npm run test
-        env:
-          # The database URL to connect to the PostgreSQL database
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
-
-      - name: Build next.js service
-        run: npm run build
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          NEXT_PUBLIC_API_POWERBY: "BusinessMonitor api 1.0.0-ci"
+        run: npm run test:it
