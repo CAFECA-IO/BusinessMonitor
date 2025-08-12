@@ -5,9 +5,8 @@ import { ApiCode } from '@/lib/status';
 
 export type Provider = 'google' | 'apple' | 'facebook' | 'did';
 
-// payload 以 sub 作為 user id，保留你要求的 provider 聯登型別
 export const JwtPayloadSchema = z.object({
-  sub: z.string().min(1), // user id
+  sub: z.string().min(1),
   email: z.string().email(),
   name: z.string().min(1),
   avatar: z.url().optional().default(''),
@@ -17,7 +16,7 @@ export const JwtPayloadSchema = z.object({
     z.literal('facebook'),
     z.literal('did'),
   ]),
-  roles: z.array(z.string()).optional(), // 如不需要可不放
+  roles: z.array(z.string()).optional(),
   iat: z.number().optional(),
   exp: z.number().optional(),
 });
@@ -33,7 +32,6 @@ export type AuthUser = {
   roles?: string[];
 };
 
-// -- 金鑰自動切換：優先使用非對稱（public/private），否則使用對稱（secret）
 const SECRET = process.env.JWT_SECRET ?? process.env.AUTH_JWT_SECRET ?? '';
 const PUBLIC_KEY = process.env.JWT_PUBLIC_KEY ?? process.env.AUTH_JWT_PUBLIC_KEY ?? '';
 const PRIVATE_KEY = process.env.JWT_PRIVATE_KEY ?? process.env.AUTH_JWT_PRIVATE_KEY ?? '';
@@ -62,12 +60,10 @@ export const verifyJwt = (token: string): JwtPayload => {
     if (!parsed.success) throw new AppError(ApiCode.UNAUTHENTICATED, 'Invalid token payload');
     return parsed.data;
   } catch (err: unknown) {
-    // expired / invalid 都歸類 UNAUTHENTICATED
     throw new AppError(ApiCode.UNAUTHENTICATED, 'Invalid or expired token');
   }
 };
 
-// 供 API handler 直接使用的斷言：取出 Authorization: Bearer <token>，驗證並回傳 AuthUser
 export const assertAuth = (req: Request): AuthUser => {
   const auth = req.headers.get('authorization') || req.headers.get('Authorization');
   if (!auth || !auth.startsWith('Bearer '))

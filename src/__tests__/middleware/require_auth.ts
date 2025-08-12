@@ -9,7 +9,7 @@ const buildRequest = (token?: string) =>
   }) as unknown as NextRequest;
 
 describe('requireAuth', () => {
-  // 確保用對稱金鑰，測試簡單
+  // Info: (20250812 - Tzuhan) 確保用對稱金鑰，測試簡單
   const OLD_SECRET = process.env.JWT_SECRET;
   beforeAll(() => {
     process.env.JWT_SECRET = 'test-secret-1234567890';
