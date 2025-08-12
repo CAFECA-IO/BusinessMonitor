@@ -1,25 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { TAB_BAR_ITEMS, TabBarItem } from '@/constants/tab_bar';
 
-const TabBar: React.FC = () => {
+interface ITabBarProps {
+  currentTab: TabBarItem;
+  onTabChange: (tab: TabBarItem) => void;
+}
+
+const TabBar: React.FC<ITabBarProps> = ({ currentTab, onTabChange }) => {
   const { t } = useTranslation(['business_detail']);
 
-  const tabItems = [
-    'BASIC_INFO',
-    'MARKET_INFO',
-    'OPERATIONS',
-    'FINANCIAL_REPORT',
-    'FLAGS',
-    'DISCUSSION',
-  ];
-
-  const [activeTab, setActiveTab] = useState(tabItems[0]);
-
-  const displayTabContent = tabItems.map((item) => {
-    const isActive = activeTab === item;
-    const clickHandler = () => setActiveTab(item);
+  const displayTabContent = TAB_BAR_ITEMS.map((item) => {
+    const isActive = currentTab === item;
+    const clickHandler = () => onTabChange(item);
 
     return (
       <button

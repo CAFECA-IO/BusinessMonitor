@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import Button from '@/components/common/button';
 import { AiOutlineGlobal } from 'react-icons/ai';
@@ -15,6 +15,7 @@ const I18n: React.FC = () => {
   ];
 
   const { targetRef, componentVisible, setComponentVisible } = useOuterClick<HTMLDivElement>(false);
+  const router = useRouter();
   const pathname = usePathname();
 
   const toggleLangMenu = () => setComponentVisible((prev) => !prev);
@@ -24,16 +25,19 @@ const I18n: React.FC = () => {
     const currentPath = pathname.replace(/^\/(en|tw|cn)/, '');
     const currentHref = `/${lang.value}${currentPath}`;
 
+    const switchLang = () => {
+      setComponentVisible(false);
+      router.push(currentHref);
+    };
+
     return (
-      <Link
+      <button
         key={lang.value}
-        href={currentHref}
-        scroll={false}
-        onClick={toggleLangMenu}
-        className="p-16px hover:bg-surface-secondary"
+        onClick={switchLang}
+        className="p-16px text-left hover:bg-surface-secondary"
       >
         {lang.label}
-      </Link>
+      </button>
     );
   });
 
