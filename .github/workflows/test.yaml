@@ -2,36 +2,54 @@ name: Unit & Integration Tests
 
 on:
   push:
-    branches:
-      - feature/*
-      - fix/*
-      - hotfix/*
+    branches: [ "feature/*", "fix/*", "hotfix/*" ]
   pull_request:
-    branches:
-      - develop
-      - main
+    branches: [ "develop", "main" ]
 
 jobs:
-  backend-integration-tests:
+  # ---- 1) Unit：不需要 DB ----
+  unit-tests:
     runs-on: ubuntu-latest
     container: node:20-slim
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm i
+      - name: Run unit tests (no DB)
+        env:
+          NODE_ENV: test
+          DOTENV_CONFIG_PATH: .env.test
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run test:unit
+
+  # ---- 2) Integration：優先用真 DB，否則用容器 + migrate ----
+  integration-tests:
+    runs-on: ubuntu-latest
+    container: node:20-slim
+
+    # 用不到真 DB 時才會真的用到這個 Postgres 服務
     services:
       postgres:
         image: postgres:16
-        env: { POSTGRES_PASSWORD: postgres }
+        env:
+          POSTGRES_PASSWORD: postgres
         options: >-
-          --health-cmd pg_isready --health-interval 10s
-          --health-timeout 5s --health-retries 5
-        ports: [ "5432:5432" ]
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci
+      - run: npm i
 
+      # 選 DB：有 secrets.IT_DATABASE_URL 就用它（只讀真 DB）；否則走容器
       - name: Choose DB (prefer real)
         id: setdb
+        shell: bash
         run: |
-          if [ -n "${{ secrets.IT_DATABASE_URL }}" ]; then
+          if [[ -n "${{ secrets.IT_DATABASE_URL }}" ]]; then
             echo "DATABASE_URL=${{ secrets.IT_DATABASE_URL }}" >> $GITHUB_ENV
             echo "mode=real" >> $GITHUB_OUTPUT
           else
@@ -39,14 +57,24 @@ jobs:
             echo "mode=container" >> $GITHUB_OUTPUT
           fi
 
-      - name: Migrate & seed (container only)
+      # 容器模式才需要 schema 準備（會自動 CREATE EXTENSION pg_trgm）
+      - name: Migrate schema (container only)
         if: steps.setdb.outputs.mode == 'container'
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: |
           npx prisma migrate deploy
           npx prisma db seed
 
-      - name: Run integration tests
+      - name: Run integration tests (Supertest)
         env:
+          NODE_ENV: test
           DATABASE_URL: ${{ env.DATABASE_URL }}
-          NEXT_PUBLIC_API_POWERBY: "BusinessMonitor api 1.0.0-ci"
+          NEXT_TELEMETRY_DISABLED: '1'
+          # ↓ 讓 200/排序測試更穩（可改用 Secrets）
+          IT_SAMPLE_NAME_PREFIX: 公司
+          IT_SAMPLE_REGNO: ${{ secrets.IT_SAMPLE_REGNO }}
         run: npm run test:it
+
+      - name: Build Next.js
+        run: npm run build
