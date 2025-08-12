@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+43",
+  "version": "0.1.0+44",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,9 +17,11 @@
     "build": "npm run gen:prisma && next build",
     "start": "next start",
     "test": "jest --coverage --passWithNoTests",
+    "test:coverage": "jest --coverage",
     "test:server": "jest --selectProjects server",
     "test:client": "jest --selectProjects client",
-    "test:coverage": "jest --coverage",
+    "test:unit": "jest --selectProjects=server --testPathPatterns '__tests__/(unit|lib)/'",
+    "test:it": "cross-env NODE_ENV=test DOTENV_CONFIG_PATH=.env.test jest --selectProjects=server --testPathPatterns '__tests__/integration/'",
     "coverage:open": "open coverage/lcov-report/index.html",
     "lint": "next lint && eslint --fix --ext .js,.jsx,.ts,.tsx .",
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|jsx|ts|tsx|json)\"",
@@ -64,6 +66,7 @@
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
+    "cross-env": "^10.0.0",
     "eslint": "^9.32.0",
     "eslint-config-next": "15.4.4",
     "eslint-plugin-import": "^2.32.0",

@@ -69,6 +69,7 @@ jobs:
       - name: Run integration tests (Supertest)
         env:
           NODE_ENV: test
+          DOTENV_CONFIG_PATH: .env.test
           DATABASE_URL: ${{ env.DATABASE_URL }}
           NEXT_TELEMETRY_DISABLED: '1'
           # ↓ 讓 200/排序測試更穩（可改用 Secrets）

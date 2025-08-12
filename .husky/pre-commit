@@ -2,7 +2,7 @@
 npx lint-staged
 
 # Info: (20250730 - Tzuhan) 2. 跑單元測試
-npm test
+npm run -s test:unit  
 
 # Info: (20250730 - Tzuhan) 3. （可選）版本號自動更新
 npm run update-version
