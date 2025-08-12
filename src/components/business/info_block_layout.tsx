@@ -1,14 +1,14 @@
 import React from 'react';
 import Image from 'next/image';
 
-interface IOtherInfoBlockProps {
+interface IInfoBlockLayoutProps {
   title: string;
   children: React.ReactNode;
   tooltipContent?: string;
   className?: string;
 }
 
-const OtherInfoBlock: React.FC<IOtherInfoBlockProps> = ({
+const InfoBlockLayout: React.FC<IInfoBlockLayoutProps> = ({
   title,
   children,
   tooltipContent = '',
@@ -43,4 +43,4 @@ const OtherInfoBlock: React.FC<IOtherInfoBlockProps> = ({
   );
 };
 
-export default OtherInfoBlock;
+export default InfoBlockLayout;

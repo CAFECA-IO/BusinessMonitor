@@ -6,7 +6,7 @@ import Layout from '@/components/common/layout';
 import { BM_URL } from '@/constants/url';
 import { TAB_BAR_ITEMS, TabBarItem } from '@/constants/tab_bar';
 import BasicInfoBlock from '@/components/business/basic_info_block';
-import OtherInfoBlock from '@/components/business/other_info_block';
+import InfoBlockLayout from '@/components/business/info_block_layout';
 
 interface IBusinessDetailPageProps {
   businessId: string;
@@ -31,7 +31,7 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
       <BasicInfoBlock />
 
       {/* ToDo: (20250812 - Julian) Investor Block */}
-      <OtherInfoBlock
+      <InfoBlockLayout
         title="Investor"
         tooltipContent="tooltip content"
         className="flex justify-between text-sm"
@@ -52,10 +52,10 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
           <p className="font-medium text-text-note">Representative of a Juridical Person</p>
           <p>InfoTech Software Services</p>
         </div>
-      </OtherInfoBlock>
+      </InfoBlockLayout>
 
       {/* ToDo: (20250812 - Julian) Business Scope Block */}
-      <OtherInfoBlock
+      <InfoBlockLayout
         title="Business Scope"
         tooltipContent="tooltip content"
         className="grid grid-cols-2 gap-y-40px text-sm"
@@ -68,7 +68,7 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
           <p className="font-medium text-text-secondary">I301011</p>
           <p className="font-normal text-text-primary">Data Processing Services</p>
         </>
-      </OtherInfoBlock>
+      </InfoBlockLayout>
     </>
   );
 
