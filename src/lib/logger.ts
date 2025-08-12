@@ -132,7 +132,7 @@ class Logger implements ILogger {
 
 export const logger: ILogger = new Logger();
 
-/** 從 request 產生 child logger（帶 requestId / route） */
+/** Info: (20250808 - Tzuhan) 從 request 產生 child logger（帶 requestId / route） */
 export const loggerFromRequest = (input: {
   method?: string;
   url?: string;
