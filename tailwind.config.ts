@@ -109,6 +109,7 @@ module.exports = {
         'grey-100': 'var(--color-grey-grey-100)',
         'grey-600': ' var(--color-grey-grey-600)',
         'brand-blud-500': 'var(--color-brand-brand-blud-500)',
+        'grey-60': 'var(--color-grey-grey-60)',
 
         'tab-bar-bg': '#ececf4',
       },
