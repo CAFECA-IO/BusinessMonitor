@@ -11,6 +11,8 @@ export interface IBusinessBrief {
 
 export interface IBusinessDetail extends IBusinessBrief {
   address: string;
+  isVerified: boolean;
+  officialWebLink: string;
 }
 
 export const dummyBusinesses: IBusinessDetail[] = [
@@ -24,6 +26,8 @@ export const dummyBusinesses: IBusinessDetail[] = [
     stockPrice: 150.75,
     stockPriceChange: 0.0043, // Info: (20250804 - Julian) 0.43%
     address: '123 Business St, Business City, BC 12345',
+    isVerified: true,
+    officialWebLink: 'https://mermer.com.tw/',
   },
   {
     id: 2,
@@ -35,6 +39,8 @@ export const dummyBusinesses: IBusinessDetail[] = [
     stockPrice: 200.5,
     stockPriceChange: -0.0021, // Info: (20250804 - Julian) -0.21%
     address: '456 Another Ave, Another City, AC 67890',
+    isVerified: false,
+    officialWebLink: 'https://mermer.com.tw/',
   },
   {
     id: 3,
@@ -46,5 +52,7 @@ export const dummyBusinesses: IBusinessDetail[] = [
     stockPrice: 75.0,
     stockPriceChange: 0.005, // Info: (20250804 - Julian) 0.50%
     address: '789 Third Blvd, Third City, TC 11223',
+    isVerified: true,
+    officialWebLink: 'https://mermer.com.tw/',
   },
 ];
