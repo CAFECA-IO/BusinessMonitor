@@ -6,6 +6,7 @@ import Layout from '@/components/common/layout';
 import { BM_URL } from '@/constants/url';
 import { TAB_BAR_ITEMS, TabBarItem } from '@/constants/tab_bar';
 import BasicInfoBlock from '@/components/business/basic_info_block';
+import OtherInfoBlock from '@/components/business/other_info_block';
 
 interface IBusinessDetailPageProps {
   businessId: string;
@@ -26,8 +27,48 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
 
   const basicInfoTab = (
     <>
-      {/* Info: (20250811 - Julian) Basic Info Block */}
+      {/* Info: (20250812 - Julian) Basic Info Block */}
       <BasicInfoBlock />
+
+      {/* ToDo: (20250812 - Julian) Investor Block */}
+      <OtherInfoBlock
+        title="Investor"
+        tooltipContent="tooltip content"
+        className="flex justify-between text-sm"
+      >
+        <div className="flex flex-col gap-40px">
+          <p className="font-medium text-text-note">Name</p>
+          <p>Joyce Chen</p>
+        </div>
+        <div className="flex flex-col gap-40px">
+          <p className="font-medium text-text-note">Position</p>
+          <p>Chairman</p>
+        </div>
+        <div className="flex flex-col gap-40px">
+          <p className="font-medium text-text-note">Shares Held</p>
+          <p>0.03%</p>
+        </div>
+        <div className="flex flex-col gap-40px">
+          <p className="font-medium text-text-note">Representative of a Juridical Person</p>
+          <p>InfoTech Software Services</p>
+        </div>
+      </OtherInfoBlock>
+
+      {/* ToDo: (20250812 - Julian) Business Scope Block */}
+      <OtherInfoBlock
+        title="Business Scope"
+        tooltipContent="tooltip content"
+        className="grid grid-cols-2 gap-y-40px text-sm"
+      >
+        <>
+          <p className="font-medium text-text-secondary">I301010</p>
+          <p className="font-normal text-text-primary">Information Software Services</p>
+        </>
+        <>
+          <p className="font-medium text-text-secondary">I301011</p>
+          <p className="font-normal text-text-primary">Data Processing Services</p>
+        </>
+      </OtherInfoBlock>
     </>
   );
 
