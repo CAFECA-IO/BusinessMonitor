@@ -41,3 +41,29 @@ describe('lib/response', () => {
     expect(body.message).toBe('missing');
   });
 });
+
+describe('lib/response http status mapping', () => {
+  it.each([
+    [ApiCode.VALIDATION_ERROR, 400],
+    [ApiCode.UNAUTHENTICATED, 401],
+    [ApiCode.FORBIDDEN, 403],
+    [ApiCode.NOT_FOUND, 404],
+    [ApiCode.SERVER_ERROR, 500],
+  ])('jsonFail maps %s -> %d', async (code, expected) => {
+    const res = jsonFail(code, 'x');
+    expect(res.status).toBe(expected);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.code).toBe(code);
+    expect(body.payload).toBeNull();
+  });
+
+  it('covers OK branch of httpStatusOf (for coverage only)', async () => {
+    // jsonOk 本身也會是 200，但不會經過 httpStatusOf
+    expect(jsonOk(null).status).toBe(200);
+
+    // 只為覆蓋率：用 jsonFail 觸發 httpStatusOf 的 OK 分支
+    const res = jsonFail(ApiCode.OK, 'coverage-only');
+    expect(res.status).toBe(200);
+  });
+});
