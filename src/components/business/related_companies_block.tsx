@@ -1,16 +1,22 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import InfoBlockLayout from '@/components/business/info_block_layout';
 import { IRelatedCompany, mockBusinesses } from '@/interfaces/business';
+import { BM_URL } from '@/constants/url';
 
 const RelatedCompaniesItem: React.FC<{ data: IRelatedCompany }> = ({ data }) => {
   const { name, businessTaxId } = data;
+  const targetUrl = `${BM_URL.BUSINESS_MONITOR}/${data.id}`;
+
   return (
     <>
       <p className="text-text-secondary">{businessTaxId}</p>
-      <p className="text-button-link">{name}</p>
+      <Link href={targetUrl} className="text-button-link hover:underline">
+        {name}
+      </Link>
     </>
   );
 };
