@@ -1,5 +1,5 @@
 import React from 'react';
-import Tooltip from '@/components/common/tooltip';
+import Tooltip, { TooltipDirection } from '@/components/common/tooltip';
 
 interface IInfoBlockLayoutProps {
   title: string;
@@ -14,7 +14,9 @@ const InfoBlockLayout: React.FC<IInfoBlockLayoutProps> = ({
   tooltipContent = '',
   className = '',
 }) => {
-  const tooltip = tooltipContent && <Tooltip content={tooltipContent} direction="right" />;
+  const tooltip = tooltipContent && (
+    <Tooltip content={tooltipContent} direction={TooltipDirection.RIGHT} />
+  );
 
   return (
     <div className="flex h-420px flex-col gap-40px rounded-radius-l bg-white px-60px py-40px">
