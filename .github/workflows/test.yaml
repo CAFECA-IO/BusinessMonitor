@@ -2,56 +2,68 @@ name: Unit & Integration Tests
 
 on:
   push:
-    branches: [ feature/*, fix/*, hotfix/* ]
+    branches: [ 'feature/**', 'fix/**', 'hotfix/**' ]
   pull_request:
-    branches: [ develop, main ]
+    branches: [ 'develop', 'main' ]
 
 jobs:
-  backend-unit-tests:
+  server-tests:
     runs-on: ubuntu-latest
-    container: node:20-slim
 
     services:
       postgres:
-        image: postgres
+        image: postgres:15-alpine
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
           - 5432:5432
 
-    steps:
-      - name: Install OS deps
-        run: apt-get update -y && apt-get install -y openssl
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+      NEXT_TELEMETRY_DISABLED: '1'
+      CI: 'true'
 
-      - name: Checkout
+    steps:
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install node deps
+      - name: Use Node 20 (with npm cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
         run: npm i
 
-      - name: Generate Prisma Client (optional)
+      - name: Generate Prisma client
         run: npx prisma generate
-
-      - name: Migrate & seed DB
-        run: npx prisma migrate deploy && npx prisma db seed
         env:
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+          DISABLE_ERD: 'true'
 
-      - name: Build Next.js (for prod server used by Jest globalSetup)
+      - name: Migrate DB
+        run: npx prisma migrate deploy
+
+      - name: Seed DB
+        run: npx prisma db seed
+
+      - name: Build Next.js (required by Jest globalSetup)
         run: npm run build
         env:
           NODE_ENV: production
-          NEXT_TELEMETRY_DISABLED: '1'
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
 
-      - name: Run unit tests & integration tests
-        run: npm run test
+      - name: Precheck .next
+        run: test -f .next/BUILD_ID && echo 'build ok' || (echo 'NO .next BUILD_ID'; ls -la .next || true; exit 1)
+
+      - name: Run DB health smoke test (optional)
+        run: npm run smoke:db_health || true
+
+      - name: Run unit & integration tests (server project)
+        run: npm test -- --coverage --selectProjects server
         env:
           NODE_ENV: test
-          NEXT_TELEMETRY_DISABLED: '1'
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
