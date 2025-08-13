@@ -6,36 +6,14 @@ import Layout from '@/components/common/layout';
 import { BM_URL } from '@/constants/url';
 import { TAB_BAR_ITEMS, TabBarItem } from '@/constants/tab_bar';
 import BasicInfoBlock from '@/components/business/basic_info_block';
-import InfoBlockLayout from '@/components/business/info_block_layout';
 import InvestorBlock from '@/components/business/investor_block';
 import BusinessScopeBlock from '@/components/business/business_scope_block';
 import HistoryBlock from '@/components/business/history_block';
+import RelatedCompaniesBlock from '@/components/business/related_companies_block';
 
 interface IBusinessDetailPageProps {
   businessId: string;
 }
-
-const RelatedCompaniesBlock: React.FC = () => {
-  return (
-    <InfoBlockLayout
-      title="Related Companies"
-      tooltipContent="tooltip content"
-      className="grid grid-cols-2 gap-y-40px text-sm font-medium"
-    >
-      <p className="text-text-note">Business ID</p>
-      <p className="text-text-note">Company Name</p>
-
-      <>
-        <p className="text-text-secondary">2025 - 06 - 10</p>
-        <p className="text-button-link">Creative Strategies LLC.</p>
-      </>
-      <>
-        <p className="text-text-secondary">2025 - 06 - 09</p>
-        <p className="text-button-link">Forward Thinking Solutions Co.</p>
-      </>
-    </InfoBlockLayout>
-  );
-};
 
 const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId }) => {
   const [currentTab, setCurrentTab] = useState<TabBarItem>(TAB_BAR_ITEMS[0]);

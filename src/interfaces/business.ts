@@ -1,8 +1,11 @@
-export interface IBusinessBrief {
-  id: number;
+export interface IRelatedCompany {
+  id: string;
   name: string;
-  imgSrc: string;
   businessTaxId: string;
+}
+
+export interface IBusinessBrief extends IRelatedCompany {
+  imgSrc: string;
   countOfGreenFlags: number;
   countOfRedFlags: number;
   stockPrice: number;
@@ -24,9 +27,9 @@ export interface IBusinessDetail extends IBusinessBrief {
   updatedAt: number; // Info: (20250813 - Julian) 更新時間
 }
 
-export const dummyBusinesses: IBusinessDetail[] = [
+export const mockBusinesses: IBusinessDetail[] = [
   {
-    id: 1,
+    id: '1',
     name: 'Business Name here with second line',
     imgSrc: '/fake_avatar/business_img_1.jpg',
     businessTaxId: '1234567890',
@@ -46,7 +49,7 @@ export const dummyBusinesses: IBusinessDetail[] = [
     updatedAt: 1723299420,
   },
   {
-    id: 2,
+    id: '2',
     name: 'Another Business Name',
     imgSrc: '/fake_avatar/business_img_2.png',
     businessTaxId: '0987654321',
@@ -66,7 +69,7 @@ export const dummyBusinesses: IBusinessDetail[] = [
     updatedAt: 1729823819,
   },
   {
-    id: 3,
+    id: '3',
     name: 'Third Business Example',
     imgSrc: '/fake_avatar/business_img_3.jpg',
     businessTaxId: '1122334455',

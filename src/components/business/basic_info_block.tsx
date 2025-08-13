@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-import { dummyBusinesses } from '@/interfaces/business';
+import { mockBusinesses } from '@/interfaces/business';
 import Button from '@/components/common/button';
 import { timestampToString, formatNumberWithCommas } from '@/lib/common';
 
@@ -12,7 +12,7 @@ const BasicInfoBlock: React.FC = () => {
   const { t } = useTranslation(['business_detail']);
 
   // ToDo: (20250812 - Julian) 從 API 取得資料
-  const dummyData = dummyBusinesses[0];
+  const dummyData = mockBusinesses[0];
 
   const {
     imgSrc,
