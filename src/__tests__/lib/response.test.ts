@@ -59,10 +59,10 @@ describe('lib/response http status mapping', () => {
   });
 
   it('covers OK branch of httpStatusOf (for coverage only)', async () => {
-    // jsonOk 本身也會是 200，但不會經過 httpStatusOf
+    // Info: (20250813 - Tzuhan) jsonOk 本身也會是 200，但不會經過 httpStatusOf
     expect(jsonOk(null).status).toBe(200);
 
-    // 只為覆蓋率：用 jsonFail 觸發 httpStatusOf 的 OK 分支
+    // Info: (20250813 - Tzuhan) 只為覆蓋率：用 jsonFail 觸發 httpStatusOf 的 OK 分支
     const res = jsonFail(ApiCode.OK, 'coverage-only');
     expect(res.status).toBe(200);
   });
