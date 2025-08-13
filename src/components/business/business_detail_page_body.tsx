@@ -7,10 +7,81 @@ import { BM_URL } from '@/constants/url';
 import { TAB_BAR_ITEMS, TabBarItem } from '@/constants/tab_bar';
 import BasicInfoBlock from '@/components/business/basic_info_block';
 import InfoBlockLayout from '@/components/business/info_block_layout';
+import InvestorBlock from '@/components/business/investor_block';
 
 interface IBusinessDetailPageProps {
   businessId: string;
 }
+
+const BusinessScopeBlock: React.FC = () => {
+  return (
+    <InfoBlockLayout
+      title="Business Scope"
+      tooltipContent="tooltip content"
+      className="grid grid-cols-2 gap-y-40px text-sm"
+    >
+      <>
+        <p className="font-medium text-text-secondary">I301010</p>
+        <p className="font-normal text-text-primary">Information Software Services</p>
+      </>
+      <>
+        <p className="font-medium text-text-secondary">I301011</p>
+        <p className="font-normal text-text-primary">Data Processing Services</p>
+      </>
+    </InfoBlockLayout>
+  );
+};
+
+const HistoryBlock: React.FC = () => {
+  return (
+    <InfoBlockLayout
+      title="History"
+      tooltipContent="tooltip content"
+      className="flex flex-col gap-40px text-sm"
+    >
+      <div className="flex items-center gap-24px">
+        <p className="font-medium text-text-secondary">2025-06-12</p>
+        <p className="flex-1 font-normal text-text-primary">
+          Increased Registered Capital to $1,200,000 for expansion.
+        </p>
+      </div>
+      <div className="flex items-center gap-24px">
+        <p className="font-medium text-text-secondary">2025-06-11</p>
+        <p className="flex-1 font-normal text-text-primary">
+          Raised Registered Capital to $1,200,000 for new projects.
+        </p>
+      </div>
+      <div className="flex items-center gap-24px">
+        <p className="font-medium text-text-secondary">2011-11-11</p>
+        <p className="flex-1 font-normal text-text-primary">
+          Elevated Registered Capital to $1,200,000 for market growth.
+        </p>
+      </div>
+    </InfoBlockLayout>
+  );
+};
+
+const RelatedCompaniesBlock: React.FC = () => {
+  return (
+    <InfoBlockLayout
+      title="Business Scope"
+      tooltipContent="tooltip content"
+      className="grid grid-cols-2 gap-y-40px text-sm font-medium"
+    >
+      <p className="text-text-note">Business ID</p>
+      <p className="text-text-note">Company Name</p>
+
+      <>
+        <p className="text-text-secondary">2025 - 06 - 10</p>
+        <p className="text-button-link">Creative Strategies LLC.</p>
+      </>
+      <>
+        <p className="text-text-secondary">2025 - 06 - 09</p>
+        <p className="text-button-link">Forward Thinking Solutions Co.</p>
+      </>
+    </InfoBlockLayout>
+  );
+};
 
 const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId }) => {
   const [currentTab, setCurrentTab] = useState<TabBarItem>(TAB_BAR_ITEMS[0]);
@@ -30,45 +101,17 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
       {/* Info: (20250812 - Julian) Basic Info Block */}
       <BasicInfoBlock />
 
-      {/* ToDo: (20250812 - Julian) Investor Block */}
-      <InfoBlockLayout
-        title="Investor"
-        tooltipContent="tooltip content"
-        className="flex justify-between text-sm"
-      >
-        <div className="flex flex-col gap-40px">
-          <p className="font-medium text-text-note">Name</p>
-          <p>Joyce Chen</p>
-        </div>
-        <div className="flex flex-col gap-40px">
-          <p className="font-medium text-text-note">Position</p>
-          <p>Chairman</p>
-        </div>
-        <div className="flex flex-col gap-40px">
-          <p className="font-medium text-text-note">Shares Held</p>
-          <p>0.03%</p>
-        </div>
-        <div className="flex flex-col gap-40px">
-          <p className="font-medium text-text-note">Representative of a Juridical Person</p>
-          <p>InfoTech Software Services</p>
-        </div>
-      </InfoBlockLayout>
+      {/* Info: (20250813 - Julian) Investor Block */}
+      <InvestorBlock />
 
-      {/* ToDo: (20250812 - Julian) Business Scope Block */}
-      <InfoBlockLayout
-        title="Business Scope"
-        tooltipContent="tooltip content"
-        className="grid grid-cols-2 gap-y-40px text-sm"
-      >
-        <>
-          <p className="font-medium text-text-secondary">I301010</p>
-          <p className="font-normal text-text-primary">Information Software Services</p>
-        </>
-        <>
-          <p className="font-medium text-text-secondary">I301011</p>
-          <p className="font-normal text-text-primary">Data Processing Services</p>
-        </>
-      </InfoBlockLayout>
+      {/* Info: (20250813 - Julian) Business Scope Block */}
+      <BusinessScopeBlock />
+
+      {/* Info: (20250813 - Julian) History Block */}
+      <HistoryBlock />
+
+      {/* Info: (20250813 - Julian) Related Companies Block */}
+      <RelatedCompaniesBlock />
     </>
   );
 
