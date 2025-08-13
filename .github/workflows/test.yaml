@@ -2,66 +2,50 @@ name: Unit & Integration Tests
 
 on:
   push:
-    branches: [ 'feature/**', 'fix/**', 'hotfix/**' ]
+    branches:
+      - feature/*
+      - fix/*
+      - hotfix/*
   pull_request:
-    branches: [ 'develop', 'main' ]
+    branches:
+      - develop
+      - main
 
 jobs:
-  server-tests:
+  backend-unit-tests:
     runs-on: ubuntu-latest
+    container: node:20-slim
 
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
         ports:
           - 5432:5432
 
-    env:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
-      NEXT_TELEMETRY_DISABLED: '1'
-      CI: 'true'
-
     steps:
-      - name: Checkout repo
+      - name: Set up openssl
+        run: apt-get update -y && apt-get install -y openssl
+
+      - name: Check out repository code
         uses: actions/checkout@v4
 
-      - name: Use Node 20 (with npm cache)
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install deps
+      - name: Install dependencies
         run: npm i
 
-      - name: Generate Prisma client
-        run: npm run gen:prisma
+      - name: Connect to PostgreSQL
+        run: npx prisma migrate deploy && npx prisma db seed
+        env:
+          DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
 
-      - name: Migrate DB
-        run: npx prisma migrate deploy
-
-      - name: Seed DB
-        run: npx prisma db seed
-
-      - name: Build Next.js (required by Jest globalSetup)
+      - name: Build next.js service
         run: npm run build
+
+      - name: Run unit tests & integration tests
+        run: npm run test
         env:
-          NODE_ENV: production
-
-      - name: Precheck .next
-        run: test -f .next/BUILD_ID && echo 'build ok' || (echo 'NO .next BUILD_ID'; ls -la .next || true; exit 1)
-
-      - name: Run DB health smoke test (optional)
-        run: npm run smoke:db_health || true
-
-      - name: Run unit & integration tests (server project)
-        run: npm test -- --coverage --selectProjects server
-        env:
-          NODE_ENV: test
+      
+          DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
