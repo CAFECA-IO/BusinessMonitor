@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install node deps
-        run: npm ci
+        run: npm i
 
       - name: Generate Prisma Client (optional)
         run: npx prisma generate
