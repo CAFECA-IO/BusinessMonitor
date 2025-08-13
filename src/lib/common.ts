@@ -1,16 +1,21 @@
 export const timestampToString = (timestamp: number) => {
-  if (!timestamp || timestamp == 0) return { formattedDate: '-' };
+  if (!timestamp || timestamp == 0) return { formattedDate: '-', time: '-' };
 
   const date = new Date(timestamp * 1000);
   const year = date.getFullYear();
   const month = date.getMonth() + 1; // Info: (20250812 - Julian) 月份從 0 開始算，所以需要加 1
   const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
 
   const monthWithDoubleDigit = month.toString().padStart(2, '0');
   const dayWithDoubleDigit = day.toString().padStart(2, '0');
+  const hourWithDoubleDigit = hour.toString().padStart(2, '0');
+  const minuteWithDoubleDigit = minute.toString().padStart(2, '0');
 
   return {
     formattedDate: `${year}-${monthWithDoubleDigit}-${dayWithDoubleDigit}`,
+    time: `${hourWithDoubleDigit}:${minuteWithDoubleDigit}`,
   };
 };
 

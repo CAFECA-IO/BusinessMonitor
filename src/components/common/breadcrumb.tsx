@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { FaChevronRight } from 'react-icons/fa6';
 import { IBreadcrumbItem } from '@/interfaces/breadcrumb';
 
@@ -8,16 +11,18 @@ interface IBreadcrumbProps {
 }
 
 const Breadcrumb: React.FC<IBreadcrumbProps> = ({ items }) => {
+  const { t } = useTranslation(['breadcrumb']);
+
   const crumbs = items.map((item, index) => {
     // Info: (20250805 - Julian) 最後一項為當前頁面
     const isActive = index === items.length - 1;
 
     // Info: (20250805 - Julian) 當前頁面不需要連結
     const isLink = isActive ? (
-      <div className="text-text-brand">{item.name}</div>
+      <div className="text-text-brand">{t(`breadcrumb:${item.name}`)}</div>
     ) : (
       <Link href={item.link} className="hover:text-text-brand">
-        {item.name}
+        {t(`breadcrumb:${item.name}`)}
       </Link>
     );
     // Info: (20250805 - Julian) 最後一項不需要顯示箭頭

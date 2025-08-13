@@ -1,5 +1,5 @@
 import { i18nConfig } from '@/../i18n-config';
-import { dummyBusinesses } from '@/interfaces/business';
+import { mockBusinesses } from '@/interfaces/business';
 import SearchArea from '@/components/common/search_area';
 import NewBusinessList from '@/components/business/new_business_list';
 import MostViewedList from '@/components/business/most_viewed_list';
@@ -30,9 +30,9 @@ export default function SearchPage() {
       {/* Info: (20250804 - Julian) Business Lists */}
       <div className="flex w-full flex-col items-center gap-56px">
         {/* Info: (20250804 - Julian) New Business List */}
-        <NewBusinessList businessList={dummyBusinesses} />
+        <NewBusinessList businessList={mockBusinesses} />
         {/* Info: (20250804 - Julian) Most Viewed List */}
-        <MostViewedList businessList={dummyBusinesses} />
+        <MostViewedList businessList={mockBusinesses} />
       </div>
     </Layout>
   );
