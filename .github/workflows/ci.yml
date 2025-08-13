@@ -54,7 +54,7 @@ jobs:
       - name: Run unit tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/business_monitor_test
-          NEXT_PUBLIC_API_POWERBY: 'BusinessMonitor api 1.0.0'
+
         run: npm test -- --coverage --selectProjects server
 
       - name: Upload coverage (optional)
