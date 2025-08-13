@@ -44,8 +44,8 @@ export type Company = z.infer<typeof CompanySchema>;
 
 // Info: (20250812 - Tzuhan) UI 走勢用到的點
 export const TrendPointSchema = z.object({
-  date: z.string().datetime(), // ISO-8601（UTC+0）
-  close: DecimalString, // string: Decimal(30,8)
+  date: z.string().datetime(), // Info: (20250812 - Tzuhan) ISO-8601（UTC+0）
+  close: DecimalString, // Info: (20250812 - Tzuhan) string: Decimal(30,8)
 });
 
 // Info: (20250812 - Tzuhan) 卡片：只放 UI 需要的欄位
@@ -56,7 +56,7 @@ export const CompanyCardSchema = z.object({
   logoUrl: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
   foreignCompanyName: z.string().nullable().optional(),
-  trend: z.array(TrendPointSchema).max(30), // 近 30 筆（倒序取、正序回前端）
+  trend: z.array(TrendPointSchema).max(30), // Info: (20250812 - Tzuhan) 近 30 筆（倒序取、正序回前端）
   peRatio: DecimalString.nullable().optional(),
   marketCap: DecimalString.nullable().optional(),
 });
