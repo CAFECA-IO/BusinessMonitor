@@ -48,6 +48,9 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/business_monitor_test
         run: npm run smoke:db_health   # 你的 scripts/db_health.ts
 
+      - name: Build next.js service
+        run: npm run build
+
       - name: Run unit tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/business_monitor_test
