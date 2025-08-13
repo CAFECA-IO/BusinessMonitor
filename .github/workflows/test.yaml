@@ -42,9 +42,7 @@ jobs:
         run: npm i
 
       - name: Generate Prisma client
-        run: npx prisma generate
-        env:
-          DISABLE_ERD: 'true'
+        run: npm run gen:prisma
 
       - name: Migrate DB
         run: npx prisma migrate deploy
