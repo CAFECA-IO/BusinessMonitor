@@ -8,63 +8,17 @@ import { TAB_BAR_ITEMS, TabBarItem } from '@/constants/tab_bar';
 import BasicInfoBlock from '@/components/business/basic_info_block';
 import InfoBlockLayout from '@/components/business/info_block_layout';
 import InvestorBlock from '@/components/business/investor_block';
+import BusinessScopeBlock from '@/components/business/business_scope_block';
+import HistoryBlock from '@/components/business/history_block';
 
 interface IBusinessDetailPageProps {
   businessId: string;
 }
 
-const BusinessScopeBlock: React.FC = () => {
-  return (
-    <InfoBlockLayout
-      title="Business Scope"
-      tooltipContent="tooltip content"
-      className="grid grid-cols-2 gap-y-40px text-sm"
-    >
-      <>
-        <p className="font-medium text-text-secondary">I301010</p>
-        <p className="font-normal text-text-primary">Information Software Services</p>
-      </>
-      <>
-        <p className="font-medium text-text-secondary">I301011</p>
-        <p className="font-normal text-text-primary">Data Processing Services</p>
-      </>
-    </InfoBlockLayout>
-  );
-};
-
-const HistoryBlock: React.FC = () => {
-  return (
-    <InfoBlockLayout
-      title="History"
-      tooltipContent="tooltip content"
-      className="flex flex-col gap-40px text-sm"
-    >
-      <div className="flex items-center gap-24px">
-        <p className="font-medium text-text-secondary">2025-06-12</p>
-        <p className="flex-1 font-normal text-text-primary">
-          Increased Registered Capital to $1,200,000 for expansion.
-        </p>
-      </div>
-      <div className="flex items-center gap-24px">
-        <p className="font-medium text-text-secondary">2025-06-11</p>
-        <p className="flex-1 font-normal text-text-primary">
-          Raised Registered Capital to $1,200,000 for new projects.
-        </p>
-      </div>
-      <div className="flex items-center gap-24px">
-        <p className="font-medium text-text-secondary">2011-11-11</p>
-        <p className="flex-1 font-normal text-text-primary">
-          Elevated Registered Capital to $1,200,000 for market growth.
-        </p>
-      </div>
-    </InfoBlockLayout>
-  );
-};
-
 const RelatedCompaniesBlock: React.FC = () => {
   return (
     <InfoBlockLayout
-      title="Business Scope"
+      title="Related Companies"
       tooltipContent="tooltip content"
       className="grid grid-cols-2 gap-y-40px text-sm font-medium"
     >
