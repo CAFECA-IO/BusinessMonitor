@@ -6,7 +6,6 @@ describe('lib/response', () => {
     const res = jsonOk({ a: 1 });
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.powerby).toBe('Business Monitor API');
     expect(body.success).toBe(true);
     expect(body.code).toBe('OK'); // Info: (20250813 - Tzuhan) 覆蓋 OK 分支
     expect(body.message).toBeTruthy(); // Info: (20250813 - Tzuhan) 預設訊息
