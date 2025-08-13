@@ -21,8 +21,8 @@ export default function SearchingResultPage() {
   };
 
   const crumbsItems = [
-    { name: 'Home', link: BM_URL.HOME },
-    { name: 'Searching Result', link: BM_URL.SEARCH },
+    { name: 'HOME', link: BM_URL.HOME },
+    { name: 'SEARCHING_RESULT', link: BM_URL.BUSINESS_MONITOR },
   ];
 
   return (

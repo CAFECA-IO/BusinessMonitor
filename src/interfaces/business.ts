@@ -20,6 +20,8 @@ export interface IBusinessDetail extends IBusinessBrief {
   registeredCapital: number; // Info: (20250812 - Julian) 註冊資本
   paidInCapital: number; // Info: (20250812 - Julian) 實收資本
   capitalRanking: number; // Info: (20250812 - Julian) 資本排名
+
+  updatedAt: number; // Info: (20250813 - Julian) 更新時間
 }
 
 export const dummyBusinesses: IBusinessDetail[] = [
@@ -37,10 +39,11 @@ export const dummyBusinesses: IBusinessDetail[] = [
     officialWebLink: 'https://mermer.com.tw/',
     companyRepresentative: 'Wang Xiao Ming',
     countryOfRegistration: 'Taiwan',
-    dateOfEstablishment: 1754986328,
+    dateOfEstablishment: 1714986328,
     registeredCapital: 1000000,
     paidInCapital: 800000,
     capitalRanking: 1,
+    updatedAt: 1723299420,
   },
   {
     id: 2,
@@ -60,6 +63,7 @@ export const dummyBusinesses: IBusinessDetail[] = [
     registeredCapital: 2000000,
     paidInCapital: 1500000,
     capitalRanking: 2,
+    updatedAt: 1729823819,
   },
   {
     id: 3,
@@ -79,5 +83,6 @@ export const dummyBusinesses: IBusinessDetail[] = [
     registeredCapital: 1500000,
     paidInCapital: 1200000,
     capitalRanking: 3,
+    updatedAt: 1728329042,
   },
 ];
