@@ -50,4 +50,31 @@ describe('GET /api/v1/companies/search (integration, black-box)', () => {
     expect(items.length).toBeGreaterThan(0);
     expect(items[0].registrationNo).toBe(regno);
   });
+
+  it('防止注入：分號與註解', async () => {
+    const res = await agent
+      .get(
+        Routes.companies.search({
+          q: `'; DROP TABLE company; --`,
+          page: 1,
+          pageSize: 10,
+        })
+      )
+      .expect(404);
+    expect(res.body.success).toBe(false);
+  });
+
+  // Todo: (20250814 - Tzuhan) 實作防止注入：邏輯短路
+  it.skip('防止注入：邏輯短路', async () => {
+    const res = await agent
+      .get(
+        Routes.companies.search({
+          q: `' OR 1=1 --`,
+          page: 1,
+          pageSize: 10,
+        })
+      )
+      .expect(404);
+    expect(res.body.success).toBe(false);
+  });
 });

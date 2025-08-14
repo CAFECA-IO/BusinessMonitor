@@ -10,16 +10,20 @@ import { makePaginated } from '@/types/pagination';
 const toHalfWidth = (s: string) =>
   s.replace(/[！-～]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
 const stripCompanySuffix = (s: string) => s.replace(/(股份有限公?司|有限公?司|公司)$/g, '');
+const escapeLike = (s: string) =>
+  s.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
 
 function analyzeQuery(raw: string) {
   const clean = stripCompanySuffix(toHalfWidth(raw.trim().replace(/^["']+|["']+$/g, '')));
   const digits = clean.replace(/\D/g, '');
+  const suspicious = /(--|\/\*|\*\/|;|=|\bOR\b|\bAND\b|\|\||&&)/i.test(clean);
   return {
     normalized: clean,
     regNoCandidate: digits.length > 0 ? digits : undefined,
     isLikelyRegNo: /^\d{8}$/.test(digits),
     isShort: clean.length < 2,
     hasChinese: /[\u4e00-\u9fa5]/.test(clean),
+    suspicious,
   };
 }
 
@@ -68,21 +72,21 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
   const offset = (curPage - 1) * curPageSize;
 
   const meta = analyzeQuery(q);
-  const likeName = `%${meta.normalized}%`;
-  const regPrefix = (meta.regNoCandidate ?? meta.normalized) + '%';
+  const likeLiteral = `%${escapeLike(meta.normalized)}%`;
+  const regPrefix = `${escapeLike(meta.regNoCandidate ?? meta.normalized)}%`;
+  const useILIKE = meta.isShort || meta.hasChinese || meta.suspicious;
 
-  const whereClause =
-    meta.isShort || meta.hasChinese
-      ? Prisma.sql`
-          (c.name ILIKE ${likeName}
-           OR c.registration_no LIKE ${regPrefix}
-           OR c.registration_no = ${meta.regNoCandidate ?? meta.normalized})
-        `
-      : Prisma.sql`
-          (c.name % ${meta.normalized}
-           OR c.registration_no LIKE ${regPrefix}
-           OR c.registration_no = ${meta.regNoCandidate ?? meta.normalized})
-        `;
+  const whereClause = useILIKE
+    ? Prisma.sql`
+      (c.name ILIKE ${likeLiteral} ESCAPE '\\'
+       OR c.registration_no LIKE ${regPrefix} ESCAPE '\\'
+       OR c.registration_no = ${meta.regNoCandidate ?? meta.normalized})
+    `
+    : Prisma.sql`
+      (c.name % ${meta.normalized}
+       OR c.registration_no LIKE ${regPrefix} ESCAPE '\\'
+       OR c.registration_no = ${meta.regNoCandidate ?? meta.normalized})
+    `;
 
   // Info: (20250813 - Tzuhan) ① 先查公司清單（含 total），並帶出 address / logo_url
   const companies = await prisma.$queryRaw<CompanySqlRow[]>`
@@ -130,7 +134,7 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
              sp.close_price::text AS "close",
              ROW_NUMBER() OVER (PARTITION BY sp.company_id ORDER BY sp.date DESC) AS rn
       FROM stock_price sp
-      WHERE sp.company_id = ANY(${companyIds})
+      WHERE sp.company_id IN (${Prisma.join(companyIds)}) 
     )
     SELECT "companyId","date","close"
     FROM ranked
@@ -144,7 +148,7 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
            SUM(CASE WHEN rf.flag_value > 0 THEN 1 ELSE 0 END)::int AS "green",
            SUM(CASE WHEN rf.flag_value < 0 THEN 1 ELSE 0 END)::int AS "red"
     FROM risk_flag rf
-    WHERE rf.company_id = ANY(${companyIds})
+    WHERE rf.company_id IN (${Prisma.join(companyIds)}) 
     GROUP BY rf.company_id;
   `;
 
