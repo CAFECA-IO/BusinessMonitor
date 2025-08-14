@@ -1,22 +1,12 @@
-// Info: (20250813 - Tzuhan) src/services/company.service.ts
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { AppError } from '@/lib/error';
 import { ApiCode } from '@/lib/status';
+import { CompanyCard } from '@/types/company';
+import { TrendPoint } from '@/types/trend_point';
+import { makePaginated } from '@/types/pagination';
 
-export type CompanyCard = {
-  id: number;
-  name: string;
-  registrationNo: string;
-  logoUrl: string | null;
-  status: string | null;
-  foreignCompanyName: string | null;
-  trend: { date: string; close: string }[];
-  peRatio: string | null;
-  marketCap: string | null;
-};
-
-// Info: (20250813 - Tzuhan) 工具：全形→半形、去尾綴
+// Info: (20250813 - Tzuhan)---------- 查詢前處理 ----------
 const toHalfWidth = (s: string) =>
   s.replace(/[！-～]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
 const stripCompanySuffix = (s: string) => s.replace(/(股份有限公?司|有限公?司|公司)$/g, '');
@@ -37,6 +27,39 @@ const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
+function buildMarket(points: TrendPoint[]): {
+  last: string | null;
+  change: string | null;
+  changePct: string | null;
+  sparkline: TrendPoint[];
+} {
+  const n = points.length;
+  if (n === 0) return { last: null, change: null, changePct: null, sparkline: [] };
+  const last = Number(points[n - 1].close);
+  const prev = n > 1 ? Number(points[n - 2].close) : null;
+  if (prev == null) return { last: String(last), change: null, changePct: null, sparkline: points };
+  const diff = last - prev;
+  const pct = prev !== 0 ? (diff / prev) * 100 : 0;
+  return {
+    last: String(last),
+    change: diff.toFixed(2),
+    changePct: pct.toFixed(2),
+    sparkline: points,
+  };
+}
+
+// Info: (20250813 - Tzuhan)---------- 主搜尋 ----------
+type CompanySqlRow = {
+  id: number;
+  name: string;
+  registration_no: string;
+  status: string | null;
+  foreign_company_name: string | null;
+  address: string | null;
+  logo_url: string | null;
+  total: number;
+};
+
 export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PAGE_SIZE) {
   if (!q?.trim()) throw new AppError(ApiCode.VALIDATION_ERROR, 'q is required');
 
@@ -48,7 +71,6 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
   const likeName = `%${meta.normalized}%`;
   const regPrefix = (meta.regNoCandidate ?? meta.normalized) + '%';
 
-  // Info: (20250813 - Tzuhan) --- ① 公司列表（不使用視窗函式；用 filtered + paged + 子查詢 total）---
   const whereClause =
     meta.isShort || meta.hasChinese
       ? Prisma.sql`
@@ -62,18 +84,10 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
            OR c.registration_no = ${meta.regNoCandidate ?? meta.normalized})
         `;
 
-  const companies = await prisma.$queryRaw<
-    {
-      id: number;
-      name: string;
-      registration_no: string;
-      status: string | null;
-      foreign_company_name: string | null;
-      total: number;
-    }[]
-  >`
+  // Info: (20250813 - Tzuhan) ① 先查公司清單（含 total），並帶出 address / logo_url
+  const companies = await prisma.$queryRaw<CompanySqlRow[]>`
     WITH filtered AS (
-      SELECT c.id, c.name, c.registration_no, c.status, c.foreign_company_name
+      SELECT c.id, c.name, c.registration_no, c.status, c.foreign_company_name, c.address, c.logo_url
       FROM company c
       WHERE ${whereClause}
     ),
@@ -87,7 +101,7 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
         END AS score,
         ${
           meta.isShort || meta.hasChinese
-            ? Prisma.sql`NULL::double precision AS sim` // Info: (20250813 - Tzuhan) ILIKE 路徑不算相似度
+            ? Prisma.sql`NULL::double precision AS sim`
             : Prisma.sql`similarity(f.name, ${meta.normalized}) AS sim`
         }
       FROM filtered f
@@ -97,8 +111,8 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
       ORDER BY score DESC, ${meta.isShort || meta.hasChinese ? Prisma.sql`name ASC` : Prisma.sql`sim DESC`}, id ASC
       LIMIT ${curPageSize} OFFSET ${offset}
     )
-    SELECT p.id, p.name, p.registration_no, p.status, p.foreign_company_name,
-           (SELECT COUNT(*)::int FROM filtered) AS total  -- 這裡用子查詢，避開 42803
+    SELECT p.id, p.name, p.registration_no, p.status, p.foreign_company_name, p.address, p.logo_url,
+           (SELECT COUNT(*)::int FROM filtered) AS total
     FROM paged p;
   `;
 
@@ -106,62 +120,62 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
     throw new AppError(ApiCode.NOT_FOUND, 'No companies found');
   }
 
-  // Info: (20250813 - Tzuhan) const companyIds = companies.map((c) => c.id);
-  console.debug('[searchCompanies] meta=', meta);
-  console.debug('[searchCompanies] likeName=', likeName, 'regPrefix=', regPrefix);
-
-  // Info: (20250813 - Tzuhan) --- ② 趨勢 ---
   const companyIds = companies.map((c) => c.id);
-  const trends = await prisma.$queryRaw<{ company_id: number; date: string; close: string }[]>`
-  SELECT sp.company_id, sp.date::text AS date, sp.close_price::text AS close
-  FROM stock_price sp
-  WHERE sp.company_id IN (${Prisma.join(companyIds)})
-  ORDER BY sp.company_id, sp.date ASC;
-`;
 
-  // Info: (20250813 - Tzuhan) --- ③ 指標（取最新一筆） ---
-  const indicators = await prisma.$queryRaw<
-    { company_id: number; pe_ratio: string | null; market_cap: string | null }[]
-  >`
-  SELECT DISTINCT ON (mi.company_id)
-    mi.company_id, mi.pe_ratio::text, mi.market_cap::text
-  FROM market_indicator mi
-  WHERE mi.company_id IN (${Prisma.join(companyIds)})
-  ORDER BY mi.company_id, mi.date DESC;
-`;
+  // Info: (20250813 - Tzuhan) ② 走勢（每家公司取最近 30 筆，避免 payload 過大）
+  const trends = await prisma.$queryRaw<{ companyId: number; date: string; close: string }[]>`
+    WITH ranked AS (
+      SELECT sp.company_id AS "companyId",
+             sp.date::text AS "date",
+             sp.close_price::text AS "close",
+             ROW_NUMBER() OVER (PARTITION BY sp.company_id ORDER BY sp.date DESC) AS rn
+      FROM stock_price sp
+      WHERE sp.company_id = ANY(${companyIds})
+    )
+    SELECT "companyId","date","close"
+    FROM ranked
+    WHERE rn <= 30
+    ORDER BY "companyId","date" ASC;
+  `;
 
-  // Info: (20250813 - Tzuhan) --- ④ 組裝 ---
-  const map = new Map<number, CompanyCard>();
-  for (const c of companies) {
-    map.set(c.id, {
+  // Info: (20250813 - Tzuhan)③ 旗幟統計（綠/紅）
+  const flags = await prisma.$queryRaw<{ companyId: number; green: number; red: number }[]>`
+    SELECT rf.company_id AS "companyId",
+           SUM(CASE WHEN rf.flag_value > 0 THEN 1 ELSE 0 END)::int AS "green",
+           SUM(CASE WHEN rf.flag_value < 0 THEN 1 ELSE 0 END)::int AS "red"
+    FROM risk_flag rf
+    WHERE rf.company_id = ANY(${companyIds})
+    GROUP BY rf.company_id;
+  `;
+
+  // Info: (20250813 - Tzuhan)④ 彙整成卡片
+  const trendMap = new Map<number, TrendPoint[]>();
+  for (const t of trends) {
+    const arr = trendMap.get(t.companyId) ?? [];
+    arr.push({ date: t.date, close: t.close });
+    trendMap.set(t.companyId, arr);
+  }
+
+  const flagMap = new Map<number, { green: number; red: number }>();
+  for (const f of flags) flagMap.set(f.companyId, { green: f.green, red: f.red });
+
+  const items: CompanyCard[] = companies.map((c) => {
+    const spark = trendMap.get(c.id) ?? [];
+    const market = buildMarket(spark);
+    const fr = flagMap.get(c.id) ?? { green: 0, red: 0 };
+    return {
       id: c.id,
       name: c.name,
       registrationNo: c.registration_no,
-      logoUrl: null,
+      logoUrl: c.logo_url,
       status: c.status,
       foreignCompanyName: c.foreign_company_name,
-      trend: [],
-      peRatio: null,
-      marketCap: null,
-    });
-  }
-  for (const t of trends) map.get(t.company_id)?.trend.push({ date: t.date, close: t.close });
-  for (const i of indicators) {
-    const card = map.get(i.company_id);
-    if (card) {
-      card.peRatio = i.pe_ratio;
-      card.marketCap = i.market_cap;
-    }
-  }
+      address: c.address,
+      flags: fr,
+      market,
+    };
+  });
 
   const total = companies[0].total;
-  return {
-    items: Array.from(map.values()),
-    pagination: {
-      page: curPage,
-      pageSize: curPageSize,
-      total,
-      pages: Math.ceil(total / curPageSize),
-    },
-  };
+  return makePaginated(items, total, curPage, curPageSize);
 }
