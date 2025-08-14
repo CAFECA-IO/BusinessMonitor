@@ -1,5 +1,5 @@
 import { i18nConfig } from '@/../i18n-config';
-import { dummyBusinesses } from '@/interfaces/business';
+import { mockBusinesses } from '@/interfaces/business';
 import { BM_URL } from '@/constants/url';
 import SearchArea from '@/components/common/search_area';
 import SearchResultList from '@/components/search/search_result_list';
@@ -15,14 +15,14 @@ export async function generateStaticParams() {
 
 export default function SearchingResultPage() {
   const dummyData = {
-    businesses: dummyBusinesses,
+    businesses: mockBusinesses,
     countOfTotal: 234,
     currentRow: { start: 1, end: 10 },
   };
 
   const crumbsItems = [
-    { name: 'Home', link: BM_URL.HOME },
-    { name: 'Searching Result', link: BM_URL.SEARCH },
+    { name: 'HOME', link: BM_URL.HOME },
+    { name: 'SEARCHING_RESULT', link: BM_URL.BUSINESS_MONITOR },
   ];
 
   return (

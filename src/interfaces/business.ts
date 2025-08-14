@@ -1,8 +1,11 @@
-export interface IBusinessBrief {
-  id: number;
+export interface IRelatedCompany {
+  id: string;
   name: string;
-  imgSrc: string;
   businessTaxId: string;
+}
+
+export interface IBusinessBrief extends IRelatedCompany {
+  imgSrc: string;
   countOfGreenFlags: number;
   countOfRedFlags: number;
   stockPrice: number;
@@ -20,11 +23,13 @@ export interface IBusinessDetail extends IBusinessBrief {
   registeredCapital: number; // Info: (20250812 - Julian) 註冊資本
   paidInCapital: number; // Info: (20250812 - Julian) 實收資本
   capitalRanking: number; // Info: (20250812 - Julian) 資本排名
+
+  updatedAt: number; // Info: (20250813 - Julian) 更新時間
 }
 
-export const dummyBusinesses: IBusinessDetail[] = [
+export const mockBusinesses: IBusinessDetail[] = [
   {
-    id: 1,
+    id: '1',
     name: 'Business Name here with second line',
     imgSrc: '/fake_avatar/business_img_1.jpg',
     businessTaxId: '1234567890',
@@ -37,13 +42,14 @@ export const dummyBusinesses: IBusinessDetail[] = [
     officialWebLink: 'https://mermer.com.tw/',
     companyRepresentative: 'Wang Xiao Ming',
     countryOfRegistration: 'Taiwan',
-    dateOfEstablishment: 1754986328,
+    dateOfEstablishment: 1714986328,
     registeredCapital: 1000000,
     paidInCapital: 800000,
     capitalRanking: 1,
+    updatedAt: 1723299420,
   },
   {
-    id: 2,
+    id: '2',
     name: 'Another Business Name',
     imgSrc: '/fake_avatar/business_img_2.png',
     businessTaxId: '0987654321',
@@ -60,9 +66,10 @@ export const dummyBusinesses: IBusinessDetail[] = [
     registeredCapital: 2000000,
     paidInCapital: 1500000,
     capitalRanking: 2,
+    updatedAt: 1729823819,
   },
   {
-    id: 3,
+    id: '3',
     name: 'Third Business Example',
     imgSrc: '/fake_avatar/business_img_3.jpg',
     businessTaxId: '1122334455',
@@ -79,5 +86,6 @@ export const dummyBusinesses: IBusinessDetail[] = [
     registeredCapital: 1500000,
     paidInCapital: 1200000,
     capitalRanking: 3,
+    updatedAt: 1728329042,
   },
 ];
