@@ -6,17 +6,21 @@ import { CompanyCard } from '@/types/company';
 import { TrendPoint } from '@/types/trend_point';
 import { makePaginated } from '@/types/pagination';
 
-// Info: (20250813 - Tzuhan)---------- 查詢前處理 ----------
+// Info: (20250813 - Tzuhan) ---------- 查詢前處理 ----------
 const toHalfWidth = (s: string) =>
   s.replace(/[！-～]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
 const stripCompanySuffix = (s: string) => s.replace(/(股份有限公?司|有限公?司|公司)$/g, '');
 const escapeLike = (s: string) =>
   s.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
+// Info: (20250815 - Tzuhan) 去除零寬字元：\u200B-\u200D、\u2060 (word joiner)、\uFEFF (BOM)
+const stripZeroWidth = (s: string) => s.replace(/[\u200B-\u200D\uFEFF]/g, '');
 
 function analyzeQuery(raw: string) {
-  const clean = stripCompanySuffix(toHalfWidth(raw.trim().replace(/^["']+|["']+$/g, '')));
+  const clean0 = stripZeroWidth(raw);
+  const clean = stripCompanySuffix(toHalfWidth(clean0.trim().replace(/^["']+|["']+$/g, '')));
   const digitsOnly = /^\d+$/.test(clean);
-  const suspicious = /(--|\/\*|\*\/|;|=|\bOR\b|\bAND\b|\|\||&&)/i.test(clean);
+  // Info: (20250815 - Tzuhan) 加上 \x00（Null byte）
+  const suspicious = /(\x00|--|\/\*|\*\/|;|=|\bOR\b|\bAND\b|\|\||&&)/i.test(clean);
   return {
     normalized: clean,
     regNoCandidate: digitsOnly ? clean : undefined,
@@ -24,6 +28,7 @@ function analyzeQuery(raw: string) {
     isShort: clean.length < 2,
     hasChinese: /[\u4e00-\u9fa5]/.test(clean),
     suspicious,
+    digitsOnly,
   };
 }
 
@@ -64,6 +69,11 @@ type CompanySqlRow = {
   total: number;
 };
 
+function isImprobableQuery(meta: ReturnType<typeof analyzeQuery>): boolean {
+  const s = meta.normalized;
+  return !meta.hasChinese && !meta.digitsOnly && s.length >= 24 && /\d{6,}/.test(s);
+}
+
 export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PAGE_SIZE) {
   if (!q?.trim()) throw new AppError(ApiCode.VALIDATION_ERROR, 'q is required');
 
@@ -72,24 +82,35 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
   const offset = (curPage - 1) * curPageSize;
 
   const meta = analyzeQuery(q);
+  // Info: (20250815 - Tzuhan) A) 可疑字串 → 400
   if (meta.suspicious) {
-    throw new AppError(ApiCode.VALIDATION_ERROR, 'No companies found');
+    throw new AppError(ApiCode.VALIDATION_ERROR, 'Query contains illegal patterns');
+  }
+  // Info: (20250815 - Tzuhan) B) 極低機率字串 → 404（避免 trigram 慢查）
+  if (isImprobableQuery(meta)) {
+    throw new AppError(ApiCode.NOT_FOUND, 'No companies found');
   }
   const likeLiteral = `%${escapeLike(meta.normalized)}%`;
-  const regPrefix = `${escapeLike(meta.regNoCandidate ?? meta.normalized)}%`;
-  const useILIKE = meta.isShort || meta.hasChinese || meta.suspicious;
+  const regPrefix = meta.digitsOnly ? `${escapeLike(meta.regNoCandidate!)}%` : null;
+  const useILIKE = meta.isShort || meta.hasChinese || meta.normalized.length > 24;
 
   const whereClause = useILIKE
     ? Prisma.sql`
-      (c.name ILIKE ${likeLiteral} ESCAPE '\\'
-       OR c.registration_no LIKE ${regPrefix} ESCAPE '\\'
-       OR c.registration_no = ${meta.regNoCandidate ?? meta.normalized})
-    `
+    ( c.name ILIKE ${likeLiteral} ESCAPE '\\'
+      OR ${
+        meta.digitsOnly
+          ? Prisma.sql`(c.registration_no LIKE ${regPrefix} ESCAPE '\\' OR c.registration_no = ${meta.regNoCandidate!})`
+          : Prisma.sql`false`
+      }
+    )`
     : Prisma.sql`
-      (c.name % ${meta.normalized}
-       OR c.registration_no LIKE ${regPrefix} ESCAPE '\\'
-       OR c.registration_no = ${meta.regNoCandidate ?? meta.normalized})
-    `;
+    ( c.name % ${meta.normalized}
+      OR ${
+        meta.digitsOnly
+          ? Prisma.sql`(c.registration_no LIKE ${regPrefix} ESCAPE '\\' OR c.registration_no = ${meta.regNoCandidate!})`
+          : Prisma.sql`false`
+      }
+    )`;
 
   // Info: (20250813 - Tzuhan) ① 先查公司清單（含 total），並帶出 address / logo_url
   const companies = await prisma.$queryRaw<CompanySqlRow[]>`
@@ -102,12 +123,18 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
       SELECT
         f.*,
         CASE
-          WHEN f.registration_no = ${meta.regNoCandidate ?? meta.normalized} THEN ${meta.isLikelyRegNo ? 4 : 3}
-          WHEN f.registration_no LIKE ${regPrefix} THEN ${meta.isLikelyRegNo ? 3 : 2}
+          WHEN ${
+            meta.digitsOnly
+              ? Prisma.sql`f.registration_no = ${meta.regNoCandidate!}`
+              : Prisma.sql`false`
+          } THEN ${meta.isLikelyRegNo ? 4 : 3}
+          WHEN ${
+            meta.digitsOnly ? Prisma.sql`f.registration_no LIKE ${regPrefix}` : Prisma.sql`false`
+          } THEN ${meta.isLikelyRegNo ? 3 : 2}
           ELSE 1
         END AS score,
         ${
-          meta.isShort || meta.hasChinese
+          useILIKE
             ? Prisma.sql`NULL::double precision AS sim`
             : Prisma.sql`similarity(f.name, ${meta.normalized}) AS sim`
         }

@@ -11,6 +11,11 @@ DROP INDEX IF EXISTS idx_company_representative;
 CREATE INDEX idx_company_representative_trgm
   ON company USING gin (representative gin_trgm_ops);
 
+-- 讓 registration_no 的前綴查與等值更快
+DROP INDEX IF EXISTS idx_company_registration_no_like;
+CREATE INDEX idx_company_registration_no_like
+  ON company (registration_no text_pattern_ops);
+
 -- parent_reg_no 用 B-Tree（精確查詢）
 DROP INDEX IF EXISTS idx_company_parent_reg_no;
 CREATE INDEX idx_company_parent_reg_no
