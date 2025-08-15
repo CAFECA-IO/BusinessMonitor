@@ -18,6 +18,8 @@ const config: Config = {
     {
       displayName: 'server',
       testEnvironment: 'node',
+      globalSetup: '<rootDir>/jest.global-setup.ts',
+      globalTeardown: '<rootDir>/jest.global-teardown.ts',
       testMatch: ['**/__tests__/**/*.server.test.ts', '**/__tests__/lib/**/*.test.ts'],
       ...common,
       coverageThreshold: {

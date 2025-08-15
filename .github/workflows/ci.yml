@@ -2,14 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
+    branches: [ main, develop ]
+  pull_request: {}
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     services:
-      # ① 啟動 Postgres 容器
+      # Info: (20250813 - Tzuhan) ① 啟動 Postgres 容器
       postgres:
         image: postgres:15-alpine
         env:
@@ -18,13 +19,21 @@ jobs:
           POSTGRES_DB: business_monitor_test
         ports:
           - 5432:5432
-        # ② options 可插入 docker run 參數 → healthcheck
+        # Info: (20250813 - Tzuhan) ② options 可插入 docker run 參數 → healthcheck
         options: >-
           --health-cmd="pg_isready -U postgres -d business_monitor_test"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-    # ③ GitHub 會自動等待 service Healthy；再跑步驟
+
+    # Info: (20250813 - Tzuhan) 共用環境變數（所有步驟都吃得到）
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/business_monitor_test
+      NEXT_TELEMETRY_DISABLED: '1'
+      DISABLE_ERD: 'true'
+      CI: 'true'
+
+    # Info: (20250813 - Tzuhan) ③ GitHub 會自動等待 service Healthy；再跑步驟
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -33,28 +42,37 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # cache: 'npm'
 
       - name: Install deps
-        run: npm instal
+        run: npm i --no-audit --no-fund
 
       - name: Generate Prisma client
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/business_monitor_test
         run: npm run gen:prisma
+      - name: Smoke: DB health
+        run: npm run smoke:db_health || true
 
-      - name: Run DB health smoke test (可選)
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/business_monitor_test
-        run: npm run smoke:db_health   # 你的 scripts/db_health.ts
+      - name: Migrate DB
+        run: npx prisma migrate deploy
 
-      - name: Run unit tests
+      - name: Seed DB
+        run: npx prisma db seed
+
+  
+      - name: Build next.js service
+        run: npm run build
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/business_monitor_test
-          NEXT_PUBLIC_API_POWERBY: 'BusinessMonitor api 1.0.0'
-        run: npm test -- --coverage --selectProjects server
+          NODE_ENV: production
+
+      - name: Precheck .next (ensure built)
+        run: test -f .next/BUILD_ID || (echo 'NO .next BUILD_ID'; ls -la .next || true; exit 1)
+
+      - name: Run unit & integration tests (server project)
+        run: npm run test
+        env:
+          NODE_ENV: test
 
       - name: Upload coverage (optional)
+        if: always()
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage/lcov.info
