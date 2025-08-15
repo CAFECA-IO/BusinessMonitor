@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { escapeLike } from '@/lib/utils';
-import type { QueryMeta } from '@/lib/utils'; // analyzeQuery 的回傳型別
+import type { QueryMeta } from '@/lib/utils'; // Info: (20250813 - Tzuhan) analyzeQuery 的回傳型別
 
 export type CompanySqlRow = {
   id: number;
@@ -18,7 +18,7 @@ export type FlagRow = { companyId: number; green: number; red: number };
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
-/** 公司清單（含 total 與排序相關欄位） */
+/** Info: (20250813 - Tzuhan) 公司清單（含 total 與排序相關欄位） */
 export async function repoFetchCompanies(
   db: Db,
   meta: QueryMeta,
