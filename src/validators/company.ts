@@ -104,5 +104,5 @@ export type CompaniesSearchResponse = z.infer<typeof CompaniesSearchResponseSche
 
 export type AutocompleteQuery = {
   q: string;
-  limit?: number; // 預設 10，最大 20
+  limit?: number; // Info: (20250814 - Tzuhan) 預設 10，最大 20
 };
