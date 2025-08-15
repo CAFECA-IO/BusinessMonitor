@@ -15,12 +15,12 @@ const escapeLike = (s: string) =>
 
 function analyzeQuery(raw: string) {
   const clean = stripCompanySuffix(toHalfWidth(raw.trim().replace(/^["']+|["']+$/g, '')));
-  const digits = clean.replace(/\D/g, '');
+  const digitsOnly = /^\d+$/.test(clean);
   const suspicious = /(--|\/\*|\*\/|;|=|\bOR\b|\bAND\b|\|\||&&)/i.test(clean);
   return {
     normalized: clean,
-    regNoCandidate: digits.length > 0 ? digits : undefined,
-    isLikelyRegNo: /^\d{8}$/.test(digits),
+    regNoCandidate: digitsOnly ? clean : undefined,
+    isLikelyRegNo: /^\d{8}$/.test(clean),
     isShort: clean.length < 2,
     hasChinese: /[\u4e00-\u9fa5]/.test(clean),
     suspicious,
@@ -72,6 +72,9 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
   const offset = (curPage - 1) * curPageSize;
 
   const meta = analyzeQuery(q);
+  if (meta.suspicious) {
+    throw new AppError(ApiCode.VALIDATION_ERROR, 'No companies found');
+  }
   const likeLiteral = `%${escapeLike(meta.normalized)}%`;
   const regPrefix = `${escapeLike(meta.regNoCandidate ?? meta.normalized)}%`;
   const useILIKE = meta.isShort || meta.hasChinese || meta.suspicious;

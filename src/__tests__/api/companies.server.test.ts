@@ -60,12 +60,12 @@ describe('GET /api/v1/companies/search (integration, black-box)', () => {
           pageSize: 10,
         })
       )
-      .expect(404);
+      .expect(400);
     expect(res.body.success).toBe(false);
   });
 
   // Todo: (20250814 - Tzuhan) 實作防止注入：邏輯短路
-  it.skip('防止注入：邏輯短路', async () => {
+  it('防止注入：邏輯短路', async () => {
     const res = await agent
       .get(
         Routes.companies.search({
@@ -74,7 +74,7 @@ describe('GET /api/v1/companies/search (integration, black-box)', () => {
           pageSize: 10,
         })
       )
-      .expect(404);
+      .expect(400);
     expect(res.body.success).toBe(false);
   });
 });
