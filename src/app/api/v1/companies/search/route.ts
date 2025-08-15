@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { CompaniesSearchQuerySchema, PaginatedCompanyCardSchema } from '@/validators/company';
-import { searchCompanies } from '@/services/company.service';
+import { searchCompanies } from '@/services/company.search.service';
 import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
