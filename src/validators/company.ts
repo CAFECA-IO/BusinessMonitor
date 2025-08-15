@@ -104,5 +104,10 @@ export type CompaniesSearchResponse = z.infer<typeof CompaniesSearchResponseSche
 
 export type AutocompleteQuery = {
   q: string;
-  limit?: number; // 預設 10，最大 20
+  limit?: number;
 };
+
+export const CompanyIdParam = z.object({
+  id: z.coerce.number().int().positive(),
+});
+export type CompanyIdParam = z.infer<typeof CompanyIdParam>;

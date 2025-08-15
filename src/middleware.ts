@@ -8,8 +8,10 @@ const API_PREFIX = '/api/';
 const PUBLIC_API_PATHS: (string | RegExp)[] = ['/api/health', /^\/api\/v1\/public(\/.*)?$/];
 
 const PUBLIC_GET_PATHS: RegExp[] = [
+  /^\/api\/v1\/companies\/\d+\/basic$/,
+  /^\/api\/v1\/companies\/\d+\/market$/,
+  /^\/api\/v1\/companies\/\d+\/comments$/,
   /^\/api\/v1\/companies\/search$/,
-  // Info: (20250812 - Tzuhan) 之後還有 /api/v1/autocomplete 等，再加在這裡
 ];
 
 const ALLOW_ORIGIN = process.env.NEXT_PUBLIC_WEB_ORIGIN ?? '*';
