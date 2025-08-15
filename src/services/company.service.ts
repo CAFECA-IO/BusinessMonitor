@@ -5,32 +5,7 @@ import { ApiCode } from '@/lib/status';
 import { CompanyCard } from '@/types/company';
 import { TrendPoint } from '@/types/trend_point';
 import { makePaginated } from '@/types/pagination';
-
-// Info: (20250813 - Tzuhan) ---------- 查詢前處理 ----------
-const toHalfWidth = (s: string) =>
-  s.replace(/[！-～]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
-const stripCompanySuffix = (s: string) => s.replace(/(股份有限公?司|有限公?司|公司)$/g, '');
-const escapeLike = (s: string) =>
-  s.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
-// Info: (20250815 - Tzuhan) 去除零寬字元：\u200B-\u200D、\u2060 (word joiner)、\uFEFF (BOM)
-const stripZeroWidth = (s: string) => s.replace(/[\u200B-\u200D\uFEFF]/g, '');
-
-function analyzeQuery(raw: string) {
-  const clean0 = stripZeroWidth(raw);
-  const clean = stripCompanySuffix(toHalfWidth(clean0.trim().replace(/^["']+|["']+$/g, '')));
-  const digitsOnly = /^\d+$/.test(clean);
-  // Info: (20250815 - Tzuhan) 加上 \x00（Null byte）
-  const suspicious = /(\x00|--|\/\*|\*\/|;|=|\bOR\b|\bAND\b|\|\||&&)/i.test(clean);
-  return {
-    normalized: clean,
-    regNoCandidate: digitsOnly ? clean : undefined,
-    isLikelyRegNo: /^\d{8}$/.test(clean),
-    isShort: clean.length < 2,
-    hasChinese: /[\u4e00-\u9fa5]/.test(clean),
-    suspicious,
-    digitsOnly,
-  };
-}
+import { analyzeQuery, escapeLike, isImprobableQuery } from '@/lib/utils';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
@@ -68,11 +43,6 @@ type CompanySqlRow = {
   logo_url: string | null;
   total: number;
 };
-
-function isImprobableQuery(meta: ReturnType<typeof analyzeQuery>): boolean {
-  const s = meta.normalized;
-  return !meta.hasChinese && !meta.digitsOnly && s.length >= 24 && /\d{6,}/.test(s);
-}
 
 export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PAGE_SIZE) {
   if (!q?.trim()) throw new AppError(ApiCode.VALIDATION_ERROR, 'q is required');
