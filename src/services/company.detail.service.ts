@@ -13,11 +13,11 @@ import {
   type BusinessScopeRow,
   type HistoryRow,
   type RelatedCompanyRow,
-  type StockPointRow,
   type CommentRow,
 } from '@/repositories/company.detail.repo';
 import { AppError } from '@/lib/error';
 import { ApiCode } from '@/lib/status';
+import { buildMarket } from '@/lib/market';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -55,29 +55,6 @@ export type RelatedCompanyItem = {
   relationType: string | null;
   date: string;
 };
-export type MarketPoint = { date: string; close: string };
-export type MarketPayload = {
-  last: string | null;
-  change: string | null;
-  changePct: string | null;
-  sparkline: MarketPoint[];
-};
-
-function buildMarket(points: StockPointRow[]): MarketPayload {
-  const n = points.length;
-  if (n === 0) return { last: null, change: null, changePct: null, sparkline: [] };
-  const last = Number(points[n - 1].close);
-  const prev = n > 1 ? Number(points[n - 2].close) : null;
-  if (prev == null) return { last: String(last), change: null, changePct: null, sparkline: points };
-  const diff = last - prev;
-  const pct = prev !== 0 ? (diff / prev) * 100 : 0;
-  return {
-    last: String(last),
-    change: diff.toFixed(2),
-    changePct: pct.toFixed(2),
-    sparkline: points,
-  };
-}
 
 export async function getCompanyBasic(id: number) {
   const row: CompanyBasicRow | null = await findCompanyBasicById(id);
@@ -103,7 +80,7 @@ export async function getCompanyBasic(id: number) {
     flags,
   };
 
-  // 預設各卡片 10 筆
+  // Info: (20250819 - Tzuhan) 預設各卡片 10 筆
   const limit = 10;
   const [inv, scopes, hist, rel] = await Promise.all([
     listInvestors(id, limit, 0),

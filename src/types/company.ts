@@ -8,7 +8,7 @@ export type MarketPayload = {
   last: DecimalString | null; // Info: (20250814 - Tzuhan) 最新收盤價
   change: DecimalString | null; // Info: (20250814 - Tzuhan) 與前一筆的漲跌額
   changePct: DecimalString | null; // Info: (20250814 - Tzuhan) 漲跌幅百分比（e.g. "0.26" 代表 0.26%）
-  sparkline: ReadonlyArray<TrendPoint>; // Info: (20250814 - Tzuhan) 折線圖資料
+  sparkline: Array<TrendPoint>; // Info: (20250814 - Tzuhan) 折線圖資料
 };
 
 export type CompanyCard = {

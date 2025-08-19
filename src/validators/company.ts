@@ -76,10 +76,10 @@ export const CompanyCardSchema = z.object({
   id: z.number().int(),
   name: z.string(),
   registrationNo: z.string(),
-  logoUrl: z.string().nullable().optional(),
-  status: z.string().nullable().optional(),
-  foreignCompanyName: z.string().nullable().optional(),
-  address: z.string().nullable().optional(),
+  logoUrl: z.string().nullable(),
+  status: z.string().nullable(),
+  foreignCompanyName: z.string().nullable(),
+  address: z.string().nullable(),
   flags: FlagsSchema,
   market: MarketSchema,
 });
@@ -112,3 +112,11 @@ export const AutocompleteQuery = z.object({
   limit: z.coerce.number().int().min(1).max(20).default(10),
 });
 export type AutocompleteQuery = z.infer<typeof AutocompleteQuery>;
+
+export const NewCompaniesQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
+export type NewCompaniesQuery = z.infer<typeof NewCompaniesQuery>;
+
+export const NewCompaniesResponse = ApiResponseSchema(z.array(CompanyCardSchema));
+export type NewCompaniesResponse = z.infer<typeof NewCompaniesResponse>;
