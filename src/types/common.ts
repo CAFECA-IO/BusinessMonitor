@@ -17,9 +17,9 @@ export type Paginated<TItem> = Pagination & {
   items: ReadonlyArray<TItem>;
 };
 
-// 數字以字串回傳以避免 JS 浮點誤差
-export type DecimalString = string; // e.g. "1209.50"
-export type BigIntString = string; // e.g. "9876543210"
+// Info: (20250818 - Tzuhan) 數字以字串回傳以避免 JS 浮點誤差
+export type DecimalString = string; // Info: (20250818 - Tzuhan) e.g. "1209.50"
+export type BigIntString = string; // Info: (20250818 - Tzuhan) e.g. "9876543210"
 
 export function makePaginated<TItem>(
   items: ReadonlyArray<TItem>,
