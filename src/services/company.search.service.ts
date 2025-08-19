@@ -4,37 +4,13 @@ import { ApiCode } from '@/lib/status';
 import { TrendPoint, CompanyCard } from '@/types/company';
 import { makePaginated } from '@/types/common';
 import { analyzeQuery, isImprobableQuery } from '@/lib/utils';
-import {
-  CompanySqlRow,
-  repoFetchCompanies,
-  repoFetchFlags,
-  repoFetchTrends,
-} from '@/repositories/company.search.repo';
+import { repoFetchCompanies } from '@/repositories/company.search.repo';
+import { repoFetchFlags, repoFetchTrends, CompanySqlRow } from '@/repositories/company.shared.repo';
+import { hydrateCompanyCards } from '@/services/company.card.service';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
-
-function buildMarket(points: TrendPoint[]): {
-  last: string | null;
-  change: string | null;
-  changePct: string | null;
-  sparkline: TrendPoint[];
-} {
-  const n = points.length;
-  if (n === 0) return { last: null, change: null, changePct: null, sparkline: [] };
-  const last = Number(points[n - 1].close);
-  const prev = n > 1 ? Number(points[n - 2].close) : null;
-  if (prev == null) return { last: String(last), change: null, changePct: null, sparkline: points };
-  const diff = last - prev;
-  const pct = prev !== 0 ? (diff / prev) * 100 : 0;
-  return {
-    last: String(last),
-    change: diff.toFixed(2),
-    changePct: pct.toFixed(2),
-    sparkline: points,
-  };
-}
 
 export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PAGE_SIZE) {
   if (!q?.trim()) throw new AppError(ApiCode.VALIDATION_ERROR, 'q is required');
@@ -77,22 +53,7 @@ export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PA
   const flagMap = new Map<number, { green: number; red: number }>();
   for (const f of flags) flagMap.set(f.companyId, { green: f.green, red: f.red });
 
-  const items: CompanyCard[] = companies.map((c) => {
-    const spark = trendMap.get(c.id) ?? [];
-    const market = buildMarket(spark);
-    const fr = flagMap.get(c.id) ?? { green: 0, red: 0 };
-    return {
-      id: c.id,
-      name: c.name,
-      registrationNo: c.registration_no,
-      logoUrl: c.logo_url,
-      status: c.status,
-      foreignCompanyName: c.foreign_company_name,
-      address: c.address,
-      flags: fr,
-      market,
-    };
-  });
+  const items: CompanyCard[] = await hydrateCompanyCards(prisma, companies);
 
   const total = companies[0].total;
   return makePaginated(items, total, curPage, curPageSize);

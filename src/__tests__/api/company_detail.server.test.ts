@@ -1,11 +1,7 @@
-import request from 'supertest';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { getAgent } from '@/__tests__/helpers/agent';
 import { Routes } from '@/config/api-routes';
 
-const { port } = JSON.parse(readFileSync(join(tmpdir(), 'bm_next_test.json'), 'utf-8'));
-const agent = request(`http://127.0.0.1:${port}`);
+const agent = getAgent();
 
 async function pickSampleCompanyId(): Promise<number> {
   const name = process.env.IT_SAMPLE_COMPANY_NAME ?? '台積電';

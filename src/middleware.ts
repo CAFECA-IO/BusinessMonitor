@@ -9,9 +9,11 @@ const PUBLIC_API_PATHS: (string | RegExp)[] = ['/api/health', /^\/api\/v1\/publi
 
 const PUBLIC_GET_PATHS: RegExp[] = [
   /^\/api\/v1\/companies\/\d+\/basic$/,
+  /^\/api\/v1\/companies\/\d+\/view$/,
   /^\/api\/v1\/companies\/\d+\/market$/,
   /^\/api\/v1\/companies\/\d+\/comments$/,
   /^\/api\/v1\/companies\/search$/,
+  /^\/api\/v1\/companies\/new$/,
 ];
 
 const ALLOW_ORIGIN = process.env.NEXT_PUBLIC_WEB_ORIGIN ?? '*';
@@ -49,7 +51,7 @@ export function middleware(req: NextRequest) {
 
     // Info:（20250808 - Tzuhan）公開 API 直接放行（附 CORS + requestId）
 
-    if (isPublicApi(pathname) || (req.method === 'GET' && isPublicGet(pathname))) {
+    if (isPublicApi(pathname) || isPublicGet(pathname)) {
       return withCors(NextResponse.next({ request: { headers: nextHeaders } }), requestId);
     }
 
