@@ -1,14 +1,7 @@
-// Info: (20250814 - Tzuhan) 排序定義（限制 order）
 export type SortOrder = 'asc' | 'desc';
+export type SortSpec = ReadonlyArray<{ sortBy: string; sortOrder: SortOrder }>;
 
-export type SortSpec = ReadonlyArray<{
-  sortBy: string;
-  sortOrder: SortOrder;
-}>;
-
-// Info: (20250814 - Tzuhan) 分頁容器：items 語義比 data 清楚（通常是陣列）
-export type Paginated<TItem> = {
-  items: ReadonlyArray<TItem>;
+export type Pagination = {
   page: number; // Info: (20250814 - Tzuhan) 當前頁（1-based）
   pageSize: number; // Info: (20250814 - Tzuhan) 每頁筆數
   total: number; // Info: (20250814 - Tzuhan) 總筆數
@@ -18,6 +11,15 @@ export type Paginated<TItem> = {
   sort?: SortSpec; // Info: (20250814 - Tzuhan) 目前排序條件（可選）
   note?: string; // Info: (20250814 - Tzuhan) 額外訊息（可選）
 };
+
+// Info: (20250814 - Tzuhan) 分頁容器：items 語義比 data 清楚（通常是陣列）
+export type Paginated<TItem> = Pagination & {
+  items: ReadonlyArray<TItem>;
+};
+
+// Info: (20250818 - Tzuhan) 數字以字串回傳以避免 JS 浮點誤差
+export type DecimalString = string; // Info: (20250818 - Tzuhan) e.g. "1209.50"
+export type BigIntString = string; // Info: (20250818 - Tzuhan) e.g. "9876543210"
 
 export function makePaginated<TItem>(
   items: ReadonlyArray<TItem>,

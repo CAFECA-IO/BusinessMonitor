@@ -102,12 +102,13 @@ export type CompaniesSearchPayload = z.infer<typeof PaginatedCompanyCardSchema>;
 export const CompaniesSearchResponseSchema = ApiResponseSchema(PaginatedCompanyCardSchema);
 export type CompaniesSearchResponse = z.infer<typeof CompaniesSearchResponseSchema>;
 
-export type AutocompleteQuery = {
-  q: string;
-  limit?: number;
-};
-
 export const CompanyIdParam = z.object({
   id: z.coerce.number().int().positive(),
 });
 export type CompanyIdParam = z.infer<typeof CompanyIdParam>;
+
+export const AutocompleteQuery = z.object({
+  q: z.string(),
+  limit: z.coerce.number().int().min(1).max(20).default(10),
+});
+export type AutocompleteQuery = z.infer<typeof AutocompleteQuery>;

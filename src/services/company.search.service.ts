@@ -1,9 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { AppError } from '@/lib/error';
 import { ApiCode } from '@/lib/status';
-import { CompanyCard } from '@/types/company';
-import { TrendPoint } from '@/types/trend_point';
-import { makePaginated } from '@/types/pagination';
+import { TrendPoint, CompanyCard } from '@/types/company';
+import { makePaginated } from '@/types/common';
 import { analyzeQuery, isImprobableQuery } from '@/lib/utils';
 import {
   CompanySqlRow,
