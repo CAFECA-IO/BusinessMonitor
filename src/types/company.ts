@@ -1,6 +1,6 @@
 import { DecimalString, Paginated } from '@/types/common';
 
-export type TrendPoint = { date: string; close: DecimalString }; // 由舊到新
+export type TrendPoint = { date: string; close: DecimalString }; // Info: (20250818 - Tzuhan) 由舊到新
 
 export type Flags = { green: number; red: number };
 
