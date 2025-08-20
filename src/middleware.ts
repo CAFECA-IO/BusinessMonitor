@@ -14,6 +14,7 @@ const PUBLIC_GET_PATHS: RegExp[] = [
   /^\/api\/v1\/companies\/\d+\/comments$/,
   /^\/api\/v1\/companies\/search$/,
   /^\/api\/v1\/companies\/new$/,
+  /^\/api\/v1\/companies\/most-viewed$/,
 ];
 
 const ALLOW_ORIGIN = process.env.NEXT_PUBLIC_WEB_ORIGIN ?? '*';

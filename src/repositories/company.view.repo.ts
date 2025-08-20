@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import type { Db } from '@/repositories/company.shared.repo';
 
 export async function upsertCompanyView(
