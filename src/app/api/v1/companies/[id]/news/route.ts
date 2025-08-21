@@ -4,12 +4,13 @@ import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { listCompanyNews } from '@/services/news.service';
 import { CompanyNewsQuerySchema } from '@/validators/news';
+import { withCompanyView } from '@/lib/with_company_view';
 
 const ParamsSchema = z.object({
   id: z.coerce.number().int().min(1),
 });
 
-export async function GET(req: NextRequest, context: { params: unknown }) {
+export const GET = withCompanyView(async (req: NextRequest, context: { params: unknown }) => {
   try {
     const { id } = ParamsSchema.parse(context.params);
     const sp = Object.fromEntries(req.nextUrl.searchParams.entries());
@@ -36,4 +37,4 @@ export async function GET(req: NextRequest, context: { params: unknown }) {
       : ApiCode.SERVER_ERROR;
     return jsonFail(code, msg);
   }
-}
+});

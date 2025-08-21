@@ -3,8 +3,6 @@ import { Routes } from '@/config/api-routes';
 import { prisma } from '@/lib/prisma';
 
 const agent = getAgent();
-// Info: (20250819 - Tzuhan) 測試使用的公司 id：可由環境變數注入，否則預設 1
-const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
 
 describe('GET /api/v1/companies/:id/news', () => {
   let companyId: number;
@@ -34,6 +32,7 @@ describe('GET /api/v1/companies/:id/news', () => {
   });
 
   afterAll(async () => {
+    await prisma.company_view.deleteMany({ where: { company_id: companyId } });
     await prisma.news.deleteMany({ where: { companyId } });
     await prisma.company.delete({ where: { id: companyId } });
   });

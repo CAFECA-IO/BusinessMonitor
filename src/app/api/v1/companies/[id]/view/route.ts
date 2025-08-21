@@ -1,3 +1,4 @@
+// Deprecated: (20250821 - Tzuhan) 這裡的實作已經不再使用
 import { NextRequest, NextResponse } from 'next/server';
 import { ApiCode } from '@/lib/status';
 import { jsonFail } from '@/lib/response';
