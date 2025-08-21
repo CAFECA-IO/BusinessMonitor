@@ -7,12 +7,11 @@ import { analyzeQuery, isImprobableQuery } from '@/lib/utils';
 import { repoFetchCompanies } from '@/repositories/company.search.repo';
 import { repoFetchFlags, repoFetchTrends, CompanySqlRow } from '@/repositories/company.shared.repo';
 import { hydrateCompanyCards } from '@/services/company.card.service';
+import { MAX_PAGE_SIZE } from '@/app/constants/common';
 
-const DEFAULT_PAGE_SIZE = 20;
-const MAX_PAGE_SIZE = 100;
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
-export async function searchCompanies(q: string, page = 1, pageSize = DEFAULT_PAGE_SIZE) {
+export async function searchCompanies(q: string, page: number, pageSize: number) {
   if (!q?.trim()) throw new AppError(ApiCode.VALIDATION_ERROR, 'q is required');
 
   const curPage = clamp(page, 1, Number.MAX_SAFE_INTEGER);

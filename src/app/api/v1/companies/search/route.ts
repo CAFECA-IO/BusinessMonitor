@@ -6,17 +6,18 @@ import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
 import { CompaniesSearchPayload } from '@/types/company';
+import { DEFAULT_PAGE_SIZE } from '@/app/constants/common';
 
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const { q, page, pageSize } = CompaniesSearchQuerySchema.parse({
       q: url.searchParams.get('q'),
-      page: url.searchParams.get('page'),
-      pageSize: url.searchParams.get('pageSize'),
+      page: url.searchParams.get('page') ?? undefined,
+      pageSize: url.searchParams.get('pageSize') ?? undefined,
     });
 
-    const dto = await searchCompanies(q, page, pageSize); // Info: (20250812 - Tzuhan) <-- 這裡已經把 cards 組好了
+    const dto = await searchCompanies(q, page ?? 1, pageSize ?? DEFAULT_PAGE_SIZE); // Info: (20250812 - Tzuhan) <-- 這裡已經把 cards 組好了
 
     const payload = dto as CompaniesSearchPayload;
 
