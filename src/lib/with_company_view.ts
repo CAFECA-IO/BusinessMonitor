@@ -15,31 +15,32 @@ export function withCompanyView<C extends CtxWithCompanyId>(
   }
 ): Handler<C> {
   const methods = opts?.methods ?? ['GET'];
+  const skipBots = opts?.skipBots ?? true;
+
   const BOT_RE =
     /(bot|crawler|spider|slurp|bingpreview|facebookexternalhit|ia_archiver|duckduckbot|yandex|ahrefs|semrush|applebot|twitterbot)/i;
 
   return async (req, ctx) => {
+    const ua = req.headers.get('user-agent') ?? '';
     const trackHeader = req.headers.get('x-bm-track');
     const skipHeader = req.headers.get('x-bm-skip');
 
-    let shouldTrack = trackHeader === '1';
+    // Info: (20250821 - Tzuhan) 1) 是否要追蹤
+    const shouldTrack =
+      trackHeader === '1' ||
+      (trackHeader === null &&
+        methods.includes(req.method as HttpMethod) &&
+        /^\/api\/v1\/companies\/\d+\/(basic|market|news|comments)$/.test(
+          new URL(req.url).pathname
+        ));
+
+    // Info: (20250821 - Tzuhan) 2) 是否要跳過（優先尊重 middleware，但仍做自保）
     let shouldSkip = skipHeader === 'bot';
+    if (skipBots && !shouldSkip) shouldSkip = BOT_RE.test(ua);
 
-    // fallback：沒經 middleware 時自行判斷
-    if (trackHeader === null) {
-      const pathname = new URL(req.url).pathname;
-      shouldTrack =
-        /^\/api\/v1\/companies\/\d+\/(basic|market|news|comments)$/.test(pathname) &&
-        req.method === 'GET';
-      const ua = req.headers.get('user-agent') ?? '';
-      shouldSkip = BOT_RE.test(ua);
-    }
-
-    // Info: (20250821 - Tzuhan) 僅在指定方法且非爬蟲時記錄
     if (methods.includes(req.method as HttpMethod) && shouldTrack && !shouldSkip) {
       try {
         const { id } = CompanyIdParam.parse(ctx.params);
-        const ua = req.headers.get('user-agent') ?? '';
         const ipHash = ipUaHash(clientIp(req), ua);
         const sessionId = req.headers.get('x-session-id') ?? req.cookies.get('sid')?.value;
         await recordCompanyView(id, ipHash, sessionId);
