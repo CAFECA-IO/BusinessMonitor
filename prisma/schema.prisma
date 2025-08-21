@@ -2,109 +2,103 @@ generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
 generator erd {
   provider = "prisma-erd-generator"
   output   = "ERD.svg"
   disabled = env("DISABLE_ERD")
 }
 
-model Company {
-  id                   Int       @id @default(autoincrement())
-  name                 String    @map("name")
-  registrationNo       String    @unique @map("registration_no")
-  parentRegNo          String?   @map("parent_reg_no") // Info: (20250812 - Tzuhan) 有值表示分公司
-  representative       String?   @map("representative")
-  registrationCountry  String?   @map("registration_country")
-  establishedDate      DateTime? @map("established_date")
-  capitalAmount        Decimal?  @db.Decimal(30,8) @map("capital_amount")
-  paidInCapital        Decimal?  @db.Decimal(30,8) @map("paid_in_capital")
-  capitalRanking       Int?      @map("capital_ranking")
-  address              String?   @map("address")
-  websiteUrl           String?   @map("website_url")
-  logoUrl              String?   @map("logo_url")
-  registrationAgency   String?   @map("registration_agency")
-  status               String?   @map("status")
-  organizationType     String?   @map("organization_type")
-  businessItems        Json?     @map("business_items")
-  contributions        Json?     @map("contributions")
-  shareholdingStatus   String?   @map("shareholding_status")
-  sharePrice           Decimal?  @db.Decimal(30,8) @map("share_price")
-  totalIssuedShares    BigInt?   @map("total_issued_shares")
-  multipleVotingRights String?   @map("multiple_voting_rights")
-  specialVotingRights  String?   @map("special_voting_rights")
-  lastChangeDate       DateTime? @map("last_change_date")
-  lastApprovedChange   DateTime? @map("last_approved_change")
-  statusDate           DateTime? @map("status_date")
-  statusDocNo          String?   @map("status_doc_no")
-  foreignCompanyName   String?   @map("foreign_company_name")
-  directors            Json?     @map("directors")
-  managers             Json?     @map("managers")
-  suspensionStartDate  DateTime? @map("suspension_start_date")
-  suspensionEndDate    DateTime? @map("suspension_end_date")
-  suspensionAgency     String?   @map("suspension_agency")
-  oldBusinessItemsUrl  String?   @map("old_business_items_url")
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-  industryCodes            IndustryCode[]     @relation("CompanyIndustry")
-  investors                CompanyInvestor[]
+model Company {
+  id                       Int                @id @default(autoincrement())
+  name                     String             @map("name")
+  registrationNo           String             @unique @map("registration_no")
+  parentRegNo              String?            @map("parent_reg_no")
+  representative           String?            @map("representative")
+  registrationCountry      String?            @map("registration_country")
+  establishedDate          DateTime?          @map("established_date")
+  capitalAmount            Decimal?           @map("capital_amount") @db.Decimal(30, 8)
+  paidInCapital            Decimal?           @map("paid_in_capital") @db.Decimal(30, 8)
+  capitalRanking           Int?               @map("capital_ranking")
+  address                  String?            @map("address")
+  websiteUrl               String?            @map("website_url")
+  logoUrl                  String?            @map("logo_url")
+  registrationAgency       String?            @map("registration_agency")
+  status                   String?            @map("status")
+  organizationType         String?            @map("organization_type")
+  businessItems            Json?              @map("business_items")
+  contributions            Json?              @map("contributions")
+  shareholdingStatus       String?            @map("shareholding_status")
+  sharePrice               Decimal?           @map("share_price") @db.Decimal(30, 8)
+  totalIssuedShares        BigInt?            @map("total_issued_shares")
+  multipleVotingRights     String?            @map("multiple_voting_rights")
+  specialVotingRights      String?            @map("special_voting_rights")
+  lastChangeDate           DateTime?          @map("last_change_date")
+  lastApprovedChange       DateTime?          @map("last_approved_change")
+  statusDate               DateTime?          @map("status_date")
+  statusDocNo              String?            @map("status_doc_no")
+  foreignCompanyName       String?            @map("foreign_company_name")
+  directors                Json?              @map("directors")
+  managers                 Json?              @map("managers")
+  suspensionStartDate      DateTime?          @map("suspension_start_date")
+  suspensionEndDate        DateTime?          @map("suspension_end_date")
+  suspensionAgency         String?            @map("suspension_agency")
+  oldBusinessItemsUrl      String?            @map("old_business_items_url")
+  createdAt                DateTime           @default(now()) @map("created_at")
+  updatedAt                DateTime           @updatedAt @map("updated_at")
+  announcements            Announcement[]
+  businessScopes           BusinessScope[]
+  comments                 Comment[]
   histories                CompanyHistory[]
+  investors                CompanyInvestor[]
+  relationsAsChild         CompanyRelation[]  @relation("ChildRelations")
+  relationsAsParent        CompanyRelation[]  @relation("ParentRelations")
+  company_view             company_view[]
+  financialReports         FinancialReport[]
+  governmentTenders        GovernmentTender[]
+  importExportData         ImportExportData[]
+  marketIndicators         MarketIndicator[]
+  news                     News[]
+  patents                  Patent[]
   relatedCompaniesAsSource RelatedCompany[]   @relation("CompanyToRelatedCompany")
   relatedCompaniesAsTarget RelatedCompany[]   @relation("CompanyToRelatedCompanyTarget")
-  stockPrices              StockPrice[]
-  marketIndicators         MarketIndicator[]
   riskFlags                RiskFlag[]
-  importExportData         ImportExportData[]
-  governmentTenders        GovernmentTender[]
+  stockPrices              StockPrice[]
   trademarks               Trademark[]
-  patents                  Patent[]
-  financialReports         FinancialReport[]
-  announcements            Announcement[]
-  comments                 Comment[]
-  businessScopes           BusinessScope[]
-  news                     News[]
-  relationsAsParent        CompanyRelation[] @relation("ParentRelations")
-  relationsAsChild         CompanyRelation[] @relation("ChildRelations")
+  industryCodes            IndustryCode[]     @relation("CompanyIndustry")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
-
-  @@index([name], map: "idx_company_name")
   @@index([parentRegNo], map: "idx_company_parent_reg_no")
-  @@index([representative], map: "idx_company_representative")
-  @@index([businessItems], map: "idx_company_business_items")
-
+  @@index([businessItems(ops: JsonbPathOps)], map: "idx_company_business_items_gin", type: Gin)
+  @@index([name(ops: raw("gin_trgm_ops"))], map: "idx_company_name_trgm", type: Gin)
+  @@index([registrationNo], map: "idx_company_registration_no_like")
+  @@index([representative(ops: raw("gin_trgm_ops"))], map: "idx_company_representative_trgm", type: Gin)
   @@map("company")
 }
 
 model CompanyRelation {
-  id          Int      @id @default(autoincrement())
-  parentRegNo String   @map("parent_reg_no")
-  childRegNo  String   @map("child_reg_no")
-  relation    String?  @map("relation")
-
-  parentCompany Company @relation("ParentRelations", fields: [parentRegNo], references: [registrationNo])
+  id            Int     @id @default(autoincrement())
+  parentRegNo   String  @map("parent_reg_no")
+  childRegNo    String  @map("child_reg_no")
+  relation      String? @map("relation")
   childCompany  Company @relation("ChildRelations", fields: [childRegNo], references: [registrationNo])
+  parentCompany Company @relation("ParentRelations", fields: [parentRegNo], references: [registrationNo])
 
   @@unique([parentRegNo, childRegNo])
   @@map("company_relation")
 }
 
-
-
 model Investor {
-  id              Int     @id @default(autoincrement())
-  name            String  @map("name")
-  title           String? @map("title")
-  shareholderType String? @map("shareholder_type")
-
+  id               Int               @id @default(autoincrement())
+  name             String            @map("name")
+  title            String?           @map("title")
+  shareholderType  String?           @map("shareholder_type")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
   companyInvestors CompanyInvestor[]
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
 
   @@map("investor")
 }
@@ -117,12 +111,10 @@ model CompanyInvestor {
   shareRatio                    Decimal?  @map("share_ratio")
   representativeJuridicalPerson String?   @map("representative_juridical_person")
   investmentDate                DateTime? @map("investment_date")
-
-  company  Company  @relation(fields: [companyId], references: [id])
-  investor Investor @relation(fields: [investorId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  createdAt                     DateTime  @default(now()) @map("created_at")
+  updatedAt                     DateTime  @updatedAt @map("updated_at")
+  company                       Company   @relation(fields: [companyId], references: [id])
+  investor                      Investor  @relation(fields: [investorId], references: [id])
 
   @@unique([companyId, investorId])
   @@map("company_investor")
@@ -134,27 +126,23 @@ model CompanyHistory {
   changeDate   DateTime @map("change_date")
   changeType   String   @map("change_type")
   changeDetail Json     @map("change_detail")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  company      Company  @relation(fields: [companyId], references: [id])
 
   @@map("company_history")
 }
 
 model RelatedCompany {
-  id                Int     @id @default(autoincrement())
-  companyId         Int     @map("company_id")
-  relatedCompanyId  Int     @map("related_company_id")
-  relationType      String? @map("relation_type")
-  relatedBusinessId String? @map("related_business_id")
-
-  company        Company @relation("CompanyToRelatedCompany", fields: [companyId], references: [id])
-  relatedCompany Company @relation("CompanyToRelatedCompanyTarget", fields: [relatedCompanyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  id                Int      @id @default(autoincrement())
+  companyId         Int      @map("company_id")
+  relatedCompanyId  Int      @map("related_company_id")
+  relationType      String?  @map("relation_type")
+  relatedBusinessId String?  @map("related_business_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  company           Company  @relation("CompanyToRelatedCompany", fields: [companyId], references: [id])
+  relatedCompany    Company  @relation("CompanyToRelatedCompanyTarget", fields: [relatedCompanyId], references: [id])
 
   @@unique([companyId, relatedCompanyId])
   @@map("related_company")
@@ -164,16 +152,14 @@ model StockPrice {
   id         Int      @id @default(autoincrement())
   companyId  Int      @map("company_id")
   date       DateTime @map("date")
-  openPrice  Decimal? @db.Decimal(30,8) @map("open_price")
-  highPrice  Decimal? @db.Decimal(30,8) @map("high_price")
-  lowPrice   Decimal? @db.Decimal(30,8) @map("low_price")
-  closePrice Decimal? @db.Decimal(30,8) @map("close_price")
+  openPrice  Decimal? @map("open_price") @db.Decimal(30, 8)
+  highPrice  Decimal? @map("high_price") @db.Decimal(30, 8)
+  lowPrice   Decimal? @map("low_price") @db.Decimal(30, 8)
+  closePrice Decimal? @map("close_price") @db.Decimal(30, 8)
   volume     Int?     @map("volume")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  company    Company  @relation(fields: [companyId], references: [id])
 
   @@index([companyId, date])
   @@map("stock_price")
@@ -187,11 +173,9 @@ model MarketIndicator {
   peRatio           Decimal? @map("pe_ratio")
   dividendYield     Decimal? @map("dividend_yield")
   investorSentiment Json?    @map("investor_sentiment")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  company           Company  @relation(fields: [companyId], references: [id])
 
   @@index([companyId, date])
   @@map("market_indicator")
@@ -203,24 +187,20 @@ model RiskFlag {
   flagType    String   @map("flag_type")
   flagValue   Int      @map("flag_value")
   flaggedDate DateTime @map("flagged_date")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  company     Company  @relation(fields: [companyId], references: [id])
 
   @@map("risk_flag")
 }
 
 model IndustryCode {
-  id          Int     @id @default(autoincrement())
-  code        String  @unique @map("code")
-  description String? @map("description")
-
-  companies Company[] @relation("CompanyIndustry")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  id          Int       @id @default(autoincrement())
+  code        String    @unique @map("code")
+  description String?   @map("description")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  companies   Company[] @relation("CompanyIndustry")
 
   @@map("industry_code")
 }
@@ -232,11 +212,9 @@ model ImportExportData {
   month       String?  @map("month")
   totalImport Decimal? @map("total_import")
   totalExport Decimal? @map("total_export")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  company     Company  @relation(fields: [companyId], references: [id])
 
   @@map("import_export_data")
 }
@@ -249,40 +227,34 @@ model GovernmentTender {
   awardDate    DateTime? @map("award_date")
   awardAmount  Decimal?  @map("award_amount")
   awarded      Boolean?  @map("awarded")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  company      Company   @relation(fields: [companyId], references: [id])
 
   @@map("government_tender")
 }
 
 model Trademark {
-  id          Int     @id @default(autoincrement())
-  companyId   Int     @map("company_id")
-  imageUrl    String? @map("image_url")
-  name        String  @map("name")
-  description String? @map("description")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  imageUrl    String?  @map("image_url")
+  name        String   @map("name")
+  description String?  @map("description")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  company     Company  @relation(fields: [companyId], references: [id])
 
   @@map("trademark")
 }
 
 model Patent {
-  id          Int     @id @default(autoincrement())
-  companyId   Int     @map("company_id")
-  name        String  @map("name")
-  description String? @map("description")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  name        String   @map("name")
+  description String?  @map("description")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  company     Company  @relation(fields: [companyId], references: [id])
 
   @@map("patent")
 }
@@ -293,11 +265,9 @@ model FinancialReport {
   reportType String   @map("report_type")
   period     DateTime @map("period")
   data       Json     @map("data")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  company    Company  @relation(fields: [companyId], references: [id])
 
   @@index([companyId, reportType, period])
   @@map("financial_report")
@@ -309,25 +279,21 @@ model Announcement {
   title     String   @map("title")
   date      DateTime @map("date")
   content   String?  @map("content")
-
-  company Company @relation(fields: [companyId], references: [id])
-
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  company   Company  @relation(fields: [companyId], references: [id])
 
   @@map("announcement")
 }
 
 model BusinessScope {
-  id          Int     @id @default(autoincrement())
-  companyId   Int     @map("company_id")
-  code        String  @map("code")
-  description String? @map("description")
-
-  company Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  code        String   @map("code")
+  description String?  @map("description")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  company     Company  @relation(fields: [companyId], references: [id])
 
   @@index([companyId, code])
   @@map("business_scope")
@@ -340,11 +306,9 @@ model News {
   content   String?  @map("content")
   date      DateTime @map("date")
   imageUrl  String?  @map("image_url")
-
-  company Company @relation(fields: [companyId], references: [id])
-
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  company   Company  @relation(fields: [companyId], references: [id])
 
   @@index([companyId, date])
   @@map("news")
@@ -357,14 +321,14 @@ model Comment {
   userAvatar String?   @map("user_avatar")
   content    String
   createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt      @map("updated_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
   likes      Int       @default(0)
   comments   Int       @default(0)
   shares     Int       @default(0)
   parentId   Int?      @map("parent_id")
   company    Company   @relation(fields: [companyId], references: [id])
-  replies    Comment[] @relation("CommentReplies")
   parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies    Comment[] @relation("CommentReplies")
 
   @@index([companyId, createdAt])
   @@map("comment")
@@ -376,12 +340,26 @@ model ImportLog {
   fileName     String    @map("file_name")
   totalCount   Int       @map("total_count")
   successCount Int       @map("success_count")
-  status       String    @map("status") // Info: (20250812 - Tzuhan) pending, in_progress, completed, failed
+  status       String    @map("status")
   startedAt    DateTime? @map("started_at")
   finishedAt   DateTime? @map("finished_at")
   createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt      @map("updated_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@unique([folderPath, fileName], name: "folder_file_unique")
   @@map("import_log")
+}
+
+model company_view {
+  id         Int      @id @default(autoincrement())
+  company_id Int
+  day        DateTime
+  ip_hash    String
+  session_id String?
+  created_at DateTime @default(now())
+  company    Company  @relation(fields: [company_id], references: [id])
+
+  @@unique([company_id, day, ip_hash], map: "uniq_company_day_ip")
+  @@index([company_id, day], map: "idx_company_day")
+  @@index([day], map: "idx_view_day")
 }

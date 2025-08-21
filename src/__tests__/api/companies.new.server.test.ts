@@ -37,9 +37,9 @@ describe('GET /api/v1/companies/new (integration, black-box)', () => {
     expect(items.length).toBeLessThanOrEqual(1);
   });
 
-  it.skip('422：limit 非法（=0）', async () => {
+  it('400：limit 非法（=0）', async () => {
     const url = Routes.companies.newest({ limit: 0 });
-    const res = await agent.get(url).expect(422);
+    const res = await agent.get(url).expect(400);
 
     expect(res.body.success).toBe(false);
     expect(res.body.code).toBe('VALIDATION_ERROR');

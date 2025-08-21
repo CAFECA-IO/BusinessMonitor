@@ -120,3 +120,6 @@ export type NewCompaniesQuery = z.infer<typeof NewCompaniesQuery>;
 
 export const NewCompaniesResponse = ApiResponseSchema(z.array(CompanyCardSchema));
 export type NewCompaniesResponse = z.infer<typeof NewCompaniesResponse>;
+
+export const MostViewedCompaniesResponse = ApiResponseSchema(z.array(CompanyCardSchema));
+export type MostViewedCompaniesResponse = z.infer<typeof MostViewedCompaniesResponse>;

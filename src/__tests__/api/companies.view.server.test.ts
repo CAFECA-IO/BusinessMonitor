@@ -8,7 +8,7 @@ const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
 describe('POST /api/v1/companies/:id/view (integration, black-box)', () => {
   const path = Routes.companies.view({ id: companyId });
 
-  it.skip('201：第一次計數', async () => {
+  it('201：第一次計數', async () => {
     const res = await agent
       .post(path)
       // Info: (20250819 - Tzuhan) 固定 IP/UA，確保 idempotency 可被檢驗
@@ -21,7 +21,7 @@ describe('POST /api/v1/companies/:id/view (integration, black-box)', () => {
     expect(res.body.payload).toEqual({ created: true });
   });
 
-  it.skip('200：相同 IP+UA 當天重送為 idempotent（不重覆計數）', async () => {
+  it('200：相同 IP+UA 當天重送為 idempotent（不重覆計數）', async () => {
     const res = await agent
       .post(path)
       .set('x-forwarded-for', '9.9.9.9') // Info: (20250819 - Tzuhan) 與前一個 case 相同
