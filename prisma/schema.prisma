@@ -355,15 +355,15 @@ model ImportLog {
 
 model CompanyView {
   id         Int      @id @default(autoincrement())
-  company_id Int
+  companyId  Int      @map("company_id")
   day        DateTime
-  ip_hash    String
-  session_id String?
-  created_at DateTime @default(now())
-  company    Company  @relation(fields: [company_id], references: [id])
+  ipHash     String   @map("ip_hash")
+  sessionId  String?  @map("session_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  company    Company  @relation(fields: [companyId], references: [id])
 
-  @@unique([company_id, day, ip_hash], map: "uniq_company_day_ip")
-  @@index([company_id, day], map: "idx_company_day")
+  @@unique([companyId, day, ipHash], map: "uniq_company_day_ip")
+  @@index([companyId, day], map: "idx_company_day")
   @@index([day], map: "idx_view_day")
 
   @@map("company_view")

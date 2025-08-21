@@ -15,11 +15,11 @@ describe.skip('POST /api/v1/companies/:id/view (integration, black-box)', () => 
     companyId = c.id;
     path = Routes.companies.view({ id: companyId });
 
-    await prisma.company_view.deleteMany({ where: { company_id: companyId } });
+    await prisma.companyView.deleteMany({ where: { companyId } });
   });
 
   afterAll(async () => {
-    await prisma.company_view.deleteMany({ where: { company_id: companyId } });
+    await prisma.companyView.deleteMany({ where: { companyId } });
     await prisma.company.delete({ where: { id: companyId } });
   });
 
