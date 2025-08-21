@@ -88,8 +88,8 @@ export type CompanyCard = z.infer<typeof CompanyCardSchema>;
 /* Info: (20250814 - Tzuhan) ========== 查詢參數 ========== */
 export const CompaniesSearchQuerySchema = z.object({
   q: z.string().trim().min(1, 'q is required'),
-  page: z.coerce.number().int().positive().default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  page: z.coerce.number().int().positive().default(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20).optional(),
 });
 export type CompaniesSearchQuery = z.infer<typeof CompaniesSearchQuerySchema>;
 

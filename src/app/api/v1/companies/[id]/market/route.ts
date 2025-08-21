@@ -5,10 +5,11 @@ import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
 import { CompanyIdParam, CompanyMarketQuery, CompanyMarketResponseSchema } from '@/validators';
 import { getCompanyMarket, marketLimitOf } from '@/services/company.detail.service';
+import { withCompanyView } from '@/lib/with_company_view';
 
 type Ctx = { params: { id: string } };
 
-export async function GET(req: NextRequest, ctx: Ctx) {
+export const GET = withCompanyView(async (req: NextRequest, ctx: Ctx) => {
   try {
     const { id } = CompanyIdParam.parse(ctx.params);
 
@@ -40,4 +41,4 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     }
     return jsonFail(ApiCode.SERVER_ERROR, err instanceof Error ? err.message : 'Unexpected error');
   }
-}
+});

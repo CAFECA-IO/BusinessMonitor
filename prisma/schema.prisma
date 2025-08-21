@@ -57,7 +57,7 @@ model Company {
   investors                CompanyInvestor[]
   relationsAsChild         CompanyRelation[]  @relation("ChildRelations")
   relationsAsParent        CompanyRelation[]  @relation("ParentRelations")
-  company_view             company_view[]
+  company_view             CompanyView[]
   financialReports         FinancialReport[]
   governmentTenders        GovernmentTender[]
   importExportData         ImportExportData[]
@@ -306,6 +306,9 @@ model News {
   content   String?  @map("content")
   date      DateTime @map("date")
   imageUrl  String?  @map("image_url")
+  lang      String?  @map("lang")
+  source    String?  @map("source")
+  url       String?  @map("url")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   company   Company  @relation(fields: [companyId], references: [id])
@@ -350,16 +353,18 @@ model ImportLog {
   @@map("import_log")
 }
 
-model company_view {
+model CompanyView {
   id         Int      @id @default(autoincrement())
-  company_id Int
+  companyId  Int      @map("company_id")
   day        DateTime
-  ip_hash    String
-  session_id String?
-  created_at DateTime @default(now())
-  company    Company  @relation(fields: [company_id], references: [id])
+  ipHash     String   @map("ip_hash")
+  sessionId  String?  @map("session_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  company    Company  @relation(fields: [companyId], references: [id])
 
-  @@unique([company_id, day, ip_hash], map: "uniq_company_day_ip")
-  @@index([company_id, day], map: "idx_company_day")
+  @@unique([companyId, day, ipHash], map: "uniq_company_day_ip")
+  @@index([companyId, day], map: "idx_company_day")
   @@index([day], map: "idx_view_day")
+
+  @@map("company_view")
 }

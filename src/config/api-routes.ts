@@ -57,6 +57,12 @@ export type PageQuery = { page?: number; pageSize?: number };
 
 export type MarketQuery = { range?: '7d' | '1m' | '3m' | '6m' | '1y'; limit?: number };
 
+export type NewsQuery = {
+  from?: string;
+  to?: string;
+  source?: Array<string>;
+} & PageQuery;
+
 export type CommentsQuery = {
   q?: string;
   sort?: 'newest' | 'oldest' | 'most_liked';
@@ -95,6 +101,10 @@ export const Routes = {
     // Info: (20250818 - Tzuhan) GET /api/v1/companies/:id/market?range=...&limit=...
     marketQ: (p: { id: string | number }, q?: MarketQuery) =>
       withQuery(Routes.companies.market(p), q),
+
+    // Info: (20250820 - Tzuhan) GET /api/v1/companies/:id/news
+    news: buildPath(`${API_PREFIX}/companies/:id/news`),
+    newsQ: (p: { id: string | number }, q?: NewsQuery) => withQuery(Routes.companies.news(p), q),
 
     // Info: (20250818 - Tzuhan) -------- Discussion (Comments) --------
     // Info: (20250818 - Tzuhan) GET /api/v1/companies/:id/comments

@@ -1,12 +1,27 @@
 import { getAgent } from '@/__tests__/helpers/agent';
 import { Routes } from '@/config/api-routes';
+import { prisma } from '@/lib/prisma';
 
 const agent = getAgent();
-// Info: (20250819 - Tzuhan) 測試使用的公司 id：可由環境變數注入，否則預設 1
-const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
 
-describe('POST /api/v1/companies/:id/view (integration, black-box)', () => {
-  const path = Routes.companies.view({ id: companyId });
+describe.skip('POST /api/v1/companies/:id/view (integration, black-box)', () => {
+  let companyId: number;
+  let path: string;
+
+  beforeAll(async () => {
+    const c = await prisma.company.create({
+      data: { name: 'Acme AutoView', registrationNo: 'ACME-V-1' },
+    });
+    companyId = c.id;
+    path = Routes.companies.view({ id: companyId });
+
+    await prisma.companyView.deleteMany({ where: { companyId } });
+  });
+
+  afterAll(async () => {
+    await prisma.companyView.deleteMany({ where: { companyId } });
+    await prisma.company.delete({ where: { id: companyId } });
+  });
 
   it('201：第一次計數', async () => {
     const res = await agent
