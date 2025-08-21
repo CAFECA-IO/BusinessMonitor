@@ -32,7 +32,7 @@ describe('GET /api/v1/companies/:id/news', () => {
   });
 
   afterAll(async () => {
-    await prisma.company_view.deleteMany({ where: { company_id: companyId } });
+    await prisma.companyView.deleteMany({ where: { company_id: companyId } });
     await prisma.news.deleteMany({ where: { companyId } });
     await prisma.company.delete({ where: { id: companyId } });
   });

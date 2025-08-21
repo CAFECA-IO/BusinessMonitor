@@ -20,11 +20,11 @@ describe('自動記錄公司瀏覽（withCompanyView on GET routes）', () => {
     });
     companyId = c.id;
 
-    await prisma.company_view.deleteMany({ where: { company_id: companyId } });
+    await prisma.companyView.deleteMany({ where: { company_id: companyId } });
   });
 
   afterAll(async () => {
-    await prisma.company_view.deleteMany({ where: { company_id: companyId } });
+    await prisma.companyView.deleteMany({ where: { company_id: companyId } });
     await prisma.company.delete({ where: { id: companyId } });
   });
 

@@ -6,12 +6,22 @@ export async function upsertCompanyView(
   day: string,
   ipHash: string,
   sessionId?: string
-) {
-  const rows = await db.$queryRaw<{ inserted: number }[]>`
-    INSERT INTO company_view (company_id, day, ip_hash, session_id)
-    VALUES (${companyId}, ${day}::date, ${ipHash}, ${sessionId ?? null})
-    ON CONFLICT (company_id, day, ip_hash) DO NOTHING
-    RETURNING 1::int AS inserted;
+): Promise<{ created: boolean; hasCompany: boolean }> {
+  const rows = await db.$queryRaw<{ hasCompany: boolean; inserted: number | null }[]>`
+    WITH got_company AS (
+      SELECT c.id FROM company c WHERE c.id = ${companyId}
+    ),
+    ins AS (
+      INSERT INTO company_view (company_id, day, ip_hash, session_id)
+      SELECT gc.id, ${day}::date, ${ipHash}, ${sessionId ?? null}
+      FROM got_company gc
+      ON CONFLICT (company_id, day, ip_hash) DO NOTHING
+      RETURNING 1 AS inserted
+    )
+    SELECT
+      EXISTS(SELECT 1 FROM got_company) AS "hasCompany",
+      (SELECT inserted FROM ins LIMIT 1) AS inserted;
   `;
-  return { created: rows.length > 0 };
+  const r = rows[0] ?? { hasCompany: false, inserted: null };
+  return { hasCompany: r.hasCompany, created: r.inserted === 1 };
 }

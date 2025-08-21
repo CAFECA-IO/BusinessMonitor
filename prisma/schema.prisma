@@ -57,7 +57,7 @@ model Company {
   investors                CompanyInvestor[]
   relationsAsChild         CompanyRelation[]  @relation("ChildRelations")
   relationsAsParent        CompanyRelation[]  @relation("ParentRelations")
-  company_view             company_view[]
+  company_view             CompanyView[]
   financialReports         FinancialReport[]
   governmentTenders        GovernmentTender[]
   importExportData         ImportExportData[]
@@ -353,7 +353,7 @@ model ImportLog {
   @@map("import_log")
 }
 
-model company_view {
+model CompanyView {
   id         Int      @id @default(autoincrement())
   company_id Int
   day        DateTime
@@ -365,4 +365,6 @@ model company_view {
   @@unique([company_id, day, ip_hash], map: "uniq_company_day_ip")
   @@index([company_id, day], map: "idx_company_day")
   @@index([day], map: "idx_view_day")
+
+  @@map("company_view")
 }
