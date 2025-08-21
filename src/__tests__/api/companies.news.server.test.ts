@@ -13,7 +13,7 @@ describe('GET /api/v1/companies/:id/news', () => {
     });
     companyId = company.id;
 
-    // 造 15 筆新聞：不同日期、不同來源
+    // Info: (20250821 - Tzuhan) 造 15 筆新聞：不同日期、不同來源
     const sources = ['Bloomberg', 'Reuters', 'FT'];
     const langs = ['en', 'zh'];
     const now = new Date();
@@ -51,7 +51,7 @@ describe('GET /api/v1/companies/:id/news', () => {
     expect(payload.page).toBe(1);
     expect(payload.pageSize).toBe(10);
     expect(payload.items.length).toBe(10);
-    // newest：第一筆日期應 >= 第二筆
+    // Info: (20250821 - Tzuhan) newest：第一筆日期應 >= 第二筆
     expect(new Date(payload.items[0].date).getTime()).toBeGreaterThanOrEqual(
       new Date(payload.items[1].date).getTime()
     );
