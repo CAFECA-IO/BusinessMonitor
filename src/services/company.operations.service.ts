@@ -57,7 +57,7 @@ export async function listTrademarks(
 
   const items: TrademarkRow[] = rows.map((r) => ({
     name: r.name,
-    imageUrl: r.imageUrl, // 可為 null
+    imageUrl: r.imageUrl, // Info: (20250822 - Tzuhan) 可為 null
     description: r.description ?? null,
   }));
 
