@@ -13,6 +13,7 @@ const PUBLIC_GET_PATHS: RegExp[] = [
   /^\/api\/v1\/companies\/\d+\/market$/,
   /^\/api\/v1\/companies\/\d+\/news$/,
   /^\/api\/v1\/companies\/\d+\/comments$/,
+  /^\/api\/v1\/companies\/\d+\/operations(?:\/.*)?$/,
   /^\/api\/v1\/companies\/search$/,
   /^\/api\/v1\/companies\/new$/,
   /^\/api\/v1\/companies\/most-viewed$/,
