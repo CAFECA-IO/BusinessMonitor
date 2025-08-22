@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 
     const payload = await listTenders(id, page, pageSize);
 
-    // 開發期型別防呆
+    // Info: (20250822 - Tzuhan) 開發期型別防呆
     TenderResponse.parse({
       powerby: 'BusinessMonitor api 1.0.0',
       success: true,
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         payload: null,
       };
       return new Response(JSON.stringify(body), {
-        status: 422, // AC：422
+        status: 422, // Info: (20250822 - Tzuhan) AC：422
         headers: { 'content-type': 'application/json; charset=utf-8' },
       });
     }
