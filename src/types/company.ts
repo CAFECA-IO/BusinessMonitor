@@ -152,3 +152,11 @@ export type CompanyBasicResponse = {
   history: Array<HistoryItem>;
   related: Array<RelatedCompanyItem>;
 };
+
+export type TenderRowDb = {
+  projectTitle: string;
+  agencyName: string | null;
+  awardDate: string; // Info: (20250822 - Tzuhan) YYYY-MM-DD（SQL 直接 cast）
+  awardAmount: string | null; // Info: (20250822 - Tzuhan) Decimal → text
+  awarded: boolean;
+};

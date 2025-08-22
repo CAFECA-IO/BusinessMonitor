@@ -1,6 +1,7 @@
 import { countCompanyNews, findCompanyNews, NewsWhere } from '@/repositories/news.repo';
 import { CompanyNewsPayload } from '@/validators/news';
 import { prisma } from '@/lib/prisma';
+import { makePaginated } from '@/types/common';
 
 export async function listCompanyNews(
   companyId: number,
@@ -61,8 +62,8 @@ export async function listCompanyNews(
     );
   }
 
-  return {
-    items: items.map((n) => ({
+  return makePaginated(
+    items.map((n) => ({
       id: n.id,
       title: n.title,
       content: n.content ?? undefined,
@@ -74,9 +75,6 @@ export async function listCompanyNews(
     })),
     total,
     page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-    hasPrev: page > 1,
-    hasNext: page * pageSize < total,
-  };
+    pageSize
+  );
 }
