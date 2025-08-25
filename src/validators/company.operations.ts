@@ -5,7 +5,7 @@ import { ApiResponseSchema, DecimalString, PaginatedOf } from '@/validators/comm
 export const TenderRowSchema = z.object({
   projectTitle: z.string(),
   agencyName: z.string().nullable(),
-  awardDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
+  awardDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   awardAmount: DecimalString.nullable(),
   awarded: z.boolean(),
 });
@@ -32,3 +32,20 @@ export type PaginatedTrademark = z.infer<typeof PaginatedTrademarkSchema>;
 
 export const TrademarkResponse = ApiResponseSchema(PaginatedTrademarkSchema);
 export type TrademarkResponse = z.infer<typeof TrademarkResponse>;
+
+/** Info: (20250825 - Tzuhan) ==== Patent ==== */
+export const PatentRowSchema = z.object({
+  title: z.string(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // Info: (20250825 - Tzuhan) YYYY-MM-DD
+  applicationNo: z.string().nullable().optional(),
+  kind: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+});
+export type PatentRow = z.infer<typeof PatentRowSchema>;
+
+export const PaginatedPatentSchema = PaginatedOf(PatentRowSchema);
+export type PaginatedPatent = z.infer<typeof PaginatedPatentSchema>;
+
+export const PatentResponse = ApiResponseSchema(PaginatedPatentSchema);
+export type PatentResponse = z.infer<typeof PatentResponse>;

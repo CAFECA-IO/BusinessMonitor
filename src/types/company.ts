@@ -95,10 +95,11 @@ export type TrademarkRow = {
 
 export type PatentRow = {
   title: string;
-  applicationNo: string;
-  kind?: string;
+  applicationNo: string | null;
+  kind: string | null;
   date: string; // Info: (20250818 - Tzuhan) YYYY-MM-DD
-  status?: string;
+  status: string | null;
+  description: string | null;
 };
 
 export type PoliticalRow = {
