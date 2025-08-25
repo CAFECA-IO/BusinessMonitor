@@ -22,7 +22,7 @@ export const GET = withCompanyView(async (req: NextRequest, ctx: Ctx) => {
     const effLimit = marketLimitOf(range ?? '3m', limit ?? undefined);
     const payload = await getCompanyMarket(id, effLimit);
 
-    // dev 防呆（上線可移除）
+    // Info: (20250825 - Tzuhan) dev 防呆（上線可移除）
     CompanyMarketResponseSchema.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
