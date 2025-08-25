@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { jsonOk, jsonFail } from '@/lib/response';
+import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
@@ -23,13 +23,7 @@ export const GET = withCompanyView(async (req: NextRequest, ctx: Ctx) => {
     const payload = await getCompanyMarket(id, effLimit);
 
     // dev 防呆（上線可移除）
-    CompanyMarketResponseSchema.parse({
-      powerby: 'BusinessMonitor api 1.0.0',
-      success: true,
-      code: 'OK',
-      message: 'OK',
-      payload,
-    });
+    CompanyMarketResponseSchema.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
     res.headers.set('Cache-Control', 's-maxage=30');

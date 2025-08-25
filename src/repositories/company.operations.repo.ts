@@ -72,3 +72,43 @@ export async function countTrademarks(db: Db, companyId: number): Promise<number
   `;
   return rows[0]?.count ?? 0;
 }
+
+/** Info: (20250825 - Tzuhan) ==== Patent (DB rows) ==== */
+export type PatentRowDb = {
+  title: string;
+  date: string;
+  applicationNo: string | null;
+  kind: string | null;
+  status: string | null;
+  description: string | null;
+};
+
+export async function findPatents(
+  db: Db,
+  companyId: number,
+  limit: number,
+  offset: number
+): Promise<PatentRowDb[]> {
+  return db.$queryRaw<PatentRowDb[]>`
+    SELECT
+      p.name AS "title",
+      p.date AS "date",
+      NULL::text AS "applicationNo",
+      NULL::text AS "kind",
+      NULL::text AS "status",
+      NULL::text AS "description"
+    FROM patent p
+    WHERE p.company_id = ${companyId}
+    ORDER BY p.id DESC
+    LIMIT ${limit} OFFSET ${offset};
+  `;
+}
+
+export async function countPatents(db: Db, companyId: number): Promise<number> {
+  const rows = await db.$queryRaw<{ count: number }[]>`
+    SELECT COUNT(*)::int AS count
+    FROM patent
+    WHERE company_id = ${companyId};
+  `;
+  return rows[0]?.count ?? 0;
+}

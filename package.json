@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+85",
+  "version": "0.1.0+86",
   "private": true,
   "type": "module",
   "scripts": {
@@ -26,7 +26,8 @@
     "update-version": "tsx scripts/update_version.ts && git add package.json",
     "import-data": "tsx scripts/import_data.ts",
     "prepare": "husky",
-    "i18n:pull": "i18nexus pull && tsx scripts/move_locales.ts"
+    "i18n:pull": "i18nexus pull && tsx scripts/move_locales.ts",
+    "swarm": "next start -p 10002"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",
