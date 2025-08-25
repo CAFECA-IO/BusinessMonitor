@@ -1,5 +1,6 @@
 import { getAgent } from '@/__tests__/helpers/agent';
 import { Routes } from '@/config/api-routes';
+import { ApiCode } from '@/lib/status';
 
 const agent = getAgent();
 const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
@@ -17,10 +18,10 @@ describe('GET /api/v1/companies/:id/operations/trademarks', () => {
     }
   });
 
-  it('422：pageSize 非法 (=0)', async () => {
+  it('400：pageSize 非法 (=0)', async () => {
     const url = Routes.companies.operations.trademarksQ({ id: companyId }, { pageSize: 0 });
-    const res = await agent.get(url).expect(422);
+    const res = await agent.get(url).expect(400);
     expect(res.body.success).toBe(false);
-    expect(res.body.code).toBe('VALIDATION_ERROR');
+    expect(res.body.code).toBe(ApiCode.VALIDATION_ERROR);
   });
 });

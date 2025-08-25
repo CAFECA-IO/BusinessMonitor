@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { jsonOk, jsonFail } from '@/lib/response';
+import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
@@ -14,13 +14,7 @@ export async function GET(req: NextRequest) {
     });
     const items = await listNewCompanies(limit);
 
-    NewCompaniesResponse.parse({
-      powerby: 'BusinessMonitor api 1.0.0',
-      success: true,
-      code: 'OK',
-      message: 'OK',
-      payload: items,
-    });
+    NewCompaniesResponse.parse(ok(items));
 
     const res = jsonOk(items, 'OK');
     res.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
