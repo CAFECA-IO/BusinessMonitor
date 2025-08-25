@@ -32,6 +32,7 @@ fi
 pm2 list | grep "$APP_NAME" | grep -q "online"
 if [ $? -eq 0 ]; then
   echo "PM2 服務 $APP_NAME 已經在運行中。"
+
 else
   echo "PM2 服務 $APP_NAME 沒有運行，正在啟動..."
   pm2 start npm --name "$APP_NAME" -- run swarm
