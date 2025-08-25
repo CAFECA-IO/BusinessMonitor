@@ -60,6 +60,7 @@ const PopulateDates: React.FC<IPopulateDatesProps> = ({
   ));
 
   const dateGrid = daysInMonth.map((el, index) => {
+    // Deprecated: (20250825 - Luphia) remove eslint-disable
     // eslint-disable-next-line react/jsx-key
     if (!el) return <p className={`null-${index}`}></p>;
 
