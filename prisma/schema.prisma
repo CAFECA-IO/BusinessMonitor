@@ -235,26 +235,32 @@ model GovernmentTender {
 }
 
 model Trademark {
-  id          Int      @id @default(autoincrement())
-  companyId   Int      @map("company_id")
-  imageUrl    String?  @map("image_url")
-  name        String   @map("name")
-  description String?  @map("description")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  company     Company  @relation(fields: [companyId], references: [id])
+  id            Int      @id @default(autoincrement())
+  companyId     Int      @map("company_id")
+  imageUrl      String?  @map("image_url")
+  name          String   @map("name")
+  description   String?  @map("description")
+  applicationNo String?  @map("application_no")
+  status        String?  @map("status")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  company      Company  @relation(fields: [companyId], references: [id])
 
   @@map("trademark")
 }
 
 model Patent {
-  id          Int      @id @default(autoincrement())
-  companyId   Int      @map("company_id")
-  name        String   @map("name")
-  description String?  @map("description")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  company     Company  @relation(fields: [companyId], references: [id])
+  id            Int       @id @default(autoincrement())
+  companyId     Int       @map("company_id")
+  title         String    @map("title")
+  date          DateTime  @map("date")
+  applicationNo String?   @map("application_no")
+  description   String?   @map("description")
+  kind          String?   @map("kind")
+  status        String?   @map("status")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  company       Company   @relation(fields: [companyId], references: [id])
 
   @@map("patent")
 }

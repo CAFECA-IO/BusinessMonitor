@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { jsonOk, jsonFail } from '@/lib/response';
+import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
@@ -15,13 +15,7 @@ export async function GET(req: NextRequest) {
     const items = await listMostViewedCompanies(limit);
 
     // Info: (20250820 - Tzuhan) dev 防呆（上線可移除）
-    MostViewedCompaniesResponse.parse({
-      powerby: 'BusinessMonitor api 1.0.0',
-      success: true,
-      code: 'OK',
-      message: 'OK',
-      payload: items,
-    });
+    MostViewedCompaniesResponse.parse(ok(items));
 
     const res = jsonOk(items, 'OK');
     res.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');

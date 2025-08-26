@@ -4,14 +4,18 @@ import type {
   PaginatedTender,
   TrademarkRow,
   PaginatedTrademark,
+  PaginatedPatent,
 } from '@/validators/company.operations';
 import {
   findTenders,
   countTenders,
   findTrademarks,
   countTrademarks,
+  findPatents,
+  countPatents,
 } from '@/repositories/company.operations.repo';
 import { makePaginated } from '@/types/common';
+import { PatentRow } from '@/types/company';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 const MAX_PAGE_SIZE = 100;
@@ -58,6 +62,32 @@ export async function listTrademarks(
   const items: TrademarkRow[] = rows.map((r) => ({
     name: r.name,
     imageUrl: r.imageUrl, // Info: (20250822 - Tzuhan) 可為 null
+    description: r.description ?? null,
+  }));
+
+  return makePaginated(items, total, curPage, curSize);
+}
+
+export async function listPatents(
+  companyId: number,
+  page: number,
+  pageSize: number
+): Promise<PaginatedPatent> {
+  const curPage = clamp(page, 1, Number.MAX_SAFE_INTEGER);
+  const curSize = clamp(pageSize, 1, MAX_PAGE_SIZE);
+  const offset = (curPage - 1) * curSize;
+
+  const [rows, total] = await Promise.all([
+    findPatents(prisma, companyId, curSize, offset),
+    countPatents(prisma, companyId),
+  ]);
+
+  const items: PatentRow[] = rows.map((r) => ({
+    title: r.title,
+    date: r.date,
+    applicationNo: r.applicationNo ?? null,
+    kind: r.kind ?? null,
+    status: r.status ?? null,
     description: r.description ?? null,
   }));
 
