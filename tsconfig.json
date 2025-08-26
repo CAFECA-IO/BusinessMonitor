@@ -34,7 +34,7 @@
     "next.config.js",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/app/page.txs",
+    "src/app/page.tsx",
     ".next/types/**/*.ts"
   ],
   "exclude": [

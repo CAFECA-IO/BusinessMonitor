@@ -1,8 +1,12 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { IoTriangle } from 'react-icons/io5';
 import { PiFlagPennantFill } from 'react-icons/pi';
 import { IBusinessBrief } from '@/interfaces/business';
+import { BM_URL } from '@/constants/url';
 
 interface IBusinessBriefCardProps {
   business: IBusinessBrief;
@@ -33,8 +37,10 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
   );
 
   return (
-    // ToDo: (20250804 - Julian) 到 Business Detail Page
-    <div className="flex w-220px flex-col gap-24px rounded-radius-m border border-transparent bg-surface-primary px-16px py-12px shadow-drop-L hover:cursor-pointer hover:border-border-brand">
+    <Link
+      href={`${BM_URL.BUSINESS_MONITOR}/${business.id}`}
+      className="flex w-220px flex-col gap-24px rounded-radius-m border border-transparent bg-surface-primary px-16px py-12px shadow-drop-L hover:cursor-pointer hover:border-border-brand"
+    >
       {/* Info: (20250804 - Julian) Business Info */}
       <div className="flex gap-8px">
         <div className="h-40px w-40px shrink-0 overflow-hidden rounded-full">
@@ -75,7 +81,7 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      # Info: (20250813 - Tzuhan) ① 啟動 Postgres 容器
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: business_monitor_test
+        ports:
+          - 5432:5432
+        # Info: (20250813 - Tzuhan) ② options 可插入 docker run 參數 → healthcheck
+        options: >-
+          --health-cmd="pg_isready -U postgres -d business_monitor_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    # Info: (20250813 - Tzuhan) 共用環境變數（所有步驟都吃得到）
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/business_monitor_test
+      NEXT_TELEMETRY_DISABLED: '1'
+      DISABLE_ERD: 'true'
+      CI: 'true'
+
+    # Info: (20250813 - Tzuhan) ③ GitHub 會自動等待 service Healthy；再跑步驟
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm i --no-audit --no-fund
+
+      - name: Generate Prisma client
+        run: npm run gen:prisma
+      - name: Smoke: DB health
+        run: npm run smoke:db_health || true
+
+      - name: Migrate DB
+        run: npx prisma migrate deploy
+
+      - name: Seed DB
+        run: npx prisma db seed
+
+  
+      - name: Build next.js service
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Precheck .next (ensure built)
+        run: test -f .next/BUILD_ID || (echo 'NO .next BUILD_ID'; ls -la .next || true; exit 1)
+
+      - name: Run unit & integration tests (server project)
+        run: npm run test
+        env:
+          NODE_ENV: test
+
+      - name: Upload coverage (optional)
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info

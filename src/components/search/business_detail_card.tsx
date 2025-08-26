@@ -1,8 +1,10 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { IoTriangle } from 'react-icons/io5';
 import { PiFlagPennantFill } from 'react-icons/pi';
 import { IBusinessDetail } from '@/interfaces/business';
+import { BM_URL } from '@/constants/url';
 
 interface IBusinessDetailCardProps {
   business: IBusinessDetail;
@@ -35,7 +37,10 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
 
   return (
     // ToDo: (20250805 - Julian) 連結至 Business Detail Page
-    <div className="flex w-full gap-24px rounded-radius-m border border-border-secondary bg-surface-primary px-16px py-12px hover:cursor-pointer hover:border-border-brand">
+    <Link
+      href={`${BM_URL.BUSINESS_MONITOR}/${business.id}`}
+      className="flex w-full gap-24px rounded-radius-m border border-border-secondary bg-surface-primary px-16px py-12px hover:cursor-pointer hover:border-border-brand"
+    >
       <div className="flex flex-1 gap-8px">
         {/* Info: (20250804 - Julian) Business Image */}
         <div className="h-40px w-40px shrink-0 overflow-hidden rounded-full">
@@ -78,7 +83,7 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
