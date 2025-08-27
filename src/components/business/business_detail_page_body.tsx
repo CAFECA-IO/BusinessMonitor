@@ -5,11 +5,9 @@ import TabBar from '@/components/business/tab_bar';
 import Layout from '@/components/common/layout';
 import { BM_URL } from '@/constants/url';
 import { TAB_BAR_ITEMS, TabBarItem } from '@/constants/tab_bar';
-import BasicInfoBlock from '@/components/business/basic_info_block';
-import InvestorBlock from '@/components/business/investor_block';
-import BusinessScopeBlock from '@/components/business/business_scope_block';
-import HistoryBlock from '@/components/business/history_block';
-import RelatedCompaniesBlock from '@/components/business/related_companies_block';
+import BasicInfoTab from '@/components/business/basic_info_tab';
+import MarketInfoTab from '@/components/business/market_info_tab';
+import DatePicker from '@/components/common/date_picker';
 
 interface IBusinessDetailPageProps {
   businessId: string;
@@ -28,26 +26,12 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
     setCurrentTab(tab);
   };
 
-  const basicInfoTab = (
-    <>
-      {/* Info: (20250812 - Julian) Basic Info Block */}
-      <BasicInfoBlock />
-
-      {/* Info: (20250813 - Julian) Investor Block */}
-      <InvestorBlock />
-
-      {/* Info: (20250813 - Julian) Business Scope Block */}
-      <BusinessScopeBlock />
-
-      {/* Info: (20250813 - Julian) History Block */}
-      <HistoryBlock />
-
-      {/* Info: (20250813 - Julian) Related Companies Block */}
-      <RelatedCompaniesBlock />
-    </>
-  );
-
-  const currentTabContent = currentTab === TabBarItem.BASIC_INFO ? basicInfoTab : null;
+  const currentTabContent =
+    currentTab === TabBarItem.BASIC_INFO ? (
+      <BasicInfoTab />
+    ) : currentTab === TabBarItem.MARKET_INFO ? (
+      <MarketInfoTab />
+    ) : null;
 
   return (
     <Layout
@@ -55,11 +39,14 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
       pageBgColor="bg-surface-background"
       className="gap-60px px-80px"
     >
+      {/* ToDo: (20250825 - Julian) Developing */}
+      <DatePicker selectedYear={2025} selectedMonth={8} label="Period" />
+
       {/* Info: (20250811 - Julian) Tab Bar */}
       <TabBar currentTab={currentTab} onTabChange={onTabChange} />
 
       {/* Info: (20250811 - Julian) Tab Content */}
-      <div className="grid grid-cols-2 gap-x-60px gap-y-40px">{currentTabContent}</div>
+      {currentTabContent}
     </Layout>
   );
 };

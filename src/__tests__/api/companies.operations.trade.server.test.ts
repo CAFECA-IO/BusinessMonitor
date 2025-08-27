@@ -40,7 +40,7 @@ describe('GET /api/v1/companies/:id/operations/trade (integration, black-box)', 
     const res = await agent.get(url);
     expect(200);
     expect(res.body.success).toBe(true);
-    // 可能為空集合，不強制斷言 items.length>0
+    // Info: (20250827 - Tzuhan) 可能為空集合，不強制斷言 items.length>0
   });
 
   it('400：年份格式錯（字串或超出範圍）', async () => {

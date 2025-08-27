@@ -69,6 +69,7 @@ module.exports = {
         '160px': '160px',
         '200px': '200px',
         '220px': '220px',
+        '300px': '300px',
         '350px': '350px',
         '420px': '420px',
         '500px': '500px',
@@ -106,6 +107,8 @@ module.exports = {
         'border-success': 'var(--color-state-safe)',
         'border-warning': 'var(--color-state-warn)',
         'border-error': 'var(--color-state-danger)',
+        'datepicker-active': 'var(--color-brand-brand-purple-500)',
+        'datepicker-hover': 'var(--color-brand-brand-purple-500-20)',
 
         'grey-100': 'var(--color-grey-grey-100)',
         'grey-600': ' var(--color-grey-grey-600)',
