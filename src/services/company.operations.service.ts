@@ -117,7 +117,7 @@ export async function listTrade(
 
   const items: TradeRow[] = rows.map((r) => ({
     year: r.year,
-    month: r.month, // 已正規化 YYYY-MM
+    month: r.month, // Info: (20250827 - Tzuhan) 已正規化 YYYY-MM
     totalImportUSD: r.totalImportUSD,
     totalExportUSD: r.totalExportUSD,
   }));
@@ -142,7 +142,7 @@ export async function listPoliticalContributions(
   const items: PoliticalRow[] = rows.map((r) => ({
     event: r.event,
     amount: r.amount,
-    date: r.date, // 已為 YYYY-MM-DD
+    date: r.date, // Info: (20250827 - Tzuhan) 已為 YYYY-MM-DD
     recipient: r.recipient ?? undefined,
   }));
 
