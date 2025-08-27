@@ -397,6 +397,6 @@ model PoliticalActivity {
 
   @@index([companyId, date], map: "idx_pc_company_date")
   @@index([companyId, type, date], map: "idx_pc_company_type_date") // Info: (20250827 - Tzuhan) 給左右分欄各自查
-  @@unique([companyId, event, date, recipient, type], map: "uniq_pc_company_event_date_recipient_type") // 避免重複
+  @@unique([companyId, event, date, recipient, type], map: "uniq_pc_company_event_date_recipient_type") // Info: (20250827 - Tzuhan) 避免重複
   @@map("political_activity")
 }
