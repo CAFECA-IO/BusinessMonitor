@@ -6,7 +6,6 @@ import type {
   PaginatedTrademark,
   PaginatedPatent,
   PaginatedTrade,
-  PaginatedPolitical,
 } from '@/validators/company.operations';
 import {
   findTenders,
@@ -17,11 +16,13 @@ import {
   countPatents,
   findTrade,
   countTrade,
-  findPoliticalContributions,
-  countPoliticalContributions,
+  findPoliticalByType,
+  countPoliticalByType,
+  sumPoliticalByType,
 } from '@/repositories/company.operations.repo';
 import { makePaginated } from '@/types/common';
-import { PatentRow, PoliticalRow, TradeRow } from '@/types/company';
+import { PatentRow, TradeRow } from '@/types/company';
+import { PoliticalType } from '@prisma/client';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 const MAX_PAGE_SIZE = 100;
@@ -117,7 +118,7 @@ export async function listTrade(
 
   const items: TradeRow[] = rows.map((r) => ({
     year: r.year,
-    month: r.month, // Info: (20250827 - Tzuhan) 已正規化 YYYY-MM
+    month: r.month,
     totalImportUSD: r.totalImportUSD,
     totalExportUSD: r.totalExportUSD,
   }));
@@ -125,26 +126,34 @@ export async function listTrade(
   return makePaginated(items, total, curPage, curSize);
 }
 
-export async function listPoliticalContributions(
+async function listPoliticalByType(
   companyId: number,
+  type: PoliticalType,
   page: number,
   pageSize: number
-): Promise<PaginatedPolitical> {
+) {
   const curPage = clamp(page, 1, Number.MAX_SAFE_INTEGER);
-  const curSize = clamp(pageSize, 1, MAX_PAGE_SIZE);
-  const offset = (curPage - 1) * curSize;
+  const curPageSize = clamp(pageSize, 1, MAX_PAGE_SIZE);
+  const offset = (curPage - 1) * curPageSize;
 
-  const [rows, total] = await Promise.all([
-    findPoliticalContributions(prisma, companyId, curSize, offset),
-    countPoliticalContributions(prisma, companyId),
+  const [items, total, sum] = await Promise.all([
+    findPoliticalByType(prisma, companyId, type, curPageSize, offset),
+    countPoliticalByType(prisma, companyId, type),
+    sumPoliticalByType(prisma, companyId, type),
   ]);
 
-  const items: PoliticalRow[] = rows.map((r) => ({
-    event: r.event,
-    amount: r.amount,
-    date: r.date, // Info: (20250827 - Tzuhan) 已為 YYYY-MM-DD
-    recipient: r.recipient ?? undefined,
-  }));
-
-  return makePaginated(items, total, curPage, curSize);
+  return makePaginated(
+    items,
+    total,
+    curPage,
+    curPageSize,
+    undefined,
+    /*note*/ `totalAmount=${sum}`
+  );
 }
+
+export const listPoliticalDonations = (id: number, p: number, s: number) =>
+  listPoliticalByType(id, PoliticalType.donation, p, s);
+
+export const listPoliticalContributions = (id: number, p: number, s: number) =>
+  listPoliticalByType(id, PoliticalType.contribution, p, s);

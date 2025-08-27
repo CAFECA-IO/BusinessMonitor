@@ -73,7 +73,7 @@ export type TradeQuery = z.infer<typeof TradeQuerySchema>;
 export const TradeResponse = ApiResponseSchema(PaginatedTradeSchema);
 export type TradeResponse = z.infer<typeof TradeResponse>;
 
-/** Info: (20250826 - Tzuhan) =============== Political Contributions (政治獻金) =============== */
+/** Info: (20250826 - Tzuhan) =============== Political activities (donations/contributions) =============== */
 export const PoliticalRowSchema = z.object({
   event: z.string(),
   amount: DecimalString, // Info: (20250826 - Tzuhan) 金額字串
