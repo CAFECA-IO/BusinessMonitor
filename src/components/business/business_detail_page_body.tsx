@@ -11,6 +11,8 @@ import BusinessScopeBlock from '@/components/business/business_scope_block';
 import HistoryBlock from '@/components/business/history_block';
 import RelatedCompaniesBlock from '@/components/business/related_companies_block';
 
+import DatePicker from '@/components/common/date_picker';
+
 interface IBusinessDetailPageProps {
   businessId: string;
 }
@@ -55,6 +57,9 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
       pageBgColor="bg-surface-background"
       className="gap-60px px-80px"
     >
+      {/* ToDo: (20250825 - Julian) Developing */}
+      <DatePicker selectedYear={2025} selectedMonth={8} label="Period" />
+
       {/* Info: (20250811 - Julian) Tab Bar */}
       <TabBar currentTab={currentTab} onTabChange={onTabChange} />
 
