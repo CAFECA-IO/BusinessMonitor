@@ -5,6 +5,8 @@ import type {
   TrademarkRow,
   PaginatedTrademark,
   PaginatedPatent,
+  PaginatedTrade,
+  PaginatedPolitical,
 } from '@/validators/company.operations';
 import {
   findTenders,
@@ -13,9 +15,13 @@ import {
   countTrademarks,
   findPatents,
   countPatents,
+  findTrade,
+  countTrade,
+  findPoliticalContributions,
+  countPoliticalContributions,
 } from '@/repositories/company.operations.repo';
 import { makePaginated } from '@/types/common';
-import { PatentRow } from '@/types/company';
+import { PatentRow, PoliticalRow, TradeRow } from '@/types/company';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 const MAX_PAGE_SIZE = 100;
@@ -89,6 +95,55 @@ export async function listPatents(
     kind: r.kind ?? null,
     status: r.status ?? null,
     description: r.description ?? null,
+  }));
+
+  return makePaginated(items, total, curPage, curSize);
+}
+
+export async function listTrade(
+  companyId: number,
+  year: number | undefined,
+  page: number,
+  pageSize: number
+): Promise<PaginatedTrade> {
+  const curPage = clamp(page, 1, Number.MAX_SAFE_INTEGER);
+  const curSize = clamp(pageSize, 1, MAX_PAGE_SIZE);
+  const offset = (curPage - 1) * curSize;
+
+  const [rows, total] = await Promise.all([
+    findTrade(prisma, companyId, year, curSize, offset),
+    countTrade(prisma, companyId, year),
+  ]);
+
+  const items: TradeRow[] = rows.map((r) => ({
+    year: r.year,
+    month: r.month, // Info: (20250827 - Tzuhan) 已正規化 YYYY-MM
+    totalImportUSD: r.totalImportUSD,
+    totalExportUSD: r.totalExportUSD,
+  }));
+
+  return makePaginated(items, total, curPage, curSize);
+}
+
+export async function listPoliticalContributions(
+  companyId: number,
+  page: number,
+  pageSize: number
+): Promise<PaginatedPolitical> {
+  const curPage = clamp(page, 1, Number.MAX_SAFE_INTEGER);
+  const curSize = clamp(pageSize, 1, MAX_PAGE_SIZE);
+  const offset = (curPage - 1) * curSize;
+
+  const [rows, total] = await Promise.all([
+    findPoliticalContributions(prisma, companyId, curSize, offset),
+    countPoliticalContributions(prisma, companyId),
+  ]);
+
+  const items: PoliticalRow[] = rows.map((r) => ({
+    event: r.event,
+    amount: r.amount,
+    date: r.date, // Info: (20250827 - Tzuhan) 已為 YYYY-MM-DD
+    recipient: r.recipient ?? undefined,
   }));
 
   return makePaginated(items, total, curPage, curSize);

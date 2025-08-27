@@ -4,33 +4,27 @@ import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
 import { CompanyIdParam } from '@/validators';
-import { PageQuery } from '@/validators/common';
-import { TrademarkResponse } from '@/validators/company.operations';
-import { listTrademarks } from '@/services/company.operations.service';
+import { TradeQuerySchema, TradeResponse } from '@/validators/company.operations';
+import { listTrade } from '@/services/company.operations.service';
 
 type Ctx = { params: { id: string } };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
   try {
     const { id } = CompanyIdParam.parse(ctx.params);
-
     const url = new URL(req.url);
-    const { page, pageSize } = PageQuery.parse({
+    const { year, page, pageSize } = TradeQuerySchema.parse({
+      year: url.searchParams.get('year') ?? undefined,
       page: url.searchParams.get('page') ?? undefined,
       pageSize: url.searchParams.get('pageSize') ?? undefined,
     });
 
-    console.log('page, pageSize', page, pageSize);
+    const payload = await listTrade(id, year, page, pageSize);
 
-    const payload = await listTrademarks(id, page, pageSize);
-
-    console.log('payload', payload);
-
-    // Info: (20250822 - Tzuhan) 開發期型別防呆
-    TrademarkResponse.parse(ok(payload));
+    // Info: (20250826 - Tzuhan) dev 契約檢查
+    TradeResponse.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
-    console.log('res', res);
     res.headers.set('Cache-Control', 's-maxage=300');
     return res;
   } catch (err) {
