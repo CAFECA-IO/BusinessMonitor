@@ -17,7 +17,7 @@ export type FlagsQuery = z.infer<typeof FlagsQuerySchema>;
 export const FlagRowSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD expected'),
   level: z.number().int().nonnegative(),
-  event: z.string(), // = risk_flag.flag_type
+  event: z.string(), // Info: (20250827 - Tzuhan) = risk_flag.flag_type
 });
 export type FlagRow = z.infer<typeof FlagRowSchema>;
 
