@@ -7,7 +7,7 @@ const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
 
 describe('GET /api/v1/companies/:id/flags (integration, black-box)', () => {
   it('200：預設 type=red；分頁欄位齊全；items 可為空', async () => {
-    const url = Routes.companies.flagsQ({ id: companyId }); // 不帶 type
+    const url = Routes.companies.flagsQ({ id: companyId }); // Info: (20250827 - Tzuhan) 不帶 type
     const res = await agent.get(url).expect(200);
     expect(res.body.success).toBe(true);
     const p = res.body.payload as {
