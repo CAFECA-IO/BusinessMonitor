@@ -74,4 +74,4 @@
 ---
 
 ## 附錄
-[設計稿](https://www.figma.com/design/Fnur8pE3XDsIJHWUDwdYZe/CAFECA-Official-Web?node-id=1745-16849&m=dev)
+[設計稿](https://www.figma.com/design/CwIDzPNFpoi9PK0LtscLD5/DID?node-id=1633-7672&p=f&m=dev)
