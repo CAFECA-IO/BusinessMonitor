@@ -60,9 +60,7 @@ const PopulateDates: React.FC<IPopulateDatesProps> = ({
   ));
 
   const dateGrid = daysInMonth.map((el, index) => {
-    // Deprecated: (20250825 - Luphia) remove eslint-disable
-    // eslint-disable-next-line react/jsx-key
-    if (!el) return <p className={`null-${index}`}></p>;
+    if (!el) return <div key={`null-${index}`}></div>;
 
     // Info: (20250825 - Julian) 取得該日期的 timestamp (秒)
     const timestamp = new Date(`${selectedYear}/${selectedMonth}/${el.date}`).getTime() / 1000;
