@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { PoliticalType, Prisma } from '@prisma/client';
 import type { Db } from '@/repositories/company.shared.repo';
 import type { TradeRow, PoliticalRow } from '@/types/company';
 
@@ -186,53 +186,55 @@ export async function countTrade(db: Db, companyId: number, year?: number): Prom
 }
 
 /** Info: (20250826 - Tzuhan) ---------- Political Contributions（公司.contributions JSON 陣列） ---------- */
-
-export async function findPoliticalContributions(
+/** Info: (20250827 - Tzuhan) 依類型查詢（donation | contribution） */
+export async function findPoliticalByType(
   db: Db,
   companyId: number,
+  type: PoliticalType,
   limit: number,
   offset: number
-): Promise<PoliticalRow[]> {
-  const sql = Prisma.sql`
-    WITH src AS (
-      SELECT (c.contributions)::jsonb AS contributions
-      FROM company c
-      WHERE c.id = ${companyId}
-    ),
-    arr AS (
-      SELECT CASE
-               WHEN jsonb_typeof(contributions) = 'array' THEN contributions
-               ELSE '[]'::jsonb
-             END AS a
-      FROM src
-    ),
-    flat AS (
-      SELECT x
-      FROM arr, LATERAL jsonb_array_elements(a) AS x
-    )
+) {
+  return db.$queryRaw<PoliticalRow[]>`
     SELECT
-      (x->>'event')::text                              AS "event",
-      COALESCE((x->>'amount')::numeric, 0)::text       AS "amount",
-      COALESCE((x->>'date')::date::text, '1970-01-01') AS "date",
-      NULLIF((x->>'recipient')::text, '')              AS "recipient"
-    FROM flat
-    ORDER BY COALESCE((x->>'date')::date, '1970-01-01'::date) DESC
+      pc.event::text           AS "event",
+      (pc.amount)::text        AS "amount",
+      (pc.date::date)::text    AS "date",
+      NULLIF(pc.recipient, '') AS "recipient"
+    FROM political_activity pc
+    WHERE pc.company_id = ${companyId}
+      AND pc.type = ${type}::"PoliticalType"
+    ORDER BY pc.date DESC, pc.id DESC
     LIMIT ${limit} OFFSET ${offset};
   `;
-  return db.$queryRaw<PoliticalRow[]>(sql);
 }
 
-export async function countPoliticalContributions(db: Db, companyId: number): Promise<number> {
+/** Info: (20250827 - Tzuhan) 計數 */
+export async function countPoliticalByType(
+  db: Db,
+  companyId: number,
+  type: 'donation' | 'contribution'
+): Promise<number> {
   const sql = Prisma.sql`
-    SELECT
-      CASE
-        WHEN jsonb_typeof((c.contributions)::jsonb) = 'array'
-        THEN jsonb_array_length((c.contributions)::jsonb)
-        ELSE 0
-      END::int AS count
-    FROM company c
-    WHERE c.id = ${companyId};
+    SELECT COUNT(*)::int AS count
+    FROM political_activity
+   WHERE company_id = ${companyId}
+      AND type = ${type}::"PoliticalType"; 
   `;
   const rows = await db.$queryRaw<{ count: number }[]>(sql);
   return rows[0]?.count ?? 0;
+}
+
+/** Info: (20250827 - Tzuhan)（可選）總額，供 UI 的「Total」使用 */
+export async function sumPoliticalByType(
+  db: Db,
+  companyId: number,
+  type: 'donation' | 'contribution'
+) {
+  const rows = await db.$queryRaw<{ total: string }[]>`
+    SELECT COALESCE(SUM(amount), 0)::text AS total
+    FROM political_activity
+    WHERE company_id = ${companyId}
+      AND type = ${type}::"PoliticalType";
+  `;
+  return rows[0]?.total ?? '0';
 }
