@@ -10,6 +10,8 @@ import MarketInfoTab from '@/components/business/market_info_tab';
 
 import DatePicker from '@/components/common/date_picker';
 
+import DatePicker from '@/components/common/date_picker';
+
 interface IBusinessDetailPageProps {
   businessId: string;
 }

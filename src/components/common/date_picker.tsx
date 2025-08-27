@@ -60,7 +60,6 @@ const PopulateDates: React.FC<IPopulateDatesProps> = ({
   ));
 
   const dateGrid = daysInMonth.map((el, index) => {
-     
     if (!el) return <div key={`null-${index}`}></div>;
 
     // Info: (20250825 - Julian) 取得該日期的 timestamp (秒)
