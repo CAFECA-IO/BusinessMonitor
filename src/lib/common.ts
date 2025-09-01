@@ -19,7 +19,7 @@ export const timestampToString = (timestamp: number) => {
   };
 };
 
-export const formatNumberWithCommas = (num: number | string) => {
+export const formatNumberWithCommas = (num: number | string, isDecimal?: boolean) => {
   if (num === null || num === undefined) return '-';
   if (typeof num === 'number' && isNaN(num)) return '-';
 
@@ -29,7 +29,8 @@ export const formatNumberWithCommas = (num: number | string) => {
   // Info: (20250812 - Julian) 整數部分才要格式化，小數部分不需要
   const formattedIntegerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   // Info: (20250812 - Julian) 如果有小數部分，則保留小數點和小數部分
-  const formattedDecimalPart = decimalPart ? `.${decimalPart}` : '';
+  // 如果沒有小數但 isDecimal 為 true，則補上 .00
+  const formattedDecimalPart = isDecimal ? (decimalPart ? `.${decimalPart}` : '.00') : '';
 
   return `${formattedIntegerPart}${formattedDecimalPart}`;
 };

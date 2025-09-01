@@ -29,10 +29,10 @@ const InvestorBlock: React.FC = () => {
     <InfoBlockLayout
       title={t('business_detail:INVESTOR_BLOCK_TITLE')}
       tooltipContent="tooltip content"
-      className="flex flex-col gap-y-16px"
+      className="flex flex-col gap-y-16px text-sm"
     >
       {/* Info: (20250813 - Julian) Title */}
-      <div className="grid grid-cols-5 gap-x-8px gap-y-40px text-sm">
+      <div className="grid grid-cols-5 gap-x-8px gap-y-40px font-medium">
         <p className="font-medium text-text-note">{t('business_detail:INVESTOR_BLOCK_NAME')}</p>
         <p className="font-medium text-text-note">{t('business_detail:INVESTOR_BLOCK_POSITION')}</p>
         <p className="font-medium text-text-note">
@@ -44,7 +44,7 @@ const InvestorBlock: React.FC = () => {
       </div>
 
       {/* Info: (20250901 - Julian) Content */}
-      <div className="grid grid-cols-5 gap-x-8px gap-y-40px overflow-y-auto text-sm">
+      <div className="grid grid-cols-5 gap-x-8px gap-y-40px overflow-y-auto font-normal">
         {investorItems}
       </div>
     </InfoBlockLayout>
