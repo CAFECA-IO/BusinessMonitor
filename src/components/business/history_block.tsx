@@ -28,7 +28,7 @@ const HistoryBlock: React.FC = () => {
     <InfoBlockLayout
       title={t('business_detail:HISTORY_BLOCK_TITLE')}
       tooltipContent="tooltip content"
-      className="grid grid-cols-5 gap-x-24px gap-y-40px text-sm"
+      className="grid grid-cols-5 gap-x-24px gap-y-40px overflow-y-auto text-sm"
     >
       {historyItems}
     </InfoBlockLayout>

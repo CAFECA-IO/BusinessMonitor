@@ -1,3 +1,5 @@
+import { PoliticalEventType } from '@/constants/operation';
+
 export interface IImportAndExportData {
   id: string;
   year: string;
@@ -26,16 +28,22 @@ export interface IPatent {
   patentTitle: string;
 }
 
-export enum PoliticalEventType {
-  CONTRIBUTION = 'Contribution',
-  DONATION = 'Donation',
-}
-
-export interface IPoliticalActivities {
+export interface IPoliticalEvent {
   id: string;
   eventType: PoliticalEventType;
   eventTitle: string;
   amount: number;
+}
+
+export interface IPoliticalActivities {
+  contribution: {
+    events: IPoliticalEvent[];
+    totalAmount: number;
+  };
+  donation: {
+    events: IPoliticalEvent[];
+    totalAmount: number;
+  };
 }
 
 export interface IOperations {
@@ -44,6 +52,7 @@ export interface IOperations {
   governmentTenders: IGovernmentTender[];
   trademarks: ITrademark[];
   patents: IPatent[];
+  politicalActivities: IPoliticalActivities;
 }
 
 export const mockData: IOperations = {
@@ -136,7 +145,7 @@ export const mockData: IOperations = {
   ],
   governmentTenders: [
     {
-      id: '1',
+      id: 'GT-001',
       projectTitle:
         'Professional Service Project for Establishing Kaohsiung City Road Safety Audit and Decision Support System',
       agencyName: 'Kaohsiung City Government Transportation Bureau',
@@ -145,7 +154,7 @@ export const mockData: IOperations = {
       awarded: true,
     },
     {
-      id: '2',
+      id: 'GT-002',
       projectTitle: 'Taipei City Smart Streetlight System Deployment Project',
       agencyName: 'Taipei City Government Department of IT',
       awardDate: 1762590640,
@@ -153,7 +162,7 @@ export const mockData: IOperations = {
       awarded: false,
     },
     {
-      id: '3',
+      id: 'GT-003',
       projectTitle: 'Taoyuan City Water Resource Management Cloud Platform Service Project',
       agencyName: 'Taoyuan City Government Water Resources Department',
       awardDate: 1762590640,
@@ -161,7 +170,7 @@ export const mockData: IOperations = {
       awarded: true,
     },
     {
-      id: '4',
+      id: 'GT-004',
       projectTitle: 'New Taipei City Integrated Disaster Early Warning System Planning Project',
       agencyName: 'New Taipei City Government Fire Department',
       awardDate: 1762590640,
@@ -171,55 +180,97 @@ export const mockData: IOperations = {
   ],
   trademarks: [
     {
-      id: '1',
+      id: 'T-001',
       trademarkTitle: 'FontForge Creative Hub',
       imageUrl: '/fake_avatar/business_img_2.png',
     },
     {
-      id: '2',
+      id: 'T-002',
       trademarkTitle: 'TypeSmith Typography Services',
       imageUrl: '/fake_avatar/business_img_3.jpg',
     },
     {
-      id: '3',
+      id: 'T-003',
       trademarkTitle: 'GlyphWorks Design Studio',
       imageUrl: '/fake_avatar/business_img_1.jpg',
     },
     {
-      id: '4',
+      id: 'T-004',
       trademarkTitle: 'Fontastic Design Studio',
       imageUrl: '/fake_avatar/business_img_2.png',
     },
     {
-      id: '5',
+      id: 'T-005',
       trademarkTitle: 'LetterCraft Foundry',
       imageUrl: '/fake_avatar/business_img_3.jpg',
     },
   ],
   patents: [
     {
-      id: '1',
+      id: 'P-001',
       patentTitle: 'Next-Gen Architecture for Contextual Language Processing in IoT Devices',
     },
     {
-      id: '2',
+      id: 'P-002',
       patentTitle: 'Tailored Shock Absorption Mechanism for Electric Scooters',
     },
     {
-      id: '3',
+      id: 'P-003',
       patentTitle: 'Versatile Shock Absorption Technology for E-Scooters',
     },
     {
-      id: '4',
+      id: 'P-004',
       patentTitle: 'Adjustable Impact Mitigation System for E-Scooters',
     },
     {
-      id: '5',
+      id: 'P-005',
       patentTitle: 'Personalized Impact Resistance Framework for E-Scooters',
     },
     {
-      id: '6',
+      id: 'P-006',
       patentTitle: 'Adaptive Shock Absorption Solution for Electric Scooters',
     },
   ],
+  politicalActivities: {
+    contribution: {
+      events: [
+        {
+          id: 'C-001',
+          eventType: PoliticalEventType.CONTRIBUTION,
+          eventTitle: '109 - City/County Councilor Election',
+          amount: 524000,
+        },
+        {
+          id: 'C-002',
+          eventType: PoliticalEventType.CONTRIBUTION,
+          eventTitle: 'City/County Councilor Election',
+          amount: 321000,
+        },
+        {
+          id: 'C-003',
+          eventType: PoliticalEventType.CONTRIBUTION,
+          eventTitle: 'Policy Advocacy Event',
+          amount: 243000,
+        },
+      ],
+      totalAmount: 1088000,
+    },
+    donation: {
+      events: [
+        {
+          id: 'D-001',
+          eventType: PoliticalEventType.DONATION,
+          eventTitle: 'City/County Councilor Election',
+          amount: 1275000,
+        },
+        {
+          id: 'D-002',
+          eventType: PoliticalEventType.DONATION,
+          eventTitle: '109 - City/County Councilor Election',
+          amount: 1300000,
+        },
+      ],
+      totalAmount: 2575000,
+    },
+  },
 };

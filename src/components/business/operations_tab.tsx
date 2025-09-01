@@ -7,8 +7,10 @@ import {
   ITrademark,
   IPatent,
   mockData,
+  IPoliticalEvent,
 } from '@/interfaces/operation';
 import InfoBlockLayout from '@/components/business/info_block_layout';
+import { PoliticalEventType } from '@/constants/operation';
 
 const ImportAndExportItem: React.FC<IImportAndExportData> = ({
   year,
@@ -63,9 +65,62 @@ const PatentItem: React.FC<IPatent> = ({ patentTitle }) => {
   return <p className="text-text-primary">{patentTitle}</p>;
 };
 
+const PoliticalActivityItem: React.FC<IPoliticalEvent> = ({ eventTitle, amount }) => {
+  return (
+    <>
+      <p className="col-span-3 font-normal text-text-primary">{eventTitle}</p>
+      <p className="font-normal text-text-primary">$ {formatNumberWithCommas(amount)}</p>
+    </>
+  );
+};
+
+const PoliticalActivityBlock: React.FC<{
+  eventType: PoliticalEventType;
+  politicalActivity: {
+    events: IPoliticalEvent[];
+    totalAmount: number;
+  };
+}> = ({ eventType, politicalActivity }) => {
+  const { events, totalAmount } = politicalActivity;
+  const politicalActivityRows = events.map((event) => (
+    <PoliticalActivityItem key={event.id} {...event} />
+  ));
+
+  return (
+    <div className="flex w-full flex-col gap-24px py-24px">
+      <h6 className="text-h6 font-bold text-black">{eventType}</h6>
+      <div className="flex h-200px flex-col gap-40px">
+        {/* Info: (20250901 - Julian) Header */}
+        <div className="grid grid-cols-4 font-medium text-text-note">
+          <p className="col-span-3">Event</p>
+          <p>Amount</p>
+        </div>
+
+        {/* Info: (20250901 - Julian) Content */}
+        <div className="grid grid-cols-4 gap-y-40px overflow-y-auto">
+          {politicalActivityRows}
+
+          <p className="col-span-3 font-medium text-text-primary">Total</p>
+          <p className="font-medium text-text-primary">$ {formatNumberWithCommas(totalAmount)}</p>
+        </div>
+
+        {/* Info: (20250901 - Julian) Footer */}
+        <div className="grid grid-cols-4"></div>
+      </div>
+    </div>
+  );
+};
+
 const OperationsTab: React.FC = () => {
   // ToDo: (20250901 - Julian) Replace mock data with real API data
-  const { lastUpdateTime, importAndExportData, governmentTenders, trademarks, patents } = mockData;
+  const {
+    lastUpdateTime,
+    importAndExportData,
+    governmentTenders,
+    trademarks,
+    patents,
+    politicalActivities,
+  } = mockData;
 
   const formattedTime = timestampToString(lastUpdateTime);
   const timeStr = `Last Update Time: ${formattedTime.formattedDate} ${formattedTime.time}`;
@@ -135,7 +190,7 @@ const OperationsTab: React.FC = () => {
         <InfoBlockLayout
           title="Trademarks"
           tooltipContent="tooltip content"
-          className="flex flex-col gap-24px text-sm font-medium"
+          className="flex flex-col gap-24px overflow-y-auto text-sm font-medium"
         >
           {trademarkRows}
         </InfoBlockLayout>
@@ -146,7 +201,7 @@ const OperationsTab: React.FC = () => {
         <InfoBlockLayout
           title="Patents"
           tooltipContent="tooltip content"
-          className="flex flex-col gap-40px text-sm font-medium"
+          className="flex flex-col gap-40px overflow-y-auto text-sm font-medium"
         >
           {patentRows}
         </InfoBlockLayout>
@@ -157,9 +212,19 @@ const OperationsTab: React.FC = () => {
         <InfoBlockLayout
           title="Political Activities"
           tooltipContent="tooltip content"
-          className="grid grid-cols-2"
+          className="flex gap-80px"
         >
-          <div className=""></div>
+          {/* Info: (20250901 - Julian) Contribution */}
+          <PoliticalActivityBlock
+            eventType={PoliticalEventType.CONTRIBUTION}
+            politicalActivity={politicalActivities.contribution}
+          />
+          <hr className="h-full w-px bg-border-secondary" />
+          {/* Info: (20250901 - Julian) Donation */}
+          <PoliticalActivityBlock
+            eventType={PoliticalEventType.DONATION}
+            politicalActivity={politicalActivities.donation}
+          />
         </InfoBlockLayout>
       </div>
     </div>
