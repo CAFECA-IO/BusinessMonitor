@@ -7,6 +7,7 @@ import { BM_URL } from '@/constants/url';
 import { TAB_BAR_ITEMS, TabBarItem } from '@/constants/tab_bar';
 import BasicInfoTab from '@/components/business/basic_info_tab';
 import MarketInfoTab from '@/components/business/market_info_tab';
+import OperationsTab from '@/components/business/operations_tab';
 import DatePicker from '@/components/common/date_picker';
 
 interface IBusinessDetailPageProps {
@@ -31,7 +32,11 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
       <BasicInfoTab />
     ) : currentTab === TabBarItem.MARKET_INFO ? (
       <MarketInfoTab />
-    ) : null;
+    ) : currentTab === TabBarItem.OPERATIONS ? (
+      <OperationsTab />
+    ) : (
+      <div>Coming Soon</div>
+    );
 
   return (
     <Layout
