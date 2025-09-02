@@ -25,4 +25,9 @@ export const mockBusinessHistory: IBusinessHistory[] = [
     date: 1320969600,
     description: 'Elevated Registered Capital to $1,200,000 for market growth.',
   },
+  {
+    id: '5',
+    date: 1262304000,
+    description: 'Increased Registered Capital to $1,200,000 for expansion.',
+  }
 ];

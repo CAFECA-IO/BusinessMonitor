@@ -23,8 +23,9 @@ const RelatedCompaniesItem: React.FC<{ data: IRelatedCompany }> = ({ data }) => 
 
 const RelatedCompaniesBlock: React.FC = () => {
   const { t } = useTranslation(['business_detail']);
+  const businessData = mockBusinesses; // ToDo: (20250901 - Julian) Fetch real data
 
-  const relatedCompanies = mockBusinesses.map((company) => (
+  const relatedCompanies = businessData.map((company) => (
     <RelatedCompaniesItem key={company.id} data={company} />
   ));
 
@@ -32,13 +33,16 @@ const RelatedCompaniesBlock: React.FC = () => {
     <InfoBlockLayout
       title={t('business_detail:RELATED_COMPANIES_BLOCK_TITLE')}
       tooltipContent="tooltip content"
-      className="grid grid-cols-2 gap-y-40px text-sm font-medium"
+      className="flex flex-col gap-y-40px text-sm font-medium"
     >
       {/* Info: (20250813 - Julian) Title */}
-      <p className="text-text-note">{t('business_detail:RELATED_COMPANIES_BLOCK_ID')}</p>
-      <p className="text-text-note">{t('business_detail:RELATED_COMPANIES_BLOCK_NAME')}</p>
+      <div className="grid grid-cols-2 gap-y-40px">
+        <p className="text-text-note">{t('business_detail:RELATED_COMPANIES_BLOCK_ID')}</p>
+        <p className="text-text-note">{t('business_detail:RELATED_COMPANIES_BLOCK_NAME')}</p>
+      </div>
 
-      {relatedCompanies}
+      {/* Info: (20250901 - Julian) Content */}
+      <div className="grid grid-cols-2 gap-y-40px overflow-y-auto">{relatedCompanies}</div>
     </InfoBlockLayout>
   );
 };
