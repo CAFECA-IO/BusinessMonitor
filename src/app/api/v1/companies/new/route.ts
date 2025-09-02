@@ -3,7 +3,7 @@ import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { NewCompaniesQuery, NewCompaniesResponse } from '@/validators/company';
+import { NewCompaniesQuery, NewCompaniesResponse } from '@/validators';
 import { listNewCompanies } from '@/services/company.new.service';
 
 export async function GET(req: NextRequest) {

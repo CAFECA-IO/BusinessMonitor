@@ -3,28 +3,29 @@ import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam, TradeQuerySchema, TradeResponse } from '@/validators';
-import { listTrade } from '@/services/company.operations.service';
+import { CompanyIdParam } from '@/validators';
+import { PageQuery } from '@/validators/common';
+import { CompanyCommentsResponseSchema } from '@/validators';
+import { getCompanyComments } from '@/services/company.comments.service';
 
 type Ctx = { params: { id: string } };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
   try {
     const { id } = CompanyIdParam.parse(ctx.params);
+
     const url = new URL(req.url);
-    const { year, page, pageSize } = TradeQuerySchema.parse({
-      year: url.searchParams.get('year') ?? undefined,
+    const { page, pageSize } = PageQuery.parse({
       page: url.searchParams.get('page') ?? undefined,
       pageSize: url.searchParams.get('pageSize') ?? undefined,
     });
 
-    const payload = await listTrade(id, year, page, pageSize);
+    const payload = await getCompanyComments(id, page, pageSize);
 
-    // Info: (20250826 - Tzuhan) dev 契約檢查
-    TradeResponse.parse(ok(payload));
+    CompanyCommentsResponseSchema.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
-    res.headers.set('Cache-Control', 's-maxage=300');
+    res.headers.set('Cache-Control', 'no-store');
     return res;
   } catch (err) {
     if (err instanceof ZodError) {

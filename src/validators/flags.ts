@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiResponseSchema, PaginatedOf } from '@/validators/common';
+import { ApiResponseSchema, PaginatedOf } from '@/validators';
 export const FlagColorSchema = z.enum(['red', 'green']);
 
 export const FlagsQuerySchema = z.object({

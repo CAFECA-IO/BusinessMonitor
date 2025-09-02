@@ -3,9 +3,7 @@ import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam } from '@/validators';
-import { PageQuery } from '@/validators/common';
-import { PoliticalResponse } from '@/validators/company.operations';
+import { CompanyIdParam, PageQuery, PoliticalResponse } from '@/validators';
 import { listPoliticalContributions } from '@/services/company.operations.service';
 
 type Ctx = { params: { id: string } };
