@@ -9,6 +9,7 @@ import BasicInfoTab from '@/components/business/basic_info_tab';
 import MarketInfoTab from '@/components/business/market_info_tab';
 import OperationsTab from '@/components/business/operations_tab';
 import FinancialReportTab from '@/components/business/financial_report_tab';
+import RedFlagsTab from '@/components/business/reg_flags_tab';
 
 interface IBusinessDetailPageProps {
   businessId: string;
@@ -36,6 +37,8 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
       <OperationsTab />
     ) : currentTab === TabBarItem.FINANCIAL_REPORT ? (
       <FinancialReportTab />
+    ) : currentTab === TabBarItem.FLAGS ? (
+      <RedFlagsTab />
     ) : (
       <div>Coming Soon</div>
     );
