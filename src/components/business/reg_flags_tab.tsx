@@ -17,7 +17,7 @@ const FlagItem: React.FC<IFlags> = ({ id, flagType, date, eventTitle, level }) =
       <p className="col-span-3">{eventTitle}</p>
       <p className={`col-span-1 text-center font-medium ${flagColor}`}>{level}</p>
       <div className="col-span-2 text-center">
-        <Link href={readMoreLink} className="text-button-link hover:text-button-link-hover">
+        <Link href={readMoreLink} className="text-button-link hover:text-button-primary-hover">
           Read More
         </Link>
       </div>
