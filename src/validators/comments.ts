@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiResponseSchema } from './common';
+import { ApiResponseSchema } from '@/validators/common';
 
 export const CommentsQuerySchema = z.object({
   q: z.string().min(1).max(200).optional(),
