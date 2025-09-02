@@ -50,7 +50,7 @@ describe('GET /api/v1/companies/:id/announcements (integration, black-box)', () 
   });
 
   it('400：limit 非法（非數字）', async () => {
-    // 直接在 querystring 模擬非法值
+    // Info: (20250902 - Tzuhan) 直接在 querystring 模擬非法值
     const url = `${Routes.companies.announcements({ id: companyId })}?limit=foo`;
     const res = await agent.get(url).expect(400);
 
