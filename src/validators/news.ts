@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DateParam, PageQuery, StringArrayParam, PaginatedOf } from '@/validators/common';
+import { DateParam, PageQuery, StringArrayParam, PaginatedOf } from '@/validators';
 
 /** Info: (20250821 - Tzuhan) 查詢參數 */
 export const CompanyNewsQuerySchema = PageQuery.extend({

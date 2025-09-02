@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { listCompanyNews } from '@/services/news.service';
-import { CompanyNewsQuerySchema } from '@/validators/news';
+import { CompanyNewsQuerySchema } from '@/validators';
 import { withCompanyView } from '@/lib/with_company_view';
 
 const ParamsSchema = z.object({

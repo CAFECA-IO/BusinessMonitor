@@ -1,11 +1,9 @@
 import { NextRequest } from 'next/server';
 import { jsonOk, jsonFail, ok } from '@/lib/response';
-import { ApiCode, HttpMap } from '@/lib/status';
+import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam } from '@/validators';
-import { PageQuery } from '@/validators/common';
-import { TenderResponse } from '@/validators/company.operations';
+import { CompanyIdParam, PageQuery, TenderResponse } from '@/validators';
 import { listTenders } from '@/services/company.operations.service';
 
 type Ctx = { params: { id: string } };

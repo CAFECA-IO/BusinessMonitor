@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import type { Db } from '@/repositories/company.shared.repo';
-import type { FlagRow } from '@/validators/company.flags';
+import type { FlagRow } from '@/validators';
 
 export async function findFlags(
   db: Db,

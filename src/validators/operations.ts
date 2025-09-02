@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiResponseSchema, DecimalString, PaginatedOf } from '@/validators/common';
+import { ApiResponseSchema, DecimalString, PaginatedOf } from '@/validators';
 
 /** Info: (20250822 - Tzuhan) 政府標案列 */
 export const TenderRowSchema = z.object({

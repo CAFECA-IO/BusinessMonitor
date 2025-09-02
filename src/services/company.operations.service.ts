@@ -6,7 +6,7 @@ import type {
   PaginatedTrademark,
   PaginatedPatent,
   PaginatedTrade,
-} from '@/validators/company.operations';
+} from '@/validators';
 import {
   findTenders,
   countTenders,

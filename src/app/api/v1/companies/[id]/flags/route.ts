@@ -4,7 +4,7 @@ import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
 import { CompanyIdParam } from '@/validators';
-import { FlagsQuerySchema, FlagsResponse } from '@/validators/company.flags';
+import { FlagsQuerySchema, FlagsResponse } from '@/validators';
 import { listFlags } from '@/services/company.flags.service';
 
 type Ctx = { params: { id: string } };

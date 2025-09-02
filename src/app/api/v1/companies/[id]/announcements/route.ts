@@ -3,26 +3,29 @@ import { jsonOk, jsonFail, ok, fail } from '@/lib/response';
 import { ApiCode, HttpMap } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam, PageQuery, PoliticalResponse } from '@/validators';
-import { listPoliticalDonations } from '@/services/company.operations.service';
+import {
+  CompanyIdParam,
+  AnnouncementsQuerySchema,
+  AnnouncementsResponseSchema,
+} from '@/validators';
+import { listCompanyAnnouncements } from '@/services/company.announcements.service';
 
 type Ctx = { params: { id: string } };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
   try {
     const { id } = CompanyIdParam.parse(ctx.params);
-
     const url = new URL(req.url);
-    const { page, pageSize } = PageQuery.parse({
-      page: url.searchParams.get('page') ?? undefined,
-      pageSize: url.searchParams.get('pageSize') ?? undefined,
+    const { limit } = AnnouncementsQuerySchema.parse({
+      limit: url.searchParams.get('limit') ?? undefined,
     });
 
-    const payload = await listPoliticalDonations(id, page, pageSize);
+    const items = await listCompanyAnnouncements(id, limit ?? 10);
 
-    PoliticalResponse.parse(ok(payload));
+    // Info: (20250902 - Tzuhan) dev 防呆
+    AnnouncementsResponseSchema.parse(ok(items));
 
-    const res = jsonOk(payload, 'OK');
+    const res = jsonOk(items, 'OK');
     res.headers.set('Cache-Control', 's-maxage=300');
     return res;
   } catch (err) {

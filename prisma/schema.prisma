@@ -286,6 +286,10 @@ model Announcement {
   title     String   @map("title")
   date      DateTime @map("date")
   content   String?  @map("content")
+  imageUrl  String?  @map("image_url")    // Info: (20250902 - Tzuhan) UI hero 圖
+  views     Int      @default(0)          // Info: (20250902 - Tzuhan) 瀏覽數（將來可做累計）
+  shares    Int      @default(0)          // Info: (20250902 - Tzuhan) 分享數
+  isPinned  Boolean  @default(false)      // Info: (20250902 - Tzuhan) 置頂（列表排序可先 pinned 再 date）
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   company   Company  @relation(fields: [companyId], references: [id])

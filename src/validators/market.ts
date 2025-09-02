@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { ApiResponseSchema, DecimalString } from '@/validators/common';
-import { TrendPointSchema as BaseTrendPoint } from '@/validators/company';
+import { ApiResponseSchema, DecimalString, TrendPointSchema as BaseTrendPoint } from '@/validators';
 
 // Info: (20250820 - Tzuhan) 市場區段
 export const MarketRange = z.enum(['7d', '1m', '3m', '6m', '1y']);
