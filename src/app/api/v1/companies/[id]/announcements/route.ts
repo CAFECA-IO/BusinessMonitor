@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 
     const items = await listCompanyAnnouncements(id, limit ?? 10);
 
-    // dev 防呆
+    // Info: (20250902 - Tzuhan) dev 防呆
     AnnouncementsResponseSchema.parse(ok(items));
 
     const res = jsonOk(items, 'OK');
