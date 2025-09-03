@@ -14,10 +14,13 @@ import {
   type HistoryRow,
   type RelatedCompanyRow,
   type CommentRow,
+  countCompanyComments,
 } from '@/repositories/company.detail.repo';
 import { AppError } from '@/lib/error';
 import { ApiCode } from '@/lib/status';
 import { buildMarket } from '@/lib/market';
+import { CommentSort } from '@/validators';
+import { makePaginated } from '@/types/common';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -141,24 +144,33 @@ export async function getCompanyMarket(id: number, limit: number) {
   return buildMarket(points);
 }
 
-export async function getCompanyComments(id: number, page: number, pageSize: number) {
-  const limit = clamp(pageSize, 1, 100);
-  const offset = (clamp(page, 1, Number.MAX_SAFE_INTEGER) - 1) * limit;
-  const rows: CommentRow[] = await listCompanyComments(id, limit, offset);
-  return {
-    items: rows.map((r) => ({
-      id: r.id,
-      userName: r.userName,
-      userAvatar: r.userAvatar,
-      content: r.content,
-      createdAt: r.createdAt.toISOString(),
-      likes: r.likes,
-      comments: r.comments,
-      shares: r.shares,
-    })),
-    page,
-    pageSize: limit,
-  };
+export async function getCompanyComments(
+  id: number,
+  page: number,
+  pageSize: number,
+  q?: string,
+  sort: CommentSort = CommentSort.newest
+) {
+  const size = clamp(pageSize, 1, 100);
+  const curPage = clamp(page, 1, Number.MAX_SAFE_INTEGER);
+  const offset = (curPage - 1) * size;
+
+  const [rows, total]: [CommentRow[], number] = await Promise.all([
+    listCompanyComments(id, size, offset, q, sort),
+    countCompanyComments(id, q),
+  ]);
+
+  const items = rows.map((r) => ({
+    id: r.id,
+    userName: r.userName,
+    userAvatar: r.userAvatar,
+    content: r.content,
+    createdAt: r.createdAt.toISOString().slice(0, 10),
+    comments: r.comments,
+    shares: r.shares,
+  }));
+
+  return makePaginated(items, total, curPage, size);
 }
 
 export async function likeCompanyComment(commentId: number) {

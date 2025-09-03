@@ -6,7 +6,7 @@ import { AppError } from '@/lib/error';
 import { CompanyIdParam } from '@/validators';
 import { PageQuery } from '@/validators/common';
 import { CompanyCommentsResponseSchema } from '@/validators';
-import { getCompanyComments } from '@/services/company.comments.service';
+import { getCompanyComments } from '@/services/company.detail.service';
 
 type Ctx = { params: { id: string } };
 

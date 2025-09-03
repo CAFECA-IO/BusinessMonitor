@@ -5,7 +5,7 @@ import { ApiCode } from '@/lib/status';
 const agent = getAgent();
 const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
 
-describe.skip('GET /api/v1/companies/:id/comments (integration, black-box)', () => {
+describe('GET /api/v1/companies/:id/comments (integration, black-box)', () => {
   it('200：預設分頁，回傳分頁容器；items 為陣列（可為空）', async () => {
     const url = Routes.companies.comments({ id: companyId });
     const res = await agent.get(url).expect(200);
