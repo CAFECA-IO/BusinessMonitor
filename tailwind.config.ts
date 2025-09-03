@@ -67,6 +67,7 @@ module.exports = {
         '120px': '120px',
         '150px': '150px',
         '160px': '160px',
+        '180px': '180px',
         '200px': '200px',
         '220px': '220px',
         '300px': '300px',
@@ -127,6 +128,9 @@ module.exports = {
         'radius-rounded': 'var(--radius-5)',
       },
       boxShadow: {
+        'drop-L': '0px 10px 20px 0px #5D5D7B33',
+      },
+      dropShadow: {
         'drop-L': '0px 10px 20px 0px #5D5D7B33',
       },
     },
