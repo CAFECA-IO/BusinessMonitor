@@ -7,7 +7,7 @@ export enum CommentSort {
   most_liked = 'most_liked',
 }
 
-// GET /companies/:id/comments 的 Query
+// Info: (20250903 - Tzuhan) GET /companies/:id/comments 的 Query
 export const CommentsQuerySchema = z.object({
   q: z.string().trim().min(1).optional(),
   sort: z.enum(CommentSort).default(CommentSort.newest),
