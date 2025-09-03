@@ -1,36 +1,37 @@
 import { z } from 'zod';
-import { ApiResponseSchema } from '@/validators';
+import { ApiResponseSchema, PageQuery } from '@/validators';
 
+export enum CommentSort {
+  newest = 'newest',
+  oldest = 'oldest',
+  most_liked = 'most_liked',
+}
+
+// GET /companies/:id/comments 的 Query
 export const CommentsQuerySchema = z.object({
-  q: z.string().min(1).max(200).optional(),
-  sort: z.enum(['newest', 'oldest', 'most_liked']).optional(),
-  page: z.coerce.number().int().min(1, 'page must be >= 1').default(1).optional(),
-  pageSize: z.coerce
-    .number()
-    .int()
-    .min(1, 'pageSize must be >= 1')
-    .max(100, 'pageSize too large')
-    .default(20)
-    .optional(),
+  q: z.string().trim().min(1).optional(),
+  sort: z.enum(CommentSort).default(CommentSort.newest),
+  page: PageQuery.shape.page,
+  pageSize: PageQuery.shape.pageSize,
 });
 
 export const CompanyCommentItemSchema = z.object({
-  id: z.number().int(),
-  userName: z.string().nullable().optional(),
-  userAvatar: z.string().nullable().optional(),
+  id: z.number().int().positive(),
+  userName: z.string().nullable(),
+  userAvatar: z.string().nullable(),
   content: z.string(),
-  createdAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  likes: z.number().int().nonnegative(),
-  comments: z.number().int().nonnegative(),
-  shares: z.number().int().nonnegative(),
+  createdAt: z.string(),
+  likes: z.number().int(),
+  comments: z.number().int(),
+  shares: z.number().int(),
 });
 
 export type CompanyCommentItem = z.infer<typeof CompanyCommentItemSchema>;
 
 export const CompanyCommentsPayloadSchema = z.object({
   items: z.array(CompanyCommentItemSchema),
-  page: z.number().int().positive(),
-  pageSize: z.number().int().positive(),
+  page: PageQuery.shape.page,
+  pageSize: PageQuery.shape.pageSize,
   total: z.number().int().nonnegative(),
   pages: z.number().int().positive(),
   hasNext: z.boolean(),
