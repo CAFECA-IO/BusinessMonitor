@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { IPeriod } from '@/interfaces/period';
 import DatePicker from '@/components/common/date_picker';
 
 enum FinancialReportType {
@@ -14,6 +15,10 @@ enum FinancialReportType {
 }
 
 const FinancialReportTab: React.FC = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState<IPeriod>({
+    startTimestamp: 0,
+    endTimestamp: 0,
+  });
   const [currentTab, setCurrentTab] = useState<FinancialReportType>(
     FinancialReportType.BALANCE_SHEET
   );
@@ -73,7 +78,11 @@ const FinancialReportTab: React.FC = () => {
       <div className="grid grid-cols-6 gap-8px">{reportSelections}</div>
 
       {/* ToDo: (20250901 - Julian) Developing */}
-      <DatePicker selectedYear={2025} selectedMonth={8} label="Period" />
+      <DatePicker
+        label="Period"
+        selectedPeriod={selectedPeriod}
+        setSelectedPeriod={setSelectedPeriod}
+      />
 
       {/* ToDo: (20250901 - Julian) Report Content */}
       {reportContent}
