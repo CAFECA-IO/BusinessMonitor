@@ -1,46 +1,81 @@
-import React from 'react';
-import Image from 'next/image';
-import { PiPaperPlaneTiltBold } from 'react-icons/pi';
-// import { TbThumbUp,TbThumbDown } from "react-icons/tb";
-import { timestampToString } from '@/lib/common';
-import InfoBlockLayout from '@/components/business/info_block_layout';
+'use client';
 
-interface IAnnouncement {
-  id: string;
-  date: number;
-  content: string;
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { FaCircleChevronUp, FaChevronDown } from 'react-icons/fa6';
+import { FiSearch } from 'react-icons/fi';
+import { PiPaperPlaneTiltBold } from 'react-icons/pi';
+import useOuterClick from '@/lib/hooks/use_outer_click';
+import { timestampToString } from '@/lib/common';
+import { mockAnnouncements } from '@/interfaces/announcement';
+import { mockPosts } from '@/interfaces/post';
+import InfoBlockLayout from '@/components/business/info_block_layout';
+import PostItem from '@/components/business/post_item';
+
+enum SortOrder {
+  NEWEST = 'newest',
+  OLDEST = 'oldest',
 }
 
-const mockAnnouncements: IAnnouncement[] = [
-  {
-    id: 'ANN-001',
-    date: 1696118400,
-    content: 'We are excited to announce the launch of our new feature!',
-  },
-  {
-    id: 'ANN-002',
-    date: 1696204800,
-    content: 'Scheduled maintenance will occur on September 15th from 1 AM to 3 AM UTC.',
-  },
-  {
-    id: 'ANN-003',
-    date: 1696291200,
-    content: 'Our team has expanded! Welcome our new members joining this month.',
-  },
-  {
-    id: 'ANN-004',
-    date: 1696377600,
-    content:
-      'We have updated our privacy policy. Please review the changes at your earliest convenience.',
-  },
-];
-
 const DiscussionTab: React.FC = () => {
-  // ToDo: (20250902 - Julian) Fetch real announcements from backend
+  // ToDo: (20250903 - Julian) Fetch real announcements from backend
   const importantAnnouncements = mockAnnouncements;
+  const posts = mockPosts;
+
+  const {
+    targetRef: sortRef,
+    componentVisible: isSortOpen,
+    setComponentVisible: setIsSortOpen,
+  } = useOuterClick<HTMLDivElement>(false);
+
+  const [scrollTop, setScrollTop] = useState<number>(0);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.NEWEST);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollTop(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Info: (20250903 - Julian) 在頂部時隱藏按鈕
+  const scrollBtnDisabled = scrollTop === 0;
+
+  const toggleSortDropdown = () => setIsSortOpen((prev) => !prev);
+
+  // Info: (20250903 - Julian) 捲動到頂部
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const sortOptions = Object.values(SortOrder).map((order) => {
+    const handleClick = () => {
+      setSortOrder(order);
+      setIsSortOpen(false);
+    };
+    return (
+      <button
+        type="button"
+        key={order}
+        onClick={handleClick}
+        className="p-16px text-left hover:text-text-brand"
+      >
+        {order}
+      </button>
+    );
+  });
 
   const annRows = importantAnnouncements.map((ann) => (
-    // ToDo: (20250902 - Julian) Add onClick to open announcement modal
+    // ToDo: (20250903 - Julian) Add onClick to open announcement modal
     <button
       type="button"
       key={ann.id}
@@ -55,9 +90,11 @@ const DiscussionTab: React.FC = () => {
     </button>
   ));
 
+  const postRows = posts.map((post) => <PostItem key={post.id} {...post} />);
+
   return (
     <div className="flex gap-24px">
-      {/* Info: (20250902 - Julian) Important Announcement Block */}
+      {/* Info: (20250903 - Julian) Important Announcement Block */}
       <InfoBlockLayout
         title="Important Announcement"
         className="flex h-400px w-300px flex-col gap-40px overflow-y-auto"
@@ -65,11 +102,21 @@ const DiscussionTab: React.FC = () => {
         {annRows}
       </InfoBlockLayout>
 
-      {/* Info: (20250902 - Julian) Discussion Section */}
+      {/* Info: (20250903 - Julian) Discussion Section */}
       <div className="flex w-full flex-col gap-40px">
-        {/* Info: (20250902 - Julian) Discussion Posting */}
+        {/* Info: (20250903 - Julian) Scroll to Top Button */}
+        <button
+          type="button"
+          onClick={scrollToTop}
+          disabled={scrollBtnDisabled}
+          className="fixed right-60px top-1/2 z-50 block overflow-hidden rounded-full text-button-primary shadow-drop-L disabled:hidden"
+        >
+          <FaCircleChevronUp size={44} />
+        </button>
+
+        {/* Info: (20250903 - Julian) Discussion Posting */}
         <div className="flex items-center gap-24px rounded-radius-l bg-surface-primary px-40px py-24px">
-          {/* Info: (20250902 - Julian) Avatar */}
+          {/* Info: (20250903 - Julian) Avatar */}
           <div className="h-80px w-80px shrink-0 overflow-hidden rounded-full">
             <Image
               src={'/fake_avatar/business_img_3.jpg'}
@@ -78,7 +125,7 @@ const DiscussionTab: React.FC = () => {
               alt="user_avatar"
             />
           </div>
-          {/* Info: (20250902 - Julian) Input Box */}
+          {/* Info: (20250903 - Julian) Input Box */}
           <div className="flex flex-1 items-center rounded-radius-s border border-border-secondary p-spacing-2xs">
             <input
               type="text"
@@ -90,27 +137,47 @@ const DiscussionTab: React.FC = () => {
             </button>
           </div>
         </div>
-        {/* Info: (20250902 - Julian) Discussion List */}
+        {/* Info: (20250903 - Julian) Discussion List */}
         <div className="flex flex-col gap-24px">
-          {/* Info: (20250902 - Julian) Filter Section */}
-          <div className="flex items-center gap-16px"></div>
-          {/* Info: (20250902 - Julian) Discussion Rows */}
-          <div className="flex flex-col gap-32px rounded-radius-l bg-surface-primary px-36px py-24px">
-            {/* Info: (20250902 - Julian) Content */}
-            <p className="text-sm font-medium text-text-primary">
-              This is an excellent chance for you to express your opinions! Im really curious to
-              hear your thoughts on the recent updates. How do you feel about the changes that have
-              been made? Lets dive into a discussion!
-            </p>
-            {/* Info: (20250902 - Julian) Likes / Dislikes / Comments / Share */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <button type="button" className="flex">
-                  <p></p>
-                </button>
+          {/* Info: (20250903 - Julian) Filter Section */}
+          <div className="flex items-center gap-16px text-base font-normal">
+            {/* Info: (20250903 - Julian) Search Box */}
+            <div className="flex flex-1 gap-8px rounded-radius-s border border-border-secondary bg-surface-primary p-spacing-2xs text-text-note">
+              <FiSearch size={24} />
+              <input
+                type="text"
+                placeholder="Search for comment"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="flex-1 text-text-primary placeholder:text-text-note"
+              />
+            </div>
+            {/* Info: (20250903 - Julian) Sorting */}
+            <div ref={sortRef} className="relative flex w-180px flex-col gap-spacing-3xs">
+              <button
+                type="button"
+                onClick={toggleSortDropdown}
+                className={`${
+                  isSortOpen
+                    ? 'border-border-brand text-text-brand'
+                    : 'border-border-secondary text-text-note'
+                } flex items-center justify-between gap-8px rounded-radius-s border bg-surface-primary p-spacing-2xs hover:border-border-brand hover:text-text-brand`}
+              >
+                <p>{sortOrder}</p>
+                <FaChevronDown size={24} />
+              </button>
+
+              <div
+                className={`${
+                  isSortOpen ? 'visible opacity-100' : 'invisible opacity-0'
+                } absolute top-64px z-10 flex max-h-300px w-full flex-col overflow-y-auto rounded-radius-s bg-surface-primary p-spacing-3xs text-text-note shadow-drop-L transition-all duration-150 ease-in-out`}
+              >
+                {sortOptions}
               </div>
             </div>
           </div>
+          {/* Info: (20250903 - Julian) Discussion Rows */}
+          <div className="flex flex-col items-center gap-12px">{postRows}</div>
         </div>
       </div>
     </div>
