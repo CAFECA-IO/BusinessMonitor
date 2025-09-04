@@ -25,5 +25,16 @@
   "INVESTOR_BLOCK_TITLE": "Investor",
   "RELATED_COMPANIES_BLOCK_ID": "Business ID",
   "RELATED_COMPANIES_BLOCK_NAME": "Company Name",
-  "RELATED_COMPANIES_BLOCK_TITLE": "Related Companies"
+  "RELATED_COMPANIES_BLOCK_TITLE": "Related Companies",
+
+  "IMPORTANT_ANNOUNCEMENT_BLOCK_TITLE": "Important Announcement",
+  "POSTING_INPUT_PLACEHOLDER": "Share your thoughts...",
+  "SEARCH_COMMENT_INPUT_PLACEHOLDER": "Search for comment",
+  "SORT_NEWEST": "Newest",
+  "SORT_OLDEST": "Oldest",
+  "DISCUSSION_COMMENTS": "{{count}} Comments",
+  "DISCUSSION_SHARE": "Share",
+  "DISCUSSION_ACTION_REPORT": "Report",
+  "DISCUSSION_ACTION_HIDE": "Hide",
+  "DISCUSSION_ACTION_DELETE": "Delete"
 }
