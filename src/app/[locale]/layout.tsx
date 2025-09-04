@@ -3,9 +3,15 @@ import { Noto_Sans_TC, Jost } from 'next/font/google';
 import '@/styles/globals.css';
 import TranslationsProvider from '@/components/translation/translations_provider';
 import initTranslations from '@/lib/i18n';
+import fs from 'fs';
+import path from 'path';
 
-// Info: (20250808 - Julian) 應寫入所有 i18n namespace
-const I18N_NAMESPACES = ['common', 'landing_page', 'business_detail'];
+// Info: (20250904 - Julian) 讀取 src/locales/en 底下的所有 namespace
+const localesDir = path.join(process.cwd(), 'src', 'locales', 'en');
+const localeFiles = fs.readdirSync(localesDir);
+const I18N_NAMESPACES = localeFiles
+  .filter((file) => file.endsWith('.json'))
+  .map((file) => path.basename(file, '.json'));
 
 const notoSansTC = Noto_Sans_TC({
   subsets: ['latin'],
