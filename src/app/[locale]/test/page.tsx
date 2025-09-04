@@ -51,7 +51,8 @@ export function WebAuthnSupport() {
   }, []);
 
   if (supported === null) {
-    return null; // SSR 時不輸出，避免 mismatch
+    // Info: (20250904 - Luphia) SSR 時不輸出，避免 mismatch
+    return null;
   }
 
   return supported ? (
