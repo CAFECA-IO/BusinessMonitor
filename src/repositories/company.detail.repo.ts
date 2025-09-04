@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { CommentSort } from '@/validators';
 import { Prisma } from '@prisma/client';
 
 export type CompanyBasicRow = {
@@ -162,10 +163,30 @@ export type CommentRow = {
 export async function listCompanyComments(
   companyId: number,
   limit: number,
-  offset: number
-): Promise<CommentRow[]> {
+  offset: number,
+  q?: string,
+  sort: CommentSort = CommentSort.newest
+) {
+  const orderBy =
+    sort === CommentSort.oldest
+      ? [{ createdAt: 'asc' as const }, { id: 'asc' as const }]
+      : sort === CommentSort.most_liked
+        ? [{ likes: 'desc' as const }, { createdAt: 'desc' as const }, { id: 'desc' as const }]
+        : [{ createdAt: 'desc' as const }, { id: 'desc' as const }];
+
   return prisma.comment.findMany({
-    where: { companyId, parentId: null },
+    where: {
+      companyId,
+      parentId: null,
+      ...(q
+        ? {
+            OR: [
+              { content: { contains: q, mode: 'insensitive' } },
+              { userName: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    },
     select: {
       id: true,
       userName: true,
@@ -177,9 +198,26 @@ export async function listCompanyComments(
       shares: true,
       parentId: true,
     },
-    orderBy: [{ createdAt: 'desc' }],
+    orderBy,
     take: limit,
     skip: offset,
+  });
+}
+
+export async function countCompanyComments(companyId: number, q?: string): Promise<number> {
+  return prisma.comment.count({
+    where: {
+      companyId,
+      parentId: null,
+      ...(q
+        ? {
+            OR: [
+              { content: { contains: q, mode: 'insensitive' } },
+              { userName: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    },
   });
 }
 

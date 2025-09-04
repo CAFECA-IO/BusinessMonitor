@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import type { CompanyCardBaseRow, Db, TrendRow } from '@/repositories/company.shared.repo';
 import { repoFetchTrends, repoFetchFlags } from '@/repositories/company.shared.repo';
-import type { CompanyCard, TrendPoint } from '@/validators/company';
+import type { CompanyCard, TrendPoint } from '@/validators';
 import { buildMarket } from '@/lib/market';
 
 export async function hydrateCompanyCards(

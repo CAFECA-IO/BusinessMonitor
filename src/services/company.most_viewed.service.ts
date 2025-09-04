@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import type { CompanyCard } from '@/validators/company';
+import type { CompanyCard } from '@/validators';
 import { findMostViewedCompanies } from '@/repositories/company.most_viewed.repo';
 import { hydrateCompanyCards } from '@/services/company.card.service';
 

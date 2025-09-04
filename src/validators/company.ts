@@ -6,7 +6,7 @@ import {
   ApiResponseSchema,
   PaginationSchema,
   PageQuery,
-} from '@/validators/common';
+} from '@/validators';
 
 /* Info: (20250814 - Tzuhan) ========== 基本 Company ========== */
 export const CompanySchema = z.object({

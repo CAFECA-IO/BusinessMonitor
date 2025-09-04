@@ -29,7 +29,7 @@ export interface IBusinessDetail extends IBusinessBrief {
 
 export const mockBusinesses: IBusinessDetail[] = [
   {
-    id: '1',
+    id: 'BS-001',
     name: 'Business Name here with second line',
     imgSrc: '/fake_avatar/business_img_1.jpg',
     businessTaxId: '1234567890',
@@ -49,7 +49,7 @@ export const mockBusinesses: IBusinessDetail[] = [
     updatedAt: 1723299420,
   },
   {
-    id: '2',
+    id: 'BS-002',
     name: 'Another Business Name',
     imgSrc: '/fake_avatar/business_img_2.png',
     businessTaxId: '0987654321',
@@ -69,7 +69,7 @@ export const mockBusinesses: IBusinessDetail[] = [
     updatedAt: 1729823819,
   },
   {
-    id: '3',
+    id: 'BS-003',
     name: 'Third Business Example',
     imgSrc: '/fake_avatar/business_img_3.jpg',
     businessTaxId: '1122334455',
@@ -87,5 +87,25 @@ export const mockBusinesses: IBusinessDetail[] = [
     paidInCapital: 1200000,
     capitalRanking: 3,
     updatedAt: 1728329042,
+  },
+  {
+    id: 'BS-004',
+    name: 'Fourth Business Example',
+    imgSrc: '/fake_avatar/business_img_1.jpg',
+    businessTaxId: '6677889900',
+    countOfGreenFlags: 7,
+    countOfRedFlags: 3,
+    stockPrice: 120.25,
+    stockPriceChange: -0.0035, // Info: (20250804 - Julian) -0.35%
+    address: '321 Fourth St, Fourth City, FC 44556',
+    isVerified: false,
+    officialWebLink: 'https://mermer.com.tw/',
+    companyRepresentative: 'Chen Wei',
+    countryOfRegistration: 'Taiwan',
+    dateOfEstablishment: 1704986328,
+    registeredCapital: 1800000,
+    paidInCapital: 1600000,
+    capitalRanking: 4,
+    updatedAt: 1727329042,
   },
 ];

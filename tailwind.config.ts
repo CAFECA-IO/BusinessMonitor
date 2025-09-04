@@ -67,9 +67,12 @@ module.exports = {
         '120px': '120px',
         '150px': '150px',
         '160px': '160px',
+        '180px': '180px',
         '200px': '200px',
         '220px': '220px',
+        '300px': '300px',
         '350px': '350px',
+        '400px': '400px',
         '420px': '420px',
         '500px': '500px',
         '800px': '800px',
@@ -106,6 +109,8 @@ module.exports = {
         'border-success': 'var(--color-state-safe)',
         'border-warning': 'var(--color-state-warn)',
         'border-error': 'var(--color-state-danger)',
+        'datepicker-active': 'var(--color-brand-brand-purple-500)',
+        'datepicker-hover': 'var(--color-brand-brand-purple-500-20)',
 
         'grey-100': 'var(--color-grey-grey-100)',
         'grey-600': ' var(--color-grey-grey-600)',
@@ -123,6 +128,9 @@ module.exports = {
         'radius-rounded': 'var(--radius-5)',
       },
       boxShadow: {
+        'drop-L': '0px 10px 20px 0px #5D5D7B33',
+      },
+      dropShadow: {
         'drop-L': '0px 10px 20px 0px #5D5D7B33',
       },
     },

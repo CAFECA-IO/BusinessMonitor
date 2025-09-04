@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { CompaniesSearchQuerySchema, PaginatedCompanyCardSchema } from '@/validators/company';
+import { CompaniesSearchQuerySchema, PaginatedCompanyCardSchema } from '@/validators';
 import { searchCompanies } from '@/services/company.search.service';
 import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';

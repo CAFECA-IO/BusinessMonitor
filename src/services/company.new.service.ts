@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import type { CompanyCard } from '@/validators/company';
+import type { CompanyCard } from '@/validators';
 import { repoFetchNewCompanies } from '@/repositories/company.new.repo';
 import { hydrateCompanyCards } from '@/services/company.card.service';
 

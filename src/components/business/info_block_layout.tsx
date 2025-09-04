@@ -27,7 +27,7 @@ const InfoBlockLayout: React.FC<IInfoBlockLayoutProps> = ({
       </div>
       <hr className="border-border-secondary" />
       {/* Info: (20250812 - Julian) Content */}
-      <div className={`${className} overflow-y-auto overflow-x-hidden`}>{children}</div>
+      <div className={`${className} overflow-hidden`}>{children}</div>
     </div>
   );
 };

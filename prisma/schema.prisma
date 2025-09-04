@@ -70,6 +70,7 @@ model Company {
   stockPrices              StockPrice[]
   trademarks               Trademark[]
   industryCodes            IndustryCode[]     @relation("CompanyIndustry")
+  politicalActivities      PoliticalActivity[]
 
   @@index([parentRegNo], map: "idx_company_parent_reg_no")
   @@index([businessItems(ops: JsonbPathOps)], map: "idx_company_business_items_gin", type: Gin)
@@ -240,27 +241,27 @@ model Trademark {
   imageUrl      String?  @map("image_url")
   name          String   @map("name")
   description   String?  @map("description")
-  applicationNo String?  @map("application_no")
-  status        String?  @map("status")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
-  company      Company  @relation(fields: [companyId], references: [id])
+  applicationNo String?  @map("application_no")
+  status        String?  @map("status")
+  company       Company  @relation(fields: [companyId], references: [id])
 
   @@map("trademark")
 }
 
 model Patent {
-  id            Int       @id @default(autoincrement())
-  companyId     Int       @map("company_id")
-  title         String    @map("title")
-  date          DateTime  @map("date")
-  applicationNo String?   @map("application_no")
-  description   String?   @map("description")
-  kind          String?   @map("kind")
-  status        String?   @map("status")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  company       Company   @relation(fields: [companyId], references: [id])
+  id            Int      @id @default(autoincrement())
+  companyId     Int      @map("company_id")
+  description   String?  @map("description")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  applicationNo String?  @map("application_no")
+  date          DateTime @map("date")
+  kind          String?  @map("kind")
+  status        String?  @map("status")
+  title         String   @map("title")
+  company       Company  @relation(fields: [companyId], references: [id])
 
   @@map("patent")
 }
@@ -285,6 +286,10 @@ model Announcement {
   title     String   @map("title")
   date      DateTime @map("date")
   content   String?  @map("content")
+  imageUrl  String?  @map("image_url")    // Info: (20250902 - Tzuhan) UI hero 圖
+  views     Int      @default(0)          // Info: (20250902 - Tzuhan) 瀏覽數（將來可做累計）
+  shares    Int      @default(0)          // Info: (20250902 - Tzuhan) 分享數
+  isPinned  Boolean  @default(false)      // Info: (20250902 - Tzuhan) 置頂（列表排序可先 pinned 再 date）
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   company   Company  @relation(fields: [companyId], references: [id])
@@ -312,11 +317,11 @@ model News {
   content   String?  @map("content")
   date      DateTime @map("date")
   imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
   lang      String?  @map("lang")
   source    String?  @map("source")
   url       String?  @map("url")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
   company   Company  @relation(fields: [companyId], references: [id])
 
   @@index([companyId, date])
@@ -360,17 +365,42 @@ model ImportLog {
 }
 
 model CompanyView {
-  id         Int      @id @default(autoincrement())
-  companyId  Int      @map("company_id")
-  day        DateTime
-  ipHash     String   @map("ip_hash")
-  sessionId  String?  @map("session_id")
-  createdAt  DateTime @default(now()) @map("created_at")
-  company    Company  @relation(fields: [companyId], references: [id])
+  id        Int      @id @default(autoincrement())
+  companyId Int      @map("company_id")
+  day       DateTime
+  ipHash    String   @map("ip_hash")
+  sessionId String?  @map("session_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  company   Company  @relation(fields: [companyId], references: [id])
 
   @@unique([companyId, day, ipHash], map: "uniq_company_day_ip")
   @@index([companyId, day], map: "idx_company_day")
   @@index([day], map: "idx_view_day")
-
   @@map("company_view")
+}
+
+enum PoliticalType {
+  contribution
+  donation
+}
+
+model PoliticalActivity {
+  id         Int           @id @default(autoincrement())
+  companyId  Int           @map("company_id")
+  event      String        @map("event")
+  type       PoliticalType @map("type") @default(donation) // Info: (20250827 - Tzuhan) 預設 donation，方便回填
+  amount     Decimal       @db.Decimal(30, 8) @map("amount")
+  date       DateTime      @map("date")
+  recipient  String?       @map("recipient")
+  source     String?       @map("source")      // Info: (20250827 - Tzuhan) 可填資料來源/連結
+
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt      @map("updated_at")
+
+  company    Company       @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, date], map: "idx_pc_company_date")
+  @@index([companyId, type, date], map: "idx_pc_company_type_date") // Info: (20250827 - Tzuhan) 給左右分欄各自查
+  @@unique([companyId, event, date, recipient, type], map: "uniq_pc_company_event_date_recipient_type") // Info: (20250827 - Tzuhan) 避免重複
+  @@map("political_activity")
 }

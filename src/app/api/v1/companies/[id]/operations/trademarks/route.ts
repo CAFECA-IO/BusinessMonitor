@@ -1,11 +1,9 @@
 import { NextRequest } from 'next/server';
 import { jsonOk, jsonFail, ok } from '@/lib/response';
-import { ApiCode, HttpMap } from '@/lib/status';
+import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam } from '@/validators';
-import { PageQuery } from '@/validators/common';
-import { TrademarkResponse } from '@/validators/company.operations';
+import { CompanyIdParam, PageQuery, TrademarkResponse } from '@/validators';
 import { listTrademarks } from '@/services/company.operations.service';
 
 type Ctx = { params: { id: string } };
@@ -20,12 +18,17 @@ export async function GET(req: NextRequest, ctx: Ctx) {
       pageSize: url.searchParams.get('pageSize') ?? undefined,
     });
 
+    console.log('page, pageSize', page, pageSize);
+
     const payload = await listTrademarks(id, page, pageSize);
+
+    console.log('payload', payload);
 
     // Info: (20250822 - Tzuhan) 開發期型別防呆
     TrademarkResponse.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
+    console.log('res', res);
     res.headers.set('Cache-Control', 's-maxage=300');
     return res;
   } catch (err) {

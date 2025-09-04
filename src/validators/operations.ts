@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiResponseSchema, DecimalString, PaginatedOf } from '@/validators/common';
+import { ApiResponseSchema, DecimalString, PaginatedOf } from '@/validators';
 
 /** Info: (20250822 - Tzuhan) 政府標案列 */
 export const TenderRowSchema = z.object({
@@ -49,3 +49,41 @@ export type PaginatedPatent = z.infer<typeof PaginatedPatentSchema>;
 
 export const PatentResponse = ApiResponseSchema(PaginatedPatentSchema);
 export type PatentResponse = z.infer<typeof PatentResponse>;
+
+/** Info: (20250826 - Tzuhan) =============== Trade (進出口彙總) =============== */
+export const TradeRowSchema = z.object({
+  year: z.number().int(),
+  month: z.string().regex(/^\d{4}-\d{2}$/), // Info: (20250826 - Tzuhan) 例如 2025-03；若原始資料無月，回傳 YYYY-00
+  totalImportUSD: DecimalString, // Info: (20250826 - Tzuhan) 以字串回傳
+  totalExportUSD: DecimalString, // Info: (20250826 - Tzuhan) 以字串回傳
+});
+export type TradeRow = z.infer<typeof TradeRowSchema>;
+
+export const PaginatedTradeSchema = PaginatedOf(TradeRowSchema);
+export type PaginatedTrade = z.infer<typeof PaginatedTradeSchema>;
+
+// Info: (20250826 - Tzuhan) /companies/:id/operations/trade 查詢參數
+export const TradeQuerySchema = z.object({
+  year: z.coerce.number().int().min(1900).max(2100).optional(),
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type TradeQuery = z.infer<typeof TradeQuerySchema>;
+
+export const TradeResponse = ApiResponseSchema(PaginatedTradeSchema);
+export type TradeResponse = z.infer<typeof TradeResponse>;
+
+/** Info: (20250826 - Tzuhan) =============== Political activities (donations/contributions) =============== */
+export const PoliticalRowSchema = z.object({
+  event: z.string(),
+  amount: DecimalString, // Info: (20250826 - Tzuhan) 金額字串
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // Info: (20250826 - Tzuhan) YYYY-MM-DD
+  recipient: z.string().optional(),
+});
+export type PoliticalRow = z.infer<typeof PoliticalRowSchema>;
+
+export const PaginatedPoliticalSchema = PaginatedOf(PoliticalRowSchema);
+export type PaginatedPolitical = z.infer<typeof PaginatedPoliticalSchema>;
+
+export const PoliticalResponse = ApiResponseSchema(PaginatedPoliticalSchema);
+export type PoliticalResponse = z.infer<typeof PoliticalResponse>;
