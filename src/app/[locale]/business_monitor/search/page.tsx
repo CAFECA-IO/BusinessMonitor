@@ -1,13 +1,23 @@
 import { i18nConfig } from '@/../i18n-config';
+import initTranslations from '@/lib/i18n';
+import type { Metadata } from 'next';
 import { mockBusinesses } from '@/interfaces/business';
 import { BM_URL } from '@/constants/url';
 import SearchArea from '@/components/common/search_area';
 import SearchResultList from '@/components/search/search_result_list';
 import Layout from '@/components/common/layout';
 
-export const metadata = {
-  title: 'CAFECA - Searching Result',
-};
+// Info: (20250904 - Julian) 網頁標題 i18n
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string };
+}): Promise<Metadata> {
+  const { t } = await initTranslations(params.locale, ['search_page']);
+  return {
+    title: `CAFECA - ${t('search_page:HEAD_TITLE')}`,
+  };
+}
 
 export async function generateStaticParams() {
   return i18nConfig.locales.map((locale) => ({ locale }));

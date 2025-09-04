@@ -19,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { t } = await initTranslations(params.locale, ['home_page']);
   return {
-    title: `CAFECA - ${t('home_page:HEAD_TITLE')}`, // 從翻譯檔讀取
+    title: `CAFECA - ${t('home_page:HEAD_TITLE')}`,
   };
 }
 
