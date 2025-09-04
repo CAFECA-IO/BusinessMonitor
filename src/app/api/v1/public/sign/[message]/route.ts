@@ -11,7 +11,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ mess
     return jsonOk(result);
   } catch (err) {
     if (err instanceof AppError) return jsonFail(err.code, err.message);
-    console.error(err);
     return jsonFail(ApiCode.SERVER_ERROR, 'Internal Server Error');
   }
 }
