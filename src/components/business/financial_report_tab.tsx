@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { IPeriod } from '@/interfaces/period';
 import DatePicker, { DatePickerType } from '@/components/common/date_picker';
 
@@ -15,6 +16,8 @@ enum FinancialReportType {
 }
 
 const FinancialReportTab: React.FC = () => {
+  const { t } = useTranslation(['business_detail']);
+
   const [selectedPeriod, setSelectedPeriod] = useState<IPeriod>({
     startTimestamp: 0,
     endTimestamp: 0,
@@ -23,10 +26,16 @@ const FinancialReportTab: React.FC = () => {
     FinancialReportType.BALANCE_SHEET
   );
 
+  const reportKeys = Object.keys(FinancialReportType);
   const reportOptions = Object.values(FinancialReportType);
 
   const reportSelections = reportOptions.map((report) => {
-    const reportStr = report.toLocaleLowerCase().replace(/\s+/g, '_');
+    const reportStr = report.toLowerCase().replace(/\s+/g, '_');
+
+    // Info: (20250905 - Julian) i18n key mapping
+    const reportKey = reportKeys[reportOptions.indexOf(report)];
+    const reportTransCode = `REPORT_${reportKey}`;
+
     const isSelected = report === currentTab;
 
     const imgSrc = isSelected
@@ -52,7 +61,7 @@ const FinancialReportTab: React.FC = () => {
           />
           <Image src={imgSrc} alt={`${reportStr}_icon`} width={80} height={80} />
         </div>
-        <p>{report}</p>
+        <p>{t(`business_detail:${reportTransCode}`)}</p>
       </button>
     );
   });

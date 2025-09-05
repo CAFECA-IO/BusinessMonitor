@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { timestampToString, formatNumberWithCommas } from '@/lib/common';
 import {
   IImportAndExportData,
@@ -35,13 +36,19 @@ const GovernmentTenderItem: React.FC<IGovernmentTender> = ({
   awardAmount,
   awarded,
 }) => {
+  const { t } = useTranslation(['business_detail']);
+
+  const awardedStr = awarded
+    ? t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARDED_YES')
+    : t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARDED_NO');
+
   return (
     <>
       <p className="col-span-3">{projectTitle}</p>
       <p className="col-span-3">{agencyName}</p>
       <p>{timestampToString(awardDate).formattedDate}</p>
       <p>$ {formatNumberWithCommas(awardAmount)}</p>
-      <p>{awarded ? 'Yes' : 'No'}</p>
+      <p>{awardedStr}</p>
     </>
   );
 };
@@ -81,6 +88,11 @@ const PoliticalActivityBlock: React.FC<{
     totalAmount: number;
   };
 }> = ({ eventType, politicalActivity }) => {
+  const { t } = useTranslation(['business_detail']);
+
+  // Info: (20250905 - Julian) Contribution | Donation
+  const eventTitle = t(`business_detail:POLITICAL_ACTIVITIES_BLOCK_${eventType.toUpperCase()}`);
+
   const { events, totalAmount } = politicalActivity;
   const politicalActivityRows = events.map((event) => (
     <PoliticalActivityItem key={event.id} {...event} />
@@ -88,12 +100,12 @@ const PoliticalActivityBlock: React.FC<{
 
   return (
     <div className="flex w-full flex-col gap-24px py-24px">
-      <h6 className="text-h6 font-bold text-black">{eventType}</h6>
+      <h6 className="text-h6 font-bold text-black">{eventTitle}</h6>
       <div className="flex h-200px flex-col gap-40px">
         {/* Info: (20250901 - Julian) Header */}
         <div className="grid grid-cols-4 font-medium text-text-note">
-          <p className="col-span-3">Event</p>
-          <p>Amount</p>
+          <p className="col-span-3">{t('business_detail:POLITICAL_ACTIVITIES_BLOCK_EVENT')}</p>
+          <p>{t('business_detail:POLITICAL_ACTIVITIES_BLOCK_AMOUNT')}</p>
         </div>
 
         {/* Info: (20250901 - Julian) Content */}
@@ -112,6 +124,8 @@ const PoliticalActivityBlock: React.FC<{
 };
 
 const OperationsTab: React.FC = () => {
+  const { t } = useTranslation(['business_detail']);
+
   // ToDo: (20250901 - Julian) Replace mock data with real API data
   const {
     lastUpdateTime,
@@ -123,7 +137,7 @@ const OperationsTab: React.FC = () => {
   } = mockData;
 
   const formattedTime = timestampToString(lastUpdateTime);
-  const timeStr = `Last Update Time: ${formattedTime.formattedDate} ${formattedTime.time}`;
+  const timeStr = `${t('business_detail:LAST_UPDATE_TIME')}: ${formattedTime.formattedDate} ${formattedTime.time}`;
 
   const importAndExportRows = importAndExportData.map((data) => (
     <ImportAndExportItem key={data.id} {...data} />
@@ -146,16 +160,16 @@ const OperationsTab: React.FC = () => {
         {/* Info: (20250901 - Julian) Last Update Time */}
         <p className="text-right font-normal text-text-primary">{timeStr}</p>
         <InfoBlockLayout
-          title="Import & Export Data"
+          title={t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE')}
           tooltipContent="tooltip content"
           className="flex flex-col gap-y-40px text-sm"
         >
           {/* Info: (20250901 - Julian) Title */}
           <div className="grid grid-cols-4 font-medium text-text-note">
-            <p>Year</p>
-            <p>Month</p>
-            <p>Total Import (USD)</p>
-            <p>Total Export (USD)</p>
+            <p>{t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE_YEAR')}</p>
+            <p>{t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE_MONTH')}</p>
+            <p>{t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE_TOTAL_IMPORT')} (USD)</p>
+            <p>{t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE_TOTAL_EXPORT')} (USD)</p>
           </div>
 
           {/* Info: (20250901 - Julian) Content */}
@@ -168,16 +182,20 @@ const OperationsTab: React.FC = () => {
       {/* Info: (20250901 - Julian) Government Tenders Block */}
       <div className="col-span-2">
         <InfoBlockLayout
-          title="Government Tenders"
+          title={t('business_detail:GOVERNMENT_TENDERS_BLOCK_TITLE')}
           tooltipContent="tooltip content"
           className="flex flex-col gap-y-40px text-sm"
         >
           <div className="grid grid-cols-9 gap-40px font-medium text-text-note">
-            <p className="col-span-3">Project Title</p>
-            <p className="col-span-3">Agency Name</p>
-            <p>Award Date</p>
-            <p>Award Amount</p>
-            <p>Awarded</p>
+            <p className="col-span-3">
+              {t('business_detail:GOVERNMENT_TENDERS_BLOCK_PROJECT_TITLE')}
+            </p>
+            <p className="col-span-3">
+              {t('business_detail:GOVERNMENT_TENDERS_BLOCK_AGENCY_NAME')}
+            </p>
+            <p>{t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARD_DATE')}</p>
+            <p>{t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARD_AMOUNT')}</p>
+            <p>{t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARDED')}</p>
           </div>
           <div className="grid grid-cols-9 gap-40px overflow-y-auto font-normal text-text-primary">
             {governmentTenderRows}
@@ -188,7 +206,7 @@ const OperationsTab: React.FC = () => {
       {/* Info: (20250901 - Julian) Trademarks Block */}
       <div>
         <InfoBlockLayout
-          title="Trademarks"
+          title={t('business_detail:TRADEMARKS_BLOCK_TITLE')}
           tooltipContent="tooltip content"
           className="flex flex-col gap-24px overflow-y-auto text-sm font-medium"
         >
@@ -199,7 +217,7 @@ const OperationsTab: React.FC = () => {
       {/* Info: (20250901 - Julian) Patents Block */}
       <div>
         <InfoBlockLayout
-          title="Patents"
+          title={t('business_detail:PATENTS_BLOCK_TITLE')}
           tooltipContent="tooltip content"
           className="flex flex-col gap-40px overflow-y-auto text-sm font-medium"
         >
@@ -210,7 +228,7 @@ const OperationsTab: React.FC = () => {
       {/* Info: (20250901 - Julian) Political Activities Block */}
       <div className="col-span-2">
         <InfoBlockLayout
-          title="Political Activities"
+          title={t('business_detail:POLITICAL_ACTIVITIES_BLOCK_TITLE')}
           tooltipContent="tooltip content"
           className="flex gap-80px"
         >
