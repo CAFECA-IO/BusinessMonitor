@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import useOuterClick from '@/lib/hooks/use_outer_click';
+import { useTranslation, Trans } from 'react-i18next';
 import { AiOutlineMessage } from 'react-icons/ai';
 import { FiShare2, FiMoreVertical, FiEyeOff } from 'react-icons/fi';
 import { TbThumbUp, TbThumbDown, TbMessageReport } from 'react-icons/tb';
 import { LuTrash2 } from 'react-icons/lu';
-import { timestampToString } from '@/lib/common';
+import useOuterClick from '@/lib/hooks/use_outer_click';
+import { timestampToString, formatNumberWithCommas } from '@/lib/common';
 import { IPost } from '@/interfaces/post';
 
 const PostItem: React.FC<IPost> = ({
@@ -18,6 +19,8 @@ const PostItem: React.FC<IPost> = ({
   countOfDislikes,
   countOfComments,
 }) => {
+  const { t } = useTranslation(['business_detail']);
+
   const formattedCreatedTime = timestampToString(createdAt);
 
   const {
@@ -29,6 +32,8 @@ const PostItem: React.FC<IPost> = ({
   // Info: (20250903 - Julian) True = liked, False = disliked, Null = no action
   const [isLiked, setIsLiked] = useState<boolean | null>(null);
 
+  // ToDo: (20250904 - Julian) 判斷是否有檢舉權限
+  const isReportAvailable = true;
   // ToDo: (20250903 - Julian) 判斷是否有刪除權限
   const isDeleteAvailable = true;
 
@@ -61,30 +66,30 @@ const PostItem: React.FC<IPost> = ({
         isMoreOpen ? 'visible opacity-100' : 'invisible opacity-0'
       } absolute right-0 top-54px flex w-220px flex-col rounded-radius-s bg-white p-spacing-3xs shadow-drop-L transition-all duration-150 ease-in-out`}
     >
+      {isReportAvailable && (
+        <button
+          type="button"
+          className="flex items-center gap-8px p-spacing-2xs text-text-primary hover:text-text-brand"
+        >
+          <TbMessageReport size={20} />
+          <p>{t('business_detail:DISCUSSION_ACTION_REPORT')}</p>
+        </button>
+      )}
       <button
         type="button"
         className="flex items-center gap-8px p-spacing-2xs text-text-primary hover:text-text-brand"
       >
-        <TbMessageReport size={20} />
-        <p>Report</p>
+        <FiEyeOff size={20} />
+        <p>{t('business_detail:DISCUSSION_ACTION_HIDE')}</p>
       </button>
       {isDeleteAvailable && (
-        <>
-          <button
-            type="button"
-            className="flex items-center gap-8px p-spacing-2xs text-text-primary hover:text-text-brand"
-          >
-            <FiEyeOff size={20} />
-            <p>Hide</p>
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-8px p-spacing-2xs text-text-primary hover:text-text-brand"
-          >
-            <LuTrash2 size={20} />
-            <p>Delete</p>
-          </button>
-        </>
+        <button
+          type="button"
+          className="flex items-center gap-8px p-spacing-2xs text-text-primary hover:text-text-brand"
+        >
+          <LuTrash2 size={20} />
+          <p>{t('business_detail:DISCUSSION_ACTION_DELETE')}</p>
+        </button>
       )}
     </div>
   );
@@ -123,7 +128,7 @@ const PostItem: React.FC<IPost> = ({
             className={`${isLikeActive ? 'text-button-primary' : 'text-text-primary'} flex items-center gap-spacing-3xs py-12px pr-24px hover:text-button-primary-hover`}
           >
             <TbThumbUp size={20} />
-            <p>{countOfLikes}</p>
+            <p>{formatNumberWithCommas(countOfLikes)}</p>
           </button>
           <button
             type="button"
@@ -131,7 +136,7 @@ const PostItem: React.FC<IPost> = ({
             className={`${isDislikeActive ? 'text-button-primary' : 'text-text-primary'} flex items-center gap-spacing-3xs px-24px py-12px hover:text-button-primary-hover`}
           >
             <TbThumbDown size={20} />
-            <p>{countOfDislikes}</p>
+            <p>{formatNumberWithCommas(countOfDislikes)}</p>
           </button>
         </div>
 
@@ -141,14 +146,17 @@ const PostItem: React.FC<IPost> = ({
             className="flex items-center gap-spacing-3xs px-24px py-12px hover:text-button-primary-hover"
           >
             <AiOutlineMessage size={20} />
-            <p>{countOfComments} Comments</p>
+            <Trans
+              i18nKey="business_detail:DISCUSSION_COMMENTS"
+              values={{ count: formatNumberWithCommas(countOfComments) }}
+            />
           </button>
           <button
             type="button"
             className="flex items-center gap-spacing-3xs py-12px pl-24px hover:text-button-primary-hover"
           >
             <FiShare2 size={20} />
-            <p>Share</p>
+            <p>{t('business_detail:DISCUSSION_SHARE')}</p>
           </button>
         </div>
       </div>

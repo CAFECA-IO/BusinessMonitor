@@ -27,8 +27,10 @@ const FlagItem: React.FC<IFlags> = ({ id, flagType, date, eventTitle, level }) =
 
 const RedFlagsTab: React.FC = () => {
   // ToDo: (20250902 - Julian) Replace with actual data fetching logic
-  const lastUpdateTime = 173289600;
+  const lastUpdateTime = 1737289600;
   const flagData = mockFlags;
+
+  const formattedTime = timestampToString(lastUpdateTime);
 
   // Info: (20250902 - Julian) Separate red and green flags
   const redFlags = flagData.filter((flag) => flag.flagType === FlagType.RED);
@@ -39,7 +41,9 @@ const RedFlagsTab: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-16px">
-      <p className="text-right">{timestampToString(lastUpdateTime).formattedDate}</p>
+      <p className="text-right">
+        Last Update Time: {formattedTime.formattedDate} {formattedTime.time}
+      </p>
       <div className="grid grid-cols-2 gap-60px">
         {/* Info: (20250902 - Julian) Red Flags Block */}
         <InfoBlockLayout

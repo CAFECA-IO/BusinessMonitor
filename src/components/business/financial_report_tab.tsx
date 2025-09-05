@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { IPeriod } from '@/interfaces/period';
-import DatePicker from '@/components/common/date_picker';
+import DatePicker, { DatePickerType } from '@/components/common/date_picker';
 
 enum FinancialReportType {
   BALANCE_SHEET = 'Balance Sheet',
@@ -80,6 +80,7 @@ const FinancialReportTab: React.FC = () => {
       {/* ToDo: (20250901 - Julian) Developing */}
       <DatePicker
         label="Period"
+        pickerType={DatePickerType.PERIOD}
         selectedPeriod={selectedPeriod}
         setSelectedPeriod={setSelectedPeriod}
       />

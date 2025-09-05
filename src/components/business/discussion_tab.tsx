@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { FaCircleChevronUp, FaChevronDown } from 'react-icons/fa6';
 import { FiSearch } from 'react-icons/fi';
-import { PiPaperPlaneTiltBold } from 'react-icons/pi';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import { timestampToString } from '@/lib/common';
 import { mockAnnouncements } from '@/interfaces/announcement';
 import { mockPosts } from '@/interfaces/post';
 import InfoBlockLayout from '@/components/business/info_block_layout';
+import DiscussionPoster from '@/components/business/discussion_poster';
 import PostItem from '@/components/business/post_item';
 
 enum SortOrder {
@@ -18,6 +18,8 @@ enum SortOrder {
 }
 
 const DiscussionTab: React.FC = () => {
+  const { t } = useTranslation(['business_detail']);
+
   // ToDo: (20250903 - Julian) Fetch real announcements from backend
   const importantAnnouncements = mockAnnouncements;
   const posts = mockPosts;
@@ -69,7 +71,7 @@ const DiscussionTab: React.FC = () => {
         onClick={handleClick}
         className="p-16px text-left hover:text-text-brand"
       >
-        {order}
+        {t(`business_detail:SORT_${order.toUpperCase()}`)}
       </button>
     );
   });
@@ -96,7 +98,7 @@ const DiscussionTab: React.FC = () => {
     <div className="flex gap-24px">
       {/* Info: (20250903 - Julian) Important Announcement Block */}
       <InfoBlockLayout
-        title="Important Announcement"
+        title={t('business_detail:IMPORTANT_ANNOUNCEMENT_BLOCK_TITLE')}
         className="flex h-400px w-300px flex-col gap-40px overflow-y-auto"
       >
         {annRows}
@@ -109,34 +111,13 @@ const DiscussionTab: React.FC = () => {
           type="button"
           onClick={scrollToTop}
           disabled={scrollBtnDisabled}
-          className="fixed right-60px top-1/2 z-50 block overflow-hidden rounded-full text-button-primary shadow-drop-L disabled:hidden"
+          className="fixed right-60px top-1/2 z-50 block overflow-hidden rounded-full bg-white text-button-primary shadow-drop-L disabled:hidden"
         >
           <FaCircleChevronUp size={44} />
         </button>
 
-        {/* Info: (20250903 - Julian) Discussion Posting */}
-        <div className="flex items-center gap-24px rounded-radius-l bg-surface-primary px-40px py-24px">
-          {/* Info: (20250903 - Julian) Avatar */}
-          <div className="h-80px w-80px shrink-0 overflow-hidden rounded-full">
-            <Image
-              src={'/fake_avatar/business_img_3.jpg'}
-              width={80}
-              height={80}
-              alt="user_avatar"
-            />
-          </div>
-          {/* Info: (20250903 - Julian) Input Box */}
-          <div className="flex flex-1 items-center rounded-radius-s border border-border-secondary p-spacing-2xs">
-            <input
-              type="text"
-              placeholder="Say something"
-              className="flex-1 text-base font-normal text-text-primary placeholder:text-text-note"
-            />
-            <button type="button" className="text-text-note hover:text-button-accent-hover">
-              <PiPaperPlaneTiltBold size={20} />
-            </button>
-          </div>
-        </div>
+        {/* Info: (20250903 - Julian) Discussion Poster */}
+        <DiscussionPoster />
         {/* Info: (20250903 - Julian) Discussion List */}
         <div className="flex flex-col gap-24px">
           {/* Info: (20250903 - Julian) Filter Section */}
@@ -146,7 +127,7 @@ const DiscussionTab: React.FC = () => {
               <FiSearch size={24} />
               <input
                 type="text"
-                placeholder="Search for comment"
+                placeholder={t('business_detail:SEARCH_COMMENT_INPUT_PLACEHOLDER')}
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className="flex-1 text-text-primary placeholder:text-text-note"
@@ -163,7 +144,7 @@ const DiscussionTab: React.FC = () => {
                     : 'border-border-secondary text-text-note'
                 } flex items-center justify-between gap-8px rounded-radius-s border bg-surface-primary p-spacing-2xs hover:border-border-brand hover:text-text-brand`}
               >
-                <p>{sortOrder}</p>
+                <p>{t(`business_detail:SORT_${sortOrder.toUpperCase()}`)}</p>
                 <FaChevronDown size={24} />
               </button>
 
