@@ -8,6 +8,7 @@ import { IoTriangle } from 'react-icons/io5';
 import { FaChevronRight } from 'react-icons/fa6';
 import { INews, mockNews } from '@/interfaces/news';
 import { mockMarketInfo } from '@/interfaces/market';
+import CandlestickChartSection from '@/components/business/candlestick_chart_section';
 
 interface INewsItemProps {
   news: INews;
@@ -152,8 +153,8 @@ const MarketInfoTab: React.FC = () => {
           </div>
         </div>
 
-        {/* ToDo: (20250826 - Julian) Stock Chart */}
-        <div className="h-500px w-full bg-purple-400"></div>
+        {/* Info: (20250905 - Julian) Stock Chart */}
+        <CandlestickChartSection />
 
         {/* Info: (20250826 - Julian) Traders’ Sentiment */}
         <div className="flex flex-col gap-24px">
