@@ -284,6 +284,21 @@ async function importOneFile(filePath: string, opts: { dryRun: boolean }) {
   );
 }
 
+async function dateHasData(date: Date): Promise<boolean> {
+  const priceCount = await prisma.marketDailyPrice.count({ where: { date } });
+  const summaryCount = await prisma.marketDailySummary.count({ where: { date } });
+  return priceCount > 0 && summaryCount > 0;
+}
+
+function dateFromFileName(fp: string): Date | null {
+  const m = path.basename(fp).match(/^(\d{8})\.csv$/i);
+  if (!m) return null;
+  const y = Number(m[1].slice(0, 4)),
+    mo = Number(m[1].slice(4, 6)),
+    d = Number(m[1].slice(6, 8));
+  return new Date(Date.UTC(y, mo - 1, d));
+}
+
 /** Info: (20250904 - Tzuhan) ===== CLI Entrypoint ===== */
 async function main() {
   const dirOrFile = process.argv[2];
@@ -311,6 +326,12 @@ async function main() {
     fail = 0;
   for (const f of files) {
     try {
+      const resume = process.argv.includes('--resume');
+      const fileDate = dateFromFileName(f);
+      if (resume && fileDate && (await dateHasData(fileDate))) {
+        console.log(`[SKIP] ${path.basename(f)} 已有資料（--resume）`);
+        continue;
+      }
       await importOneFile(f, { dryRun });
       ok++;
     } catch (e) {
