@@ -1,0 +1,20 @@
+[20060116.csv]
+Error: 無法從檔案解析出交易日期（民國年格式）。
+    at parseTwseCsv (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:224:11)
+    at importOneFile (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:233:37)
+    at main (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:335:13)
+[20060117.csv]
+Error: 無法從檔案解析出交易日期（民國年格式）。
+    at parseTwseCsv (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:224:11)
+    at importOneFile (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:233:37)
+    at main (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:335:13)
+[20060118.csv]
+Error: 無法從檔案解析出交易日期（民國年格式）。
+    at parseTwseCsv (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:224:11)
+    at importOneFile (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:233:37)
+    at main (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:335:13)
+[20060119.csv]
+Error: 無法從檔案解析出交易日期（民國年格式）。
+    at parseTwseCsv (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:224:11)
+    at importOneFile (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:233:37)
+    at main (/Users/tzuhan/Workspace/BusinessMonitor/scripts/import_twse_daily.ts:335:13)
