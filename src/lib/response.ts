@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 import { ApiCode } from '@/lib/status';
+import pkg from '../../package.json' assert { type: 'json' };
+
+type Pkg = { name?: string; version?: string };
+const { name = 'BusinessMonitor', version = '0.0.0' } = pkg as Pkg;
+
+export const POWERBY = `${name} v${version}`;
 
 export interface ApiResponse<T> {
   powerby: string;
@@ -8,8 +14,6 @@ export interface ApiResponse<T> {
   message: string;
   payload: T | null;
 }
-
-const POWERBY = process.env.NEXT_PUBLIC_API_POWERBY ?? 'BusinessMonitor api 1.0.0';
 
 export const ok = <T>(payload: T, message = 'OK'): ApiResponse<T> => ({
   powerby: POWERBY,
