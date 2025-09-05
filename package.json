@@ -1,9 +1,10 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+94",
+  "version": "0.1.0+96",
   "private": true,
   "type": "module",
   "scripts": {
+    "gen:env": "tsx scripts/initial_env.ts",
     "gen:prisma": "DISABLE_ERD=true prisma generate",
     "gen:erd": "DISABLE_ERD=false prisma generate",
     "gen:openapi": "tsx scripts/generate_openapi.ts > openapi.json",
@@ -13,9 +14,12 @@
     "db:down": "docker compose down -v",
     "db:logs": "docker compose logs -f postgres",
     "smoke:db_health": "tsx scripts/db_health.ts",
+    "predev": "npm run gen:env",
     "dev": "next dev --turbopack",
+    "prebuild": "npm run gen:env",
     "build": "npm run gen:prisma && next build",
     "start": "next start",
+    "pretest": "npm run build",
     "test": "jest --coverage --passWithNoTests",
     "test:coverage": "jest --coverage",
     "coverage:open": "open coverage/lcov-report/index.html",
@@ -30,6 +34,7 @@
     "swarm": "next start -p 10002"
   },
   "dependencies": {
+    "@passwordless-id/webauthn": "^2.3.1",
     "@prisma/client": "^6.13.0",
     "@types/supertest": "^6.0.0",
     "autoprefixer": "^10.4.21",
@@ -45,6 +50,7 @@
     "react-i18next": "^15.6.1",
     "react-icons": "^5.5.0",
     "react-usestateref": "^1.0.9",
+    "secp256k1": "^5.0.1",
     "supertest": "^7.0.0",
     "tailwindcss": "^3.4.17",
     "zod": "^4.0.15"
@@ -61,6 +67,7 @@
     "@types/node": "^20.19.9",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/secp256k1": "^4.0.6",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
     "eslint": "^9.32.0",
