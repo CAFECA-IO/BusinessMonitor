@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ApiCode } from '@/lib/status';
-import { name, version } from '../../package.json';
+import { name, version } from '../../package.json'; // ToDo: (20250905 - Tzuhan) 之後要改用相對路徑
 
 export const POWERBY = `${name} v${version}`;
 
