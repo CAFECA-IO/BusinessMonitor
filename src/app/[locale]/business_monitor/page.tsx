@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { i18nConfig } from '@/../i18n-config';
+import { i18nConfig } from 'i18n-config';
 import initTranslations from '@/lib/i18n';
 import { mockBusinesses } from '@/interfaces/business';
 import MainSearch from '@/components/business/main_search';
