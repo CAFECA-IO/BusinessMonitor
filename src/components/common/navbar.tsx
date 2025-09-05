@@ -35,10 +35,12 @@ const Navbar: React.FC = () => {
             variant={isActiveHome ? 'primaryBorderless' : 'secondaryBorderless'}
             className="gap-8px"
           >
-            <GrHomeRounded
-              size={24}
-              className={isActiveHome ? '' : 'text-text-secondary group-hover:text-text-brand'}
-            />
+            <div className="shrink-0">
+              <GrHomeRounded
+                size={24}
+                className={isActiveHome ? '' : 'text-text-secondary group-hover:text-text-brand'}
+              />
+            </div>
             <p>{t('common:HOME')}</p>
           </Button>
         </Link>
@@ -49,12 +51,14 @@ const Navbar: React.FC = () => {
             variant={isActiveBusinessMonitor ? 'primaryBorderless' : 'secondaryBorderless'}
             className="gap-8px"
           >
-            <RiComputerLine
-              size={24}
-              className={
-                isActiveBusinessMonitor ? '' : 'text-text-secondary group-hover:text-text-brand'
-              }
-            />
+            <div className="shrink-0">
+              <RiComputerLine
+                size={24}
+                className={
+                  isActiveBusinessMonitor ? '' : 'text-text-secondary group-hover:text-text-brand'
+                }
+              />
+            </div>
             <p>{t('common:BUSINESS_MONITOR')}</p>
           </Button>
         </Link>
