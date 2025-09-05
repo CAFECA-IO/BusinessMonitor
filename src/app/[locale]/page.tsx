@@ -1,12 +1,22 @@
-import { i18nConfig } from '@/../i18n-config';
+import { i18nConfig } from '@/i18nconfig';
+import initTranslations from '@/lib/i18n';
+import type { Metadata } from 'next';
 import Kv from '@/components/landing_page/kv';
 import IntroCard from '@/components/landing_page/intro_card';
 import Cta from '@/components/landing_page/cta';
 import Layout from '@/components/common/layout';
 
-export const metadata = {
-  title: 'CAFECA - Own Your Identity',
-};
+// Info: (20250904 - Julian) 網頁標題 i18n
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string };
+}): Promise<Metadata> {
+  const { t } = await initTranslations(params.locale, ['landing_page']);
+  return {
+    title: `CAFECA - ${t('landing_page:HEAD_TITLE')}`,
+  };
+}
 
 export async function generateStaticParams() {
   return i18nConfig.locales.map((locale) => ({ locale }));
