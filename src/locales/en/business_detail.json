@@ -70,6 +70,7 @@
   "REPORT_PROFITABILITY": "Profitability Analysis Report",
   "REPORT_INVESTMENT": "Investment Advisory Report",
   "REPORT_SOLVENCY": "Solvency Analysis Report",
+  "REPORT_PERIOD": "Period",
 
   "RED_FLAGS_BLOCK_TITLE": "Red Flags",
   "GREEN_FLAGS_BLOCK_TITLE": "Green Flags",

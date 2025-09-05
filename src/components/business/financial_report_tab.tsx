@@ -88,7 +88,7 @@ const FinancialReportTab: React.FC = () => {
 
       {/* ToDo: (20250901 - Julian) Developing */}
       <DatePicker
-        label="Period"
+        label={t('business_detail:REPORT_PERIOD')}
         pickerType={DatePickerType.PERIOD}
         selectedPeriod={selectedPeriod}
         setSelectedPeriod={setSelectedPeriod}

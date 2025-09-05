@@ -12,7 +12,8 @@ export async function generateMetadata({
 }: {
   params: { locale: string };
 }): Promise<Metadata> {
-  const { t } = await initTranslations(params.locale, ['landing_page']);
+  const { locale } = await params;
+  const { t } = await initTranslations(locale, ['landing_page']);
   return {
     title: `CAFECA - ${t('landing_page:HEAD_TITLE')}`,
   };

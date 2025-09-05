@@ -13,7 +13,8 @@ export async function generateMetadata({
 }: {
   params: { locale: string };
 }): Promise<Metadata> {
-  const { t } = await initTranslations(params.locale, ['search_page']);
+  const { locale } = await params;
+  const { t } = await initTranslations(locale, ['search_page']);
   return {
     title: `CAFECA - ${t('search_page:HEAD_TITLE')}`,
   };
