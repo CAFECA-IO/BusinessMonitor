@@ -1,4 +1,4 @@
-import { i18nConfig } from '@/../i18n-config';
+import { i18nConfig } from '@/i18nconfig';
 import initTranslations from '@/lib/i18n';
 import type { Metadata } from 'next';
 import Kv from '@/components/landing_page/kv';
