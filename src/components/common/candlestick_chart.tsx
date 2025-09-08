@@ -12,8 +12,8 @@ const CandlestickChart: React.FC = () => {
     chart: {
       type: 'line', // Info: (20250908 - Julian) 基底類型 (混合圖不用設成 candlestick)
       height: 350,
-      toolbar: { show: true },
       zoom: { enabled: true, autoScaleYaxis: true, allowMouseWheelZoom: false },
+      toolbar: { show: false }, // Info: (20250908 - Julian) 不顯示工具列
     },
     xaxis: {
       type: 'datetime',
