@@ -71,6 +71,7 @@ model Company {
   trademarks               Trademark[]
   industryCodes            IndustryCode[]     @relation("CompanyIndustry")
   politicalActivities      PoliticalActivity[]
+  stockSymbols             StockSymbol[]
 
   @@index([parentRegNo], map: "idx_company_parent_reg_no")
   @@index([businessItems(ops: JsonbPathOps)], map: "idx_company_business_items_gin", type: Gin)
@@ -405,33 +406,56 @@ model PoliticalActivity {
   @@map("political_activity")
 }
 
+enum Board {
+  LISTED  // Info: (20250908 - Tzuhan) 上市（四位數）
+  OTC     // Info: (20250908 - Tzuhan) 上櫃（非四位數）
+}
+
+model StockSymbol {
+  id           Int       @id @default(autoincrement())
+  symbol       String    @unique
+  name         String?
+  board        Board
+  companyId    Int?      @map("company_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt      @map("updated_at")
+  company      Company?  @relation(fields: [companyId], references: [id])
+  marketPrices MarketDailyPrice[]
+
+  @@map("stock_symbol")
+}
+
 // Info: (20250903 - Tzuhan) 證交所每日「逐檔」行情（含 ETF / 權證等）
 model MarketDailyPrice {
   id             Int      @id @default(autoincrement())
-  market         String   // Info: (20250903 - Tzuhan) 例如 "TWSE"
-  date           DateTime // Info: (20250903 - Tzuhan) 以 UTC 00:00 儲存該交易日
-  symbol         String   // Info: (20250903 - Tzuhan) 證券代號，例如 0050、2330、0302P...
-  name           String?  // Info: (20250903 - Tzuhan) 證券名稱
-  tradeVolume    BigInt?  @map("trade_volume")     // Info: (20250903 - Tzuhan) 成交股數
-  tradeValue     Decimal? @db.Decimal(30,0) @map("trade_value") // Info: (20250903 - Tzuhan) 成交金額(元)
-  tradeCount     Int?     @map("trade_count")      // Info: (20250903 - Tzuhan) 成交筆數
-  openPrice      Decimal? @db.Decimal(20,4) @map("open_price")
-  highPrice      Decimal? @db.Decimal(20,4) @map("high_price")
-  lowPrice       Decimal? @db.Decimal(20,4) @map("low_price")
-  closePrice     Decimal? @db.Decimal(20,4) @map("close_price")
-  changeSign     String?  @map("change_sign")      // Info: (20250903 - Tzuhan) '+' | '-' | 'X'（無漲跌）
-  changeAmount   Decimal? @db.Decimal(20,4) @map("change_amount")
-  finalBidPrice  Decimal? @db.Decimal(20,4) @map("final_bid_price")
+  market         String
+  date           DateTime
+  symbol         String
+  name           String?
+  tradeVolume    BigInt?  @map("trade_volume")
+  tradeValue     Decimal? @db.Decimal(30, 0) @map("trade_value")
+  tradeCount     Int?     @map("trade_count")
+  openPrice      Decimal? @db.Decimal(20, 4) @map("open_price")
+  highPrice      Decimal? @db.Decimal(20, 4) @map("high_price")
+  lowPrice       Decimal? @db.Decimal(20, 4) @map("low_price")
+  closePrice     Decimal? @db.Decimal(20, 4) @map("close_price")
+  changeSign     String?  @map("change_sign")
+  changeAmount   Decimal? @db.Decimal(20, 4) @map("change_amount")
+  finalBidPrice  Decimal? @db.Decimal(20, 4) @map("final_bid_price")
   finalBidVolume BigInt?  @map("final_bid_volume")
-  finalAskPrice  Decimal? @db.Decimal(20,4) @map("final_ask_price")
+  finalAskPrice  Decimal? @db.Decimal(20, 4) @map("final_ask_price")
   finalAskVolume BigInt?  @map("final_ask_volume")
-  peRatio        Decimal? @db.Decimal(10,2) @map("pe_ratio")
+  peRatio        Decimal? @db.Decimal(10, 2) @map("pe_ratio")
+
+  // Info: (20250908 - Tzuhan)★ 新增：暫時可為空的 FK
+  stockSymbolId  Int?        @map("stock_symbol_id")
+  stockSymbol    StockSymbol? @relation(fields: [stockSymbolId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt      @map("updated_at")
 
   @@unique([market, date, symbol], name: "market_date_symbol_unique")
-  @@index([market, date, symbol])
+  @@index([stockSymbolId])
   @@map("market_daily_price")
 }
 
