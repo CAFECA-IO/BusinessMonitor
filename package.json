@@ -34,7 +34,6 @@
     "swarm": "next start -p 10002"
   },
   "dependencies": {
-    "@canvasjs/react-charts": "^1.0.2",
     "@passwordless-id/webauthn": "^2.3.1",
     "@prisma/client": "^6.13.0",
     "@types/supertest": "^6.0.0",
