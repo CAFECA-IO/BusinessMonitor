@@ -404,3 +404,51 @@ model PoliticalActivity {
   @@unique([companyId, event, date, recipient, type], map: "uniq_pc_company_event_date_recipient_type") // Info: (20250827 - Tzuhan) 避免重複
   @@map("political_activity")
 }
+
+// Info: (20250903 - Tzuhan) 證交所每日「逐檔」行情（含 ETF / 權證等）
+model MarketDailyPrice {
+  id             Int      @id @default(autoincrement())
+  market         String   // Info: (20250903 - Tzuhan) 例如 "TWSE"
+  date           DateTime // Info: (20250903 - Tzuhan) 以 UTC 00:00 儲存該交易日
+  symbol         String   // Info: (20250903 - Tzuhan) 證券代號，例如 0050、2330、0302P...
+  name           String?  // Info: (20250903 - Tzuhan) 證券名稱
+  tradeVolume    BigInt?  @map("trade_volume")     // Info: (20250903 - Tzuhan) 成交股數
+  tradeValue     Decimal? @db.Decimal(30,0) @map("trade_value") // Info: (20250903 - Tzuhan) 成交金額(元)
+  tradeCount     Int?     @map("trade_count")      // Info: (20250903 - Tzuhan) 成交筆數
+  openPrice      Decimal? @db.Decimal(20,4) @map("open_price")
+  highPrice      Decimal? @db.Decimal(20,4) @map("high_price")
+  lowPrice       Decimal? @db.Decimal(20,4) @map("low_price")
+  closePrice     Decimal? @db.Decimal(20,4) @map("close_price")
+  changeSign     String?  @map("change_sign")      // Info: (20250903 - Tzuhan) '+' | '-' | 'X'（無漲跌）
+  changeAmount   Decimal? @db.Decimal(20,4) @map("change_amount")
+  finalBidPrice  Decimal? @db.Decimal(20,4) @map("final_bid_price")
+  finalBidVolume BigInt?  @map("final_bid_volume")
+  finalAskPrice  Decimal? @db.Decimal(20,4) @map("final_ask_price")
+  finalAskVolume BigInt?  @map("final_ask_volume")
+  peRatio        Decimal? @db.Decimal(10,2) @map("pe_ratio")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  @@unique([market, date, symbol], name: "market_date_symbol_unique")
+  @@index([market, date, symbol])
+  @@map("market_daily_price")
+}
+
+// Info: (20250903 - Tzuhan) 證交所每日「分類彙總」：一般股票、ETF、權證… 的 金額/股數/筆數
+model MarketDailySummary {
+  id          Int      @id @default(autoincrement())
+  market      String
+  date        DateTime
+  category    String   // Info: (20250903 - Tzuhan) 例如 "一般股票"、"ETF"、"台灣存託憑證"...
+  tradeValue  Decimal? @db.Decimal(30,0) @map("trade_value")
+  tradeVolume BigInt?  @map("trade_volume")
+  tradeCount  Int?     @map("trade_count")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  @@unique([market, date, category], name: "market_date_category_unique")
+  @@index([market, date, category])
+  @@map("market_daily_summary")
+}
