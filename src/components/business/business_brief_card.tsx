@@ -8,6 +8,53 @@ import { PiFlagPennantFill } from 'react-icons/pi';
 import { IBusinessBrief } from '@/interfaces/business';
 import { BM_URL } from '@/constants/url';
 
+import dynamic from 'next/dynamic';
+import { ApexOptions } from 'apexcharts';
+
+// Info: (20250908 - Julian) 動態載入，避免 SSR 錯誤
+const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
+
+const LineChart: React.FC = () => {
+  const options: ApexOptions = {
+    chart: {
+      type: 'area',
+      height: 100,
+      toolbar: { show: false },
+      zoom: { enabled: false },
+    },
+    stroke: { width: 2 },
+    grid: { show: false },
+    xaxis: {
+      type: 'datetime',
+      labels: { show: false },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+    },
+    yaxis: {
+      labels: { show: false },
+    },
+    tooltip: { enabled: false },
+    colors: ['#3DD08C'], // ToDo: (20250908 - Julian) Line Color
+  };
+
+  const series = [
+    {
+      name: 'Price',
+      data: [
+        { x: new Date(2023, 0, 1).getTime(), y: 420.85 },
+        { x: new Date(2023, 0, 2).getTime(), y: 320.95 },
+        { x: new Date(2023, 0, 3).getTime(), y: 388.48 },
+        { x: new Date(2023, 0, 4).getTime(), y: 450.23 },
+        { x: new Date(2023, 0, 5).getTime(), y: 470.12 },
+        { x: new Date(2023, 0, 6).getTime(), y: 430.56 },
+        { x: new Date(2023, 0, 7).getTime(), y: 480.34 },
+      ],
+    },
+  ];
+
+  return <Chart options={options} series={series} type="line" height={100} />;
+};
+
 interface IBusinessBriefCardProps {
   business: IBusinessBrief;
 }
@@ -51,10 +98,13 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
           <p className="text-xs font-medium text-text-note">{businessTaxId}</p>
         </div>
       </div>
-      {/* Info: (20250804 - Julian) Candlestick Chart */}
+      {/* Info: (20250804 - Julian) Chart Part */}
       <div className="flex flex-col gap-12px">
-        {/* ToDo: (20250804 - Julian) Candlestick Chart */}
-        <div className="h-40px w-full bg-lime-600"></div>
+        {/* ToDo: (20250804 - Julian) Line Chart */}
+        <div className="w-full">
+          <LineChart />
+        </div>
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8px text-xs font-normal">
             {/* Info: (20250804 - Julian) Green Flag */}
