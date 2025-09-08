@@ -8,7 +8,8 @@ export async function generateMetadata({
 }: {
   params: { locale: string };
 }): Promise<Metadata> {
-  const { t } = await initTranslations(params.locale, ['business_detail']);
+  const { locale } = await params;
+  const { t } = await initTranslations(locale, ['business_detail']);
   return {
     title: `CAFECA - ${t('business_detail:HEAD_TITLE')}`,
   };

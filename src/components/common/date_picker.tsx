@@ -243,6 +243,13 @@ const DatePicker: React.FC<IDatePickerProps> = ({
     }
   };
 
+  // Info: (20250908 - Julian) 清除已選日期
+  const clearDate = () => {
+    setDateOne(null);
+    setDateTwo(null);
+    setSelectedPeriod({ startTimestamp: 0, endTimestamp: 0 });
+  };
+
   // Info: (20250904 - Julian) 顯示標籤
   const isShowLabel = label && <p className="text-sm font-normal text-text-primary">{label}</p>;
 
@@ -301,6 +308,17 @@ const DatePicker: React.FC<IDatePickerProps> = ({
             {weekHeader}
             {/* Info: (20250825 - Julian) Date */}
             {dateGrid}
+          </div>
+
+          {/* Info: (20250908 - Julian) Clear Button */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={clearDate}
+              className="text-xs font-bold text-text-secondary hover:text-text-brand"
+            >
+              Clear
+            </button>
           </div>
         </div>
       </div>

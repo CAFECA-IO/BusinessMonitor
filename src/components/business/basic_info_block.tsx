@@ -36,7 +36,7 @@ const BasicInfoBlock: React.FC = () => {
     <div className="col-span-2 flex flex-col items-end gap-16px">
       {/* Info: (20250813 - Julian) Last Update Time */}
       <p className="text-base font-normal text-text-primary">
-        {t('business_detail:BASIC_INFO_TAB_LAST_UPDATE_TIME')}: {updatedAtString.formattedDate}{' '}
+        {t('business_detail:LAST_UPDATE_TIME')}: {updatedAtString.formattedDate}{' '}
         {updatedAtString.time}
       </p>
       {/* Info: (20250813 - Julian) Main Block */}

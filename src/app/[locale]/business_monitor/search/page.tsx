@@ -1,4 +1,4 @@
-import { i18nConfig } from '@/i18nconfig';
+import { i18nConfig } from 'i18n-config';
 import initTranslations from '@/lib/i18n';
 import type { Metadata } from 'next';
 import { mockBusinesses } from '@/interfaces/business';
@@ -13,7 +13,8 @@ export async function generateMetadata({
 }: {
   params: { locale: string };
 }): Promise<Metadata> {
-  const { t } = await initTranslations(params.locale, ['search_page']);
+  const { locale } = await params;
+  const { t } = await initTranslations(locale, ['search_page']);
   return {
     title: `CAFECA - ${t('search_page:HEAD_TITLE')}`,
   };
