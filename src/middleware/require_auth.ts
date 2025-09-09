@@ -11,8 +11,7 @@ export const requireAuth =
   <T>(handler: Handler<T>) =>
   async (req: NextRequest, ctx: Ctx) => {
     try {
-      const user = assertAuth(req);
-      // Info: (20250808 - Tzuhan) 傳進去 handler 的 ctx.user（避免直接改寫 req）
+      const user = await assertAuth(req); // ← 加 await（重要）
       return await handler(req, { ...ctx, user });
     } catch (err: unknown) {
       if (err instanceof AppError) {

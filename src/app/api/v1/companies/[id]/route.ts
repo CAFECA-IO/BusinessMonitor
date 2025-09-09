@@ -17,8 +17,8 @@ export const GET = withCompanyView(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     const log = loggerFromRequest({ method: 'GET', url: `/api/v1/companies/${params.id}` });
     try {
-      // Info: (20250808 - Tzuhan) 這裡才做驗簽（middleware 只檢查是否有 Bearer）
-      const user = assertAuth(req);
+      // middleware 現在只檢 Cookie presence；驗章在這裡做
+      const user = await assertAuth(req); // ← 加 await
       log.debug('auth ok', { userId: user.id });
 
       const id = toInt(params.id);
