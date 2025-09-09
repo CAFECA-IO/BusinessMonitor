@@ -5,24 +5,8 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
 import { FiCalendar } from 'react-icons/fi';
 import { timestampToString } from '@/lib/common';
 import useOuterClick from '@/lib/hooks/use_outer_click';
+import { MONTH_LIST, WEEK_LIST } from '@/constants/date';
 import { IPeriod } from '@/interfaces/period';
-
-// Info: (20250825 - Julian) Constants
-const MONTH_LIST = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-const WEEK_LIST = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 type IDate = {
   date: number;
