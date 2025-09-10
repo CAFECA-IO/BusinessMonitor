@@ -9,14 +9,15 @@ const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface ILineGraphProps {
   lineColor: string;
-  data: ILineGraphNode[];
+  graphData: ILineGraphNode[];
+  graphHeight?: number;
 }
 
-const LineGraph: React.FC<ILineGraphProps> = ({ lineColor, data }) => {
+const LineGraph: React.FC<ILineGraphProps> = ({ lineColor, graphData, graphHeight = 40 }) => {
   const options: ApexOptions = {
     chart: {
       type: 'area',
-      height: 40,
+      height: graphHeight,
       toolbar: { show: false },
       zoom: { enabled: false },
       // Info: (20250910 - Julian) sparkline：小圖模式
@@ -36,9 +37,9 @@ const LineGraph: React.FC<ILineGraphProps> = ({ lineColor, data }) => {
     },
   };
 
-  const series = [{ name: 'Price', data }];
+  const series = [{ name: 'Price', data: graphData }];
 
-  return <Chart options={options} series={series} type="area" height={40} />;
+  return <Chart options={options} series={series} type="area" height={graphHeight} />;
 };
 
 export default LineGraph;

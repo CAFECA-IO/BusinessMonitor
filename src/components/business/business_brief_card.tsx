@@ -57,9 +57,9 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
       </div>
       {/* Info: (20250804 - Julian) Chart Part */}
       <div className="flex flex-col gap-12px">
-        {/* ToDo: (20250804 - Julian) Line Chart */}
+        {/* Info: (20250804 - Julian) Line Chart */}
         <div className="w-full">
-          <LineGraph lineColor={lineColor} data={lineGraphData} />
+          <LineGraph lineColor={lineColor} graphData={lineGraphData} graphHeight={40} />
         </div>
 
         <div className="flex items-center justify-between">

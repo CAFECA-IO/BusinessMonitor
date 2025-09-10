@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -5,6 +7,7 @@ import { IoTriangle } from 'react-icons/io5';
 import { PiFlagPennantFill } from 'react-icons/pi';
 import { IBusinessDetail } from '@/interfaces/business';
 import { BM_URL } from '@/constants/url';
+import LineGraph from '@/components/common/line_graph';
 
 interface IBusinessDetailCardProps {
   business: IBusinessDetail;
@@ -20,11 +23,14 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
     stockPrice,
     stockPriceChange,
     address,
+    lineGraphData,
   } = business;
 
   const isPositive = stockPriceChange >= 0;
   const isShowGreenFlag = countOfGreenFlags > 0;
   const isShowRedFlag = countOfRedFlags > 0;
+
+  const lineColor = isPositive ? '#3DD08C' : '#FF5959';
 
   const changePercentage = (stockPriceChange * 100).toFixed(2);
 
@@ -36,7 +42,6 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
   );
 
   return (
-    // ToDo: (20250805 - Julian) 連結至 Business Detail Page
     <Link
       href={`${BM_URL.BUSINESS_MONITOR}/${business.id}`}
       className="flex w-full gap-24px rounded-radius-m border border-border-secondary bg-surface-primary px-16px py-12px hover:cursor-pointer hover:border-border-brand"
@@ -71,10 +76,12 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
           </div>
         </div>
       </div>
-      {/* Info: (20250804 - Julian) Candlestick Chart */}
+      {/* Info: (20250804 - Julian) Chart Part */}
       <div className="flex flex-col items-end gap-12px">
-        {/* ToDo: (20250804 - Julian) Candlestick Chart */}
-        <div className="h-40px w-160px bg-lime-600"></div>
+        {/* Info: (20250910 - Julian) Line Graph */}
+        <div className="h-full w-160px">
+          <LineGraph lineColor={lineColor} graphData={lineGraphData} graphHeight={60} />
+        </div>
         <div className={`flex items-center gap-4px font-medium ${changeColor}`}>
           <p className="text-sm">{stockPrice}</p>
           <div className="flex items-center gap-4px text-xs">
