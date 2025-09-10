@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { IoTriangle } from 'react-icons/io5';
+import { useTranslation } from 'react-i18next';
 import { formatNumberWithCommas } from '@/lib/common';
 import CandlestickChart from '@/components/common/candlestick_chart';
 import { ICandidateChartNode } from '@/interfaces/chart';
@@ -24,6 +25,10 @@ const dayChartData: ICandidateChartNode[] = [
   { x: 1675270800, y: [700.34, 730.56, 690.45, 710.78] },
   { x: 1675274400, y: [710.12, 740.23, 700.34, 720.45] },
   { x: 1675278000, y: [720.45, 750.12, 710.23, 730.34] },
+  { x: 1675281600, y: [730.23, 760.45, 720.56, 740.12] },
+  { x: 1675285200, y: [740.56, 770.34, 730.45, 750.23] },
+  { x: 1675288800, y: [750.34, 780.23, 740.12, 760.45] },
+  { x: 1675292400, y: [760.12, 790.45, 750.34, 770.56] },
 ];
 
 const weekChartData: ICandidateChartNode[] = [
@@ -65,12 +70,13 @@ const mockData = {
 };
 
 enum ChartRange {
-  DAY = 'D',
-  WEEK = 'W',
-  MONTH = 'M',
+  DAY = 'DAY',
+  WEEK = 'WEEK',
+  MONTH = 'MONTH',
 }
 
 const CandlestickChartSection: React.FC = () => {
+  const { t } = useTranslation(['business_detail']);
   const { open, high, low, close, change, changePercent, volume } = mockData;
 
   const [currentRange, setCurrentRange] = useState<ChartRange>(ChartRange.DAY);
@@ -111,7 +117,7 @@ const CandlestickChartSection: React.FC = () => {
             : 'bg-transparent text-text-primary hover:bg-grey-100'
         } w-60px rounded-full px-12px py-2px text-sm`}
       >
-        {range}
+        {t(`business_detail:GRAPH_${range.toUpperCase()}_BTN`)}
       </button>
     );
   });
@@ -119,18 +125,22 @@ const CandlestickChartSection: React.FC = () => {
   return (
     <div className="relative flex w-full flex-col">
       {/* Info: (20250909 - Julian) chart meta data */}
-      <div className="absolute left-24px top-24px z-50 flex items-center gap-16px text-sm font-medium text-text-secondary">
+      <div className="absolute left-24px top-24px z-50 flex items-center gap-16px bg-surface-background px-4px text-sm font-medium text-text-secondary">
         <p>
-          Open <span className="text-text-success">{formatNumberWithCommas(open, true)}</span>
+          {t('business_detail:GRAPH_OPEN')}{' '}
+          <span className="text-text-success">{formatNumberWithCommas(open, true)}</span>
         </p>
         <p>
-          High <span className="text-text-success">{formatNumberWithCommas(high, true)}</span>
+          {t('business_detail:GRAPH_HIGH')}{' '}
+          <span className="text-text-success">{formatNumberWithCommas(high, true)}</span>
         </p>
         <p>
-          Low <span className="text-text-success">{formatNumberWithCommas(low, true)}</span>
+          {t('business_detail:GRAPH_LOW')}{' '}
+          <span className="text-text-success">{formatNumberWithCommas(low, true)}</span>
         </p>
         <p>
-          Close <span className="text-text-success">{formatNumberWithCommas(close, true)}</span>
+          {t('business_detail:GRAPH_CLOSE')}{' '}
+          <span className="text-text-success">{formatNumberWithCommas(close, true)}</span>
         </p>
         <div className={`flex items-center gap-4px ${changeColor}`}>
           <IoTriangle size={8} />
@@ -139,7 +149,8 @@ const CandlestickChartSection: React.FC = () => {
           </p>
         </div>
         <p>
-          Vol <span className="text-text-success">{formatNumberWithCommas(volume)}</span>
+          {t('business_detail:GRAPH_VOLUME')}{' '}
+          <span className="text-text-success">{formatNumberWithCommas(volume)}</span>
         </p>
       </div>
 

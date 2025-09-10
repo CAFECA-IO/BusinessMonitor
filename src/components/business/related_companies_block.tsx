@@ -32,7 +32,7 @@ const RelatedCompaniesBlock: React.FC = () => {
   return (
     <InfoBlockLayout
       title={t('business_detail:RELATED_COMPANIES_BLOCK_TITLE')}
-      tooltipContent="tooltip content"
+      tooltipContent={t('business_detail:TOOLTIP_RELATED_COMPANIES')}
       className="flex flex-col gap-y-40px text-sm font-medium"
     >
       {/* Info: (20250813 - Julian) Title */}

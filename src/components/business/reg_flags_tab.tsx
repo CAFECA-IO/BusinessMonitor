@@ -53,7 +53,7 @@ const RedFlagsTab: React.FC = () => {
         {/* Info: (20250902 - Julian) Red Flags Block */}
         <InfoBlockLayout
           title={t('business_detail:RED_FLAGS_BLOCK_TITLE')}
-          tooltipContent="tooltip content"
+          tooltipContent={t('business_detail:TOOLTIP_RED_FLAGS')}
           className="flex flex-col gap-40px"
         >
           <div className="grid grid-cols-8 gap-40px font-medium text-text-note">
@@ -69,7 +69,7 @@ const RedFlagsTab: React.FC = () => {
         {/* Info: (20250902 - Julian) Green Flags Block */}
         <InfoBlockLayout
           title={t('business_detail:GREEN_FLAGS_BLOCK_TITLE')}
-          tooltipContent="tooltip content"
+          tooltipContent={t('business_detail:TOOLTIP_GREEN_FLAGS')}
           className="flex flex-col gap-40px"
         >
           <div className="grid grid-cols-8 gap-40px font-medium text-text-note">
