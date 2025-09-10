@@ -14,49 +14,49 @@ datasource db {
 }
 
 model Company {
-  id                       Int                @id @default(autoincrement())
-  name                     String             @map("name")
-  registrationNo           String             @unique @map("registration_no")
-  parentRegNo              String?            @map("parent_reg_no")
-  representative           String?            @map("representative")
-  registrationCountry      String?            @map("registration_country")
-  establishedDate          DateTime?          @map("established_date")
-  capitalAmount            Decimal?           @map("capital_amount") @db.Decimal(30, 8)
-  paidInCapital            Decimal?           @map("paid_in_capital") @db.Decimal(30, 8)
-  capitalRanking           Int?               @map("capital_ranking")
-  address                  String?            @map("address")
-  websiteUrl               String?            @map("website_url")
-  logoUrl                  String?            @map("logo_url")
-  registrationAgency       String?            @map("registration_agency")
-  status                   String?            @map("status")
-  organizationType         String?            @map("organization_type")
-  businessItems            Json?              @map("business_items")
-  contributions            Json?              @map("contributions")
-  shareholdingStatus       String?            @map("shareholding_status")
-  sharePrice               Decimal?           @map("share_price") @db.Decimal(30, 8)
-  totalIssuedShares        BigInt?            @map("total_issued_shares")
-  multipleVotingRights     String?            @map("multiple_voting_rights")
-  specialVotingRights      String?            @map("special_voting_rights")
-  lastChangeDate           DateTime?          @map("last_change_date")
-  lastApprovedChange       DateTime?          @map("last_approved_change")
-  statusDate               DateTime?          @map("status_date")
-  statusDocNo              String?            @map("status_doc_no")
-  foreignCompanyName       String?            @map("foreign_company_name")
-  directors                Json?              @map("directors")
-  managers                 Json?              @map("managers")
-  suspensionStartDate      DateTime?          @map("suspension_start_date")
-  suspensionEndDate        DateTime?          @map("suspension_end_date")
-  suspensionAgency         String?            @map("suspension_agency")
-  oldBusinessItemsUrl      String?            @map("old_business_items_url")
-  createdAt                DateTime           @default(now()) @map("created_at")
-  updatedAt                DateTime           @updatedAt @map("updated_at")
+  id                       Int                 @id @default(autoincrement())
+  name                     String              @map("name")
+  registrationNo           String              @unique @map("registration_no")
+  parentRegNo              String?             @map("parent_reg_no")
+  representative           String?             @map("representative")
+  registrationCountry      String?             @map("registration_country")
+  establishedDate          DateTime?           @map("established_date")
+  capitalAmount            Decimal?            @map("capital_amount") @db.Decimal(30, 8)
+  paidInCapital            Decimal?            @map("paid_in_capital") @db.Decimal(30, 8)
+  capitalRanking           Int?                @map("capital_ranking")
+  address                  String?             @map("address")
+  websiteUrl               String?             @map("website_url")
+  logoUrl                  String?             @map("logo_url")
+  registrationAgency       String?             @map("registration_agency")
+  status                   String?             @map("status")
+  organizationType         String?             @map("organization_type")
+  businessItems            Json?               @map("business_items")
+  contributions            Json?               @map("contributions")
+  shareholdingStatus       String?             @map("shareholding_status")
+  sharePrice               Decimal?            @map("share_price") @db.Decimal(30, 8)
+  totalIssuedShares        BigInt?             @map("total_issued_shares")
+  multipleVotingRights     String?             @map("multiple_voting_rights")
+  specialVotingRights      String?             @map("special_voting_rights")
+  lastChangeDate           DateTime?           @map("last_change_date")
+  lastApprovedChange       DateTime?           @map("last_approved_change")
+  statusDate               DateTime?           @map("status_date")
+  statusDocNo              String?             @map("status_doc_no")
+  foreignCompanyName       String?             @map("foreign_company_name")
+  directors                Json?               @map("directors")
+  managers                 Json?               @map("managers")
+  suspensionStartDate      DateTime?           @map("suspension_start_date")
+  suspensionEndDate        DateTime?           @map("suspension_end_date")
+  suspensionAgency         String?             @map("suspension_agency")
+  oldBusinessItemsUrl      String?             @map("old_business_items_url")
+  createdAt                DateTime            @default(now()) @map("created_at")
+  updatedAt                DateTime            @updatedAt @map("updated_at")
   announcements            Announcement[]
   businessScopes           BusinessScope[]
   comments                 Comment[]
   histories                CompanyHistory[]
   investors                CompanyInvestor[]
-  relationsAsChild         CompanyRelation[]  @relation("ChildRelations")
-  relationsAsParent        CompanyRelation[]  @relation("ParentRelations")
+  relationsAsChild         CompanyRelation[]   @relation("ChildRelations")
+  relationsAsParent        CompanyRelation[]   @relation("ParentRelations")
   company_view             CompanyView[]
   financialReports         FinancialReport[]
   governmentTenders        GovernmentTender[]
@@ -64,13 +64,14 @@ model Company {
   marketIndicators         MarketIndicator[]
   news                     News[]
   patents                  Patent[]
-  relatedCompaniesAsSource RelatedCompany[]   @relation("CompanyToRelatedCompany")
-  relatedCompaniesAsTarget RelatedCompany[]   @relation("CompanyToRelatedCompanyTarget")
+  politicalActivities      PoliticalActivity[]
+  relatedCompaniesAsSource RelatedCompany[]    @relation("CompanyToRelatedCompany")
+  relatedCompaniesAsTarget RelatedCompany[]    @relation("CompanyToRelatedCompanyTarget")
   riskFlags                RiskFlag[]
   stockPrices              StockPrice[]
+  stock_symbol             stock_symbol[]
   trademarks               Trademark[]
-  industryCodes            IndustryCode[]     @relation("CompanyIndustry")
-  politicalActivities      PoliticalActivity[]
+  industryCodes            IndustryCode[]      @relation("CompanyIndustry")
 
   @@index([parentRegNo], map: "idx_company_parent_reg_no")
   @@index([businessItems(ops: JsonbPathOps)], map: "idx_company_business_items_gin", type: Gin)
@@ -286,12 +287,12 @@ model Announcement {
   title     String   @map("title")
   date      DateTime @map("date")
   content   String?  @map("content")
-  imageUrl  String?  @map("image_url")    // Info: (20250902 - Tzuhan) UI hero 圖
-  views     Int      @default(0)          // Info: (20250902 - Tzuhan) 瀏覽數（將來可做累計）
-  shares    Int      @default(0)          // Info: (20250902 - Tzuhan) 分享數
-  isPinned  Boolean  @default(false)      // Info: (20250902 - Tzuhan) 置頂（列表排序可先 pinned 再 date）
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  imageUrl  String?  @map("image_url")
+  isPinned  Boolean  @default(false)
+  shares    Int      @default(0)
+  views     Int      @default(0)
   company   Company  @relation(fields: [companyId], references: [id])
 
   @@map("announcement")
@@ -331,6 +332,7 @@ model News {
 model Comment {
   id         Int       @id @default(autoincrement())
   companyId  Int       @map("company_id")
+  userId     String?   @map("user_id")
   userName   String?   @map("user_name")
   userAvatar String?   @map("user_avatar")
   content    String
@@ -340,6 +342,7 @@ model Comment {
   comments   Int       @default(0)
   shares     Int       @default(0)
   parentId   Int?      @map("parent_id")
+  user       User?     @relation(fields: [userId], references: [id])
   company    Company   @relation(fields: [companyId], references: [id])
   parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   replies    Comment[] @relation("CommentReplies")
@@ -379,76 +382,133 @@ model CompanyView {
   @@map("company_view")
 }
 
+model PoliticalActivity {
+  id        Int           @id @default(autoincrement())
+  companyId Int           @map("company_id")
+  event     String        @map("event")
+  type      PoliticalType @default(donation) @map("type")
+  amount    Decimal       @map("amount") @db.Decimal(30, 8)
+  date      DateTime      @map("date")
+  recipient String?       @map("recipient")
+  source    String?       @map("source")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  company   Company       @relation(fields: [companyId], references: [id])
+
+  @@unique([companyId, event, date, recipient, type], map: "uniq_pc_company_event_date_recipient_type")
+  @@index([companyId, date], map: "idx_pc_company_date")
+  @@index([companyId, type, date], map: "idx_pc_company_type_date")
+  @@map("political_activity")
+}
+
+model MarketDailyPrice {
+  id              Int           @id @default(autoincrement())
+  market          String
+  date            DateTime
+  symbol          String
+  name            String?
+  tradeVolume     BigInt?       @map("trade_volume")
+  tradeValue      Decimal?      @map("trade_value") @db.Decimal(30, 0)
+  tradeCount      Int?          @map("trade_count")
+  openPrice       Decimal?      @map("open_price") @db.Decimal(20, 4)
+  highPrice       Decimal?      @map("high_price") @db.Decimal(20, 4)
+  lowPrice        Decimal?      @map("low_price") @db.Decimal(20, 4)
+  closePrice      Decimal?      @map("close_price") @db.Decimal(20, 4)
+  changeSign      String?       @map("change_sign")
+  changeAmount    Decimal?      @map("change_amount") @db.Decimal(20, 4)
+  finalBidPrice   Decimal?      @map("final_bid_price") @db.Decimal(20, 4)
+  finalBidVolume  BigInt?       @map("final_bid_volume")
+  finalAskPrice   Decimal?      @map("final_ask_price") @db.Decimal(20, 4)
+  finalAskVolume  BigInt?       @map("final_ask_volume")
+  peRatio         Decimal?      @map("pe_ratio") @db.Decimal(10, 2)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  stock_symbol_id Int?
+  stock_symbol    stock_symbol? @relation(fields: [stock_symbol_id], references: [id])
+
+  @@unique([market, date, symbol], name: "market_date_symbol_unique")
+  @@index([stock_symbol_id])
+  @@map("market_daily_price")
+}
+
+model MarketDailySummary {
+  id          Int      @id @default(autoincrement())
+  market      String
+  date        DateTime
+  category    String
+  tradeValue  Decimal? @map("trade_value") @db.Decimal(30, 0)
+  tradeVolume BigInt?  @map("trade_volume")
+  tradeCount  Int?     @map("trade_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([market, date, category], name: "market_date_category_unique")
+  @@index([market, date, category])
+  @@map("market_daily_summary")
+}
+
+model stock_symbol {
+  id                 Int                @id @default(autoincrement())
+  symbol             String             @unique
+  name               String?
+  board              Board
+  company_id         Int?
+  created_at         DateTime           @default(now())
+  updated_at         DateTime
+  market_daily_price MarketDailyPrice[]
+  company            Company?           @relation(fields: [company_id], references: [id])
+}
+
 enum PoliticalType {
   contribution
   donation
 }
 
-model PoliticalActivity {
-  id         Int           @id @default(autoincrement())
-  companyId  Int           @map("company_id")
-  event      String        @map("event")
-  type       PoliticalType @map("type") @default(donation) // Info: (20250827 - Tzuhan) 預設 donation，方便回填
-  amount     Decimal       @db.Decimal(30, 8) @map("amount")
-  date       DateTime      @map("date")
-  recipient  String?       @map("recipient")
-  source     String?       @map("source")      // Info: (20250827 - Tzuhan) 可填資料來源/連結
-
-  createdAt  DateTime      @default(now()) @map("created_at")
-  updatedAt  DateTime      @updatedAt      @map("updated_at")
-
-  company    Company       @relation(fields: [companyId], references: [id])
-
-  @@index([companyId, date], map: "idx_pc_company_date")
-  @@index([companyId, type, date], map: "idx_pc_company_type_date") // Info: (20250827 - Tzuhan) 給左右分欄各自查
-  @@unique([companyId, event, date, recipient, type], map: "uniq_pc_company_event_date_recipient_type") // Info: (20250827 - Tzuhan) 避免重複
-  @@map("political_activity")
+enum Board {
+  LISTED
+  OTC
 }
 
-// Info: (20250903 - Tzuhan) 證交所每日「逐檔」行情（含 ETF / 權證等）
-model MarketDailyPrice {
-  id             Int      @id @default(autoincrement())
-  market         String   // Info: (20250903 - Tzuhan) 例如 "TWSE"
-  date           DateTime // Info: (20250903 - Tzuhan) 以 UTC 00:00 儲存該交易日
-  symbol         String   // Info: (20250903 - Tzuhan) 證券代號，例如 0050、2330、0302P...
-  name           String?  // Info: (20250903 - Tzuhan) 證券名稱
-  tradeVolume    BigInt?  @map("trade_volume")     // Info: (20250903 - Tzuhan) 成交股數
-  tradeValue     Decimal? @db.Decimal(30,0) @map("trade_value") // Info: (20250903 - Tzuhan) 成交金額(元)
-  tradeCount     Int?     @map("trade_count")      // Info: (20250903 - Tzuhan) 成交筆數
-  openPrice      Decimal? @db.Decimal(20,4) @map("open_price")
-  highPrice      Decimal? @db.Decimal(20,4) @map("high_price")
-  lowPrice       Decimal? @db.Decimal(20,4) @map("low_price")
-  closePrice     Decimal? @db.Decimal(20,4) @map("close_price")
-  changeSign     String?  @map("change_sign")      // Info: (20250903 - Tzuhan) '+' | '-' | 'X'（無漲跌）
-  changeAmount   Decimal? @db.Decimal(20,4) @map("change_amount")
-  finalBidPrice  Decimal? @db.Decimal(20,4) @map("final_bid_price")
-  finalBidVolume BigInt?  @map("final_bid_volume")
-  finalAskPrice  Decimal? @db.Decimal(20,4) @map("final_ask_price")
-  finalAskVolume BigInt?  @map("final_ask_volume")
-  peRatio        Decimal? @db.Decimal(10,2) @map("pe_ratio")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  createdAt    DateTime     @default(now()) @map("created_at")
 
-  @@unique([market, date, symbol], name: "market_date_symbol_unique")
-  @@index([market, date, symbol])
-  @@map("market_daily_price")
+  // Info: (20250910 - Tzuhan) 一個使用者可綁定多把 FIDO2 憑證（每台裝置一把）
+  credentials  Credential[]
+  comments     Comment[]
+
+  @@map("user")
 }
 
-// Info: (20250903 - Tzuhan) 證交所每日「分類彙總」：一般股票、ETF、權證… 的 金額/股數/筆數
-model MarketDailySummary {
-  id          Int      @id @default(autoincrement())
-  market      String
-  date        DateTime
-  category    String   // Info: (20250903 - Tzuhan) 例如 "一般股票"、"ETF"、"台灣存託憑證"...
-  tradeValue  Decimal? @db.Decimal(30,0) @map("trade_value")
-  tradeVolume BigInt?  @map("trade_volume")
-  tradeCount  Int?     @map("trade_count")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+enum WebAuthnAlgo {
+  ES256
+  RS256
+  EdDSA
+}
 
-  @@unique([market, date, category], name: "market_date_category_unique")
-  @@index([market, date, category])
-  @@map("market_daily_summary")
+model Credential {
+  id              String        @id @default(cuid())
+  userId          String        @map("user_id")
+  credentialId    String        @unique @map("credential_id")
+  publicKey       String        @map("public_key")
+  publicKeyAlg    Int?          @map("public_key_alg")     // Info: (20250910 - Tzuhan) e.g. ES256=-7, RS256=-257, EdDSA=-8
+  algorithmNamed  WebAuthnAlgo  @default(ES256) @map("algorithm_named")
+
+  counter         Int           @default(0)
+
+  credIdHash      String?       @map("cred_id_hash")
+  aPubHash        String?       @map("a_pub_hash")
+  rpId            String?       @map("rp_id")
+  transports      String?       @map("transports")
+  deviceNote      String?       @map("device_note")
+
+  createdAt       DateTime      @default(now()) @map("created_at")
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_credential_user")
+  @@index([credIdHash], map: "idx_credential_credidhash")
+  @@map("credential")
 }
