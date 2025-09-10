@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+102",
+  "version": "0.1.0+104",
   "private": true,
   "type": "module",
   "scripts": {
@@ -44,6 +44,7 @@
     "i18next-resources-to-backend": "^1.2.1",
     "i18nexus-cli": "^3.7.0",
     "iconv-lite": "^0.7.0",
+    "jose": "^6.1.0",
     "json2csv": "^6.0.0-alpha.2",
     "next": "15.4.4",
     "next-i18n-router": "^5.5.3",

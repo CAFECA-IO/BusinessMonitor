@@ -5,7 +5,11 @@ import { fail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 
 const API_PREFIX = '/api/';
-const PUBLIC_API_PATHS: (string | RegExp)[] = ['/api/health', /^\/api\/v1\/public(\/.*)?$/];
+const PUBLIC_API_PATHS: (string | RegExp)[] = [
+  '/api/health',
+  /^\/api\/v1\/public(\/.*)?$/,
+  /^\/api\/auth(\/.*)?$/,
+];
 
 const PUBLIC_GET_PATHS: RegExp[] = [
   /^\/api\/v1\/companies\/\d+\/basic$/,
@@ -35,37 +39,37 @@ function withCors(res: NextResponse, requestId?: string): NextResponse {
   res.headers.set('Access-Control-Allow-Methods', ALLOW_METHODS);
   res.headers.set('Access-Control-Allow-Headers', ALLOW_HEADERS);
   res.headers.set('Access-Control-Expose-Headers', EXPOSE_HEADERS);
+
+  if (ALLOW_ORIGIN !== '*') res.headers.set('Access-Control-Allow-Credentials', 'true');
+  res.headers.set('Vary', 'Origin');
   if (requestId) res.headers.set('x-request-id', requestId);
   return res;
+}
+
+function hasSessionCookie(req: NextRequest): boolean {
+  return Boolean(req.cookies.get('bm_sess')?.value);
 }
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Info:（20250808 - Tzuhan）1) 只要是 /api/*，走 API middleware
   if (pathname.startsWith(API_PREFIX)) {
-    // Info:（20250808 - Tzuhan）CORS Preflight
     if (req.method === 'OPTIONS') {
       return withCors(NextResponse.json({}, { status: 204 }));
     }
 
-    // Info:（20250808 - Tzuhan）requestId
     const requestId = crypto.randomUUID();
     const nextHeaders = new Headers(req.headers);
     nextHeaders.set('x-request-id', requestId);
 
-    // Info:（20250808 - Tzuhan）公開 API 直接放行（附 CORS + requestId）
-
-    if (isPublicApi(pathname) || isPublicGet(pathname)) {
+    if (isPublicApi(pathname) || (req.method === 'GET' && isPublicGet(pathname))) {
       return withCors(NextResponse.next({ request: { headers: nextHeaders } }), requestId);
     }
 
-    // Info:（20250808 - Tzuhan）檢查是否帶 Bearer；真正驗簽交給 handler（lib/auth.ts）
-    const auth = req.headers.get('authorization') ?? '';
-    const hasBearer = /^Bearer\s+.+$/i.test(auth);
-    if (!hasBearer) {
+    // Info: (20250909 - Tzuhan) 只接受 Cookie
+    if (!hasSessionCookie(req)) {
       return withCors(
-        NextResponse.json(fail(ApiCode.UNAUTHENTICATED, 'Missing Bearer token'), { status: 401 }),
+        NextResponse.json(fail(ApiCode.UNAUTHENTICATED, 'Missing session cookie'), { status: 401 }),
         requestId
       );
     }
@@ -73,11 +77,5 @@ export function middleware(req: NextRequest) {
     return withCors(NextResponse.next({ request: { headers: nextHeaders } }), requestId);
   }
 
-  // Info:（20250808 - Tzuhan）2) 非 /api/* 路徑走 i18nRouter
   return i18nRouter(req, i18nConfig);
 }
-
-// Info:（20250808 - Tzuhan）同時攔 API 與前端頁面（避開 _next、static、檔案等）
-export const config = {
-  matcher: ['/api/:path*', '/((?!api|static|.*\\..*|_next).*)'],
-};

@@ -8,9 +8,10 @@ export function clientIp(req: NextRequest): string {
   return xreal ?? '0.0.0.0';
 }
 
-export function ipUaHash(ip: string, ua: string | null): string {
+export function ipUaHash(ip: string, ua: string | null, lang?: string | null): string {
   const h = createHash('sha256');
   h.update(ip);
   if (ua) h.update('|').update(ua);
+  if (lang) h.update('|').update(lang);
   return h.digest('hex').slice(0, 32);
 }
