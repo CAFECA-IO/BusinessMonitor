@@ -3,16 +3,14 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
-import { MONTH_LIST } from '@/constants/date';
+import { ICandidateChartNode } from '@/interfaces/chart';
+// import { MONTH_LIST } from '@/constants/date';
 
 // Info: (20250908 - Julian) 動態載入，避免 SSR 錯誤
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface ICandlestickChartProps {
-  chartData: {
-    x: Date;
-    y: number[];
-  }[];
+  chartData: ICandidateChartNode[];
 }
 
 const CandlestickChart: React.FC<ICandlestickChartProps> = ({ chartData }) => {
@@ -38,7 +36,6 @@ const CandlestickChart: React.FC<ICandlestickChartProps> = ({ chartData }) => {
           day: 'dd MMM',
           month: "MMM 'yy",
         },
-
       },
     },
     yaxis: [

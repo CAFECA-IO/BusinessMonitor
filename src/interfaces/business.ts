@@ -1,3 +1,5 @@
+import { ILineGraphNode } from '@/interfaces/chart';
+
 export interface IRelatedCompany {
   id: string;
   name: string;
@@ -10,6 +12,7 @@ export interface IBusinessBrief extends IRelatedCompany {
   countOfRedFlags: number;
   stockPrice: number;
   stockPriceChange: number;
+  lineGraphData: ILineGraphNode[];
 }
 
 export interface IBusinessDetail extends IBusinessBrief {
@@ -47,6 +50,20 @@ export const mockBusinesses: IBusinessDetail[] = [
     paidInCapital: 800000,
     capitalRanking: 1,
     updatedAt: 1723299420,
+    lineGraphData: [
+      { x: 1672502400, y: 420.85 },
+      { x: 1672588800, y: 320.95 },
+      { x: 1672675200, y: 388.48 },
+      { x: 1672848000, y: 450.23 },
+      { x: 1672934400, y: 670.12 },
+      { x: 1673020800, y: 430.56 },
+      { x: 1673107200, y: 580.34 },
+      { x: 1673193600, y: 600.45 },
+      { x: 1673280000, y: 520.65 },
+      { x: 1673366400, y: 720.78 },
+      { x: 1673452800, y: 650.89 },
+      { x: 1673539200, y: 480.23 },
+    ],
   },
   {
     id: 'BS-002',
@@ -67,6 +84,20 @@ export const mockBusinesses: IBusinessDetail[] = [
     paidInCapital: 1500000,
     capitalRanking: 2,
     updatedAt: 1729823819,
+    lineGraphData: [
+      { x: 1672502400, y: 234.23 },
+      { x: 1672588800, y: 424.13 },
+      { x: 1672675200, y: 623.41 },
+      { x: 1672848000, y: 234.53 },
+      { x: 1672934400, y: 435.15 },
+      { x: 1673020800, y: 524.13 },
+      { x: 1673107200, y: 573.15 },
+      { x: 1673193600, y: 691.84 },
+      { x: 1673280000, y: 728.23 },
+      { x: 1673366400, y: 658.91 },
+      { x: 1673452800, y: 448.24 },
+      { x: 1673539200, y: 749.63 },
+    ],
   },
   {
     id: 'BS-003',
@@ -87,6 +118,20 @@ export const mockBusinesses: IBusinessDetail[] = [
     paidInCapital: 1200000,
     capitalRanking: 3,
     updatedAt: 1728329042,
+    lineGraphData: [
+      { x: 1672502400, y: 838.12 },
+      { x: 1672588800, y: 451.23 },
+      { x: 1672675200, y: 642.78 },
+      { x: 1672848000, y: 523.23 },
+      { x: 1672934400, y: 725.12 },
+      { x: 1673020800, y: 634.85 },
+      { x: 1673107200, y: 523.45 },
+      { x: 1673193600, y: 743.26 },
+      { x: 1673280000, y: 617.51 },
+      { x: 1673366400, y: 592.28 },
+      { x: 1673452800, y: 658.9 },
+      { x: 1673539200, y: 719.83 },
+    ],
   },
   {
     id: 'BS-004',
@@ -107,5 +152,19 @@ export const mockBusinesses: IBusinessDetail[] = [
     paidInCapital: 1600000,
     capitalRanking: 4,
     updatedAt: 1727329042,
+    lineGraphData: [
+      { x: 1672502400, y: 812.46 },
+      { x: 1672588800, y: 738.23 },
+      { x: 1672675200, y: 627.94 },
+      { x: 1672848000, y: 727.49 },
+      { x: 1672934400, y: 658.07 },
+      { x: 1673020800, y: 377.29 },
+      { x: 1673107200, y: 628.92 },
+      { x: 1673193600, y: 859.24 },
+      { x: 1673280000, y: 736.02 },
+      { x: 1673366400, y: 718.48 },
+      { x: 1673452800, y: 823.89 },
+      { x: 1673539200, y: 689.28 },
+    ],
   },
 ];
