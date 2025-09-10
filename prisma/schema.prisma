@@ -494,7 +494,7 @@ model Credential {
   userId          String        @map("user_id")
   credentialId    String        @unique @map("credential_id")
   publicKey       String        @map("public_key")
-  publicKeyAlg    Int?          @map("public_key_alg")     // e.g. ES256=-7, RS256=-257, EdDSA=-8
+  publicKeyAlg    Int?          @map("public_key_alg")     // Info: (20250910 - Tzuhan) e.g. ES256=-7, RS256=-257, EdDSA=-8
   algorithmNamed  WebAuthnAlgo  @default(ES256) @map("algorithm_named")
 
   counter         Int           @default(0)
@@ -512,5 +512,3 @@ model Credential {
   @@index([credIdHash], map: "idx_credential_credidhash")
   @@map("credential")
 }
-
-
