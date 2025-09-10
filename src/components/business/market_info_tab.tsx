@@ -48,7 +48,7 @@ const MarketInfoTab: React.FC = () => {
     sharesOutstanding,
     mktCap,
     divYield,
-    // volume,
+    volume,
     sellersPercent,
     buyersPercent,
   } = mockMarketInfo;
@@ -154,7 +154,15 @@ const MarketInfoTab: React.FC = () => {
         </div>
 
         {/* Info: (20250905 - Julian) Stock Chart */}
-        <CandlestickChartSection />
+        <CandlestickChartSection
+          open={open}
+          high={high}
+          low={low}
+          close={price}
+          volume={volume}
+          change={change}
+          changePercent={changePercent}
+        />
 
         {/* Info: (20250826 - Julian) Traders’ Sentiment */}
         <div className="flex flex-col gap-24px">
