@@ -28,7 +28,7 @@ const InvestorBlock: React.FC = () => {
   return (
     <InfoBlockLayout
       title={t('business_detail:INVESTOR_BLOCK_TITLE')}
-      tooltipContent="tooltip content"
+      tooltipContent={t('business_detail:TOOLTIP_INVESTOR')}
       className="flex flex-col gap-y-16px text-sm"
     >
       {/* Info: (20250813 - Julian) Title */}

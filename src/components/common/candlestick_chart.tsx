@@ -3,23 +3,23 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
-import { MONTH_LIST } from '@/constants/date';
+import { ICandlestickChartNode, IBarGraphNode } from '@/interfaces/chart';
+// import { MONTH_LIST } from '@/constants/date';
 
 // Info: (20250908 - Julian) 動態載入，避免 SSR 錯誤
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface ICandlestickChartProps {
-  chartData: {
-    x: Date;
-    y: number[];
-  }[];
+  candlestickData: ICandlestickChartNode[];
+  volumeData: IBarGraphNode[];
 }
 
-const CandlestickChart: React.FC<ICandlestickChartProps> = ({ chartData }) => {
+const CandlestickChart: React.FC<ICandlestickChartProps> = ({ candlestickData, volumeData }) => {
+  const axisStyle = { colors: '#8181A0', fontFamily: 'Jost', fontSize: '12px', fontWeight: 500 };
+
   const options: ApexOptions = {
     chart: {
-      // type: 'line', // Info: (20250908 - Julian) 基底類型 (混合圖不用設成 candlestick)
-      type: 'candlestick',
+      type: 'line', // Info: (20250908 - Julian) 基底類型 (混合圖不用設成 candlestick)
       height: 470,
       zoom: { enabled: false, autoScaleYaxis: false, allowMouseWheelZoom: false },
       toolbar: { show: false }, // Info: (20250908 - Julian) 不顯示工具列
@@ -28,7 +28,7 @@ const CandlestickChart: React.FC<ICandlestickChartProps> = ({ chartData }) => {
       type: 'datetime',
       tickAmount: 10,
       labels: {
-        style: { colors: '#8181A0', fontFamily: 'Jost', fontSize: '12px', fontWeight: 500 },
+        style: axisStyle,
         // formatter: function (value) {
         //   // Info: (20250909 - Julian) x 軸只顯示月份的前三個字母
         //   const date = new Date(value);
@@ -38,7 +38,6 @@ const CandlestickChart: React.FC<ICandlestickChartProps> = ({ chartData }) => {
           day: 'dd MMM',
           month: "MMM 'yy",
         },
-
       },
     },
     yaxis: [
@@ -46,15 +45,13 @@ const CandlestickChart: React.FC<ICandlestickChartProps> = ({ chartData }) => {
         seriesName: 'Price',
         opposite: true,
         tooltip: { enabled: true },
-        labels: {
-          style: { colors: '#8181A0', fontFamily: 'Jost', fontSize: '12px', fontWeight: 500 },
-        },
+        labels: { style: axisStyle },
       },
-      // {
-      //   seriesName: 'Volume',
-      //   tooltip: { enabled: true },
-      //   show: false,
-      // },
+      {
+        seriesName: 'Volume',
+        tooltip: { enabled: true },
+        show: false,
+      },
     ],
     plotOptions: {
       candlestick: {
@@ -62,11 +59,13 @@ const CandlestickChart: React.FC<ICandlestickChartProps> = ({ chartData }) => {
           upward: '#3DD08C', // Info: (20250908 - Julian) 上漲的顏色
           downward: '#FF5959', // Info: (20250908 - Julian) 下跌的顏色
         },
-        wick: {
-          useFillColor: true,
-        },
+        wick: { useFillColor: true },
       },
     },
+    stroke: {
+      colors: ['', 'transparent'], // Info: (20250910 - Julian) 柱狀圖的邊框為透明
+    },
+    legend: { show: false },
     grid: {
       borderColor: '#DBDBEB',
       xaxis: { lines: { show: true } },
@@ -80,23 +79,13 @@ const CandlestickChart: React.FC<ICandlestickChartProps> = ({ chartData }) => {
     {
       name: 'Price',
       type: 'candlestick', // Info: (20250908 - Julian) 蠟燭圖
-      data: chartData,
+      data: candlestickData,
     },
-    //   {
-    //     name: 'Volume',
-    //     type: 'column', // Info: (20250908 - Julian) 柱狀圖
-    //     data: [
-    //       { x: new Date(2023, 0, 1), y: 212 },
-    //       { x: new Date(2023, 0, 2), y: 220 },
-    //       { x: new Date(2023, 0, 3), y: 193 },
-    //       { x: new Date(2023, 0, 4), y: 312 },
-    //       { x: new Date(2023, 0, 5), y: 242 },
-    //       { x: new Date(2023, 0, 6), y: 352 },
-    //       { x: new Date(2023, 0, 7), y: 252 },
-    //       { x: new Date(2023, 0, 8), y: 442 },
-    //       { x: new Date(2023, 0, 9), y: 362 },
-    //     ],
-    //   },
+    {
+      name: 'Volume',
+      type: 'column', // Info: (20250908 - Julian) 柱狀圖
+      data: volumeData,
+    },
   ];
 
   return (

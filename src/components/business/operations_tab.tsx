@@ -163,7 +163,7 @@ const OperationsTab: React.FC = () => {
         <p className="text-right font-normal text-text-primary">{timeStr}</p>
         <InfoBlockLayout
           title={t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE')}
-          tooltipContent="tooltip content"
+          tooltipContent={t('business_detail:TOOLTIP_IMPORT_AND_EXPORT')}
           className="flex flex-col gap-y-40px text-sm"
         >
           {/* Info: (20250901 - Julian) Title */}
@@ -185,7 +185,7 @@ const OperationsTab: React.FC = () => {
       <div className="col-span-2">
         <InfoBlockLayout
           title={t('business_detail:GOVERNMENT_TENDERS_BLOCK_TITLE')}
-          tooltipContent="tooltip content"
+          tooltipContent={t('business_detail:TOOLTIP_GOVERNMENT_TENDERS')}
           className="flex flex-col gap-y-40px text-sm"
         >
           <div className="grid grid-cols-9 gap-40px font-medium text-text-note">
@@ -209,7 +209,7 @@ const OperationsTab: React.FC = () => {
       <div>
         <InfoBlockLayout
           title={t('business_detail:TRADEMARKS_BLOCK_TITLE')}
-          tooltipContent="tooltip content"
+          tooltipContent={t('business_detail:TOOLTIP_TRADEMARKS')}
           className="flex flex-col gap-24px overflow-y-auto text-sm font-medium"
         >
           {trademarkRows}
@@ -220,7 +220,7 @@ const OperationsTab: React.FC = () => {
       <div>
         <InfoBlockLayout
           title={t('business_detail:PATENTS_BLOCK_TITLE')}
-          tooltipContent="tooltip content"
+          tooltipContent={t('business_detail:TOOLTIP_PATENTS')}
           className="flex flex-col gap-40px overflow-y-auto text-sm font-medium"
         >
           {patentRows}
@@ -231,7 +231,7 @@ const OperationsTab: React.FC = () => {
       <div className="col-span-2">
         <InfoBlockLayout
           title={t('business_detail:POLITICAL_ACTIVITIES_BLOCK_TITLE')}
-          tooltipContent="tooltip content"
+          tooltipContent={t('business_detail:TOOLTIP_POLITICAL_ACTIVITIES')}
           className="flex gap-80px"
         >
           {/* Info: (20250901 - Julian) Contribution */}
