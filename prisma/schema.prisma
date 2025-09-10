@@ -332,6 +332,7 @@ model News {
 model Comment {
   id         Int       @id @default(autoincrement())
   companyId  Int       @map("company_id")
+  userId     String?   @map("user_id")
   userName   String?   @map("user_name")
   userAvatar String?   @map("user_avatar")
   content    String
@@ -341,6 +342,7 @@ model Comment {
   comments   Int       @default(0)
   shares     Int       @default(0)
   parentId   Int?      @map("parent_id")
+  user       User?     @relation(fields: [userId], references: [id])
   company    Company   @relation(fields: [companyId], references: [id])
   parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   replies    Comment[] @relation("CommentReplies")
@@ -467,40 +469,52 @@ enum Board {
   OTC
 }
 
+
 model User {
   id           String       @id @default(cuid())
   email        String       @unique
   createdAt    DateTime     @default(now()) @map("created_at")
+
+  // Info: (20250910 - Tzuhan) 一個使用者可綁定多把 FIDO2 憑證（每台裝置一把）
   credentials  Credential[]
-  loginTickets LoginTicket[]
+  comments     Comment[]
 
   @@map("user")
 }
 
 model Credential {
+  // Info: (20250910 - Tzuhan) 建議用 cuid 做主鍵，credentialId 本身是外部 ID，仍設 unique
   id           String   @id @default(cuid())
+
+  // Info: (20250910 - Tzuhan)  所屬使用者
   userId       String   @map("user_id")
+
+  // Info: (20250910 - Tzuhan)  WebAuthn Credential ID（瀏覽器回傳的 ID；字串化後存）
   credentialId String   @unique @map("credential_id")
+
+  // Info: (20250910 - Tzuhan) Authenticator 公鑰（COSE Key → 你驗證函式用得到；以 base64 或 JWK/PEM 字串存）
   publicKey    String   @map("public_key")
+
+  // Info: (20250910 - Tzuhan) 防重放：計數器，必須「嚴格遞增」
   counter      Int      @default(0)
+
+  // Info: (20250910 - Tzuhan) 便於稽核/查詢的衍生欄位（可選，但很實用）
+  // Info: (20250910 - Tzuhan) credIdHash = sha256(credentialId)；aPubHash = sha256(平台公鑰或序列化公鑰)
   credIdHash   String?  @map("cred_id_hash")
   aPubHash     String?  @map("a_pub_hash")
+
+  // Info: (20250910 - Tzuhan) 新增 rpId / transports / deviceLabel 等欄位
+  rpId       String?  @map("rp_id")
+  transports String?  @map("transports") 
+  deviceNote String?  @map("device_note")
+
   createdAt    DateTime @default(now()) @map("created_at")
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  
+  @@index([userId], map: "idx_credential_user")
+  @@index([credIdHash], map: "idx_credential_credidhash")
   @@map("credential")
 }
 
-model LoginTicket {
-  id           String   @id @default(cuid())
-  status       String   @map("status")
-  expiresAt    DateTime @map("expires_at")
-  userId       String?  @map("user_id")
-  browserNonce String   @map("browser_nonce")
-  createdAt    DateTime @default(now()) @map("created_at")
 
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("login_ticket")
-}
 

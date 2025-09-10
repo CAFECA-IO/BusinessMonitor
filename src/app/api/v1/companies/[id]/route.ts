@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import { ok, fail } from '@/lib/response';
 import { AppError } from '@/lib/error';
 import { ApiCode } from '@/lib/status';
-import { assertAuth } from '@/lib/auth';
 import { loggerFromRequest } from '@/lib/logger';
 import { withCompanyView } from '@/lib/with_company_view';
 
@@ -17,10 +16,6 @@ export const GET = withCompanyView(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     const log = loggerFromRequest({ method: 'GET', url: `/api/v1/companies/${params.id}` });
     try {
-      // middleware 現在只檢 Cookie presence；驗章在這裡做
-      const user = await assertAuth(req); // ← 加 await
-      log.debug('auth ok', { userId: user.id });
-
       const id = toInt(params.id);
       const company = await prisma.company.findUnique({ where: { id } });
       if (!company) throw new AppError(ApiCode.NOT_FOUND, 'Company not found');
