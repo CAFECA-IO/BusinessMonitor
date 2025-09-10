@@ -1,40 +1,36 @@
 import { z } from 'zod';
 
 const EnvSchema = z.object({
+  // Info: (20250910 - Tzuhan) --- General ---
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  RPID: z.string().min(1, 'RPID is required'), // Info: (20250909 - Tzuhan) 例：localhost 或 bm.example.com
-  ORIGIN: z.string().url('ORIGIN must be a valid URL'), // Info: (20250909 - Tzuhan) 例：http://localhost:3000
-  SESSION_KID: z.string().min(1, 'SESSION_KID is required'),
-  SESSION_JWK: z.string().min(1, 'SESSION_JWK is required'), // Info: (20250909 - Tzuhan) 私鑰 JWK（JSON 或 base64url）
-  SESSION_ISS: z.string().default('bm'),
-  SESSION_AUD: z.string().default('bm-web'),
-  SESSION_MAX_AGE_SEC: z.coerce.number().default(15 * 60), // Info: (20250909 - Tzuhan) 15 分鐘
-  COOKIE_DOMAIN: z.string().optional(), // Info: (20250909 - Tzuhan) 正式可設為 .example.com
-  COOKIE_SECURE: z
-    .preprocess((v) => String(v ?? 'true').toLowerCase(), z.enum(['true', 'false']))
-    .default('true'),
+
+  // Info: (20250910 - Tzuhan) --- WebAuthn ---
+  RPID: z.string().min(1, 'RPID is required'), // Info: (20250910 - Tzuhan) 例：localhost 或 bm.example.com [cite]
+  ORIGIN: z.url('ORIGIN must be a valid URL'), // Info: (20250910 - Tzuhan) 例：http: // Info: (20250910 - Tzuhan)localhost:3000 [cite]
+
+  // Info: (20250910 - Tzuhan) --- DeWT ---
+  DEWT_ISS: z.string().min(1), // Info: (20250910 - Tzuhan) [cite]
+  DEWT_AUD: z.string().min(1), // Info: (20250910 - Tzuhan) [cite]
+  DEWT_MAX_AGE_SEC: z.coerce.number().int().positive(), // Info: (20250910 - Tzuhan) [cite]
+  DEWT_KID: z.string().min(1), // Info: (20250910 - Tzuhan) [cite]
+  DEWT_JWK: z.string().min(1, 'DEWT_JWK is required for signing tokens'), // Info: (20250910 - Tzuhan) 私鑰 JWK（JSON 或 base64url）
 });
 
-export const env = EnvSchema.parse({
-  NODE_ENV: process.env.NODE_ENV,
-  RPID: process.env.RPID,
-  ORIGIN: process.env.ORIGIN,
-  SESSION_KID: process.env.SESSION_KID,
-  SESSION_JWK: process.env.SESSION_JWK,
-  SESSION_ISS: process.env.SESSION_ISS,
-  SESSION_AUD: process.env.SESSION_AUD,
-  SESSION_MAX_AGE_SEC: process.env.SESSION_MAX_AGE_SEC,
-  COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
-});
+// Info: (20250910 - Tzuhan) 解析並導出經過驗證的環境變數
+export const env = EnvSchema.parse(process.env);
 
-// Info: (20250909 - Tzuhan) 解析 SESSION_JWK：允許 base64url 或 JSON
-export function parseSessionJwk<T extends object = Record<string, unknown>>(raw: string): T {
+// Info: (20250910 - Tzuhan) --- Helper Functions (可選，但建議保留) ---
+
+// Info: (20250910 - Tzuhan) 用於解析 base64url 或 JSON 格式的 JWK
+export function parseB64uJwk<T extends object = Record<string, unknown>>(raw: string): T {
   try {
-    // Info: (20250909 - Tzuhan) JSON 直接 parse
+    // Info: (20250910 - Tzuhan) 優先嘗試直接解析 JSON
     return JSON.parse(raw) as T;
   } catch {
-    // Info: (20250909 - Tzuhan) 否則視為 base64url
-    const buf = Buffer.from(raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
-    return JSON.parse(buf.toString('utf8')) as T;
+    // Info: (20250910 - Tzuhan) 否則視為 base64url 處理
+    const b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+    const jsonStr = Buffer.from(b64 + pad, 'base64').toString('utf8');
+    return JSON.parse(jsonStr) as T;
   }
 }

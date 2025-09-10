@@ -1,45 +1,44 @@
-import { SignJWT, jwtVerify, importJWK, JWK } from 'jose';
-import crypto from 'crypto';
-import { env, parseSessionJwk } from './env';
+import { createHash } from 'node:crypto';
 
-const ALG = 'ES256' as const;
-const privateJwk = Object.assign(parseSessionJwk(env.SESSION_JWK), {
-  alg: ALG,
-  kid: env.SESSION_KID,
-});
+export type ChallengeBase = {
+  tag: 'LOGIN'; // Info: (20250910 - Tzuhan) 可擴充其它用途
+  t: number; // Info: (20250910 - Tzuhan) time window（秒）＝ Math.floor(now/60)
+  rpId: string; // Info: (20250910 - Tzuhan) 必須與 WebAuthn rpId 一致
+  origin: string; // Info: (20250910 - Tzuhan) 必須與 WebAuthn origin 一致
+  nonce?: string; // Info: (20250910 - Tzuhan) FE 可自行加隨機字串（可選）
+  uidHint?: string; // Info: (20250910 - Tzuhan) email/username 提示（可選）
+};
 
-export type ChallengeKind = 'register' | 'login';
-export type ChallengeTicket = { token: string; challengeHex: string; expiresAt: number };
-
-export async function issueChallenge(kind: ChallengeKind, ttlSec = 120): Promise<ChallengeTicket> {
-  const challengeHex = crypto.randomBytes(32).toString('hex');
-  const key = await importJWK(privateJwk as unknown as JWK, ALG);
-  const now = Math.floor(Date.now() / 1000);
-  const exp = now + ttlSec;
-
-  const token = await new SignJWT({ typ: 'challenge', kind, challenge: challengeHex })
-    .setProtectedHeader({ alg: ALG, kid: env.SESSION_KID })
-    .setIssuer(env.SESSION_ISS)
-    .setAudience(`${env.SESSION_AUD}:${kind}`)
-    .setIssuedAt(now)
-    .setExpirationTime(exp)
-    .sign(key);
-
-  return { token, challengeHex, expiresAt: exp };
+// Info: (20250910 - Tzuhan) 以「鍵名排序」做穩定 JSON 序列化，避免不同環境順序差異
+export function stableStringify(obj: Record<string, unknown>): string {
+  const keys = Object.keys(obj).sort();
+  const kv = keys.map((k) => {
+    const v = (obj as Record<string, unknown>)[k];
+    return `"${k}":${typeof v === 'string' ? JSON.stringify(v) : String(v)}`;
+  });
+  return `{${kv.join(',')}}`;
 }
 
-export async function verifyChallenge(kind: ChallengeKind, token: string): Promise<string> {
-  const key = await importJWK(privateJwk as unknown as JWK, ALG);
-  const { payload } = await jwtVerify(token, key, {
-    issuer: env.SESSION_ISS,
-    audience: `${env.SESSION_AUD}:${kind}`,
-  });
-  if (
-    payload.typ !== 'challenge' ||
-    payload.kind !== kind ||
-    typeof payload.challenge !== 'string'
-  ) {
-    throw new Error('Invalid challenge ticket');
-  }
-  return payload.challenge;
+export function buildLoginData(params: {
+  rpId: string;
+  origin: string;
+  uidHint?: string;
+  nonce?: string;
+  now?: number; // Info: (20250910 - Tzuhan) 測試用（毫秒）
+}): ChallengeBase {
+  const now = typeof params.now === 'number' ? params.now : Date.now();
+  return {
+    tag: 'LOGIN',
+    t: Math.floor(now / 1000 / 60), // Info: (20250910 - Tzuhan) 分鐘窗
+    rpId: params.rpId,
+    origin: params.origin,
+    uidHint: params.uidHint,
+    nonce: params.nonce,
+  };
+}
+
+export function calcChallengeHex(loginData: ChallengeBase): string {
+  const json = stableStringify(loginData as unknown as Record<string, unknown>);
+  const h = createHash('sha256').update(json, 'utf8').digest('hex');
+  return h;
 }

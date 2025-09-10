@@ -1,55 +1,55 @@
 import { SignJWT, jwtVerify, importJWK, type JWK, type JWTPayload } from 'jose';
-import { env, parseSessionJwk } from '@/lib/env';
-
-// 可選：單獨的 DeWT 金鑰；缺省時沿用 SESSION_JWK
-function getDewtPrivateJwk(): JWK {
-  if (process.env.DEWT_JWK && process.env.DEWT_JWK.length > 0) {
-    return parseSessionJwk<JWK>(process.env.DEWT_JWK);
-  }
-  return parseSessionJwk<JWK>(env.SESSION_JWK);
-}
-
-function toPublicJwk(priv: JWK): JWK {
-  const { kty, crv, x, y } = priv as { kty: 'EC'; crv: 'P-256'; x: string; y: string };
-  if (!x || !y) throw new Error('DeWT JWK missing x/y');
-  return { kty, crv, x, y };
-}
+import { env, parseB64uJwk } from '@/lib/env';
 
 const ALG = 'ES256';
-const DEWT_ISS = process.env.DEWT_ISS ?? env.SESSION_ISS ?? 'bm';
-const DEWT_AUD = process.env.DEWT_AUD ?? 'bm-dewt';
-const DEWT_MAX_AGE_SEC = Number.parseInt(process.env.DEWT_MAX_AGE_SEC ?? '180', 10); // 高風險建議 60~300 秒
-const DEWT_KID = process.env.DEWT_KID ?? process.env.SESSION_KID ?? 'bm-dewt';
+
+// Info: (20250910 - Tzuhan) 惰性載入，只在需要時解析一次 JWK
+let privateJwk: JWK | null = null;
+function getPriv(): JWK {
+  if (!privateJwk) {
+    privateJwk = parseB64uJwk(env.DEWT_JWK);
+  }
+  return privateJwk;
+}
+
+function toPub(priv: JWK): JWK {
+  const { kty, crv, x, y } = priv as { kty: 'EC'; crv: 'P-256'; x: string; y: string };
+  if (!kty || !crv || !x || !y) throw new Error('Invalid EC private JWK for public key conversion');
+  return { kty, crv, x, y };
+}
 
 export type DeWTClaims = {
   sub: string;
   scope: string[];
-  amr: ['fido2'];
+  amr: ['fido2']; // Info: (20250910 - Tzuhan) 只允許 FIDO2 來源
   acr?: 'low' | 'high';
-  credIdHash?: string;
-  ncfcid?: string; // 之後可加入合約身分
+  credIdHash?: string | null; // Info: (20250910 - Tzuhan) 裝置綁定（可選）
+  ncfcid?: string; // Info: (20250910 - Tzuhan) 之後要串鏈上身份可用
 };
 
 export async function signDeWT(claims: DeWTClaims): Promise<string> {
-  const priv = getDewtPrivateJwk();
-  const key = await importJWK(priv, ALG);
+  const key = await importJWK(getPriv(), ALG);
   const now = Math.floor(Date.now() / 1000);
-  return await new SignJWT({ ...claims })
-    .setProtectedHeader({ alg: ALG, kid: DEWT_KID, typ: 'DEWT' })
-    .setIssuer(DEWT_ISS)
-    .setAudience(DEWT_AUD)
-    .setNotBefore(now) // 明確 nbf
+  return new SignJWT({ ...claims })
+    .setProtectedHeader({ alg: ALG, kid: env.DEWT_KID, typ: 'DEWT' }) // Info: (20250910 - Tzuhan) <-- 使用 env
+    .setIssuer(env.DEWT_ISS) // Info: (20250910 - Tzuhan) <-- 使用 env
+    .setAudience(env.DEWT_AUD) // Info: (20250910 - Tzuhan) <-- 使用 env
+    .setNotBefore(now)
     .setIssuedAt(now)
-    .setExpirationTime(now + DEWT_MAX_AGE_SEC)
+    .setExpirationTime(now + env.DEWT_MAX_AGE_SEC) // Info: (20250910 - Tzuhan) <-- 使用 env
     .sign(key);
 }
 
-export async function verifyDeWT(token: string): Promise<JWTPayload> {
-  const pub = toPublicJwk(getDewtPrivateJwk());
-  const key = await importJWK(pub, ALG);
+export async function verifyDeWT(token: string): Promise<JWTPayload & DeWTClaims> {
+  const key = await importJWK(toPub(getPriv()), ALG);
   const { payload } = await jwtVerify(token, key, {
-    issuer: DEWT_ISS,
-    audience: DEWT_AUD,
+    issuer: env.DEWT_ISS, // Info: (20250910 - Tzuhan) <-- 使用 env
+    audience: env.DEWT_AUD, // Info: (20250910 - Tzuhan) <-- 使用 env
   });
-  return payload;
+
+  const amr = Array.isArray(payload.amr) ? payload.amr : [];
+  if (!amr.includes('fido2')) {
+    throw new Error('Login method not allowed, "fido2" AMR is required');
+  }
+  return payload as JWTPayload & DeWTClaims;
 }
