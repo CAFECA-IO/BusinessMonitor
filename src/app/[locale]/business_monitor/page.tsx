@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { i18nConfig } from 'i18n-config';
 import initTranslations from '@/lib/i18n';
-import { mockBusinesses } from '@/interfaces/business';
 import MainSearch from '@/components/business/main_search';
 import NewBusinessList from '@/components/business/new_business_list';
 import MostViewedList from '@/components/business/most_viewed_list';
@@ -33,9 +32,9 @@ export default function SearchPage() {
       {/* Info: (20250804 - Julian) Business Lists */}
       <div className="flex w-full flex-col items-center gap-56px">
         {/* Info: (20250804 - Julian) New Business List */}
-        <NewBusinessList businessList={mockBusinesses} />
+        <NewBusinessList />
         {/* Info: (20250804 - Julian) Most Viewed List */}
-        <MostViewedList businessList={mockBusinesses} />
+        <MostViewedList />
       </div>
     </Layout>
   );

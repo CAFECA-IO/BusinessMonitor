@@ -7,7 +7,7 @@ import { IoTriangle } from 'react-icons/io5';
 import { PiFlagPennantFill } from 'react-icons/pi';
 import { IBusinessDetail } from '@/interfaces/business';
 import { BM_URL } from '@/constants/url';
-import LineGraph from '@/components/common/line_graph';
+// import LineGraph from '@/components/common/line_graph';
 
 interface IBusinessDetailCardProps {
   business: IBusinessDetail;
@@ -23,14 +23,14 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
     stockPrice,
     stockPriceChange,
     address,
-    lineGraphData,
+    // lineGraphData,
   } = business;
 
   const isPositive = stockPriceChange >= 0;
   const isShowGreenFlag = countOfGreenFlags > 0;
   const isShowRedFlag = countOfRedFlags > 0;
 
-  const lineColor = isPositive ? '#3DD08C' : '#FF5959';
+  // const lineColor = isPositive ? '#3DD08C' : '#FF5959';
 
   const changePercentage = (stockPriceChange * 100).toFixed(2);
 
@@ -80,7 +80,8 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
       <div className="flex flex-col items-end gap-12px">
         {/* Info: (20250910 - Julian) Line Graph */}
         <div className="h-full w-160px">
-          <LineGraph lineColor={lineColor} graphData={lineGraphData} graphHeight={60} />
+          {/* ToDo: (20250910 - Julian) During Developing */}
+          {/* <LineGraph lineColor={lineColor} graphData={lineGraphData} graphHeight={60} /> */}
         </div>
         <div className={`flex items-center gap-4px font-medium ${changeColor}`}>
           <p className="text-sm">{stockPrice}</p>
