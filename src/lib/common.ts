@@ -1,3 +1,6 @@
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
 export const timestampToString = (timestamp: number) => {
   if (!timestamp || timestamp == 0) return { formattedDate: '-', time: '-' };
 
@@ -33,4 +36,9 @@ export const formatNumberWithCommas = (num: number | string, isDecimal?: boolean
   const formattedDecimalPart = isDecimal ? (decimalPart ? `.${decimalPart}` : '.00') : '';
 
   return `${formattedIntegerPart}${formattedDecimalPart}`;
+};
+
+// Info: (20250911 - Julian) 用於合併 className，並自動處理 Tailwind CSS 的衝突問題
+export const cn = (...inputs: ClassValue[]) => {
+  return twMerge(clsx(inputs));
 };
