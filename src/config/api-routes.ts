@@ -177,6 +177,22 @@ export const Routes = {
     view: buildPath(`${API_PREFIX}/companies/:id/view`),
   },
 
+  auth: {
+    // Info: (20250911 - Tzuhan) POST /api/v1/secure/login
+    login: () => `${API_PREFIX}/secure/login`,
+
+    // Info: (20250911 - Tzuhan) GET /api/v1/secure/me
+    me: () => `${API_PREFIX}/secure/me`,
+
+    // Info: (20250911 - Tzuhan) FIDO2 註冊流程 (預留)
+    register: {
+      // Info: (20250911 - Tzuhan) POST /api/v1/secure/register/challenge (取得註冊選項)
+      challenge: () => `${API_PREFIX}/secure/register/challenge`,
+      // Info: (20250911 - Tzuhan) POST /api/v1/secure/register (提交註冊憑證)
+      submit: () => `${API_PREFIX}/secure/register`,
+    },
+  },
+
   comments: {
     // Info: (20250818 - Tzuhan) POST /api/v1/comments/:id/like
     like: buildPath(`${API_PREFIX}/comments/:id/like`),
