@@ -1,43 +1,60 @@
 import { useState, useEffect } from 'react';
 import { ApiResponse } from '@/lib/response';
+import { APIConfig } from '@/constants/api_connection';
+import { IAPIName, IAPIInput, IAPIConfig } from '@/interfaces/api_connection';
 
-function useApi<T>(api: string) {
-  const [data, setData] = useState<T | null>(null);
+function getAPIPath(apiConfig: IAPIConfig, input: IAPIInput) {
+  const originalPath = apiConfig.path;
+
+  // Info:(20250912 - Julian) Replace path parameters
+  const path = originalPath.replace(/:([a-zA-Z_]+)/g, (_, key) => {
+    const value = input.params?.[key] as string;
+    return value;
+  });
+
+  // Info:(20250912 - Julian) Add query string
+  const queryString = input?.query
+    ? Object.keys(input.query)
+        .filter((key) => input.query?.[key] !== undefined)
+        .map(
+          (key) => `${encodeURIComponent(key)}=${encodeURIComponent(String(input.query?.[key]))}`
+        )
+        .join('&')
+    : '';
+
+  // Info:(20250912 - Julian) Combine path and query string
+  const resultPath = queryString ? `${path}?${queryString}` : path;
+  return resultPath;
+}
+
+function useApi<T>(apiNAme: IAPIName, options?: IAPIInput) {
+  const [response, setResponse] = useState<ApiResponse<T> | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const [success, setSuccess] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    let isMounted = true;
+  const apiConfig = APIConfig[apiNAme];
+  const apiPath = getAPIPath(apiConfig, options ?? {});
+
+  const fetchData = async () => {
     setIsLoading(true);
 
-    fetch(api)
-      .then((res) => res.json())
-      .then((d: ApiResponse<T>) => {
-        if (isMounted) {
-          const { payload } = d; // Info: (20250911 - Julian) 解構 response 取得 payload
-          setData(payload);
-          setSuccess(true);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setError(err);
-          setSuccess(false);
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      });
+    try {
+      const res = await fetch(apiPath, { method: apiConfig.method });
+      const result: ApiResponse<T> = await res.json();
+      setResponse(result);
+    } catch (err) {
+      setError(err as Error);
+      setResponse(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return () => {
-      isMounted = false;
-    };
-  }, [api]);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  return { success, data, error, isLoading };
+  return { ...response, error, isLoading };
 }
 
 export default useApi;

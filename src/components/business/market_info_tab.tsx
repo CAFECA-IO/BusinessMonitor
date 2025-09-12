@@ -6,33 +6,41 @@ import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { IoTriangle } from 'react-icons/io5';
 import { FaChevronRight } from 'react-icons/fa6';
-import { INews, mockNews } from '@/interfaces/news';
+import useApi from '@/lib/hooks/use_api';
+import { APIName } from '@/constants/api_connection';
+import { Paginated } from '@/types/common';
+// import { MarketPayload } from '@/types/company';
+import { INews } from '@/interfaces/news';
 import { mockMarketInfo } from '@/interfaces/market';
 import CandlestickChartSection from '@/components/business/candlestick_chart_section';
+import NewsItem from '@/components/business/news_item';
+import Skeleton from '@/components/common/skeleton';
 
-interface INewsItemProps {
-  news: INews;
+interface IMarketInfoTabProps {
+  businessId: string;
 }
 
-const NewsItem: React.FC<INewsItemProps> = ({ news }) => {
-  const { title, content, imageUrl } = news;
-
-  return (
-    // ToDo: (20250826 - Julian) Link to news detail page
-    <Link href={'/'} className="flex items-center gap-40px">
-      <div className="relative h-150px w-200px shrink-0 overflow-hidden object-cover">
-        <Image src={imageUrl} width={218} height={145} alt="news_thumbnail" />
-      </div>
-      <div className="flex flex-col gap-24px text-text-primary">
-        <p className="text-lg font-bold">{title}</p>
-        <p className="line-clamp-3 text-sm">{content}</p>
-      </div>
-    </Link>
-  );
-};
-
-const MarketInfoTab: React.FC = () => {
+const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
+
+  // ToDo: (20250912 - Julian) During development
+  // const {
+  //   success: marketInfoSuccess,
+  //   payload: marketInfo,
+  //   isLoading: marketInfoIsLoading,
+  // } = useApi<MarketPayload>(APIName.GET_MARKET_INFO_BY_COMPANY_ID, {
+  //   params: { id: businessId },
+  //   query: { range: '1y', limit: 10 }, // ToDo: (20250912 - Julian) Make range & limit dynamic
+  // });
+
+  const {
+    success: newsSuccess,
+    payload: newsData,
+    isLoading: newsIsLoading,
+    // ToDo: (20250912 - Julian) interface may change later
+  } = useApi<Paginated<INews>>(APIName.GET_NEWS_BY_COMPANY_ID, {
+    params: { id: businessId },
+  });
 
   // ToDo: (20250826 - Julian) Fetch real stock & news data
   const {
@@ -52,7 +60,6 @@ const MarketInfoTab: React.FC = () => {
     sellersPercent,
     buyersPercent,
   } = mockMarketInfo;
-  const newsData = mockNews;
 
   const formatNumber = (num: number) => {
     const numAbs = Math.abs(num);
@@ -75,7 +82,14 @@ const MarketInfoTab: React.FC = () => {
       ''
     );
 
-  const newsList = newsData.map((news) => <NewsItem key={news.id} news={news} />);
+  const displayedNews = newsIsLoading ? (
+    <Skeleton width={200} height={150} />
+  ) : newsSuccess && newsData && newsData.items.length > 0 ? (
+    newsData.items.map((news) => <NewsItem key={news.id} news={news} />)
+  ) : (
+    // ToDo: (20250912 - Julian) 設計 no data 畫面
+    <div>no news</div>
+  );
 
   return (
     <div className="flex flex-col gap-60px">
@@ -192,7 +206,7 @@ const MarketInfoTab: React.FC = () => {
       <div className="flex flex-col gap-40px">
         <p className="text-h5 font-bold text-text-brand">{t('business_detail:NEWS_TITLE')}</p>
         <hr className="h-px border-border-secondary" />
-        <div className="flex flex-col gap-24px">{newsList}</div>
+        <div className="flex flex-col gap-24px">{displayedNews}</div>
         {/* ToDo: (20250826 - Julian) Link to news page */}
         <Link
           href={'/'}

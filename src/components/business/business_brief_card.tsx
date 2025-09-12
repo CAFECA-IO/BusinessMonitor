@@ -51,7 +51,7 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
     <Image src={logoUrl} width={40} height={40} alt="business_avatar" />
   ) : (
     // ToDo: (20250911 - Julian) Default Logo
-    <div className="h-40px w-40px rounded-full bg-grey-100"></div>
+    <div className="h-40px w-40px animate-pulse rounded-full bg-grey-100"></div>
   );
 
   const isShowGreenFlag = countOfGreenFlags > 0 && (
