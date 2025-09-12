@@ -16,7 +16,7 @@ export enum APIName {
   LIST_MOST_VIEWED_BUSINESSES = 'LIST_MOST_VIEWED_BUSINESSES',
   RECORD_COMPANY_VIEW = 'RECORD_COMPANY_VIEW',
   GET_MARKET_INFO_BY_COMPANY_ID = 'GET_MARKET_INFO_BY_COMPANY_ID',
-  LIST_BUSINESS_NEWS = 'LIST_BUSINESS_NEWS',
+  GET_NEWS_BY_COMPANY_ID = 'GET_NEWS_BY_COMPANY_ID',
   GET_TRADE_BY_COMPANY_ID = 'GET_TRADE_BY_COMPANY_ID',
   GET_TENDERS_BY_COMPANY_ID = 'GET_TENDERS_BY_COMPANY_ID',
   GET_TRADEMARKS_BY_COMPANY_ID = 'GET_TRADEMARKS_BY_COMPANY_ID',
@@ -33,7 +33,7 @@ export enum APIPath {
   LIST_MOST_VIEWED_BUSINESSES = `${apiPrefix}/companies/most-viewed`,
   RECORD_COMPANY_VIEW = `${apiPrefix}/companies/:id/view`,
   GET_MARKET_INFO_BY_COMPANY_ID = `${apiPrefix}/companies/:id/market`,
-  LIST_BUSINESS_NEWS = `${apiPrefix}/companies/:id/news`,
+  GET_NEWS_BY_COMPANY_ID = `${apiPrefix}/companies/:id/news`,
   GET_TRADE_BY_COMPANY_ID = `${apiPrefix}/companies/:id/operations/trade`,
   GET_TENDERS_BY_COMPANY_ID = `${apiPrefix}/companies/:id/operations/tenders`,
   GET_TRADEMARKS_BY_COMPANY_ID = `${apiPrefix}/companies/:id/operations/trademarks`,
@@ -80,10 +80,10 @@ export const APIConfig: Record<IAPIName, IAPIConfig> = {
     method: HttpMethod.GET,
     path: APIPath.GET_MARKET_INFO_BY_COMPANY_ID,
   }),
-  [APIName.LIST_BUSINESS_NEWS]: createAPIConfig({
-    name: APIName.LIST_BUSINESS_NEWS,
+  [APIName.GET_NEWS_BY_COMPANY_ID]: createAPIConfig({
+    name: APIName.GET_NEWS_BY_COMPANY_ID,
     method: HttpMethod.GET,
-    path: APIPath.LIST_BUSINESS_NEWS,
+    path: APIPath.GET_NEWS_BY_COMPANY_ID,
   }),
   [APIName.GET_TRADE_BY_COMPANY_ID]: createAPIConfig({
     name: APIName.GET_TRADE_BY_COMPANY_ID,

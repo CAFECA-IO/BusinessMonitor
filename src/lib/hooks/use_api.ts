@@ -28,8 +28,6 @@ function getAPIPath(apiConfig: IAPIConfig, input: IAPIInput) {
 }
 
 function useApi<T>(apiNAme: IAPIName, options?: IAPIInput) {
-  // const { header, query, params, body } = options;
-
   const [response, setResponse] = useState<ApiResponse<T> | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
