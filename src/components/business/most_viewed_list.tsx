@@ -13,7 +13,7 @@ const MostViewedList: React.FC = () => {
   const { t } = useTranslation(['home_page']);
   const {
     success,
-    data: businessList,
+    payload: businessList,
     isLoading,
   } = useApi<CompanyCard[]>(APIName.LIST_MOST_VIEWED_BUSINESSES);
 

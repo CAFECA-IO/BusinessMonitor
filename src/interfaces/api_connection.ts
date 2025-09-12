@@ -16,8 +16,15 @@ export type IAPIName =
 
 export type IHttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
-export interface IAPIConfig {
+export type IAPIInput = {
+  header?: { [key: string]: string };
+  body?: { [key: string]: unknown } | FormData | string;
+  params?: { [key: string]: unknown };
+  query?: { [key: string]: unknown };
+};
+
+export type IAPIConfig = {
   name: IAPIName;
   method: IHttpMethod;
   path: string;
-}
+};
