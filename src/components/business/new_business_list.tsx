@@ -7,16 +7,15 @@ import Skeleton from '@/components/common/skeleton';
 // import { IBusinessBrief } from '@/interfaces/business';
 import { CompanyCard } from '@/types/company';
 import useApi from '@/lib/hooks/use_api';
+import { APIName } from '@/interfaces/api_connection';
 
 const NewBusinessList: React.FC = () => {
   const { t } = useTranslation(['home_page']);
-
   const {
     success,
     data: businessList,
-    // error,
     isLoading,
-  } = useApi<CompanyCard[]>('http://localhost:3000/api/v1/companies/new');
+  } = useApi<CompanyCard[]>(APIName.LIST_NEW_BUSINESSES);
 
   const isShowList = isLoading ? (
     <Skeleton width={220} height={130} />
