@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ApiResponse } from '@/lib/response';
-import { APIMap, APIName } from '@/interfaces/api_connection';
+import { APIConfig, APIName } from '@/constants/api_connection';
 
 function useApi<T>(api: APIName) {
   const [data, setData] = useState<T | null>(null);
@@ -8,13 +8,15 @@ function useApi<T>(api: APIName) {
   const [success, setSuccess] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const apiPath = APIMap[api];
+  const apiConfig = APIConfig[api];
 
   const fetchData = async () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(apiPath);
+      const response = await fetch(apiConfig.path, {
+        method: apiConfig.method,
+      });
       const result: ApiResponse<T> = await response.json();
       setData(result.payload);
       setSuccess(true);

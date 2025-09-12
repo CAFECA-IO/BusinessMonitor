@@ -7,7 +7,7 @@ import Skeleton from '@/components/common/skeleton';
 // import { IBusinessBrief } from '@/interfaces/business';
 import { CompanyCard } from '@/types/company';
 import useApi from '@/lib/hooks/use_api';
-import { APIName } from '@/interfaces/api_connection';
+import { APIName } from '@/constants/api_connection';
 
 const MostViewedList: React.FC = () => {
   const { t } = useTranslation(['home_page']);
