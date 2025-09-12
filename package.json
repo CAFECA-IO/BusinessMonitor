@@ -75,6 +75,7 @@
     "@types/secp256k1": "^4.0.6",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
+    "cbor": "^10.0.11",
     "eslint": "^9.32.0",
     "eslint-config-next": "15.4.4",
     "eslint-plugin-import": "^2.32.0",
