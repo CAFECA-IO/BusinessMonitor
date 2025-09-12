@@ -36,7 +36,7 @@ export async function createFidoUserAndCredential(
   const { id: credentialId, publicKey, algorithm, transports } = credential;
 
   const userId = `fido-${createHash('sha256').update(publicKey).digest('hex').slice(0, 24)}`;
-  const userEmail = `${userId}@fido.user`; // 產生一個虛擬 email 以符合 User model
+  const userEmail = `${userId}@fido.user`; // Info: (20250912 - Tzuhan) 產生一個虛擬 email 以符合 User model
 
   return prisma.user.create({
     data: {
@@ -54,7 +54,7 @@ export async function createFidoUserAndCredential(
   });
 }
 
-/**
+/** Info: (20250912 - Tzuhan)
  * 將 NamedAlgo 字串轉換為 COSE 演算法的整數 ID 以便存入資料庫。
  */
 function mapAlgoNameToInt(algName: 'ES256' | 'RS256' | 'EdDSA'): number {
