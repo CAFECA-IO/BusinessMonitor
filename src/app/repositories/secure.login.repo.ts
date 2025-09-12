@@ -54,7 +54,8 @@ export async function createFidoUserAndCredential(
   });
 }
 
-/** Info: (20250912 - Tzuhan)
+/**
+ * Info: (20250912 - Tzuhan)
  * 將 NamedAlgo 字串轉換為 COSE 演算法的整數 ID 以便存入資料庫。
  */
 function mapAlgoNameToInt(algName: 'ES256' | 'RS256' | 'EdDSA'): number {
