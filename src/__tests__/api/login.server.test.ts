@@ -1,206 +1,174 @@
 import { getAgent } from '@/__tests__/helpers/agent';
 import { Routes } from '@/config/api-routes';
-import { PrismaClient, User, Credential, WebAuthnAlgo } from '@prisma/client';
-import { buildChallenge } from '@/lib/challenge';
-import { env } from '@/lib/env';
-import crypto from 'node:crypto';
-import type { AuthenticationResponseJSON } from '@passwordless-id/webauthn/dist/esm/types';
+import { getChallenge } from '@/lib/cafeca';
+import { PrismaClient } from '@prisma/client';
+import { createHash, generateKeyPairSync, randomBytes } from 'crypto';
+import cbor from 'cbor';
 
 const agent = getAgent();
 const prisma = new PrismaClient();
 
-function createMockAssertion(
-  privateKey: crypto.KeyObject,
-  challenge: string,
-  origin: string,
-  counter: number,
-  credId: string,
-  userId: string
-): AuthenticationResponseJSON {
+// Info: (20250912 - Tzuhan) FIDO2/WebAuthn 需要一個複雜的加密物件，這個輔助函式用來模擬瀏覽器產生它。
+// Info: (20250912 - Tzuhan) 它會產生一個新的金鑰對，並圍繞它建立一個可用於 API 請求的 payload。
+async function createMockFidoPayload(loginData: Record<string, unknown>) {
+  // Info: (20250912 - Tzuhan) 1. 產生一對新的 ECDSA P-256 金鑰
+  const keyPair = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+  const publicKeyJwk = keyPair.publicKey.export({ format: 'jwk' });
+
+  // Info: (20250912 - Tzuhan) 2. 模擬 clientDataJSON 的產生
+  const challenge = await getChallenge(JSON.stringify(loginData));
   const clientData = {
-    type: 'webauthn.get',
-    challenge, // 瀏覽器會自動做 base64url 編碼
-    origin,
-    crossOrigin: false,
+    type: 'webauthn.create',
+    challenge,
+    origin: process.env.ORIGIN || 'http://localhost:3000',
   };
   const clientDataJSON = Buffer.from(JSON.stringify(clientData)).toString('base64url');
 
-  const authenticatorData = Buffer.alloc(37);
-  const rpIdHash = crypto.createHash('sha256').update(env.RPID).digest();
-  rpIdHash.copy(authenticatorData, 0); // 32 bytes
-  authenticatorData.writeUInt8(0x01, 32); // Flags (User Present)
-  authenticatorData.writeUInt32BE(counter, 33); // Sign Count (32-bit big-endian)
+  // Info: (20250912 - Tzuhan) 3. 建立 FIDO2 Authenticator Data
+  const rpIdHash = createHash('sha256')
+    .update(process.env.RPID || 'localhost')
+    .digest();
+  const flags = Buffer.from([0x41]); // Info: (20250912 - Tzuhan) Flag: User Present, Attested Credential Data Included
+  const signCount = Buffer.from([0, 0, 0, 0]);
+  const aaguid = Buffer.alloc(16); // Info: (20250912 - Tzuhan) AAGUID (zeros for none attestation)
+  const credentialId = randomBytes(16);
+  const credentialIdLength = Buffer.alloc(2);
+  credentialIdLength.writeUInt16BE(credentialId.length, 0);
 
-  const signatureBase = Buffer.concat([
-    authenticatorData,
-    crypto.createHash('sha256').update(clientDataJSON).digest(),
+  // Info: (20250912 - Tzuhan) 建立 COSE 格式的公鑰
+  const cosePublicKey = cbor.encode(
+    new Map<number, number | string | undefined>([
+      [1, 2], // Info: (20250912 - Tzuhan) kty: EC2
+      [3, -7], // Info: (20250912 - Tzuhan) alg: ES256
+      [-1, 1], // Info: (20250912 - Tzuhan) crv: P-256
+      [-2, publicKeyJwk.x], // Info: (20250912 - Tzuhan) x
+      [-3, publicKeyJwk.y], // Info: (20250912 - Tzuhan) y
+    ])
+  );
+
+  const authData = Buffer.concat([
+    rpIdHash,
+    flags,
+    signCount,
+    aaguid,
+    credentialIdLength,
+    credentialId,
+    cosePublicKey,
   ]);
-  const signature = crypto.sign('sha256', signatureBase, {
-    key: privateKey,
-    dsaEncoding: 'ieee-p1363',
+
+  // Info: (20250912 - Tzuhan) 4. 建立 Attestation Object (使用 'none' 格式以簡化測試)
+  const attestationObject = cbor.encode({
+    fmt: 'none',
+    attStmt: {},
+    authData,
   });
 
-  return {
-    id: credId,
-    rawId: credId,
+  // Info: (20250912 - Tzuhan) 5. 組裝最終的 registrationData payload
+  const registrationData = {
+    id: credentialId.toString('base64url'),
+    rawId: credentialId.toString('base64url'),
     type: 'public-key',
     response: {
       clientDataJSON,
-      authenticatorData: authenticatorData.toString('base64url'),
-      signature: signature.toString('base64url'),
-      userHandle: userId,
+      attestationObject: attestationObject.toString('base64url'),
+      transports: ['internal'],
+      // Info: (20250912 - Tzuhan) 【核心修正點】新增 Zod schema 期望的額外欄位
+      authenticatorData: authData.toString('base64url'),
+      publicKey: cosePublicKey.toString('base64url'),
+      publicKeyAlgorithm: -7, // Info: (20250912 - Tzuhan) ES256
     },
     clientExtensionResults: {},
+    user: { id: `user-${Date.now()}`, name: 'Test User' },
   };
+
+  return { loginData, registrationData };
 }
 
-describe.skip('POST /api/v1/secure/login (integration, black-box)', () => {
-  let testUser: User;
-  let testCred: Credential;
-  let keyPair: { publicKey: crypto.KeyObject; privateKey: crypto.KeyObject };
+// Info: (20250912 - Tzuhan) --- 測試主體 ---
 
-  // Info: (20250911 - Tzuhan) login 測試需要在執行前動態建立使用者和憑證，
-  beforeAll(async () => {
-    keyPair = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
-    const publicKeyJwk = keyPair.publicKey.export({ format: 'jwk' });
-
-    testUser = await prisma.user.create({
-      data: { email: `fido-test-${Date.now()}@example.com` },
+describe('POST /api/v1/secure/login (integration, black-box)', () => {
+  // Info: (20250912 - Tzuhan) 每次測試後都清理透過 FIDO2 建立的使用者，確保測試獨立性
+  afterEach(async () => {
+    const testUsers = await prisma.user.findMany({
+      where: { email: { endsWith: '@fido.user' } },
     });
-
-    testCred = await prisma.credential.create({
-      data: {
-        userId: testUser.id,
-        credentialId: crypto.randomBytes(16).toString('base64url'),
-        publicKey: JSON.stringify(publicKeyJwk),
-        counter: 10, // Info: (20250911 - Tzuhan) 從一個非零的 counter 開始
-        algorithmNamed: WebAuthnAlgo.ES256,
-      },
-    });
+    if (testUsers.length > 0) {
+      await prisma.credential.deleteMany({
+        where: { userId: { in: testUsers.map((u) => u.id) } },
+      });
+      await prisma.user.deleteMany({
+        where: { id: { in: testUsers.map((u) => u.id) } },
+      });
+    }
   });
 
   afterAll(async () => {
-    await prisma.credential.deleteMany({ where: { userId: testUser.id } });
-    await prisma.user.delete({ where: { id: testUser.id } });
     await prisma.$disconnect();
   });
 
-  it('400: 請求 body 為空或格式錯誤', async () => {
+  it('400: 缺少 registrationData 應回報錯誤', async () => {
     const url = Routes.auth.login();
-    const res = await agent.post(url).send({}).expect(400);
+    const payload = { loginData: { email: 'test@example.com' } }; // Info: (20250912 - Tzuhan) 故意缺少 registrationData
+    const res = await agent.post(url).send(payload).expect(400);
 
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toContain('Missing credential id');
-  });
-
-  it('404: 使用不存在的 credentialId 應回報找不到憑證', async () => {
-    const url = Routes.auth.login();
-    const challenge = buildChallenge({ rpId: env.RPID, origin: env.ORIGIN });
-
-    // Info: (20250911 - Tzuhan) 產生一個有效的簽章，但 credentialId 是虛構的
-    const assertion = createMockAssertion(
-      keyPair.privateKey,
-      challenge,
-      env.ORIGIN,
-      testCred.counter,
-      'non-existent-credential-id',
-      testUser.id
-    );
-
-    const res = await agent.post(url).send(assertion).expect(404);
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toContain('Credential not found');
-  });
-
-  it('401: 使用錯誤的 challenge 應登入失敗', async () => {
-    const url = Routes.auth.login();
-    const wrongChallenge = `wrong_${Date.now()}`;
-    const assertion = createMockAssertion(
-      keyPair.privateKey,
-      wrongChallenge,
-      env.ORIGIN,
-      testCred.counter,
-      testCred.credentialId,
-      testUser.id
-    );
-
-    const res = await agent.post(url).send(assertion).expect(401);
     expect(res.body.success).toBe(false);
   });
 
-  it('401: 使用無效的簽章 (錯誤的私鑰) 應登入失敗', async () => {
+  it('401: Challenge 不匹配應認證失敗', async () => {
     const url = Routes.auth.login();
-    const wrongKeyPair = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
-    const challenge = buildChallenge({ rpId: env.RPID, origin: env.ORIGIN });
-    const assertion = createMockAssertion(
-      wrongKeyPair.privateKey, // Info: (20250911 - Tzuhan) 使用錯誤的私鑰
-      challenge,
-      env.ORIGIN,
-      testCred.counter,
-      testCred.credentialId,
-      testUser.id
-    );
+    const payload = await createMockFidoPayload({ email: 'test@example.com' });
 
-    const res = await agent.post(url).send(assertion).expect(401);
+    // Info: (20250912 - Tzuhan) 竄改 payload 中的 loginData，讓後端計算出不同的 challenge
+    payload.loginData = { email: 'tampered@example.com' };
+
+    const res = await agent.post(url).send(payload).expect(401);
     expect(res.body.success).toBe(false);
   });
 
-  it('409: 使用已用過的 counter 應回報衝突 (Replay Attack)', async () => {
+  it('200: 首次請求 (新憑證) 應視為「註冊」，成功建立使用者並回傳 DeWT', async () => {
     const url = Routes.auth.login();
-    // Info: (20250911 - Tzuhan) 步驟 1: 先成功登入一次，讓 DB counter 增加
-    const firstChallenge = buildChallenge({ rpId: env.RPID, origin: env.ORIGIN });
-    const firstAssertion = createMockAssertion(
-      keyPair.privateKey,
-      firstChallenge,
-      env.ORIGIN,
-      testCred.counter, // Info: (20250911 - Tzuhan) 當前 DB counter 是 10
-      testCred.credentialId,
-      testUser.id
-    );
-    await agent.post(url).send(firstAssertion).expect(200);
+    const loginData = { email: `new-user-${Date.now()}@example.com` };
+    const payload = await createMockFidoPayload(loginData);
 
-    // Info: (20250911 - Tzuhan) DB counter 現在應該 > 10
+    // Info: (20250912 - Tzuhan) 執行請求
+    const res = await agent.post(url).send(payload).expect(200);
 
-    // Info: (20250911 - Tzuhan) 步驟 2: 再次使用相同的舊 assertion (或一個 counter 值更低的 assertion)
-    const secondChallenge = buildChallenge({ rpId: env.RPID, origin: env.ORIGIN });
-    const replayAssertion = createMockAssertion(
-      keyPair.privateKey,
-      secondChallenge,
-      env.ORIGIN,
-      testCred.counter, // Info: (20250911 - Tzuhan) 再次使用舊的 counter 10
-      testCred.credentialId,
-      testUser.id
-    );
-
-    const res = await agent.post(url).send(replayAssertion).expect(409);
-    expect(res.body.success).toBe(false);
-    expect(res.body.message).toContain('Replay detected');
-  });
-
-  it('200: 使用有效的 FIDO2 憑證應成功登入', async () => {
-    const url = Routes.auth.login();
-    // Info: (20250911 - Tzuhan) 重設 counter 以便測試成功情境
-    await prisma.credential.update({ where: { id: testCred.id }, data: { counter: 50 } });
-
-    const challenge = buildChallenge({ rpId: env.RPID, origin: env.ORIGIN });
-    const assertion = createMockAssertion(
-      keyPair.privateKey,
-      challenge,
-      env.ORIGIN,
-      50, // Info: (20250911 - Tzuhan) 使用最新的 counter
-      testCred.credentialId,
-      testUser.id
-    );
-
-    const res = await agent.post(url).send(assertion).expect(200);
-
+    // Info: (20250912 - Tzuhan) 驗證 API 回應
     expect(res.body.success).toBe(true);
-    expect(res.body.code).toBe('OK');
     expect(res.body.payload).toHaveProperty('dewt');
-    expect(res.body.payload.user.id).toBe(testUser.id);
+    expect(res.body.payload.user).toHaveProperty('id');
 
-    // Info: (20250911 - Tzuhan) 驗證資料庫 counter 已被更新
-    const updatedCred = await prisma.credential.findUnique({ where: { id: testCred.id } });
-    expect(updatedCred?.counter).toBeGreaterThan(50);
+    // Info: (20250912 - Tzuhan) 驗證資料庫狀態：確實有名為 fido-* 的使用者被建立
+    const dbUser = await prisma.user.findUnique({ where: { id: res.body.payload.user.id } });
+    expect(dbUser).not.toBeNull();
+    expect(dbUser?.email).toContain('@fido.user');
+
+    const dbCred = await prisma.credential.findUnique({
+      where: { credentialId: payload.registrationData.id },
+    });
+    expect(dbCred).not.toBeNull();
+    expect(dbCred?.userId).toBe(dbUser?.id);
+  });
+
+  it('200: 重複請求 (已存在憑證) 應視為「登入」，成功找到使用者並回傳 DeWT', async () => {
+    const url = Routes.auth.login();
+    const loginData = { email: `existing-user-${Date.now()}@example.com` };
+    const payload = await createMockFidoPayload(loginData);
+
+    // Info: (20250912 - Tzuhan) 步驟 1: 第一次請求，註冊使用者
+    const res1 = await agent.post(url).send(payload).expect(200);
+    const userId = res1.body.payload.user.id;
+    expect(userId).toBeDefined();
+
+    // Info: (20250912 - Tzuhan) 步驟 2: 使用完全相同的 payload 進行第二次請求
+    const res2 = await agent.post(url).send(payload).expect(200);
+
+    // Info: (20250912 - Tzuhan) 驗證 API 回應
+    expect(res2.body.success).toBe(true);
+    expect(res2.body.payload.user.id).toBe(userId); // Info: (20250912 - Tzuhan) 使用者 ID 應該相同
+
+    // Info: (20250912 - Tzuhan) 驗證資料庫狀態：使用者總數沒有增加
+    const userCount = await prisma.user.count({ where: { id: userId } });
+    expect(userCount).toBe(1);
   });
 });
