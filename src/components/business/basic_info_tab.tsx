@@ -71,7 +71,7 @@ const BasicInfoTab: React.FC<IBasicInfoTabProps> = ({ businessId }) => {
 
       {/* Info: (20250813 - Julian) Related Companies Block */}
       {isShowSkeleton ? (
-        <SkeletonBlock className="col-span-2" />
+        <SkeletonBlock />
       ) : (
         <RelatedCompaniesBlock relatedCompanies={companyData.related} />
       )}

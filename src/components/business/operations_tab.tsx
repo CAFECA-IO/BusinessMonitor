@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { timestampToString, formatNumberWithCommas } from '@/lib/common';
 import {
-  IImportAndExportData,
+  // IImportAndExportData,
   IGovernmentTender,
   ITrademark,
   IPatent,
@@ -14,22 +14,14 @@ import {
 } from '@/interfaces/operation';
 import InfoBlockLayout from '@/components/business/info_block_layout';
 import { PoliticalEventType } from '@/constants/operation';
+// import useApi from '@/lib/hooks/use_api';
+// import { APIName } from '@/constants/api_connection';
+// import { Paginated as IPaginated } from '@/types/common';
+import TradeBlock from '@/components/business/trade_block';
 
-const ImportAndExportItem: React.FC<IImportAndExportData> = ({
-  year,
-  month,
-  totalImportAmount,
-  totalExportAmount,
-}) => {
-  return (
-    <>
-      <p>{year}</p>
-      <p>{month}</p>
-      <p>$ {formatNumberWithCommas(totalImportAmount, true)}</p>
-      <p>$ {formatNumberWithCommas(totalExportAmount, true)}</p>
-    </>
-  );
-};
+interface IOperationsTabProps {
+  businessId: string;
+}
 
 const GovernmentTenderItem: React.FC<IGovernmentTender> = ({
   projectTitle,
@@ -125,25 +117,18 @@ const PoliticalActivityBlock: React.FC<{
   );
 };
 
-const OperationsTab: React.FC = () => {
+const OperationsTab: React.FC<IOperationsTabProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
 
   // ToDo: (20250901 - Julian) Replace mock data with real API data
   const {
-    lastUpdateTime,
-    importAndExportData,
+    // lastUpdateTime,
+    // importAndExportData,
     governmentTenders,
     trademarks,
     patents,
     politicalActivities,
   } = mockData;
-
-  const formattedTime = timestampToString(lastUpdateTime);
-  const timeStr = `${t('business_detail:LAST_UPDATE_TIME')}: ${formattedTime.formattedDate} ${formattedTime.time}`;
-
-  const importAndExportRows = importAndExportData.map((data) => (
-    <ImportAndExportItem key={data.id} {...data} />
-  ));
 
   const governmentTenderRows = governmentTenders.map((tender) => (
     <GovernmentTenderItem key={tender.id} {...tender} />
@@ -157,29 +142,8 @@ const OperationsTab: React.FC = () => {
 
   return (
     <div className="grid grid-cols-2 gap-x-60px gap-y-40px">
-      {/* Info: (20250901 - Julian) Import & Export Data Block */}
-      <div className="col-span-2 flex flex-col gap-16px">
-        {/* Info: (20250901 - Julian) Last Update Time */}
-        <p className="text-right font-normal text-text-primary">{timeStr}</p>
-        <InfoBlockLayout
-          title={t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE')}
-          tooltipContent={t('business_detail:TOOLTIP_IMPORT_AND_EXPORT')}
-          className="flex flex-col gap-y-40px text-sm"
-        >
-          {/* Info: (20250901 - Julian) Title */}
-          <div className="grid grid-cols-4 font-medium text-text-note">
-            <p>{t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE_YEAR')}</p>
-            <p>{t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE_MONTH')}</p>
-            <p>{t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE_TOTAL_IMPORT')} (USD)</p>
-            <p>{t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE_TOTAL_EXPORT')} (USD)</p>
-          </div>
-
-          {/* Info: (20250901 - Julian) Content */}
-          <div className="grid grid-cols-4 gap-y-40px overflow-y-auto font-normal text-text-primary">
-            {importAndExportRows}
-          </div>
-        </InfoBlockLayout>
-      </div>
+      {/* Info: (20250915 - Julian) Trade Block */}
+      <TradeBlock businessId={businessId} />
 
       {/* Info: (20250901 - Julian) Government Tenders Block */}
       <div className="col-span-2">

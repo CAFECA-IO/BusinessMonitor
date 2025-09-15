@@ -35,7 +35,7 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
     ) : currentTab === TabBarItem.MARKET_INFO ? (
       <MarketInfoTab businessId={businessId} />
     ) : currentTab === TabBarItem.OPERATIONS ? (
-      <OperationsTab />
+      <OperationsTab businessId={businessId} />
     ) : currentTab === TabBarItem.FINANCIAL_REPORT ? (
       <FinancialReportTab />
     ) : currentTab === TabBarItem.FLAGS ? (
