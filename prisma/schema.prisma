@@ -471,17 +471,15 @@ enum Board {
 
 
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  createdAt    DateTime     @default(now()) @map("created_at")
+  id        String       @id @default(cuid())
+  email     String?      @unique  // Info: (20250912 - Tzuhan) 設為可選，因為使用者身份由 FIDO2 憑證定義
+  createdAt DateTime     @default(now()) @map("created_at")
 
-  // Info: (20250910 - Tzuhan) 一個使用者可綁定多把 FIDO2 憑證（每台裝置一把）
-  credentials  Credential[]
-  comments     Comment[]
+  credentials Credential[]
+  comments    Comment[]
 
   @@map("user")
 }
-
 
 enum WebAuthnAlgo {
   ES256
@@ -490,23 +488,19 @@ enum WebAuthnAlgo {
 }
 
 model Credential {
-  id              String        @id @default(cuid())
-  userId          String        @map("user_id")
-  credentialId    String        @unique @map("credential_id")
-  publicKey       String        @map("public_key")
-  publicKeyAlg    Int?          @map("public_key_alg")     // Info: (20250910 - Tzuhan) e.g. ES256=-7, RS256=-257, EdDSA=-8
-  algorithmNamed  WebAuthnAlgo  @default(ES256) @map("algorithm_named")
+  id           String       @id @default(cuid())
+  userId       String       @map("user_id")
+  credentialId String       @unique @map("credential_id")
+  publicKey    String       @map("public_key")
+  algorithm    WebAuthnAlgo @map("algorithm")
+  credIdHash   String?      @map("cred_id_hash")
+  aPubHash     String?      @map("a_pub_hash")
+  rpId         String?      @map("rp_id")
+  transports   String?      @map("transports")
+  deviceNote   String?      @map("device_note")
 
-  counter         Int           @default(0)
-
-  credIdHash      String?       @map("cred_id_hash")
-  aPubHash        String?       @map("a_pub_hash")
-  rpId            String?       @map("rp_id")
-  transports      String?       @map("transports")
-  deviceNote      String?       @map("device_note")
-
-  createdAt       DateTime      @default(now()) @map("created_at")
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], map: "idx_credential_user")
   @@index([credIdHash], map: "idx_credential_credidhash")
