@@ -4,16 +4,20 @@ import React from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import InfoBlockLayout from '@/components/business/info_block_layout';
-import { IRelatedCompany, mockBusinesses } from '@/interfaces/business';
+import { RelatedCompanyItem as IRelatedCompany } from '@/types/company';
 import { BM_URL } from '@/constants/url';
 
+interface IRelatedCompaniesBlockProps {
+  relatedCompanies: IRelatedCompany[];
+}
+
 const RelatedCompaniesItem: React.FC<{ data: IRelatedCompany }> = ({ data }) => {
-  const { name, businessTaxId } = data;
+  const { name, businessId } = data;
   const targetUrl = `${BM_URL.BUSINESS_MONITOR}/${data.id}`;
 
   return (
     <>
-      <p className="text-text-secondary">{businessTaxId}</p>
+      <p className="text-text-secondary">{businessId}</p>
       <Link href={targetUrl} className="text-button-link hover:underline">
         {name}
       </Link>
@@ -21,13 +25,15 @@ const RelatedCompaniesItem: React.FC<{ data: IRelatedCompany }> = ({ data }) => 
   );
 };
 
-const RelatedCompaniesBlock: React.FC = () => {
+const RelatedCompaniesBlock: React.FC<IRelatedCompaniesBlockProps> = ({ relatedCompanies }) => {
   const { t } = useTranslation(['business_detail']);
-  const businessData = mockBusinesses; // ToDo: (20250901 - Julian) Fetch real data
 
-  const relatedCompanies = businessData.map((company) => (
-    <RelatedCompaniesItem key={company.id} data={company} />
-  ));
+  const displayedRelated =
+    relatedCompanies.length > 0 ? (
+      relatedCompanies.map((company) => <RelatedCompaniesItem key={company.id} data={company} />) // ToDo: (20250915 - Julian) No data design
+    ) : (
+      <div className="col-span-5 row-span-4 flex flex-col items-center justify-center">no data</div>
+    );
 
   return (
     <InfoBlockLayout
@@ -42,7 +48,7 @@ const RelatedCompaniesBlock: React.FC = () => {
       </div>
 
       {/* Info: (20250901 - Julian) Content */}
-      <div className="grid grid-cols-2 gap-y-40px overflow-y-auto">{relatedCompanies}</div>
+      <div className="grid grid-cols-2 gap-y-40px overflow-y-auto">{displayedRelated}</div>
     </InfoBlockLayout>
   );
 };

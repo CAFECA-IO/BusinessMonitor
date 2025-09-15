@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import BusinessBriefCard from '@/components/business/business_brief_card';
 import SkeletonCard from '@/components/common/skeleton_card';
 // import { IBusinessBrief } from '@/interfaces/business';
-import { CompanyCard } from '@/types/company';
+import { CompanyCard as ICompanyCard } from '@/types/company';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
 
@@ -15,7 +15,7 @@ const MostViewedList: React.FC = () => {
     success,
     payload: businessList,
     isLoading,
-  } = useApi<CompanyCard[]>(APIName.LIST_MOST_VIEWED_BUSINESSES);
+  } = useApi<ICompanyCard[]>(APIName.LIST_MOST_VIEWED_BUSINESSES);
 
   const isShowList = isLoading ? (
     <SkeletonCard />

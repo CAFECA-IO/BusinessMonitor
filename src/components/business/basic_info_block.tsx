@@ -6,10 +6,10 @@ import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import Button from '@/components/common/button';
 import { timestampToString, formatNumberWithCommas } from '@/lib/common';
-import { CompanyBasicCard } from '@/types/company';
+import { CompanyBasicCard as IBasicInfo } from '@/types/company';
 
 interface IBasicInfoSkeletonProps {
-  basicData: CompanyBasicCard;
+  basicData: IBasicInfo;
 }
 
 const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
@@ -129,7 +129,7 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
               <p className="text-text-note">
                 {t('business_detail:BASIC_INFO_TAB_CAPITAL_RANKING')}
               </p>
-              <p className="text-text-primary"># {capitalRanking}</p>
+              <p className="text-text-primary"># {capitalRanking ?? '-'}</p>
             </div>
 
             <div className="col-span-3 flex flex-col items-start gap-12px text-sm font-medium">

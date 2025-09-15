@@ -4,7 +4,7 @@ import InvestorBlock from '@/components/business/investor_block';
 import BusinessScopeBlock from '@/components/business/business_scope_block';
 import HistoryBlock from '@/components/business/history_block';
 import RelatedCompaniesBlock from '@/components/business/related_companies_block';
-import { CompanyBasicResponse } from '@/types/company';
+import { CompanyBasicResponse as IBasicResponse } from '@/types/company';
 import Skeleton from '@/components/common/skeleton';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
@@ -38,17 +38,14 @@ const SkeletonBlock: React.FC<ISkeletonBlockProps> = ({ className }) => {
 
 const BasicInfoTab: React.FC<IBasicInfoTabProps> = ({ businessId }) => {
   const {
-    success,
     payload: companyData,
     isLoading,
     // ToDo: (20250915 - Julian) interface may change later
-  } = useApi<CompanyBasicResponse>(APIName.GET_BASIC_INFO_BY_COMPANY_ID, {
+  } = useApi<IBasicResponse>(APIName.GET_BASIC_INFO_BY_COMPANY_ID, {
     params: { id: businessId },
   });
 
   const isShowSkeleton = isLoading || !companyData;
-
-  console.log('companyData', companyData);
 
   return (
     <div className="grid grid-cols-2 gap-x-60px gap-y-40px">
@@ -60,16 +57,24 @@ const BasicInfoTab: React.FC<IBasicInfoTabProps> = ({ businessId }) => {
       )}
 
       {/* Info: (20250813 - Julian) Investor Block */}
-      <InvestorBlock />
+      {isShowSkeleton ? <SkeletonBlock /> : <InvestorBlock investors={companyData.investors} />}
 
       {/* Info: (20250813 - Julian) Business Scope Block */}
-      <BusinessScopeBlock />
+      {isShowSkeleton ? (
+        <SkeletonBlock />
+      ) : (
+        <BusinessScopeBlock scopes={companyData.businessScopes} />
+      )}
 
       {/* Info: (20250813 - Julian) History Block */}
-      <HistoryBlock />
+      {isShowSkeleton ? <SkeletonBlock /> : <HistoryBlock history={companyData.history} />}
 
       {/* Info: (20250813 - Julian) Related Companies Block */}
-      <RelatedCompaniesBlock />
+      {isShowSkeleton ? (
+        <SkeletonBlock className="col-span-2" />
+      ) : (
+        <RelatedCompaniesBlock relatedCompanies={companyData.related} />
+      )}
     </div>
   );
 };
