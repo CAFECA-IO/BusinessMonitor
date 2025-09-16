@@ -3,10 +3,10 @@
 import React from 'react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-import { timestampToString, formatNumberWithCommas } from '@/lib/common';
+import { formatNumberWithCommas } from '@/lib/common';
 import {
   // IImportAndExportData,
-  IGovernmentTender,
+  // IGovernmentTender,
   ITrademark,
   IPatent,
   mockData,
@@ -18,34 +18,12 @@ import { PoliticalEventType } from '@/constants/operation';
 // import { APIName } from '@/constants/api_connection';
 // import { Paginated as IPaginated } from '@/types/common';
 import TradeBlock from '@/components/business/trade_block';
+import GovernmentTendersBlock from '@/components/business/government_tenders_block';
+import TrademarksBlock from '@/components/business/trademarks_block';
 
 interface IOperationsTabProps {
   businessId: string;
 }
-
-const GovernmentTenderItem: React.FC<IGovernmentTender> = ({
-  projectTitle,
-  agencyName,
-  awardDate,
-  awardAmount,
-  awarded,
-}) => {
-  const { t } = useTranslation(['business_detail']);
-
-  const awardedStr = awarded
-    ? t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARDED_YES')
-    : t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARDED_NO');
-
-  return (
-    <>
-      <p className="col-span-3">{projectTitle}</p>
-      <p className="col-span-3">{agencyName}</p>
-      <p>{timestampToString(awardDate).formattedDate}</p>
-      <p>$ {formatNumberWithCommas(awardAmount)}</p>
-      <p>{awardedStr}</p>
-    </>
-  );
-};
 
 const TrademarkItem: React.FC<ITrademark> = ({ trademarkTitle, imageUrl }) => {
   return (
@@ -124,19 +102,11 @@ const OperationsTab: React.FC<IOperationsTabProps> = ({ businessId }) => {
   const {
     // lastUpdateTime,
     // importAndExportData,
-    governmentTenders,
-    trademarks,
+    // governmentTenders,
+    // trademarks,
     patents,
     politicalActivities,
   } = mockData;
-
-  const governmentTenderRows = governmentTenders.map((tender) => (
-    <GovernmentTenderItem key={tender.id} {...tender} />
-  ));
-
-  const trademarkRows = trademarks.map((trademark) => (
-    <TrademarkItem key={trademark.id} {...trademark} />
-  ));
 
   const patentRows = patents.map((patent) => <PatentItem key={patent.id} {...patent} />);
 
@@ -145,40 +115,13 @@ const OperationsTab: React.FC<IOperationsTabProps> = ({ businessId }) => {
       {/* Info: (20250915 - Julian) Trade Block */}
       <TradeBlock businessId={businessId} />
 
-      {/* Info: (20250901 - Julian) Government Tenders Block */}
+      {/* Info: (20250916 - Julian) Government Tenders Block */}
       <div className="col-span-2">
-        <InfoBlockLayout
-          title={t('business_detail:GOVERNMENT_TENDERS_BLOCK_TITLE')}
-          tooltipContent={t('business_detail:TOOLTIP_GOVERNMENT_TENDERS')}
-          className="flex flex-col gap-y-40px text-sm"
-        >
-          <div className="grid grid-cols-9 gap-40px font-medium text-text-note">
-            <p className="col-span-3">
-              {t('business_detail:GOVERNMENT_TENDERS_BLOCK_PROJECT_TITLE')}
-            </p>
-            <p className="col-span-3">
-              {t('business_detail:GOVERNMENT_TENDERS_BLOCK_AGENCY_NAME')}
-            </p>
-            <p>{t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARD_DATE')}</p>
-            <p>{t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARD_AMOUNT')}</p>
-            <p>{t('business_detail:GOVERNMENT_TENDERS_BLOCK_AWARDED')}</p>
-          </div>
-          <div className="grid grid-cols-9 gap-40px overflow-y-auto font-normal text-text-primary">
-            {governmentTenderRows}
-          </div>
-        </InfoBlockLayout>
+        <GovernmentTendersBlock businessId={businessId} />
       </div>
 
       {/* Info: (20250901 - Julian) Trademarks Block */}
-      <div>
-        <InfoBlockLayout
-          title={t('business_detail:TRADEMARKS_BLOCK_TITLE')}
-          tooltipContent={t('business_detail:TOOLTIP_TRADEMARKS')}
-          className="flex flex-col gap-24px overflow-y-auto text-sm font-medium"
-        >
-          {trademarkRows}
-        </InfoBlockLayout>
-      </div>
+      <TrademarksBlock businessId={businessId} />
 
       {/* Info: (20250901 - Julian) Patents Block */}
       <div>
