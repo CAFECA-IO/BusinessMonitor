@@ -4,10 +4,10 @@ import { i18nConfig } from 'i18n-config';
 import { jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { verifyDeWT } from '@/lib/dewt';
-import { env } from '@/lib/env'; // Info: (20250910 - Tzuhan) <-- 導入 env
+import { ORIGIN } from '@/constants/dewt';
 
 // Info: (20250910 - Tzuhan) --- CORS & Headers Configuration ---
-const ALLOW_ORIGIN = env.ORIGIN; // Info: (20250910 - Tzuhan) 直接從 env 獲取
+const ALLOW_ORIGIN = ORIGIN!; // Info: (20250910 - Tzuhan) 直接從 env 獲取
 const ALLOW_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
 const ALLOW_HEADERS = 'Content-Type,Authorization';
 const EXPOSE_HEADERS = 'X-Request-Id';

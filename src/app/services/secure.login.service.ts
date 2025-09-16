@@ -1,10 +1,9 @@
-import { getChallenge, buildExpectedData, verifyUser, Fido2ExpectedData } from '@/lib/cafeca';
+import { getChallenge, buildExpectedData, verifyUser } from '@/lib/cafeca';
 import * as loginRepo from '@/app/repositories/secure.login.repo';
 import { signDeWT } from '@/lib/dewt';
 import type { Json } from '@/lib/cafeca';
 import type { RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
 import type { User } from '@prisma/client';
-import { env } from '@/lib/env';
 import crypto from 'crypto';
 
 /**

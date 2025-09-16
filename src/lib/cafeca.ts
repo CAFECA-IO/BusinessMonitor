@@ -1,6 +1,6 @@
+import { ORIGIN } from '@/constants/dewt';
 import { client, server, utils } from '@passwordless-id/webauthn';
 import { RegistrationInfo, RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
-import { env } from '@/lib/env';
 
 export type JsonPrimative = string | number | boolean | null;
 export type JsonArray = Json[];
@@ -40,7 +40,7 @@ const registerUser = async (loginData: Json): Promise<string> => {
 const buildExpectedData = (challenge: string): Fido2ExpectedData => {
   return {
     challenge,
-    origin: env.ORIGIN,
+    origin: ORIGIN!,
     userVerified: true,
     counter: -1,
   };

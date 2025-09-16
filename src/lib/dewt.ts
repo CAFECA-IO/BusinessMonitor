@@ -1,13 +1,27 @@
+import { DEWT_JWK, DEWT_KID, DEWT_AUD, DEWT_MAX_AGE_SEC, DEWT_ISS } from '@/constants/dewt';
 import { SignJWT, jwtVerify, importJWK, type JWK, type JWTPayload } from 'jose';
-import { env, parseB64uJwk } from '@/lib/env';
 
 const ALG = 'ES256';
+
+// Info: (20250910 - Tzuhan) 用於解析 base64url 或 JSON 格式的 JWK
+export function parseB64uJwk<T extends object = Record<string, unknown>>(raw: string): T {
+  try {
+    // Info: (20250910 - Tzuhan) 優先嘗試直接解析 JSON
+    return JSON.parse(raw) as T;
+  } catch {
+    // Info: (20250910 - Tzuhan) 否則視為 base64url 處理
+    const b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+    const jsonStr = Buffer.from(b64 + pad, 'base64').toString('utf8');
+    return JSON.parse(jsonStr) as T;
+  }
+}
 
 // Info: (20250910 - Tzuhan) 惰性載入，只在需要時解析一次 JWK
 let privateJwk: JWK | null = null;
 function getPriv(): JWK {
   if (!privateJwk) {
-    privateJwk = parseB64uJwk(env.DEWT_JWK);
+    privateJwk = parseB64uJwk(DEWT_JWK!);
   }
   return privateJwk;
 }
@@ -31,20 +45,20 @@ export async function signDeWT(claims: DeWTClaims): Promise<string> {
   const key = await importJWK(getPriv(), ALG);
   const now = Math.floor(Date.now() / 1000);
   return new SignJWT({ ...claims })
-    .setProtectedHeader({ alg: ALG, kid: env.DEWT_KID, typ: 'DEWT' }) // Info: (20250910 - Tzuhan) <-- 使用 env
-    .setIssuer(env.DEWT_ISS) // Info: (20250910 - Tzuhan) <-- 使用 env
-    .setAudience(env.DEWT_AUD) // Info: (20250910 - Tzuhan) <-- 使用 env
+    .setProtectedHeader({ alg: ALG, kid: DEWT_KID, typ: 'DEWT' }) // Info: (20250910 - Tzuhan) <-- 使用 env
+    .setIssuer(DEWT_ISS!) // Info: (20250910 - Tzuhan) <-- 使用 env
+    .setAudience(DEWT_AUD!) // Info: (20250910 - Tzuhan) <-- 使用 env
     .setNotBefore(now)
     .setIssuedAt(now)
-    .setExpirationTime(now + env.DEWT_MAX_AGE_SEC) // Info: (20250910 - Tzuhan) <-- 使用 env
+    .setExpirationTime(now + DEWT_MAX_AGE_SEC!) // Info: (20250910 - Tzuhan) <-- 使用 env
     .sign(key);
 }
 
 export async function verifyDeWT(token: string): Promise<JWTPayload & DeWTClaims> {
   const key = await importJWK(toPub(getPriv()), ALG);
   const { payload } = await jwtVerify(token, key, {
-    issuer: env.DEWT_ISS, // Info: (20250910 - Tzuhan) <-- 使用 env
-    audience: env.DEWT_AUD, // Info: (20250910 - Tzuhan) <-- 使用 env
+    issuer: DEWT_ISS, // Info: (20250910 - Tzuhan) <-- 使用 env
+    audience: DEWT_AUD, // Info: (20250910 - Tzuhan) <-- 使用 env
   });
 
   const amr = Array.isArray(payload.amr) ? payload.amr : [];
