@@ -6,7 +6,7 @@ import Skeleton from '@/components/common/skeleton';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
 import { Paginated as IPaginated } from '@/types/common';
-import { TrademarkRow as ITrademarkRow } from '@/validators/operations';
+import { TrademarkRow as ITrademarkRow } from '@/types/company';
 
 interface ITrademarksBlockProps {
   businessId: string;
