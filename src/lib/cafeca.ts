@@ -1,3 +1,4 @@
+import { ORIGIN } from '@/constants/dewt';
 import { client, server, utils } from '@passwordless-id/webauthn';
 import { RegistrationInfo, RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
 
@@ -36,6 +37,15 @@ const registerUser = async (loginData: Json): Promise<string> => {
   return userId;
 };
 
+const buildExpectedData = (challenge: string): Fido2ExpectedData => {
+  return {
+    challenge,
+    origin: ORIGIN!,
+    userVerified: true,
+    counter: -1,
+  };
+};
+
 const getUserData = async (loginData: Json): Promise<[RegistrationJSON, Fido2ExpectedData]> => {
   const challenge = await getChallenge(loginData);
   const registrationOptions = {
@@ -51,12 +61,7 @@ const getUserData = async (loginData: Json): Promise<[RegistrationJSON, Fido2Exp
     },
   };
   const userData = await client.register(registrationOptions);
-  const expectedData = {
-    challenge,
-    origin: 'http://localhost:3000',
-    userVerified: true,
-    counter: -1,
-  };
+  const expectedData = buildExpectedData(challenge);
   return [userData, expectedData];
 };
 
@@ -68,4 +73,4 @@ const verifyUser = async (
   return verificationResult;
 };
 
-export { getChallenge, getUserData, verifyUser };
+export { getChallenge, getUserData, verifyUser, buildExpectedData };

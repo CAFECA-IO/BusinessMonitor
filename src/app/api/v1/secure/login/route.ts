@@ -1,110 +1,75 @@
 import { NextRequest } from 'next/server';
-import { server as fido2Server } from '@passwordless-id/webauthn';
-import type {
-  AuthenticationResponseJSON,
-  AuthenticationInfo,
-  NamedAlgo,
-} from '@passwordless-id/webauthn/dist/esm/types';
 import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
-import { prisma } from '@/lib/prisma';
-import { buildLoginData, calcChallengeHex } from '@/lib/challenge';
-import { signDeWT, type DeWTClaims } from '@/lib/dewt';
-import { env } from '@/lib/env';
-import crypto from 'node:crypto';
+import * as loginService from '@/app/services/secure.login.service';
+import { z } from 'zod';
+import { ExtendedAuthenticatorTransport } from '@passwordless-id/webauthn/dist/esm/types';
 
-export const runtime = 'nodejs';
+// Info: (20250912 - Tzuhan) 使用 Zod 詳細定義 registrationData 的結構，參考 WebAuthn RegistrationResponseJSON
+const RegistrationDataSchema = z.object({
+  id: z.string().min(1),
+  rawId: z.string().min(1),
+  type: z.literal('public-key'),
+  response: z.object({
+    clientDataJSON: z.string().min(1),
+    attestationObject: z.string().min(1),
+    transports: z.array(z.string()),
+    authenticatorData: z.string().min(1),
+    publicKey: z.string().min(1),
+    publicKeyAlgorithm: z.number(),
+  }),
+  clientExtensionResults: z.record(z.string(), z.unknown()),
+  user: z.object({
+    id: z.string(),
+    name: z.string(),
+    displayName: z.string().optional(),
+  }),
+});
+
+// Info: (20250912 - Tzuhan) loginData 是一個 JSON 物件，用於產生 challenge
+const LoginDataSchema = z.record(z.string(), z.unknown());
+
+const LoginRequestSchema = z.object({
+  loginData: LoginDataSchema,
+  registrationData: RegistrationDataSchema,
+});
 
 export async function POST(req: NextRequest) {
-  let assertion: AuthenticationResponseJSON;
   try {
-    assertion = await req.json();
-  } catch {
-    return jsonFail(ApiCode.VALIDATION_ERROR, 'Invalid JSON body');
-  }
+    const body = await req.json();
 
-  // Info: (20250910 - Tzuhan) 1) 取 credentialId（userHandle 可有可無，不依賴它）
-  const credentialId = assertion?.id;
-  if (!credentialId) {
-    return jsonFail(ApiCode.VALIDATION_ERROR, 'Missing credential id');
-  }
-
-  // Info: (20250910 - Tzuhan) 2) DB 取憑證 + 使用者
-  const cred = await prisma.credential.findUnique({
-    where: { credentialId },
-    include: { user: true },
-  });
-  if (!cred || !cred.user) {
-    return jsonFail(ApiCode.NOT_FOUND, 'Credential not found');
-  }
-
-  // Info: (20250910 - Tzuhan) 3) 準備 verify 參數
-  const credentialKey = {
-    id: cred.credentialId,
-    publicKey: cred.publicKey,
-    algorithm: cred.algorithmNamed as NamedAlgo,
-    transports: [],
-  };
-
-  // Info: (20250910 - Tzuhan) 挑戰允許 60 秒滑窗（now 與 now-60s）
-  const now = Date.now();
-  const candidates = [
-    calcChallengeHex(buildLoginData({ rpId: env.RPID, origin: env.ORIGIN, now })),
-    calcChallengeHex(buildLoginData({ rpId: env.RPID, origin: env.ORIGIN, now: now - 60_000 })),
-  ];
-
-  // Info: (20250910 - Tzuhan) 4) 嘗試兩個 challenge 驗章（任一成功即通過）
-  let parsed: AuthenticationInfo | null = null;
-  let lastError: unknown = null;
-  for (const challenge of candidates) {
-    try {
-      parsed = await fido2Server.verifyAuthentication(assertion, credentialKey, {
-        challenge,
-        origin: env.ORIGIN,
-        userVerified: true,
-        counter: cred.counter, // Info: (20250910 - Tzuhan) 期望 > DB 值
+    // Info: (20250912 - Tzuhan) 1. 驗證請求 body 的格式
+    const validation = LoginRequestSchema.safeParse(body);
+    if (!validation.success) {
+      return jsonFail(ApiCode.VALIDATION_ERROR, '無效的請求內容結構', {
+        status: 400,
       });
-      break;
-    } catch (e) {
-      lastError = e;
     }
-  }
-  if (!parsed) {
-    const message = lastError instanceof Error ? lastError.message : 'FIDO2 verification failed';
+
+    const { loginData, registrationData } = validation.data;
+
+    // Info: (20250912 - Tzuhan) 2. 將業務邏輯委託給 Service 層處理
+    const registrationDataWithTypedTransports = {
+      ...registrationData,
+      response: {
+        ...registrationData.response,
+        // Info: (20250912 - Tzuhan) 將 transports 轉型為 ExtendedAuthenticatorTransport[]
+        transports: registrationData.response.transports as ExtendedAuthenticatorTransport[],
+      },
+    };
+
+    const result = await loginService.authenticateOrRegister(
+      JSON.stringify(loginData),
+      registrationDataWithTypedTransports
+    );
+
+    // Info: (20250912 - Tzuhan) 3. 成功後回傳結果
+    return jsonOk(result);
+  } catch (error) {
+    // Info: (20250912 - Tzuhan) 4. 捕捉 Service 層或其他地方拋出的錯誤
+    const message = error instanceof Error ? error.message : '認證失敗';
+
+    // Info: (20250912 - Tzuhan) FIDO2 驗證失敗通常回傳 401 Unauthorized
     return jsonFail(ApiCode.UNAUTHENTICATED, message);
   }
-
-  // Info: (20250910 - Tzuhan) 5) 嚴格檢查遞增（雙保險）
-  if (parsed.counter <= cred.counter) {
-    return jsonFail(ApiCode.CONFLICT, 'Replay detected');
-  }
-
-  await prisma.credential.update({
-    where: { credentialId: cred.credentialId },
-    data: { counter: parsed.counter },
-  });
-
-  // Info: (20250910 - Tzuhan) 6) 準備 DeWT claims
-  const credIdHash =
-    cred.credIdHash ?? crypto.createHash('sha256').update(cred.credentialId, 'utf8').digest('hex');
-
-  if (!cred.credIdHash) {
-    await prisma.credential.update({
-      where: { credentialId: cred.credentialId },
-      data: { credIdHash },
-    });
-  }
-
-  const claims: DeWTClaims = {
-    sub: cred.userId,
-    scope: ['user'],
-    amr: ['fido2'],
-    credIdHash,
-  };
-  const dewt = await signDeWT(claims);
-
-  return jsonOk({
-    dewt,
-    user: { id: cred.user.id, email: cred.user.email },
-  });
 }
