@@ -18,7 +18,7 @@ const MostViewedList: React.FC = () => {
   } = useApi<ICompanyCard[]>(APIName.LIST_MOST_VIEWED_BUSINESSES);
 
   const isShowList = isLoading ? (
-    <SkeletonCard />
+    <SkeletonCard cardStyle="briefed" />
   ) : success && businessList && businessList.length > 0 ? (
     businessList.map((business) => <BusinessBriefCard key={business.id} business={business} />)
   ) : (

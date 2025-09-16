@@ -1,7 +1,6 @@
 import { i18nConfig } from 'i18n-config';
 import initTranslations from '@/lib/i18n';
 import type { Metadata } from 'next';
-import { mockBusinesses } from '@/interfaces/business';
 import { BM_URL } from '@/constants/url';
 import SearchArea from '@/components/common/search_area';
 import SearchResultList from '@/components/search/search_result_list';
@@ -25,12 +24,6 @@ export async function generateStaticParams() {
 }
 
 export default function SearchingResultPage() {
-  const dummyData = {
-    businesses: mockBusinesses,
-    countOfTotal: 234,
-    currentRow: { start: 1, end: 10 },
-  };
-
   const crumbsItems = [
     { name: 'HOME', link: BM_URL.HOME },
     { name: 'BUSINESS_MONITOR', link: BM_URL.BUSINESS_MONITOR },
@@ -49,11 +42,7 @@ export default function SearchingResultPage() {
 
       {/* Info: (20250804 - Julian) Search Result List */}
       <div className="w-3/4">
-        <SearchResultList
-          countOfTotal={dummyData.countOfTotal}
-          currentRow={dummyData.currentRow}
-          list={dummyData.businesses}
-        />
+        <SearchResultList />
       </div>
     </Layout>
   );

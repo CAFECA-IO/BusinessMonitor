@@ -4,7 +4,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import BusinessBriefCard from '@/components/business/business_brief_card';
 import SkeletonCard from '@/components/common/skeleton_card';
-// import { IBusinessBrief } from '@/interfaces/business';
 import { CompanyCard as ICompanyCard } from '@/types/company';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
@@ -18,7 +17,7 @@ const NewBusinessList: React.FC = () => {
   } = useApi<ICompanyCard[]>(APIName.LIST_NEW_BUSINESSES);
 
   const isShowList = isLoading ? (
-    <SkeletonCard />
+    <SkeletonCard cardStyle="briefed" />
   ) : success && businessList && businessList.length > 0 ? (
     businessList.map((business) => <BusinessBriefCard key={business.id} business={business} />)
   ) : (
