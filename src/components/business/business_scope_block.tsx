@@ -3,11 +3,14 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import InfoBlockLayout from '@/components/business/info_block_layout';
-import { IBusinessScope, mockBusinessScopes } from '@/interfaces/business_scope';
+import { BusinessScopeItem as IBusinessScope } from '@/types/company';
+
+interface IBusinessScopeBlockProps {
+  scopes: IBusinessScope[];
+}
 
 const BusinessScopeItem: React.FC<{ data: IBusinessScope }> = ({ data }) => {
   const { code, description } = data;
-
   return (
     <>
       <p className="font-medium text-text-secondary">{code}</p>
@@ -16,13 +19,16 @@ const BusinessScopeItem: React.FC<{ data: IBusinessScope }> = ({ data }) => {
   );
 };
 
-const BusinessScopeBlock: React.FC = () => {
+const BusinessScopeBlock: React.FC<IBusinessScopeBlockProps> = ({ scopes }) => {
   const { t } = useTranslation(['business_detail']);
 
-  // ToDo: (20250813 - Julian) Replace mock data with real API data
-  const businessScopes = mockBusinessScopes.map((scope) => (
-    <BusinessScopeItem key={scope.id} data={scope} />
-  ));
+  const businessScopes =
+    scopes.length > 0 ? (
+      scopes.map((scope) => <BusinessScopeItem key={scope.code} data={scope} />)
+    ) : (
+      // ToDo: (20250915 - Julian) No data design
+      <div className="col-span-2 row-span-4 flex flex-col items-center justify-center">no data</div>
+    );
 
   return (
     <InfoBlockLayout

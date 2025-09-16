@@ -2,7 +2,7 @@ import React from 'react';
 
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
-import { TrendPoint } from '@/types/company';
+import { TrendPoint as ITrendPoint } from '@/types/company';
 import { ILineGraphNode } from '@/interfaces/chart';
 
 // Info: (20250908 - Julian) 動態載入，避免 SSR 錯誤
@@ -10,7 +10,7 @@ const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface ILineGraphProps {
   lineColor: string;
-  graphData: TrendPoint[];
+  graphData: ITrendPoint[];
   graphHeight?: number;
 }
 

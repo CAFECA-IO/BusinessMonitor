@@ -8,8 +8,7 @@ import { IoTriangle } from 'react-icons/io5';
 import { FaChevronRight } from 'react-icons/fa6';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
-import { Paginated } from '@/types/common';
-// import { MarketPayload } from '@/types/company';
+import { Paginated as IPaginated } from '@/types/common';
 import { INews } from '@/interfaces/news';
 import { mockMarketInfo } from '@/interfaces/market';
 import CandlestickChartSection from '@/components/business/candlestick_chart_section';
@@ -23,22 +22,12 @@ interface IMarketInfoTabProps {
 const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
 
-  // ToDo: (20250912 - Julian) During development
-  // const {
-  //   success: marketInfoSuccess,
-  //   payload: marketInfo,
-  //   isLoading: marketInfoIsLoading,
-  // } = useApi<MarketPayload>(APIName.GET_MARKET_INFO_BY_COMPANY_ID, {
-  //   params: { id: businessId },
-  //   query: { range: '1y', limit: 10 }, // ToDo: (20250912 - Julian) Make range & limit dynamic
-  // });
-
   const {
     success: newsSuccess,
     payload: newsData,
     isLoading: newsIsLoading,
     // ToDo: (20250912 - Julian) interface may change later
-  } = useApi<Paginated<INews>>(APIName.GET_NEWS_BY_COMPANY_ID, {
+  } = useApi<IPaginated<INews>>(APIName.GET_NEWS_BY_COMPANY_ID, {
     params: { id: businessId },
   });
 

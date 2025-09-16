@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { formatNumberWithCommas } from '@/lib/common';
 import CandlestickChart from '@/components/common/candlestick_chart';
 import { ICandlestickChartNode, IBarGraphNode } from '@/interfaces/chart';
+import { MarketPayload as IMarket } from '@/types/company';
+import useApi from '@/lib/hooks/use_api';
+import { APIName } from '@/constants/api_connection';
 
 interface INodeData {
   timestamp: number;
@@ -233,6 +236,18 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
 }) => {
   const { t } = useTranslation(['business_detail']);
 
+  const businessId = '1234';
+
+  // ToDo: (20250912 - Julian) During development
+  const {
+    // success,
+    // payload: marketInfo,
+    // isLoading,
+  } = useApi<IMarket>(APIName.GET_MARKET_INFO_BY_COMPANY_ID, {
+    params: { id: businessId },
+    query: { range: '1y', limit: 10 }, // ToDo: (20250912 - Julian) Make range & limit dynamic
+  });
+
   // Info: (20250910 - Julian) 將原始資料轉換為圖表所需格式
   function transformNodeToCandlestickData(data: INodeData[]): ICandlestickChartNode[] {
     return data.map((item) => ({
@@ -279,7 +294,7 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
       default:
         setChartData(dayChartData);
     }
-  }, [currentRange]);
+  }, [currentRange, dayChartData, weekChartData, monthChartData]);
 
   const isPosition = change >= 0;
 

@@ -3,27 +3,38 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import InfoBlockLayout from '@/components/business/info_block_layout';
-import { IInvestor, mockInvestors } from '@/interfaces/investor';
+import { InvestorItem as IInvestor } from '@/types/company';
+
+interface IInvestorBlockProps {
+  investors: IInvestor[];
+}
 
 const InvestorItems: React.FC<{ data: IInvestor }> = ({ data }) => {
-  const { name, position, sharesHeld, representative } = data;
-  const percentageSharesHeld = (sharesHeld * 100).toFixed(2);
+  const { name, position, sharesHeld, representativeOfJuridicalPerson } = data;
+
+  const sharesHeldNum = Number(sharesHeld) ?? 0;
+  const percentageSharesHeld = (sharesHeldNum * 100).toFixed(2);
 
   return (
     <>
       <p className="font-normal text-text-primary">{name}</p>
       <p className="font-normal text-text-primary">{position}</p>
       <p className="font-normal text-text-primary">{percentageSharesHeld}%</p>
-      <p className="col-span-2 font-normal text-text-primary">{representative}</p>
+      <p className="col-span-2 font-normal text-text-primary">{representativeOfJuridicalPerson}</p>
     </>
   );
 };
 
-const InvestorBlock: React.FC = () => {
+const InvestorBlock: React.FC<IInvestorBlockProps> = ({ investors }) => {
   const { t } = useTranslation(['business_detail']);
 
-  // ToDo: (20250813 - Julian) Get investor data from API
-  const investorItems = mockInvestors.map((item) => <InvestorItems key={item.id} data={item} />);
+  const investorItems =
+    investors.length > 0 ? (
+      investors.map((item) => <InvestorItems key={item.name} data={item} />)
+    ) : (
+      // ToDo: (20250915 - Julian) No data design
+      <div className="col-span-5 row-span-4 flex flex-col items-center justify-center">no data</div>
+    );
 
   return (
     <InfoBlockLayout

@@ -4,33 +4,47 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-import { mockBusinesses } from '@/interfaces/business';
 import Button from '@/components/common/button';
 import { timestampToString, formatNumberWithCommas } from '@/lib/common';
+import { CompanyBasicCard as IBasicInfo } from '@/types/company';
 
-const BasicInfoBlock: React.FC = () => {
+interface IBasicInfoSkeletonProps {
+  basicData: IBasicInfo;
+}
+
+const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
   const { t } = useTranslation(['business_detail']);
 
-  // ToDo: (20250812 - Julian) 從 API 取得資料
-  const dummyData = mockBusinesses[0];
-
   const {
-    imgSrc,
     name,
-    businessTaxId,
-    officialWebLink,
-    isVerified,
-    companyRepresentative,
-    countryOfRegistration,
-    dateOfEstablishment,
-    registeredCapital,
+    logoUrl,
+    registrationNo,
+    representative,
+    registrationCountry,
+    establishedDate,
+    capitalAmount,
     paidInCapital,
     capitalRanking,
     address,
-    updatedAt,
-  } = dummyData;
+    websiteUrl,
+    status,
+    lastUpdateTime,
+  } = basicData;
 
-  const updatedAtString = timestampToString(updatedAt);
+  const isVerified = status === '核准設立'; // ToDo: (20250915 - Julian) set constant
+  const websiteLink = websiteUrl ?? '/';
+
+  const establishedTimestamp = establishedDate ? new Date(establishedDate).getTime() / 1000 : 0;
+  const establishedString = timestampToString(establishedTimestamp);
+
+  const updatedAtTimestamp = lastUpdateTime ? new Date(lastUpdateTime).getTime() / 1000 : 0;
+  const updatedAtString = timestampToString(updatedAtTimestamp);
+
+  const isShowLogo = !!logoUrl ? (
+    <Image src={logoUrl} alt="business_logo" width={150} height={150} />
+  ) : (
+    <div className="h-150px w-150px animate-pulse rounded-full bg-grey-100"></div>
+  );
 
   return (
     <div className="col-span-2 flex flex-col items-end gap-16px">
@@ -50,7 +64,7 @@ const BasicInfoBlock: React.FC = () => {
           <div className="flex flex-col items-center gap-40px">
             {/* Info: (20250812 - Julian) Business Logo */}
             <div className="relative h-150px w-150px overflow-hidden rounded-full">
-              <Image src={imgSrc} alt="business_logo" width={150} height={150} />
+              {isShowLogo}
             </div>
             {/* Info: (20250812 - Julian) Business Name & Tax ID */}
             <div className="flex flex-col items-center gap-12px">
@@ -58,12 +72,12 @@ const BasicInfoBlock: React.FC = () => {
                 {isVerified && (
                   <Image src="/icons/verified.svg" width={32} height={32} alt="verified_icon" />
                 )}
-                <p>{name}</p>
+                <p className="flex-1 text-center">{name}</p>
               </div>
-              <p className="text-base font-medium text-grey-60">{businessTaxId}</p>
+              <p className="text-base font-medium text-grey-60">{registrationNo}</p>
             </div>
             {/* Info: (20250812 - Julian) Official Web */}
-            <Link href={officialWebLink} target="_blank">
+            <Link href={websiteLink} target="_blank">
               <Button type="button" variant="primaryBorderless" className="gap-8px">
                 <Image src="/icons/link.svg" width={18} height={18} alt="link_icon" />
                 <p className="font-normal">{t('business_detail:BASIC_INFO_TAB_OFFICIAL_WEB')}</p>
@@ -76,44 +90,46 @@ const BasicInfoBlock: React.FC = () => {
               <p className="text-text-note">
                 {t('business_detail:BASIC_INFO_TAB_COMPANY_REPRESENTATIVE')}
               </p>
-              <p className="text-text-primary">{companyRepresentative}</p>
+              <p className="text-text-primary">{representative}</p>
             </div>
 
             <div className="flex flex-col items-start gap-12px text-sm font-medium">
               <p className="text-text-note">
                 {t('business_detail:BASIC_INFO_TAB_COUNTRY_OF_REGISTRATION')}
               </p>
-              <p className="text-text-primary">{countryOfRegistration}</p>
+              <p className="text-text-primary">{registrationCountry}</p>
             </div>
 
             <div className="flex flex-col items-start gap-12px text-sm font-medium">
               <p className="text-text-note">
                 {t('business_detail:BASIC_INFO_TAB_DATE_OF_ESTABLISHMENT')}
               </p>
-              <p className="text-text-primary">
-                {timestampToString(dateOfEstablishment).formattedDate}
-              </p>
+              <p className="text-text-primary">{establishedString.formattedDate}</p>
             </div>
 
             <div className="flex flex-col items-start gap-12px text-sm font-medium">
               <p className="text-text-note">
                 {t('business_detail:BASIC_INFO_TAB_REGISTERED_CAPITAL')}
               </p>
-              <p className="text-text-primary">$ {formatNumberWithCommas(registeredCapital)} TWD</p>
+              <p className="text-text-primary">
+                $ {formatNumberWithCommas(capitalAmount ?? '-')} TWD
+              </p>
             </div>
 
             <div className="flex flex-col items-start gap-12px text-sm font-medium">
               <p className="text-text-note">
                 {t('business_detail:BASIC_INFO_TAB_PAID_IN_CAPITAL')}
               </p>
-              <p className="text-text-primary">$ {formatNumberWithCommas(paidInCapital)} TWD</p>
+              <p className="text-text-primary">
+                $ {formatNumberWithCommas(paidInCapital ?? '-')} TWD
+              </p>
             </div>
 
             <div className="flex flex-col items-start gap-12px text-sm font-medium">
               <p className="text-text-note">
                 {t('business_detail:BASIC_INFO_TAB_CAPITAL_RANKING')}
               </p>
-              <p className="text-text-primary"># {capitalRanking}</p>
+              <p className="text-text-primary"># {capitalRanking ?? '-'}</p>
             </div>
 
             <div className="col-span-3 flex flex-col items-start gap-12px text-sm font-medium">

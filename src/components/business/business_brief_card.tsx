@@ -6,12 +6,12 @@ import Link from 'next/link';
 import { IoTriangle } from 'react-icons/io5';
 import { PiFlagPennantFill } from 'react-icons/pi';
 // import { IBusinessBrief } from '@/interfaces/business';
-import { CompanyCard } from '@/types/company';
+import { CompanyCard as ICompanyCard } from '@/types/company';
 import { BM_URL } from '@/constants/url';
 import LineGraph from '@/components/common/line_graph';
 
 interface IBusinessBriefCardProps {
-  business: CompanyCard;
+  business: ICompanyCard;
 }
 
 const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
