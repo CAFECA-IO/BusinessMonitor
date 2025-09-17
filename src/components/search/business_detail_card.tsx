@@ -80,7 +80,7 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
         {/* Info: (20250804 - Julian) Business Info */}
         <div className="flex flex-col gap-12px">
           <div className="flex flex-col items-start gap-4px">
-            <p className="text-sm font-bold text-text-secondary">{isShowName}</p>
+            <p className="line-clamp-2 text-sm font-bold text-text-secondary">{isShowName}</p>
             <p className="text-xs font-medium text-text-note">{registrationNo}</p>
           </div>
           <p className="text-xs font-medium text-text-primary">{address}</p>
