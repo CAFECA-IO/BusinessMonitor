@@ -4,10 +4,8 @@ import { i18nConfig } from 'i18n-config';
 import { jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { verifyDeWT } from '@/lib/dewt';
-import { ORIGIN } from '@/constants/dewt';
 
-// Info: (20250910 - Tzuhan) --- CORS & Headers Configuration ---
-const ALLOW_ORIGIN = ORIGIN!; // Info: (20250910 - Tzuhan) 直接從 env 獲取
+const ALLOW_ORIGIN = process.env.NEXT_PUBLIC_ORIGIN || '*';
 const ALLOW_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
 const ALLOW_HEADERS = 'Content-Type,Authorization';
 const EXPOSE_HEADERS = 'X-Request-Id';
@@ -25,59 +23,89 @@ function withCors(res: NextResponse, requestId: string): NextResponse {
 // Info: (20250910 - Tzuhan) --- Main Middleware Logic ---
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const requestId = crypto.randomUUID();
 
-  // Info: (20250910 - Tzuhan) 優先處理非 API 路由的 i18n
+  // Info: (20250910 - Tzuhan)1. 優先處理非 API 路由的 i18n
   if (!pathname.startsWith('/api')) {
     return i18nRouter(req, i18nConfig);
   }
 
   // Info: (20250910 - Tzuhan) --- API 請求處理 ---
-  const requestId = crypto.randomUUID();
 
-  // Info: (20250910 - Tzuhan) 處理 CORS 預檢請求
+  // Info: (20250910 - Tzuhan) 2. 處理 CORS 預檢請求
   if (req.method === 'OPTIONS') {
     return withCors(NextResponse.json({}, { status: 204 }), requestId);
   }
 
-  // Info: (20250910 - Tzuhan) 取得 Authorization Header
+  // Info: (20250910 - Tzuhan) 3. 根據路由前綴決定保護級別
+  //    - /public: 完全開放
+  if (pathname.startsWith('/api/v1/public') || pathname.startsWith('/api/v1/companies')) {
+    const res = NextResponse.next();
+    return withCors(res, requestId);
+  }
+  // Info: (20250917 - Tzuhan)  - /secure: FIDO2 相關，不需 DeWT，但有其他機制 (如 cookie challenge)
+  if (pathname.startsWith('/api/v1/secure')) {
+    // Info: (20250917 - Tzuhan)【關鍵邏輯】處理 /me 的特殊情況
+    if (pathname.endsWith('/me')) {
+      const authHeader = req.headers.get('authorization');
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+      if (!token) {
+        // Info: (20250917 - Tzuhan) 如果沒有 token，重寫到訪客 API，實現「未登入則為訪客資訊」
+        const rewriteUrl = req.nextUrl.clone();
+        rewriteUrl.pathname = '/api/v1/public/guest-info';
+        const res = NextResponse.rewrite(rewriteUrl);
+        return withCors(res, requestId);
+      }
+      // Info: (20250917 - Tzuhan) 如果有 token，則繼續往下走，進入下面的 DeWT 驗證邏輯
+    } else {
+      const res = NextResponse.next();
+      return withCors(res, requestId);
+    }
+  }
+
+  // 4. Info: (20250917 - Tzuhan) 處理所有需要 DeWT 的路由 (/auth, /service, /admin, 以及帶有 token 的 /me)
   const authHeader = req.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
 
-  try {
-    const payload = token ? await verifyDeWT(token) : null;
+  if (!token) {
+    const response = jsonFail(ApiCode.UNAUTHENTICATED, 'Missing token');
+    return withCors(response, requestId);
+  }
 
-    // Info: (20250910 - Tzuhan) 將 user-id 和 scope 注入 headers，方便後續 API 使用
+  try {
+    const payload = await verifyDeWT(token);
+
+    // Info: (20250917 - Tzuhan) 注入 user-id 和 scope 等資訊到 request headers
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set('x-request-id', requestId);
-    if (payload?.sub) {
-      requestHeaders.set('x-user-id', payload.sub);
-      requestHeaders.set('x-user-scope', (payload.scope ?? []).join(','));
+    requestHeaders.set('x-identity-id', payload.sub as string);
+    if (payload.scope) {
+      requestHeaders.set('x-user-scope', (payload.scope as string[]).join(','));
+    }
+
+    // Info: (20250917 - Tzuhan) 檢查管理員權限
+    if (pathname.startsWith('/api/v1/admin') && !(payload.scope as string[])?.includes('admin')) {
+      const response = jsonFail(ApiCode.FORBIDDEN, 'Insufficient permissions');
+      return withCors(response, requestId);
     }
 
     const nextResponse = NextResponse.next({ request: { headers: requestHeaders } });
     return withCors(nextResponse, requestId);
   } catch (error) {
-    // Info: (20250910 - Tzuhan) Token 驗證失敗 (過期、簽章錯誤等)
+    // Info: (20250917 - Tzuhan)Token 驗證失敗 (過期、簽章錯誤等)
     const message = error instanceof Error ? error.message : 'Invalid token';
     const response = jsonFail(ApiCode.UNAUTHENTICATED, message);
     return withCors(response, requestId);
   }
 }
 
-// Info: (20250910 - Tzuhan) --- Matcher Configuration ---
+// Info: (20250917 - Tzuhan) --- Matcher Configuration ---
 export const config = {
-  /* Info: (20250910 - Tzuhan)
-   * matcher 只匹配需要保護的 API 路徑。
-   * /public 和 /secure 路徑不在此列，因此不會執行此 middleware 的 DeWT 驗證。
-   * i18n 的 matcher 確保頁面路由能正常運作。
-   */
   matcher: [
-    // Info: (20250910 - Tzuhan) 受保護的 API 路徑
+    // Info: (20250917 - Tzuhan) 匹配所有 API 路由和所有非靜態檔案的頁面路由
     '/api/v1/auth/:path*',
     '/api/v1/service/:path*',
     '/api/v1/admin/:path*',
-
-    // Info: (20250910 - Tzuhan) 非 API 路徑，交給 i18n 處理
     '/((?!api|static|.*\\..*|_next).*)',
   ],
 };
