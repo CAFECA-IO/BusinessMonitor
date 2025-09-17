@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { i18nConfig } from 'i18n-config';
 import initTranslations from '@/lib/i18n';
 import MainSearch from '@/components/business/main_search';
@@ -25,17 +26,19 @@ export async function generateMetadata({
 
 export default function SearchPage() {
   return (
-    <Layout pageBgColor="bg-surface-background" className="items-center gap-60px">
-      {/* Info: (20250904 - Julian) Main Search Area */}
-      <MainSearch />
+    <Suspense fallback={<>...</>}>
+      <Layout pageBgColor="bg-surface-background" className="items-center gap-60px">
+        {/* Info: (20250904 - Julian) Main Search Area */}
+        <MainSearch />
 
-      {/* Info: (20250804 - Julian) Business Lists */}
-      <div className="flex w-full flex-col items-center gap-56px">
-        {/* Info: (20250804 - Julian) New Business List */}
-        <NewBusinessList />
-        {/* Info: (20250804 - Julian) Most Viewed List */}
-        <MostViewedList />
-      </div>
-    </Layout>
+        {/* Info: (20250804 - Julian) Business Lists */}
+        <div className="flex w-full flex-col items-center gap-56px">
+          {/* Info: (20250804 - Julian) New Business List */}
+          <NewBusinessList />
+          {/* Info: (20250804 - Julian) Most Viewed List */}
+          <MostViewedList />
+        </div>
+      </Layout>
+    </Suspense>
   );
 }

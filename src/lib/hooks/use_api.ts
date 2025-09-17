@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ApiResponse } from '@/lib/response';
 import { APIConfig } from '@/constants/api_connection';
 import { IAPIName, IAPIInput, IAPIConfig } from '@/interfaces/api_connection';
@@ -27,34 +27,39 @@ function getAPIPath(apiConfig: IAPIConfig, input: IAPIInput) {
   return resultPath;
 }
 
-function useApi<T>(apiNAme: IAPIName, options?: IAPIInput) {
+function useApi<T>(apiName: IAPIName, options?: IAPIInput) {
   const [response, setResponse] = useState<ApiResponse<T> | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const apiConfig = APIConfig[apiNAme];
-  const apiPath = getAPIPath(apiConfig, options ?? {});
+  const apiConfig = APIConfig[apiName];
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  const fetchData = useCallback(
+    async (input?: IAPIInput) => {
+      setIsLoading(true);
 
-    try {
-      const res = await fetch(apiPath, { method: apiConfig.method });
-      const result: ApiResponse<T> = await res.json();
-      setResponse(result);
-    } catch (err) {
-      setError(err as Error);
-      setResponse(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      const apiPath = getAPIPath(apiConfig, input ?? {});
+      const apiMethod = apiConfig.method;
+
+      try {
+        const res = await fetch(apiPath, { method: apiMethod });
+        const result: ApiResponse<T> = await res.json();
+        setResponse(result);
+      } catch (err) {
+        setError(err as Error);
+        setResponse(null);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [apiName]
+  );
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(options);
+  }, [fetchData]);
 
-  return { ...response, error, isLoading };
+  return { ...response, error, isLoading, refetch: fetchData };
 }
 
 export default useApi;
