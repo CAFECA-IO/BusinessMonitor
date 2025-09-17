@@ -1,18 +1,19 @@
 'use client';
 
-import React, { Dispatch, SetStateAction } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 
 interface IPaginationProps {
-  activePage: number;
-  setActivePage: Dispatch<SetStateAction<number>>;
+  selectPage: (page: number) => void;
   totalPages: number;
 }
 
-const Pagination: React.FC<IPaginationProps> = ({ activePage, setActivePage, totalPages }) => {
-  const router = useRouter();
+const Pagination: React.FC<IPaginationProps> = ({ selectPage, totalPages }) => {
   const searchParams = useSearchParams();
+
+  // Info: (20250917 - Julian) 從 URL 參數取得當前頁碼，預設為 1
+  const activePage = Number(searchParams.get('page')) || 1;
 
   // Info: (20250917 - Julian) 建立一個包含所有頁碼的陣列
   const pagesArr = Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -30,17 +31,6 @@ const Pagination: React.FC<IPaginationProps> = ({ activePage, setActivePage, tot
     }
     // Info: (20250917 - Julian) 其他情況下顯示當前頁面前後兩頁
     return page >= activePage - 2 && page <= activePage + 2;
-  };
-
-  // Info: (20250917 - Julian) 點擊按鈕時更新當前頁面，並寫入 URL 參數
-  const selectPage = (page: number) => {
-    setActivePage(page);
-
-    // Info: (20250917 - Julian) 保留現有 query
-    const params = new URLSearchParams(searchParams);
-    params.set('page', page.toString());
-    // Info: (20250917 - Julian) 更新 URL
-    router.push(`?${params.toString()}`);
   };
 
   const pages = pagesArr.map((page) => {

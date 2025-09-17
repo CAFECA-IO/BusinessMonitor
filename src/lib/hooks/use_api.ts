@@ -33,26 +33,30 @@ function useApi<T>(apiName: IAPIName, options?: IAPIInput) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const apiConfig = APIConfig[apiName];
-  const apiPath = getAPIPath(apiConfig, options ?? {});
-  const apiMethod = apiConfig.method;
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
+  const fetchData = useCallback(
+    async (input?: IAPIInput) => {
+      setIsLoading(true);
 
-    try {
-      const res = await fetch(apiPath, { method: apiMethod });
-      const result: ApiResponse<T> = await res.json();
-      setResponse(result);
-    } catch (err) {
-      setError(err as Error);
-      setResponse(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [apiName]);
+      const apiPath = getAPIPath(apiConfig, input ?? {});
+      const apiMethod = apiConfig.method;
+
+      try {
+        const res = await fetch(apiPath, { method: apiMethod });
+        const result: ApiResponse<T> = await res.json();
+        setResponse(result);
+      } catch (err) {
+        setError(err as Error);
+        setResponse(null);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [apiName]
+  );
 
   useEffect(() => {
-    fetchData();
+    fetchData(options);
   }, [fetchData]);
 
   return { ...response, error, isLoading, refetch: fetchData };
