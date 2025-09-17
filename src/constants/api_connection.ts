@@ -28,6 +28,7 @@ export enum APIName {
   GET_ANNOUNCEMENTS_BY_COMPANY_ID = 'GET_ANNOUNCEMENTS_BY_COMPANY_ID',
   GET_COMMENTS_BY_COMPANY_ID = 'GET_COMMENTS_BY_COMPANY_ID',
   GET_FLAGS_BY_COMPANY_ID = 'GET_FLAGS_BY_COMPANY_ID',
+  LIST_SEARCHED_BUSINESSES = 'LIST_SEARCHED_BUSINESSES',
 }
 
 export enum APIPath {
@@ -47,6 +48,7 @@ export enum APIPath {
   GET_ANNOUNCEMENTS_BY_COMPANY_ID = `${apiPrefix}/companies/:id/announcements`,
   GET_COMMENTS_BY_COMPANY_ID = `${apiPrefix}/companies/:id/comments`,
   GET_FLAGS_BY_COMPANY_ID = `${apiPrefix}/companies/:id/flags`,
+  LIST_SEARCHED_BUSINESSES = `${apiPrefix}/companies/search`,
 }
 
 const createAPIConfig = ({
@@ -143,5 +145,10 @@ export const APIConfig: Record<IAPIName, IAPIConfig> = {
     name: APIName.GET_FLAGS_BY_COMPANY_ID,
     method: HttpMethod.GET,
     path: APIPath.GET_FLAGS_BY_COMPANY_ID,
+  }),
+  [APIName.LIST_SEARCHED_BUSINESSES]: createAPIConfig({
+    name: APIName.LIST_SEARCHED_BUSINESSES,
+    method: HttpMethod.GET,
+    path: APIPath.LIST_SEARCHED_BUSINESSES,
   }),
 };

@@ -1,9 +1,17 @@
 import React from 'react';
 import Skeleton from '@/components/common/skeleton';
 
-const SkeletonCard: React.FC = () => {
+interface ISkeletonCardProps {
+  cardStyle: 'briefed' | 'detailed';
+}
+
+const SkeletonCard: React.FC<ISkeletonCardProps> = ({ cardStyle }) => {
+  const isBriefed = cardStyle === 'briefed';
+
   return (
-    <div className="flex h-150px w-220px flex-col justify-between gap-24px rounded-radius-m border border-transparent bg-surface-primary px-16px py-12px">
+    <div
+      className={`${isBriefed ? 'w-220px border-transparent' : 'w-full border-border-secondary'} flex h-150px flex-col justify-between gap-24px rounded-radius-m border bg-surface-primary px-16px py-12px`}
+    >
       <div className="flex gap-8px">
         <Skeleton width={40} height={40} rounded />
         <div className="flex flex-col items-start gap-4px">
