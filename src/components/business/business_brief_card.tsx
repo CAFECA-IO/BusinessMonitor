@@ -54,6 +54,8 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
     <div className="h-40px w-40px animate-pulse rounded-full bg-grey-100"></div>
   );
 
+  const isShowName = name ? name : 'N/A';
+
   const isShowGreenFlag = countOfGreenFlags > 0 && (
     <div className="flex items-center gap-2px text-text-success">
       <PiFlagPennantFill size={12} />
@@ -79,7 +81,7 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
       <div className="flex gap-8px">
         <div className="h-40px w-40px shrink-0 overflow-hidden rounded-full">{isShowLogo}</div>
         <div className="flex flex-col items-start gap-4px">
-          <p className="text-sm font-bold text-text-secondary">{name}</p>
+          <p className="text-sm font-bold text-text-secondary">{isShowName}</p>
           <p className="text-xs font-medium text-text-note">{registrationNo}</p>
         </div>
       </div>

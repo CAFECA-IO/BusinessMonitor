@@ -101,11 +101,5 @@ export async function middleware(req: NextRequest) {
 
 // Info: (20250917 - Tzuhan) --- Matcher Configuration ---
 export const config = {
-  matcher: [
-    // Info: (20250917 - Tzuhan) 匹配所有 API 路由和所有非靜態檔案的頁面路由
-    '/api/v1/auth/:path*',
-    '/api/v1/service/:path*',
-    '/api/v1/admin/:path*',
-    '/((?!api|static|.*\\..*|_next).*)',
-  ],
+  matcher: ['/api/v1/:path*', '/((?!api|static|.*\\..*|_next).*)'],
 };

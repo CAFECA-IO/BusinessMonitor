@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { IoTriangle } from 'react-icons/io5';
 import { useTranslation } from 'react-i18next';
 import { formatNumberWithCommas } from '@/lib/common';
@@ -238,16 +238,6 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
 
   const businessId = '1234';
 
-  // ToDo: (20250912 - Julian) During development
-  const {
-    // success,
-    // payload: marketInfo,
-    // isLoading,
-  } = useApi<IMarket>(APIName.GET_MARKET_INFO_BY_COMPANY_ID, {
-    params: { id: businessId },
-    query: { range: '1y', limit: 10 }, // ToDo: (20250912 - Julian) Make range & limit dynamic
-  });
-
   // Info: (20250910 - Julian) 將原始資料轉換為圖表所需格式
   function transformNodeToCandlestickData(data: INodeData[]): ICandlestickChartNode[] {
     return data.map((item) => ({
@@ -263,21 +253,37 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
     }));
   }
 
-  const dayChartData: IChartData = {
-    candlestickData: transformNodeToCandlestickData(dayData),
-    barGraphData: transformNodeToBarGraphData(dayData),
-  };
-  const weekChartData: IChartData = {
-    candlestickData: transformNodeToCandlestickData(weekData),
-    barGraphData: transformNodeToBarGraphData(weekData),
-  };
-  const monthChartData: IChartData = {
-    candlestickData: transformNodeToCandlestickData(monthData),
-    barGraphData: transformNodeToBarGraphData(monthData),
-  };
+  const dayChartData: IChartData = useMemo(() => {
+    return {
+      candlestickData: transformNodeToCandlestickData(dayData),
+      barGraphData: transformNodeToBarGraphData(dayData),
+    };
+  }, []);
+  const weekChartData: IChartData = useMemo(() => {
+    return {
+      candlestickData: transformNodeToCandlestickData(weekData),
+      barGraphData: transformNodeToBarGraphData(weekData),
+    };
+  }, []);
+  const monthChartData: IChartData = useMemo(() => {
+    return {
+      candlestickData: transformNodeToCandlestickData(monthData),
+      barGraphData: transformNodeToBarGraphData(monthData),
+    };
+  }, []);
 
   const [currentRange, setCurrentRange] = useState<ChartRange>(ChartRange.DAY);
   const [chartData, setChartData] = useState<IChartData>(dayChartData);
+
+  // ToDo: (20250912 - Julian) During development
+  const {
+    // success,
+    // payload: marketInfo,
+    // isLoading,
+  } = useApi<IMarket>(APIName.GET_MARKET_INFO_BY_COMPANY_ID, {
+    params: { id: businessId },
+    query: { range: '1y', limit: 10 }, // ToDo: (20250912 - Julian) Make range & limit dynamic
+  });
 
   // ToDo: (20250909 - Julian) get chart data from API
   useEffect(() => {

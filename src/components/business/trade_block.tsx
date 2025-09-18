@@ -7,7 +7,7 @@ import InfoBlockLayout from '@/components/business/info_block_layout';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
 import { Paginated as IPaginated } from '@/types/common';
-import { TradeRow as ITradeRow } from '@/validators/operations';
+import { TradeRow as ITradeRow } from '@/types/company';
 import Skeleton from '@/components/common/skeleton';
 
 interface ITradeBlockProps {
