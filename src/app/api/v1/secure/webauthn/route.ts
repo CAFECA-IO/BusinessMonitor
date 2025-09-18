@@ -7,21 +7,27 @@ export async function POST(request: Request) {
     const fido2Response = await request.json();
     const cookieStore = await cookies();
 
-    const challengeCookie = cookieStore.get('webauthn-challenge');
-    if (!challengeCookie) {
+    const sessionCookie = cookieStore.get('webauthn-session');
+    if (!sessionCookie) {
       return NextResponse.json({ error: 'Session expired. Please try again.' }, { status: 400 });
     }
-    const expectedChallenge = challengeCookie.value;
 
-    const result = await webAuthnService.loginOrRegister(fido2Response, expectedChallenge);
+    // 從 cookie 中解析出 challenge
+    const { challenge } = JSON.parse(sessionCookie.value);
+    if (!challenge) {
+      return NextResponse.json({ error: 'Invalid session: challenge missing.' }, { status: 400 });
+    }
 
-    // Info: (20250917 - Tzuhan) 清除 cookie
-    cookieStore.delete('webauthn-challenge');
+    // 將所有複雜邏輯交給 Service 層處理
+    const result = await webAuthnService.loginOrRegister(fido2Response, challenge);
 
+    // 清除 session cookie
+    cookieStore.delete('webauthn-session');
+
+    // 回傳成功結果
     return NextResponse.json(result);
   } catch (error) {
     console.error('WebAuthn API Error:', error);
-    // Info: (20250917 - Tzuhan) 根據錯誤類型回傳更精確的狀態碼
     return NextResponse.json(
       { error: 'Verification failed', details: (error as Error).message },
       { status: 400 }

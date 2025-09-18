@@ -1,23 +1,46 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { server } from '@passwordless-id/webauthn';
+import { generateRegistrationOptions, generateAuthenticationOptions } from '@/lib/fido2-server';
+import { randomUUID } from 'crypto';
 
-export async function GET() {
-  // Info: (20250917 - Tzuhan) 對於無使用者名稱登入，我們不需要 `user` 或 `authenticators`
-  // Info: (20250917 - Tzuhan) 我們只生成一個 challenge
-  const challenge = server.randomChallenge();
+export async function GET(request: NextRequest) {
+  // 檢查前端的 "意圖"
+  const intent = request.nextUrl.searchParams.get('intent');
 
-  // Info: (20250917 - Tzuhan) 將 challenge 存入安全的 httpOnly cookie，用於稍後的驗證
+  let options;
   const cookieStore = await cookies();
 
-  cookieStore.set('webauthn-challenge', challenge, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV !== 'development',
-    sameSite: 'strict',
-    path: '/',
-    maxAge: 120, // 2分鐘有效
-  });
-  // Info: (20250917 - Tzuhan) 注意：這裡回傳的是一個 AuthenticationOptions 物件
-  // Info: (20250917 - Tzuhan) 因為我們不知道用戶是誰，所以不提供 `allowCredentials`
-  return NextResponse.json({ challenge });
+  if (intent === 'register') {
+    // --- 處理註冊意圖 ---
+    const userHandle = randomUUID();
+    options = generateRegistrationOptions({
+      name: `user-${userHandle.substring(0, 6)}`,
+      userHandle,
+    });
+    // 將 challenge 和 userHandle 都存起來，待後續註冊驗證
+    cookieStore.set(
+      'webauthn-session',
+      JSON.stringify({ challenge: options.challenge, userHandle }),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 120,
+      }
+    );
+  } else {
+    // --- 預設為登入意圖 ---
+    options = generateAuthenticationOptions(); // 不傳入 allowCredentials 以啟用無使用者名稱登入
+    // 只需儲存 challenge
+    cookieStore.set('webauthn-session', JSON.stringify({ challenge: options.challenge }), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 120,
+    });
+  }
+
+  return NextResponse.json(options);
 }
