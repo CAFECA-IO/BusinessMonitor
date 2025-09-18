@@ -480,8 +480,8 @@ enum WebAuthnAlgo {
 
 model IdentityAccount {
   id                  String          @id @default(cuid())
-  name                String?         @map("name")// 首次註冊後可讓用戶補充
-  email               String?         @map("email") // 首次註冊後可讓用戶補充
+  name                String?         @map("name")// Info: (20250917 - Tzuhan) 首次註冊後可讓用戶補充
+  email               String?         @map("email") // Info: (20250917 - Tzuhan) 首次註冊後可讓用戶補充
   photo               String?         @map("photo")
   ethereumAddress     String          @unique @map("ethereum_address")
   encryptedPrivateKey String          @map("encrypted_private_key")
@@ -499,7 +499,7 @@ model Authenticator {
   identityAccountId   String          @map("identity_account_id")
   counter             BigInt          @map("counter") @default(0)
   algorithm           WebAuthnAlgo    @map("algorithm")  @default(ES256)
-  userHandle          String          @unique @map("user_handle") // 核心欄位，用於實現無使用者名稱登入
+  userHandle          String          @unique @map("user_handle") // Info: (20250917 - Tzuhan) 核心欄位，用於實現無使用者名稱登入
 
   identityAccount     IdentityAccount @relation(fields: [identityAccountId], references: [id])
 
