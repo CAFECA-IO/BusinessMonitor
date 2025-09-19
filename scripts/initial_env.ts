@@ -77,13 +77,13 @@ async function initializeEnv() {
     console.log('.env file is already up to date. No changes were made.');
   }
 
-  // 檢查 DATABASE_URL 是否存在，如果不存在則給予提醒
+  // Info: (20250911 - Tzuhan) 檢查 DATABASE_URL 是否存在，如果不存在則給予提醒
   if (!/^DATABASE_URL=.*$/m.test(modifiedContent)) {
     console.warn('\n[!] IMPORTANT: Please manually set your DATABASE_URL in the .env file.');
   }
 }
 
-// 執行主函式
+// Info: (20250911 - Tzuhan) 執行主函式
 initializeEnv().catch((error) => {
   console.error('An error occurred during .env initialization:', error);
   process.exit(1);
