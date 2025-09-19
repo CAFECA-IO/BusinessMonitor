@@ -57,7 +57,7 @@ model Company {
   investors                CompanyInvestor[]
   relationsAsChild         CompanyRelation[]   @relation("ChildRelations")
   relationsAsParent        CompanyRelation[]   @relation("ParentRelations")
-  company_view             CompanyView[]
+  companyView              CompanyView[]
   financialReports         FinancialReport[]
   governmentTenders        GovernmentTender[]
   importExportData         ImportExportData[]
@@ -69,7 +69,7 @@ model Company {
   relatedCompaniesAsTarget RelatedCompany[]    @relation("CompanyToRelatedCompanyTarget")
   riskFlags                RiskFlag[]
   stockPrices              StockPrice[]
-  stock_symbol             stock_symbol[]
+  stockSymbol              StockSymbol[]
   trademarks               Trademark[]
   industryCodes            IndustryCode[]      @relation("CompanyIndustry")
 
@@ -332,7 +332,7 @@ model News {
 model Comment {
   id         Int       @id @default(autoincrement())
   companyId  Int       @map("company_id")
-  userId     String?   @map("user_id")
+  userId     String    @map("user_id")
   userName   String?   @map("user_name")
   userAvatar String?   @map("user_avatar")
   content    String
@@ -342,7 +342,8 @@ model Comment {
   comments   Int       @default(0)
   shares     Int       @default(0)
   parentId   Int?      @map("parent_id")
-  user       User?     @relation(fields: [userId], references: [id])
+
+  user       IdentityAccount     @relation(fields: [userId], references: [id])
   company    Company   @relation(fields: [companyId], references: [id])
   parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   replies    Comment[] @relation("CommentReplies")
@@ -424,7 +425,7 @@ model MarketDailyPrice {
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
   stock_symbol_id Int?
-  stock_symbol    stock_symbol? @relation(fields: [stock_symbol_id], references: [id])
+  stock_symbol    StockSymbol? @relation(fields: [stock_symbol_id], references: [id])
 
   @@unique([market, date, symbol], name: "market_date_symbol_unique")
   @@index([stock_symbol_id])
@@ -447,7 +448,7 @@ model MarketDailySummary {
   @@map("market_daily_summary")
 }
 
-model stock_symbol {
+model StockSymbol {
   id                 Int                @id @default(autoincrement())
   symbol             String             @unique
   name               String?
@@ -457,6 +458,8 @@ model stock_symbol {
   updated_at         DateTime
   market_daily_price MarketDailyPrice[]
   company            Company?           @relation(fields: [company_id], references: [id])
+
+  @@map("stock_symbol")
 }
 
 enum PoliticalType {
@@ -469,46 +472,36 @@ enum Board {
   OTC
 }
 
-
-model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  createdAt    DateTime     @default(now()) @map("created_at")
-
-  // Info: (20250910 - Tzuhan) 一個使用者可綁定多把 FIDO2 憑證（每台裝置一把）
-  credentials  Credential[]
-  comments     Comment[]
-
-  @@map("user")
-}
-
-
 enum WebAuthnAlgo {
   ES256
   RS256
   EdDSA
 }
 
-model Credential {
-  id              String        @id @default(cuid())
-  userId          String        @map("user_id")
-  credentialId    String        @unique @map("credential_id")
-  publicKey       String        @map("public_key")
-  publicKeyAlg    Int?          @map("public_key_alg")     // Info: (20250910 - Tzuhan) e.g. ES256=-7, RS256=-257, EdDSA=-8
-  algorithmNamed  WebAuthnAlgo  @default(ES256) @map("algorithm_named")
+model IdentityAccount {
+  id                  String          @id @default(cuid())
+  name                String?         @map("name")// 首次註冊後可讓用戶補充
+  email               String?         @map("email") // 首次註冊後可讓用戶補充
+  photo               String?         @map("photo")
+  ethereumAddress     String          @unique @map("ethereum_address")
+  encryptedPrivateKey String          @map("encrypted_private_key")
+  backupKeyHash       String?         @map("backup_key_hash")
+  authenticators      Authenticator[]
+  comments            Comment[]
 
-  counter         Int           @default(0)
+  @@map("identity_account")
+}
 
-  credIdHash      String?       @map("cred_id_hash")
-  aPubHash        String?       @map("a_pub_hash")
-  rpId            String?       @map("rp_id")
-  transports      String?       @map("transports")
-  deviceNote      String?       @map("device_note")
+model Authenticator {
+  id                  String          @id @default(cuid())
+  credentialID        String          @unique @map("credential_id")
+  credentialPublicKey String          @map("credential_public_key")
+  identityAccountId   String          @map("identity_account_id")
+  counter             BigInt          @map("counter") @default(0)
+  algorithm           WebAuthnAlgo    @map("algorithm")  @default(ES256)
+  userHandle          String          @unique @map("user_handle") // 核心欄位，用於實現無使用者名稱登入
 
-  createdAt       DateTime      @default(now()) @map("created_at")
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  identityAccount     IdentityAccount @relation(fields: [identityAccountId], references: [id])
 
-  @@index([userId], map: "idx_credential_user")
-  @@index([credIdHash], map: "idx_credential_credidhash")
-  @@map("credential")
+  @@map("authenticator")
 }
