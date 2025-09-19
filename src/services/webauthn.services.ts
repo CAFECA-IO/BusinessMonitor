@@ -19,12 +19,12 @@ class WebAuthnService {
     fido2Response: RegistrationJSON | AuthenticationJSON,
     expectedChallenge: string
   ): Promise<LoginResult> {
-    // 關鍵點：首先，明確判斷請求是註冊還是登入。
-    // RegistrationJSON 的 response 物件必定包含 `attestationObject`。
+    // Info: (20250919 - Tzuhan) 關鍵點：首先，明確判斷請求是註冊還是登入。
+    // Info: (20250919 - Tzuhan) RegistrationJSON 的 response 物件必定包含 `attestationObject`。
     const isRegistration = 'attestationObject' in fido2Response.response;
 
     if (isRegistration) {
-      // --- 註冊流程 ---
+      // Info: (20250919 - Tzuhan) --- 註冊流程 ---
       const registrationData = fido2Response as RegistrationJSON;
 
       const verification = await verifyRegistration(registrationData, expectedChallenge);
@@ -63,15 +63,15 @@ class WebAuthnService {
       const dewt = await signDeWT(identityAccount);
       return { dewt, backupKey };
     } else {
-      // --- 登入流程 ---
+      // Info: (20250919 - Tzuhan) --- 登入流程 ---
       const authenticationData = fido2Response as AuthenticationJSON;
       const credentialID = authenticationData.id;
       if (!credentialID) {
         throw new Error('Credential ID missing from authenticator response.');
       }
 
-      // 在登入流程中，如果找不到驗證器，就必須拋出錯誤。
-      // 絕不能進入註冊流程。
+      // Info: (20250919 - Tzuhan) 在登入流程中，如果找不到驗證器，就必須拋出錯誤。
+      // Info: (20250919 - Tzuhan) 絕不能進入註冊流程。
       const authenticator = await webAuthnRepo.findAuthenticatorByCredentialId(credentialID);
       if (!authenticator) {
         throw new Error('Authenticator not found. This device may not be registered.');
