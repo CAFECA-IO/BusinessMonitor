@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { startRegistration, startLogin } from '@/lib/fido2-client';
 
-// 輔助元件：用於優雅地顯示 JSON 結果
+// Info: (20250919 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
 const ResultDisplay = ({ title, data }: { title: string; data: object | string | null }) => {
   if (!data) return null;
   const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
@@ -33,10 +33,10 @@ export default function WebAuthnFinalDemoPage() {
   const handleAuth = useCallback(async () => {
     resetState();
 
-    // --- 步驟一: 先假設用戶已註冊，嘗試「登入」 ---
+    // Info: (20250919 - Tzuhan) --- 步驟一: 先假設用戶已註冊，嘗試「登入」 ---
     setStatusMessage('Attempting to sign in with an existing Passkey...');
     try {
-      // 請求登入選項 (不帶 intent)
+      // Info: (20250919 - Tzuhan) 請求登入選項 (不帶 intent)
       const loginOptionsRes = await fetch('/api/v1/secure/webauthn_options');
       if (!loginOptionsRes.ok) throw new Error('Could not fetch login options from server.');
       const loginOptions = await loginOptionsRes.json();
@@ -59,10 +59,10 @@ export default function WebAuthnFinalDemoPage() {
       setStatusMessage('✅ Login Successful!');
       setResult(data);
       setIsLoading(false);
-      return; // 登入成功，流程結束
+      return; // Info: (20250919 - Tzuhan) 登入成功，流程結束
     } catch (loginError) {
-      // 如果用戶取消登入，或瀏覽器找不到可用 Passkey，就會觸發 NotAllowedError。
-      // 我們將此視為需要註冊的信號，並自動降級。
+      // Info: (20250919 - Tzuhan) 如果用戶取消登入，或瀏覽器找不到可用 Passkey，就會觸發 NotAllowedError。
+      // Info: (20250919 - Tzuhan) 我們將此視為需要註冊的信號，並自動降級。
       if (
         typeof loginError === 'object' &&
         loginError !== null &&
@@ -72,14 +72,14 @@ export default function WebAuthnFinalDemoPage() {
         setStatusMessage('❌ Login attempt failed');
         setError((loginError as { message?: string }).message || 'Login attempt failed');
         setIsLoading(false);
-        return; // 其他無法處理的錯誤，終止流程
+        return; // Info: (20250919 - Tzuhan) 其他無法處理的錯誤，終止流程
       }
     }
 
-    // --- 步驟二: 「登入」失敗，自動降級到「註冊」流程 ---
+    // Info: (20250919 - Tzuhan) --- 步驟二: 「登入」失敗，自動降級到「註冊」流程 ---
     setStatusMessage('No existing Passkey found or used. Attempting to register a new one...');
     try {
-      // 請求註冊選項 (附上 intent=register 參數)
+      // Info: (20250919 - Tzuhan) 請求註冊選項 (附上 intent=register 參數)
       const regOptionsRes = await fetch('/api/v1/secure/webauthn_options?intent=register');
       if (!regOptionsRes.ok) throw new Error('Could not fetch registration options from server.');
       const regOptions = await regOptionsRes.json();
