@@ -24,6 +24,14 @@ class WebAuthnRepository {
     });
   }
 
+  public async findAuthenticatorByCredentialId(
+    credentialID: string
+  ): Promise<Authenticator | null> {
+    return prisma.authenticator.findUnique({
+      where: { credentialID },
+    });
+  }
+
   public async findIdentityAccountById(id: string): Promise<IdentityAccount | null> {
     return prisma.identityAccount.findUnique({
       where: { id },

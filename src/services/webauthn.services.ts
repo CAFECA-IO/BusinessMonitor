@@ -19,55 +19,26 @@ class WebAuthnService {
     fido2Response: RegistrationJSON | AuthenticationJSON,
     expectedChallenge: string
   ): Promise<LoginResult> {
-    // Info: (20250917 - Tzuhan) 根據 fido2Response 的結構來判斷是登入還是註冊，並取得 userHandle
-    let userHandle: string | undefined;
-    const isRegistration = 'user' in fido2Response;
+    // 關鍵點：首先，明確判斷請求是註冊還是登入。
+    // RegistrationJSON 的 response 物件必定包含 `attestationObject`。
+    const isRegistration = 'attestationObject' in fido2Response.response;
 
     if (isRegistration) {
-      // Info: (20250917 - Tzuhan) 註冊流程: userHandle 來自我們發送到前端的 user.id
-      userHandle = (fido2Response as RegistrationJSON).user.id;
-    } else {
-      // Info: (20250917 - Tzuhan) 登入流程: userHandle 來自驗證器回傳的 response.userHandle
-      userHandle = (fido2Response as AuthenticationJSON).response.userHandle;
-    }
+      // --- 註冊流程 ---
+      const registrationData = fido2Response as RegistrationJSON;
 
-    if (!userHandle) {
-      throw new Error('User handle could not be determined.');
-    }
+      const verification = await verifyRegistration(registrationData, expectedChallenge);
 
-    const authenticator = await webAuthnRepo.findAuthenticatorByUserHandle(userHandle);
-    let identityAccount: IdentityAccount | null;
-
-    if (authenticator) {
-      // Info: (20250917 - Tzuhan) --- 登入流程 ---
-      const verification = await verifyAuthentication(
-        fido2Response as AuthenticationJSON,
-        authenticator,
-        expectedChallenge
-      );
-      // Info: (20250917 - Tzuhan) 使用 `verification.counter` 而非 `verification.newCounter`
-      await webAuthnRepo.updateAuthenticatorCounter(authenticator.id, verification.counter);
-      identityAccount = await webAuthnRepo.findIdentityAccountById(authenticator.identityAccountId);
-      if (!identityAccount)
-        throw new Error('Identity account not found for existing authenticator.');
-
-      const dewt = await signDeWT(identityAccount);
-      return { dewt };
-    } else {
-      // Info: (20250917 - Tzuhan) --- 註冊流程 ---
-      const verification = await verifyRegistration(
-        fido2Response as RegistrationJSON,
-        expectedChallenge
-      );
-
-      // Info: (20250917 - Tzuhan) 使用正確的屬性名 (id, publicKey) 和別名
       const {
         id: credentialID,
         publicKey: credentialPublicKey,
         algorithm,
       } = verification.credential;
-      // Info: (20250917 - Tzuhan) counter 來自 authenticator 物件
       const { counter } = verification.authenticator;
+      const userHandle = registrationData.user.id;
+      if (!userHandle) {
+        throw new Error('User handle not found in FIDO2 registration response.');
+      }
 
       const ethKeyPair = generateEthereumKeyPair();
       const backupKey = generateBackupKey();
@@ -81,16 +52,48 @@ class WebAuthnService {
           credentialID,
           credentialPublicKey,
           counter,
-          // Info: (20250917 - Tzuhan) 將 NamedAlgo (string) 轉為 Prisma Enum
           algorithm: WebAuthnAlgo[algorithm as keyof typeof WebAuthnAlgo],
           userHandle,
         },
       };
 
-      identityAccount = await webAuthnRepo.createIdentityAndAuthenticator(creationData);
+      console.log('Creating identity with data:', creationData);
 
+      const identityAccount = await webAuthnRepo.createIdentityAndAuthenticator(creationData);
       const dewt = await signDeWT(identityAccount);
       return { dewt, backupKey };
+    } else {
+      // --- 登入流程 ---
+      const authenticationData = fido2Response as AuthenticationJSON;
+      const credentialID = authenticationData.id;
+      if (!credentialID) {
+        throw new Error('Credential ID missing from authenticator response.');
+      }
+
+      // 在登入流程中，如果找不到驗證器，就必須拋出錯誤。
+      // 絕不能進入註冊流程。
+      const authenticator = await webAuthnRepo.findAuthenticatorByCredentialId(credentialID);
+      if (!authenticator) {
+        throw new Error('Authenticator not found. This device may not be registered.');
+      }
+
+      const verification = await verifyAuthentication(
+        authenticationData,
+        authenticator,
+        expectedChallenge
+      );
+
+      await webAuthnRepo.updateAuthenticatorCounter(authenticator.id, verification.counter);
+
+      const identityAccount = await webAuthnRepo.findIdentityAccountById(
+        authenticator.identityAccountId
+      );
+      if (!identityAccount) {
+        throw new Error('Identity account not found for existing authenticator.');
+      }
+
+      const dewt = await signDeWT(identityAccount);
+      return { dewt };
     }
   }
 }
