@@ -4,20 +4,20 @@ import { generateRegistrationOptions, generateAuthenticationOptions } from '@/li
 import { randomUUID } from 'crypto';
 
 export async function GET(request: NextRequest) {
-  // 檢查前端的 "意圖"
+  // Info: (20250919 - Tzuhan) 檢查前端的 "意圖"
   const intent = request.nextUrl.searchParams.get('intent');
 
   let options;
   const cookieStore = await cookies();
 
   if (intent === 'register') {
-    // --- 處理註冊意圖 ---
+    // Info: (20250919 - Tzuhan) --- 處理註冊意圖 ---
     const userHandle = randomUUID();
     options = generateRegistrationOptions({
       name: `user-${userHandle.substring(0, 6)}`,
       userHandle,
     });
-    // 將 challenge 和 userHandle 都存起來，待後續註冊驗證
+    // Info: (20250919 - Tzuhan) 將 challenge 和 userHandle 都存起來，待後續註冊驗證
     cookieStore.set(
       'webauthn-session',
       JSON.stringify({ challenge: options.challenge, userHandle }),
@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
       }
     );
   } else {
-    // --- 預設為登入意圖 ---
-    options = generateAuthenticationOptions(); // 不傳入 allowCredentials 以啟用無使用者名稱登入
-    // 只需儲存 challenge
+    // Info: (20250919 - Tzuhan) --- 預設為登入意圖 ---
+    options = generateAuthenticationOptions(); // Info: (20250919 - Tzuhan) 不傳入 allowCredentials 以啟用無使用者名稱登入
+    // Info: (20250919 - Tzuhan) 只需儲存 challenge
     cookieStore.set('webauthn-session', JSON.stringify({ challenge: options.challenge }), {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
