@@ -99,7 +99,7 @@ const PostItem: React.FC<IPost> = ({
       {/* Info: (20250903 - Julian) Author */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-16px">
-          <div className="h-80px w-80px overflow-hidden rounded-full">
+          <div className="size-80px overflow-hidden rounded-full">
             <Image src={author.avatarUrl} width={80} height={80} alt="user_avatar" />
           </div>
           <div className="flex flex-col gap-8px font-medium">

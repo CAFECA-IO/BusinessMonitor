@@ -51,7 +51,7 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
     <Image src={logoUrl} width={40} height={40} alt="business_avatar" />
   ) : (
     // ToDo: (20250911 - Julian) Default Logo
-    <div className="h-40px w-40px animate-pulse rounded-full bg-grey-100"></div>
+    <div className="size-40px animate-pulse rounded-full bg-grey-100"></div>
   );
 
   const isShowName = name ? name : 'N/A';
@@ -79,7 +79,7 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
     >
       {/* Info: (20250804 - Julian) Business Info */}
       <div className="flex gap-8px">
-        <div className="h-40px w-40px shrink-0 overflow-hidden rounded-full">{isShowLogo}</div>
+        <div className="size-40px shrink-0 overflow-hidden rounded-full">{isShowLogo}</div>
         <div className="flex flex-col items-start gap-4px">
           <p className="text-sm font-bold text-text-secondary">{isShowName}</p>
           <p className="text-xs font-medium text-text-note">{registrationNo}</p>

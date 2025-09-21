@@ -3,16 +3,16 @@ import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam, PageQuery, PatentResponse } from '@/validators';
+import { companyIdParamSchema, pageQuerySchema, patentResponseSchema } from '@/validators';
 import { listPatents } from '@/services/company.operations.service';
 
 type Ctx = { params: { id: string } };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
   try {
-    const { id } = CompanyIdParam.parse(ctx.params);
+    const { id } = companyIdParamSchema.parse(ctx.params);
     const url = new URL(req.url);
-    const { page, pageSize } = PageQuery.parse({
+    const { page, pageSize } = pageQuerySchema.parse({
       page: url.searchParams.get('page') ?? undefined,
       pageSize: url.searchParams.get('pageSize') ?? undefined,
     });
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const payload = await listPatents(id, page, pageSize);
 
     // Info: (20250825 - Tzuhan) dev 防呆
-    PatentResponse.parse(ok(payload));
+    patentResponseSchema.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
     res.headers.set('Cache-Control', 's-maxage=300');

@@ -5,60 +5,60 @@ type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 type Primitive = string | number | boolean | null;
 type LogValue = Primitive | Record<string, unknown> | Array<Primitive | Record<string, unknown>>;
 
-export interface LogContext {
+export interface ILogContext {
   service?: string;
   requestId?: string;
   route?: string;
   [key: string]: unknown;
 }
 
-export interface LogFields {
+export interface ILogFields {
   [key: string]: LogValue;
 }
 
 export interface ILogger {
-  child(ctx: LogContext): ILogger;
-  debug(msg: string, fields?: LogFields): void;
-  info(msg: string, fields?: LogFields): void;
-  warn(msg: string, fields?: LogFields): void;
-  error(msg: string, fields?: LogFields): void;
-  time(label: string): { end: (extra?: LogFields) => void };
+  child(ctx: ILogContext): ILogger;
+  debug(msg: string, fields?: ILogFields): void;
+  info(msg: string, fields?: ILogFields): void;
+  warn(msg: string, fields?: ILogFields): void;
+  error(msg: string, fields?: ILogFields): void;
+  time(label: string): { end: (extra?: ILogFields) => void };
 }
 
 const isProd = process.env.NODE_ENV === 'production';
 const SERVICE = process.env.NEXT_PUBLIC_API_POWERBY ?? 'BusinessMonitor API';
 
 class Logger implements ILogger {
-  private readonly ctx: LogContext;
+  private readonly ctx: ILogContext;
 
-  constructor(ctx?: LogContext) {
+  constructor(ctx?: ILogContext) {
     this.ctx = { service: SERVICE, ...ctx };
   }
 
-  child(ctx: LogContext): ILogger {
+  child(ctx: ILogContext): ILogger {
     return new Logger({ ...this.ctx, ...ctx });
   }
 
-  debug(msg: string, fields?: LogFields): void {
+  debug(msg: string, fields?: ILogFields): void {
     this.log('debug', msg, fields);
   }
 
-  info(msg: string, fields?: LogFields): void {
+  info(msg: string, fields?: ILogFields): void {
     this.log('info', msg, fields);
   }
 
-  warn(msg: string, fields?: LogFields): void {
+  warn(msg: string, fields?: ILogFields): void {
     this.log('warn', msg, fields);
   }
 
-  error(msg: string, fields?: LogFields): void {
+  error(msg: string, fields?: ILogFields): void {
     this.log('error', msg, fields);
   }
 
-  time(label: string): { end: (extra?: LogFields) => void } {
+  time(label: string): { end: (extra?: ILogFields) => void } {
     const start = process.hrtime.bigint();
     return {
-      end: (extra?: LogFields) => {
+      end: (extra?: ILogFields) => {
         const end = process.hrtime.bigint();
         const durationMs = Number(end - start) / 1_000_000;
         this.info(`${label} done`, { durationMs, ...extra });
@@ -66,7 +66,7 @@ class Logger implements ILogger {
     };
   }
 
-  private log(level: LogLevel, msg: string, fields?: LogFields): void {
+  private log(level: LogLevel, msg: string, fields?: ILogFields): void {
     const payload = {
       ts: new Date().toISOString(),
       level,
@@ -117,7 +117,7 @@ class Logger implements ILogger {
     }
   }
 
-  private formatCtx(ctx: LogContext): string {
+  private formatCtx(ctx: ILogContext): string {
     const { service, requestId, route, ...rest } = ctx;
     const parts: string[] = [];
     if (service) parts.push(`service=${service}`);

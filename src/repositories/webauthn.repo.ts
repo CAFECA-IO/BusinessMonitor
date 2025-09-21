@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { WebAuthnAlgo, type IdentityAccount, type Authenticator } from '@prisma/client';
 
 // Info: (20250917 - Tzuhan) 更新 DTO 的類型定義，使其與 Prisma Enum 同步
-export interface CreateIdentityData {
+export interface ICreateIdentityData {
   name: string;
   ethereumAddress: string;
   encryptedPrivateKey: string;
@@ -46,7 +46,7 @@ class WebAuthnRepository {
     });
   }
 
-  public async createIdentityAndAuthenticator(data: CreateIdentityData): Promise<IdentityAccount> {
+  public async createIdentityAndAuthenticator(data: ICreateIdentityData): Promise<IdentityAccount> {
     return prisma.identityAccount.create({
       data: {
         name: data.name,

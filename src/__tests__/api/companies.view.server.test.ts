@@ -1,5 +1,5 @@
 import { getAgent } from '@/__tests__/helpers/agent';
-import { Routes } from '@/config/api-routes';
+import { routes } from '@/config/api-routes';
 import { prisma } from '@/lib/prisma';
 
 const agent = getAgent();
@@ -13,7 +13,7 @@ describe.skip('POST /api/v1/companies/:id/view (integration, black-box)', () => 
       data: { name: 'Acme AutoView', registrationNo: 'ACME-V-1' },
     });
     companyId = c.id;
-    path = Routes.companies.view({ id: companyId });
+    path = routes.companies.view({ id: companyId });
 
     await prisma.companyView.deleteMany({ where: { companyId } });
   });

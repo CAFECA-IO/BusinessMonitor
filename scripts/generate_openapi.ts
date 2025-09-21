@@ -4,15 +4,15 @@ import {
   extendZodWithOpenApi,
 } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
-import { CompanySchema, PaginationSchema } from '../src/validators';
+import { companySchema, paginationSchema } from '@/validators';
 
 extendZodWithOpenApi(z);
 
 const registry = new OpenAPIRegistry();
 
 // Info: (20250808 - Tzuhan) 1) 註冊 Zod schema 到 registry（自動成為 components.schemas.Company, components.schemas.Pagination）
-const CompanyRef = registry.register('Company', CompanySchema);
-const PaginationRef = registry.register('Pagination', PaginationSchema);
+const CompanyRef = registry.register('Company', companySchema);
+const PaginationRef = registry.register('Pagination', paginationSchema);
 
 // Info: (20250808 - Tzuhan) 2) 路由宣告直接用 Zod（產生器會自動 $ref）
 registry.registerPath({

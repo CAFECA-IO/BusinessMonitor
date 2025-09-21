@@ -78,10 +78,10 @@ export type TradeQuery = { year?: number } & PageQuery;
 export type OpsListQuery = PageQuery;
 
 // ======================================================
-// Info: (20250818 - Tzuhan) Info: (20250818 - Tzuhan) Routes
+// Info: (20250818 - Tzuhan) Info: (20250818 - Tzuhan) routes
 // ======================================================
 
-export const Routes = {
+export const routes = {
   // Info: (20250818 - Tzuhan) -------- Autocomplete --------
   // Info: (20250818 - Tzuhan) GET /api/v1/autocomplete?q=...&limit=...
   autocomplete: (q: AutocompleteQuery) => withQuery(`${API_PREFIX}/autocomplete`, q),
@@ -100,18 +100,18 @@ export const Routes = {
     market: buildPath(`${API_PREFIX}/companies/:id/market`),
     // Info: (20250818 - Tzuhan) GET /api/v1/companies/:id/market?range=...&limit=...
     marketQ: (p: { id: string | number }, q?: MarketQuery) =>
-      withQuery(Routes.companies.market(p), q),
+      withQuery(routes.companies.market(p), q),
 
     // Info: (20250820 - Tzuhan) GET /api/v1/companies/:id/news
     news: buildPath(`${API_PREFIX}/companies/:id/news`),
-    newsQ: (p: { id: string | number }, q?: NewsQuery) => withQuery(Routes.companies.news(p), q),
+    newsQ: (p: { id: string | number }, q?: NewsQuery) => withQuery(routes.companies.news(p), q),
 
     // Info: (20250818 - Tzuhan) -------- Discussion (Comments) --------
     // Info: (20250818 - Tzuhan) GET /api/v1/companies/:id/comments
     comments: buildPath(`${API_PREFIX}/companies/:id/comments`),
     // Info: (20250818 - Tzuhan) GET /api/v1/companies/:id/comments?q=...&sort=...&page=...&pageSize=...
     commentsQ: (p: { id: string | number }, q?: CommentsQuery) =>
-      withQuery(Routes.companies.comments(p), q),
+      withQuery(routes.companies.comments(p), q),
     // Info: (20250818 - Tzuhan) POST /api/v1/companies/:id/comments  （同一路徑，改用 POST）
     createComment: buildPath(`${API_PREFIX}/companies/:id/comments`),
 
@@ -119,12 +119,12 @@ export const Routes = {
     // Info: (20250818 - Tzuhan) GET /api/v1/companies/:id/announcements?limit=...
     announcements: buildPath(`${API_PREFIX}/companies/:id/announcements`),
     announcementsQ: (p: { id: string | number }, q?: AnnouncementsQuery) =>
-      withQuery(Routes.companies.announcements(p), q),
+      withQuery(routes.companies.announcements(p), q),
 
     // Info: (20250818 - Tzuhan) -------- Flags --------
     // Info: (20250818 - Tzuhan) GET /api/v1/companies/:id/flags?type=red|green&page=...&pageSize=...
     flags: buildPath(`${API_PREFIX}/companies/:id/flags`),
-    flagsQ: (p: { id: string | number }, q?: FlagsQuery) => withQuery(Routes.companies.flags(p), q),
+    flagsQ: (p: { id: string | number }, q?: FlagsQuery) => withQuery(routes.companies.flags(p), q),
 
     // Info: (20250818 - Tzuhan) -------- Operations --------
     operations: {
@@ -132,34 +132,34 @@ export const Routes = {
       // Info: (20250818 - Tzuhan) GET /api/v1/companies/:id/operations/trade?year=&page=&pageSize=
       trade: buildPath(`${API_PREFIX}/companies/:id/operations/trade`),
       tradeQ: (p: { id: string | number }, q?: TradeQuery) =>
-        withQuery(Routes.companies.operations.trade(p), q),
+        withQuery(routes.companies.operations.trade(p), q),
 
       // Info: (20250818 - Tzuhan) 標案
       tenders: buildPath(`${API_PREFIX}/companies/:id/operations/tenders`),
       tendersQ: (p: { id: string | number }, q?: OpsListQuery) =>
-        withQuery(Routes.companies.operations.tenders(p), q),
+        withQuery(routes.companies.operations.tenders(p), q),
 
       // Info: (20250818 - Tzuhan) 商標
       trademarks: buildPath(`${API_PREFIX}/companies/:id/operations/trademarks`),
       trademarksQ: (p: { id: string | number }, q?: OpsListQuery) =>
-        withQuery(Routes.companies.operations.trademarks(p), q),
+        withQuery(routes.companies.operations.trademarks(p), q),
 
       // Info: (20250818 - Tzuhan) 專利
       patents: buildPath(`${API_PREFIX}/companies/:id/operations/patents`),
       patentsQ: (p: { id: string | number }, q?: OpsListQuery) =>
-        withQuery(Routes.companies.operations.patents(p), q),
+        withQuery(routes.companies.operations.patents(p), q),
 
       // Info: (20250818 - Tzuhan) 政治獻金
       politicalContributions: buildPath(
         `${API_PREFIX}/companies/:id/operations/political-contributions`
       ),
       politicalContributionsQ: (p: { id: string | number }, q?: OpsListQuery) =>
-        withQuery(Routes.companies.operations.politicalContributions(p), q),
+        withQuery(routes.companies.operations.politicalContributions(p), q),
 
       // Info: (20250818 - Tzuhan) 政治捐贈
       politicalDonations: buildPath(`${API_PREFIX}/companies/:id/operations/political-donations`),
       politicalDonationsQ: (p: { id: string | number }, q?: OpsListQuery) =>
-        withQuery(Routes.companies.operations.politicalDonations(p), q),
+        withQuery(routes.companies.operations.politicalDonations(p), q),
     },
 
     // Info: (20250818 - Tzuhan) -------- Reports (iframe 簽名) --------

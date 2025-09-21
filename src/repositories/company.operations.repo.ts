@@ -4,7 +4,7 @@ import type { TradeRow, PoliticalRow } from '@/types/company';
 
 /** Info: (20250826 - Tzuhan) ---------- 共用小工具 ---------- */
 
-// Info: (20250826 - Tzuhan) 金額/數字欄位 → 字串（DecimalString）
+// Info: (20250826 - Tzuhan) 金額/數字欄位 → 字串（decimalStringSchema）
 const asText = (col: Prisma.Sql) =>
   Prisma.sql`CASE WHEN ${col} IS NULL THEN NULL ELSE (${col})::text END`;
 // Info: (20250826 - Tzuhan) 日期 → YYYY-MM-DD 字串（允許 null）

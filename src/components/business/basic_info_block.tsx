@@ -43,7 +43,7 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
   const isShowLogo = !!logoUrl ? (
     <Image src={logoUrl} alt="business_logo" width={150} height={150} />
   ) : (
-    <div className="h-150px w-150px animate-pulse rounded-full bg-grey-100"></div>
+    <div className="size-150px animate-pulse rounded-full bg-grey-100"></div>
   );
 
   return (
@@ -63,9 +63,7 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
         <div className="flex items-center justify-between">
           <div className="flex flex-col items-center gap-40px">
             {/* Info: (20250812 - Julian) Business Logo */}
-            <div className="relative h-150px w-150px overflow-hidden rounded-full">
-              {isShowLogo}
-            </div>
+            <div className="relative size-150px overflow-hidden rounded-full">{isShowLogo}</div>
             {/* Info: (20250812 - Julian) Business Name & Tax ID */}
             <div className="flex flex-col items-center gap-12px">
               <div className="flex w-350px items-center gap-4px overflow-x-auto overflow-y-hidden whitespace-nowrap text-h4 font-bold text-text-primary">

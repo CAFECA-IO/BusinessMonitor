@@ -3,20 +3,20 @@ import { z } from 'zod';
 import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { listCompanyNews } from '@/services/news.service';
-import { CompanyNewsQuerySchema } from '@/validators';
+import { companyNewsQuerySchema } from '@/validators';
 import { withCompanyView } from '@/lib/with_company_view';
 
-const ParamsSchema = z.object({
+const paramsSchema = z.object({
   id: z.coerce.number().int().min(1),
 });
 
 export const GET = withCompanyView(async (req: NextRequest, context: { params: unknown }) => {
   try {
-    const { id } = ParamsSchema.parse(context.params);
+    const { id } = paramsSchema.parse(context.params);
     const sp = Object.fromEntries(req.nextUrl.searchParams.entries());
     // Info: (20250821 - Tzuhan) 取重複 key：source
     const sourceMulti = req.nextUrl.searchParams.getAll('source');
-    const parsed = CompanyNewsQuerySchema.safeParse({
+    const parsed = companyNewsQuerySchema.safeParse({
       ...sp,
       source: sourceMulti.length ? sourceMulti : sp.source,
     });

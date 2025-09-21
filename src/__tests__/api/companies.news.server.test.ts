@@ -1,5 +1,5 @@
 import { getAgent } from '@/__tests__/helpers/agent';
-import { Routes } from '@/config/api-routes';
+import { routes } from '@/config/api-routes';
 import { prisma } from '@/lib/prisma';
 
 const agent = getAgent();
@@ -38,7 +38,7 @@ describe('GET /api/v1/companies/:id/news', () => {
   });
 
   it('200：預設 pageSize=10、sort=newest', async () => {
-    const url = Routes.companies.news({ id: companyId });
+    const url = routes.companies.news({ id: companyId });
     const res = await agent.get(url).expect(200);
 
     expect(res.body.success).toBe(true);
@@ -58,17 +58,17 @@ describe('GET /api/v1/companies/:id/news', () => {
   });
 
   it('400：時間/分頁錯誤（page=0）', async () => {
-    await agent.get(Routes.companies.newsQ({ id: companyId }, { page: 0 })).expect(400);
+    await agent.get(routes.companies.newsQ({ id: companyId }, { page: 0 })).expect(400);
   });
 
   it('400：時間格式錯誤', async () => {
-    await agent.get(Routes.companies.newsQ({ id: companyId }, { from: '2025-13-01' })).expect(400);
+    await agent.get(routes.companies.newsQ({ id: companyId }, { from: '2025-13-01' })).expect(400);
   });
 
   it('200：支援多值 source', async () => {
     const res = await agent
       .get(
-        Routes.companies.newsQ(
+        routes.companies.newsQ(
           { id: companyId },
           { source: ['Bloomberg', 'Reuters'], pageSize: 50 }
         )

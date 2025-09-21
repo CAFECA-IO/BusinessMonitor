@@ -33,7 +33,8 @@ const registerUser = async (loginData: Json): Promise<string> => {
     user: { id: userId, name: 'cafeca-user', displayName: 'CAFECA' },
     challenge: await getChallenge(loginData),
   };
-  const userData = await client.register(registrationOptions);
+  // const userData = await client.register(registrationOptions);
+  await client.register(registrationOptions);
   return userId;
 };
 
@@ -73,4 +74,4 @@ const verifyUser = async (
   return verificationResult;
 };
 
-export { getChallenge, getUserData, verifyUser, buildExpectedData };
+export { getChallenge, getUserData, registerUser, verifyUser, buildExpectedData };

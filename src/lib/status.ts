@@ -9,7 +9,7 @@ export enum ApiCode {
   SERVER_ERROR = 'SERVER_ERROR',
 }
 
-export const HttpMap: Record<ApiCode, number> = {
+export const HTTP_MAP: Record<ApiCode, number> = {
   [ApiCode.OK]: 200,
   [ApiCode.VALIDATION_ERROR]: 400,
   [ApiCode.UNAUTHENTICATED]: 401,

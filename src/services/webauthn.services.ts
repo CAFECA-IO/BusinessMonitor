@@ -6,10 +6,10 @@ import { verifyAuthentication, verifyRegistration } from '@/lib/fido2-server';
 import { signDeWT } from '@/lib/dewt';
 import { generateEthereumKeyPair, encryptPrivateKey } from '@/lib/eth-keys';
 import { generateBackupKey, hashBackupKey } from '@/lib/backup-key';
-import { webAuthnRepo, CreateIdentityData } from '@/repositories/webauthn.repo';
-import { IdentityAccount, WebAuthnAlgo } from '@prisma/client';
+import { webAuthnRepo, ICreateIdentityData } from '@/repositories/webauthn.repo';
+import { WebAuthnAlgo } from '@prisma/client';
 
-interface LoginResult {
+interface ILoginResult {
   dewt: string;
   backupKey?: string;
 }
@@ -18,7 +18,7 @@ class WebAuthnService {
   public async loginOrRegister(
     fido2Response: RegistrationJSON | AuthenticationJSON,
     expectedChallenge: string
-  ): Promise<LoginResult> {
+  ): Promise<ILoginResult> {
     // Info: (20250919 - Tzuhan) 關鍵點：首先，明確判斷請求是註冊還是登入。
     // Info: (20250919 - Tzuhan) RegistrationJSON 的 response 物件必定包含 `attestationObject`。
     const isRegistration = 'attestationObject' in fido2Response.response;
@@ -43,7 +43,7 @@ class WebAuthnService {
       const ethKeyPair = generateEthereumKeyPair();
       const backupKey = generateBackupKey();
 
-      const creationData: CreateIdentityData = {
+      const creationData: ICreateIdentityData = {
         name: `User ${userHandle.substring(0, 6)}`,
         ethereumAddress: ethKeyPair.address,
         encryptedPrivateKey: encryptPrivateKey(ethKeyPair.privateKey),
@@ -57,7 +57,7 @@ class WebAuthnService {
         },
       };
 
-      console.log('Creating identity with data:', creationData);
+      // console.log('Creating identity with data:', creationData);
 
       const identityAccount = await webAuthnRepo.createIdentityAndAuthenticator(creationData);
       const dewt = await signDeWT(identityAccount);

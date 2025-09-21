@@ -67,7 +67,7 @@ const Tooltip: React.FC<ITooltipProps> = ({ content, direction }) => {
       >
         {/* Info: (20250812 - Julian) Message Box */}
         <div
-          className={`${alignmentStyle} max-w-300px relative flex w-max items-center rounded-lg bg-surface-primary px-24px py-12px text-xs font-normal shadow-drop-L`}
+          className={`${alignmentStyle} relative flex w-max max-w-300px items-center rounded-lg bg-surface-primary px-24px py-12px text-xs font-normal shadow-drop-L`}
         >
           <p>{content}</p>
           {/* Info: (20250812 - Julian) Triangle */}

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiResponseSchema, PageQuery } from '@/validators';
+import { apiResponseSchema, pageQuerySchema } from '@/validators';
 
 export enum CommentSort {
   newest = 'newest',
@@ -8,14 +8,14 @@ export enum CommentSort {
 }
 
 // Info: (20250903 - Tzuhan) GET /companies/:id/comments 的 Query
-export const CommentsQuerySchema = z.object({
+export const commentsQuerySchema = z.object({
   q: z.string().trim().min(1).optional(),
   sort: z.enum(CommentSort).default(CommentSort.newest),
-  page: PageQuery.shape.page,
-  pageSize: PageQuery.shape.pageSize,
+  page: pageQuerySchema.shape.page,
+  pageSize: pageQuerySchema.shape.pageSize,
 });
 
-export const CompanyCommentItemSchema = z.object({
+export const companyCommentItemSchema = z.object({
   id: z.number().int().positive(),
   userName: z.string().nullable(),
   userAvatar: z.string().nullable(),
@@ -26,12 +26,12 @@ export const CompanyCommentItemSchema = z.object({
   shares: z.number().int(),
 });
 
-export type CompanyCommentItem = z.infer<typeof CompanyCommentItemSchema>;
+export type CompanyCommentItem = z.infer<typeof companyCommentItemSchema>;
 
-export const CompanyCommentsPayloadSchema = z.object({
-  items: z.array(CompanyCommentItemSchema),
-  page: PageQuery.shape.page,
-  pageSize: PageQuery.shape.pageSize,
+export const companyCommentsPayloadSchema = z.object({
+  items: z.array(companyCommentItemSchema),
+  page: pageQuerySchema.shape.page,
+  pageSize: pageQuerySchema.shape.pageSize,
   total: z.number().int().nonnegative(),
   pages: z.number().int().positive(),
   hasNext: z.boolean(),
@@ -40,5 +40,5 @@ export const CompanyCommentsPayloadSchema = z.object({
   note: z.string().optional(),
 });
 
-export const CompanyCommentsResponseSchema = ApiResponseSchema(CompanyCommentsPayloadSchema);
-export type CompanyCommentsResponse = z.infer<typeof CompanyCommentsResponseSchema>;
+export const companyCommentsResponseSchema = apiResponseSchema(companyCommentsPayloadSchema);
+export type CompanyCommentsResponse = z.infer<typeof companyCommentsResponseSchema>;

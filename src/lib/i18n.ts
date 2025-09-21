@@ -10,19 +10,19 @@ export default async function initTranslations(
   i18nInstance?: i18n,
   resources?: Resource
 ) {
-  i18nInstance = i18nInstance || createInstance();
+  const i18nOperator = i18nInstance || createInstance();
 
-  i18nInstance.use(initReactI18next);
+  i18nOperator.use(initReactI18next);
 
   if (!resources) {
-    i18nInstance.use(
+    i18nOperator.use(
       resourcesToBackend(
         (language: string, namespace: string) => import(`@/locales/${language}/${namespace}.json`)
       )
     );
   }
 
-  await i18nInstance.init({
+  await i18nOperator.init({
     lng: locale,
     resources,
     fallbackLng: i18nConfig.defaultLocale,
@@ -34,8 +34,8 @@ export default async function initTranslations(
   });
 
   return {
-    i18n: i18nInstance,
-    resources: { [locale]: i18nInstance.services.resourceStore.data[locale] },
-    t: i18nInstance.t,
+    i18n: i18nOperator,
+    resources: { [locale]: i18nOperator.services.resourceStore.data[locale] },
+    t: i18nOperator.t,
   };
 }

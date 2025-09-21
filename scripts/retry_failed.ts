@@ -21,5 +21,6 @@ for (const name of unique) {
     execSync(`npx tsx scripts/import_twse_daily.ts "${fp}"`, { stdio: 'inherit' });
   } catch (e) {
     console.error('[RETRY_FAIL]', name);
+    console.error(e);
   }
 }

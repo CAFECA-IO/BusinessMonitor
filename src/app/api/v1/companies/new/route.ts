@@ -3,18 +3,18 @@ import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { NewCompaniesQuery, NewCompaniesResponse } from '@/validators';
+import { newCompaniesQuerySchema, newCompaniesResponseSchema } from '@/validators';
 import { listNewCompanies } from '@/services/company.new.service';
 
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const { limit } = NewCompaniesQuery.parse({
+    const { limit } = newCompaniesQuerySchema.parse({
       limit: url.searchParams.get('limit') ?? undefined,
     });
     const items = await listNewCompanies(limit);
 
-    NewCompaniesResponse.parse(ok(items));
+    newCompaniesResponseSchema.parse(ok(items));
 
     const res = jsonOk(items, 'OK');
     res.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');

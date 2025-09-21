@@ -72,7 +72,7 @@ const PopulateDate: React.FC<IPopulateDateProps> = ({
       type="button"
       disabled={date.disable}
       onClick={handleDateClick}
-      className={`relative h-32px py-2px font-normal ${dateStyle} rounded-full before:absolute before:inset-0 before:z-0 before:h-full before:w-full hover:text-text-invert enabled:hover:bg-datepicker-active disabled:text-text-note`}
+      className={`relative h-32px py-2px font-normal ${dateStyle} rounded-full before:absolute before:inset-0 before:z-0 before:size-full hover:text-text-invert enabled:hover:bg-datepicker-active disabled:text-text-note`}
     >
       <p className="relative z-10">{date.date}</p>
     </button>

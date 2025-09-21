@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { CompaniesSearchQuerySchema, PaginatedCompanyCardSchema } from '@/validators';
+import { companiesSearchQuerySchema, paginatedCompanyCardSchema } from '@/validators';
 import { searchCompanies } from '@/services/company.search.service';
 import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
@@ -11,7 +11,7 @@ import { DEFAULT_PAGE_SIZE } from '@/app/constants/common';
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const { q, page, pageSize } = CompaniesSearchQuerySchema.parse({
+    const { q, page, pageSize } = companiesSearchQuerySchema.parse({
       q: url.searchParams.get('q'),
       page: url.searchParams.get('page') ?? undefined,
       pageSize: url.searchParams.get('pageSize') ?? undefined,
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     const payload = dto as CompaniesSearchPayload;
 
     // Info: (20250812 - Tzuhan) dev 防呆：用 Zod 保證 payload 形狀（上線可關）
-    PaginatedCompanyCardSchema.parse(payload);
+    paginatedCompanyCardSchema.parse(payload);
     return jsonOk(payload, 'List fetched successfully');
   } catch (err) {
     if (err instanceof AppError) {
