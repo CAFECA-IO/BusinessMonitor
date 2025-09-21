@@ -14,7 +14,7 @@ import nextPlugin from '@next/eslint-plugin-next';
 import tailwindcss from 'eslint-plugin-tailwindcss';
 import prettierConfig from 'eslint-config-prettier';
 
-export default tseslint.config(
+const tslintConfigs = [
   // Info: (20250918 - Luphia) 全域忽略設定
   {
     ignores: ['coverage', 'node_modules', '.next', 'dist', 'build', 'eslint.config.mjs', 'tailwind.config.ts', 'postcss.config.mjs', 'jest.*.ts'],
@@ -137,5 +137,6 @@ export default tseslint.config(
 
   // Info: (20250918 - Luphia) Prettier 必須放在最後
   prettierConfig,
-);
+];
 
+export default tslintConfigs;
