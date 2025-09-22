@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { CommentSort } from '@/validators';
+import { CommentSort, Timeframe } from '@/validators';
 import { Prisma } from '@prisma/client';
 
 export type CompanyBasicRow = {
@@ -133,21 +133,6 @@ export async function listRelatedCompanies(
 }
 
 export type StockPointRow = { date: string; close: string };
-export async function listStockPoints(companyId: number, limit: number): Promise<StockPointRow[]> {
-  return prisma.$queryRaw<StockPointRow[]>`
-    WITH ranked AS (
-      SELECT sp.date::text AS date,
-             sp.close_price::text AS close,
-             ROW_NUMBER() OVER (ORDER BY sp.date DESC) AS rn
-      FROM stock_price sp
-      WHERE sp.company_id = ${companyId}
-    )
-    SELECT date, close
-    FROM ranked
-    WHERE rn <= ${limit}
-    ORDER BY date ASC
-  `;
-}
 
 export type CommentRow = {
   id: number;
@@ -227,4 +212,73 @@ export async function likeComment(commentId: number): Promise<void> {
     data: { likes: { increment: 1 } },
     select: { id: true },
   });
+}
+
+/**
+ * Info: (20250922 - Tzuhan) 透過 Company ID 尋找對應的 StockSymbol
+ * @param companyId 公司 ID
+ */
+export async function findStockSymbolByCompanyId(companyId: number) {
+  return prisma.stockSymbol.findFirst({
+    where: { company_id: companyId },
+    select: { id: true, symbol: true },
+  });
+}
+
+// Info: (20250922 - Tzuhan) 定義從 $queryRaw 回傳的聚合數據型別
+type AggregatedPriceRow = {
+  date: Date;
+  open: Prisma.Decimal;
+  high: Prisma.Decimal;
+  low: Prisma.Decimal;
+  close: Prisma.Decimal;
+  volume: bigint;
+};
+
+/**
+ * Info: (20250922 - Tzuhan) 根據股票代碼 ID 和時間維度獲取市場價格
+ * @param stockSymbolId StockSymbol 的主鍵 ID
+ * @param timeframe 時間維度
+ */
+export async function getMarketPrices(
+  stockSymbolId: number,
+  timeframe: Timeframe
+): Promise<AggregatedPriceRow[]> {
+  if (timeframe === 'daily') {
+    // Info: (20250922 - Tzuhan)  每日數據：直接從 MarketDailyPrice 表中查詢最近 90 天的資料
+    const dailyPrices = await prisma.marketDailyPrice.findMany({
+      where: { stock_symbol_id: stockSymbolId },
+      orderBy: { date: 'desc' },
+      take: 90,
+    });
+    // Info: (20250922 - Tzuhan) 轉換欄位名以符合 AggregatedPriceRow 型別
+    return dailyPrices
+      .map((p) => ({
+        date: p.date,
+        open: p.openPrice ?? new Prisma.Decimal(0),
+        high: p.highPrice ?? new Prisma.Decimal(0),
+        low: p.lowPrice ?? new Prisma.Decimal(0),
+        close: p.closePrice ?? new Prisma.Decimal(0),
+        volume: p.tradeVolume ?? BigInt(0),
+      }))
+      .reverse(); // Info: (20250922 - Tzuhan)  反轉陣列，讓日期從舊到新
+  }
+
+  // Info: (20250922 - Tzuhan)  每週/每月數據：使用原生 SQL 查詢進行聚合，效能最佳
+  const result: AggregatedPriceRow[] = await prisma.$queryRaw`
+    SELECT
+      DATE_TRUNC(${timeframe}, date)::DATE AS date,
+      (array_agg(open_price ORDER BY date ASC))[1] AS open,
+      MAX(high_price) AS high,
+      MIN(low_price) AS low,
+      (array_agg(close_price ORDER BY date DESC))[1] AS close,
+      SUM(trade_volume) AS volume
+    FROM "market_daily_price"
+    WHERE stock_symbol_id = ${stockSymbolId}
+    GROUP BY DATE_TRUNC(${timeframe}, date)
+    ORDER BY date DESC
+    LIMIT 12; -- Info: (20250922 - Tzuhan) 取最近 12 個週期 (12 週或 12 個月)
+  `;
+
+  return result.reverse();
 }

@@ -68,7 +68,6 @@ model Company {
   relatedCompaniesAsSource RelatedCompany[]    @relation("CompanyToRelatedCompany")
   relatedCompaniesAsTarget RelatedCompany[]    @relation("CompanyToRelatedCompanyTarget")
   riskFlags                RiskFlag[]
-  stockPrices              StockPrice[]
   stockSymbol              StockSymbol[]
   trademarks               Trademark[]
   industryCodes            IndustryCode[]      @relation("CompanyIndustry")
@@ -150,6 +149,8 @@ model RelatedCompany {
   @@map("related_company")
 }
 
+/* Deprecate: (20250925 - Tzuhan) replaced by MarketDailyPrice*/
+/**
 model StockPrice {
   id         Int      @id @default(autoincrement())
   companyId  Int      @map("company_id")
@@ -166,6 +167,7 @@ model StockPrice {
   @@index([companyId, date])
   @@map("stock_price")
 }
+*/
 
 model MarketIndicator {
   id                Int      @id @default(autoincrement())

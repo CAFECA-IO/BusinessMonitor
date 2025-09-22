@@ -1,8 +1,6 @@
 import { prisma } from '@/lib/prisma';
-// Info: (20250917 - Tzuhan) 直接從 prisma client 導入 Enum，確保類型同步
 import { WebAuthnAlgo, type IdentityAccount, type Authenticator } from '@prisma/client';
 
-// Info: (20250917 - Tzuhan) 更新 DTO 的類型定義，使其與 Prisma Enum 同步
 export interface ICreateIdentityData {
   name: string;
   ethereumAddress: string;
@@ -17,32 +15,39 @@ export interface ICreateIdentityData {
   };
 }
 
-class WebAuthnRepository {
-  public async findAuthenticatorByUserHandle(userHandle: string): Promise<Authenticator | null> {
-    return prisma.authenticator.findUnique({
-      where: { userHandle },
-    });
-  }
+export interface IWebAuthnRepository {
+  findAuthenticatorByCredentialId(credentialID: string): Promise<Authenticator | null>;
+  findIdentityAccountById(id: string): Promise<IdentityAccount | null>;
+  updateAuthenticatorCounter(id: string, newCounter: number): Promise<void>;
+  createIdentityAndAuthenticator(data: ICreateIdentityData): Promise<IdentityAccount>;
+}
 
+class WebAuthnRepository implements IWebAuthnRepository {
   public async findAuthenticatorByCredentialId(
     credentialID: string
   ): Promise<Authenticator | null> {
-    return prisma.authenticator.findUnique({
-      where: { credentialID },
-    });
+    return prisma.authenticator.findUnique({ where: { credentialID } });
   }
 
   public async findIdentityAccountById(id: string): Promise<IdentityAccount | null> {
     return prisma.identityAccount.findUnique({
       where: { id },
+      select: {
+        id: true,
+        ethereumAddress: true,
+        name: true,
+        email: true,
+        photo: true,
+        encryptedPrivateKey: true,
+        backupKeyHash: true,
+      },
     });
   }
 
-  // Info: (20250917 - Tzuhan)參數類型從 number 改為 bigint，因為 DB 是 BigInt
   public async updateAuthenticatorCounter(id: string, newCounter: number): Promise<void> {
     await prisma.authenticator.update({
       where: { id },
-      data: { counter: BigInt(newCounter) }, // 存入 DB 時轉回 BigInt
+      data: { counter: BigInt(newCounter) },
     });
   }
 
@@ -53,15 +58,16 @@ class WebAuthnRepository {
         ethereumAddress: data.ethereumAddress,
         encryptedPrivateKey: data.encryptedPrivateKey,
         backupKeyHash: data.backupKeyHash,
-        authenticators: {
-          create: {
-            credentialID: data.credential.credentialID,
-            credentialPublicKey: data.credential.credentialPublicKey,
-            counter: data.credential.counter,
-            algorithm: data.credential.algorithm,
-            userHandle: data.credential.userHandle,
-          },
-        },
+        authenticators: { create: { ...data.credential } },
+      },
+      select: {
+        id: true,
+        ethereumAddress: true,
+        name: true,
+        email: true,
+        photo: true,
+        encryptedPrivateKey: true,
+        backupKeyHash: true,
       },
     });
   }

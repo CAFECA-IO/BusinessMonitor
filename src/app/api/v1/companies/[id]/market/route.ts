@@ -8,35 +8,44 @@ import {
   companyMarketQuerySchema,
   companyMarketResponseSchema,
 } from '@/validators';
-import { getCompanyMarket, marketLimitOf } from '@/services/company.detail.service';
+import { getCompanyMarketData } from '@/services/company.detail.service';
 import { withCompanyView } from '@/lib/with_company_view';
+import { loggerFromRequest } from '@/lib/logger';
 
 type Ctx = { params: { id: string } };
 
 export const GET = withCompanyView(async (req: NextRequest, ctx: Ctx) => {
+  const logger = loggerFromRequest(req);
   try {
     const { id } = companyIdParamSchema.parse(ctx.params);
-
     const url = new URL(req.url);
-    const { range, limit } = companyMarketQuerySchema.parse({
-      range: url.searchParams.get('range') ?? undefined,
-      limit: url.searchParams.get('limit') ?? undefined,
+
+    const { timeframe } = companyMarketQuerySchema.parse({
+      timeframe: url.searchParams.get('timeframe') ?? undefined,
     });
 
-    const effLimit = marketLimitOf(range ?? '3m', limit ?? undefined);
-    const payload = await getCompanyMarket(id, effLimit);
+    logger.info(`Fetching market data`, { companyId: id, timeframe });
+    const payload = await getCompanyMarketData(id, timeframe);
 
-    // Info: (20250825 - Tzuhan) dev 防呆（上線可移除）
-    companyMarketResponseSchema.parse(ok(payload));
+    if (process.env.NODE_ENV === 'development') {
+      companyMarketResponseSchema.parse(ok(payload));
+    }
 
-    const res = jsonOk(payload, 'OK');
-    res.headers.set('Cache-Control', 's-maxage=30');
+    const res = jsonOk(payload);
+    res.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     return res;
   } catch (err) {
-    if (err instanceof AppError) return jsonFail(err.code, err.message);
-    if (err instanceof ZodError) {
-      return jsonFail(ApiCode.VALIDATION_ERROR, err.issues.map((i) => i.message).join('; '));
+    if (err instanceof AppError) {
+      logger.warn(err.message, { code: err.code });
+      return jsonFail(err.code, err.message);
     }
-    return jsonFail(ApiCode.SERVER_ERROR, err instanceof Error ? err.message : 'Unexpected error');
+    if (err instanceof ZodError) {
+      logger.warn('Validation failed', { errors: JSON.stringify(err.issues) });
+      return jsonFail(ApiCode.VALIDATION_ERROR, err.issues[0]?.message ?? '參數驗證失敗');
+    }
+    logger.error('An unexpected error occurred in market route', {
+      error: (err as Error).stack || JSON.stringify(err),
+    });
+    return jsonFail(ApiCode.SERVER_ERROR, '發生未預期的錯誤');
   }
 });

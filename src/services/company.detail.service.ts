@@ -5,7 +5,6 @@ import {
   listBusinessScopes,
   listCompanyHistory,
   listRelatedCompanies,
-  listStockPoints,
   listCompanyComments,
   likeComment,
   type CompanyBasicRow,
@@ -15,11 +14,12 @@ import {
   type RelatedCompanyRow,
   type CommentRow,
   countCompanyComments,
+  findStockSymbolByCompanyId,
+  getMarketPrices,
 } from '@/repositories/company.detail.repo';
 import { AppError } from '@/lib/error';
 import { ApiCode } from '@/lib/status';
-import { buildMarket } from '@/lib/market';
-import { CommentSort } from '@/validators';
+import { CommentSort, MarketDataPayload, Timeframe } from '@/validators';
 import { makePaginated } from '@/types/common';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
@@ -121,29 +121,6 @@ export async function getCompanyBasic(id: number) {
   return { card, investors, businessScopes, history, related };
 }
 
-export function marketLimitOf(range: '7d' | '1m' | '3m' | '6m' | '1y', override?: number): number {
-  if (override) return clamp(override, 10, 365);
-  switch (range) {
-    case '7d':
-      return 7;
-    case '1m':
-      return 30;
-    case '3m':
-      return 90;
-    case '6m':
-      return 180;
-    case '1y':
-      return 365;
-    default:
-      return 90;
-  }
-}
-
-export async function getCompanyMarket(id: number, limit: number) {
-  const points = await listStockPoints(id, limit);
-  return buildMarket(points);
-}
-
 export async function getCompanyComments(
   id: number,
   page: number,
@@ -175,4 +152,41 @@ export async function getCompanyComments(
 
 export async function likeCompanyComment(commentId: number) {
   await likeComment(commentId);
+}
+
+/**
+ * Info: (20250922 - Tzuhan)  獲取公司的市場行情數據（重構後版本）
+ * @param companyId 公司 ID
+ * @param timeframe 時間維度 ('daily', 'weekly', 'monthly')
+ * @returns 格式化後的市場數據
+ */
+export async function getCompanyMarketData(
+  companyId: number,
+  timeframe: Timeframe
+): Promise<MarketDataPayload> {
+  // Info: (20250922 - Tzuhan) 1. 查詢公司對應的股票代碼
+  const stockSymbol = await findStockSymbolByCompanyId(companyId);
+  if (!stockSymbol) {
+    throw new AppError(ApiCode.NOT_FOUND, `找不到 ID 為 ${companyId} 的公司或其對應的股票代碼`);
+  }
+
+  // Info: (20250922 - Tzuhan) 2. 取得市場價格數據
+  const prices = await getMarketPrices(stockSymbol.id, timeframe);
+
+  // Info: (20250922 - Tzuhan) 3. 格式化為 API Response
+  const formattedData = prices.map((p) => ({
+    date: p.date.toISOString(),
+    open: p.open.toNumber(),
+    high: p.high.toNumber(),
+    low: p.low.toNumber(),
+    close: p.close.toNumber(),
+    volume: p.volume.toString(),
+  }));
+
+  return {
+    companyId,
+    stockSymbol: stockSymbol.symbol,
+    timeframe,
+    data: formattedData,
+  };
 }
