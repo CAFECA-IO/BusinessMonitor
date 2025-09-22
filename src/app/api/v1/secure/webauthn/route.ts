@@ -1,36 +1,42 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { webAuthnService } from '@/services/webauthn.services';
+import { jsonFail, jsonOk } from '@/lib/response';
+import { ApiCode } from '@/lib/status';
+import { AppError } from '@/lib/error';
+import { logger } from '@/lib/logger';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const fido2Response = await request.json();
     const cookieStore = await cookies();
 
     const sessionCookie = cookieStore.get('webauthn-session');
-    if (!sessionCookie) {
-      return NextResponse.json({ error: 'Session expired. Please try again.' }, { status: 400 });
+    if (!sessionCookie?.value) {
+      throw new AppError(ApiCode.VALIDATION_ERROR, 'Session expired. Please try again.');
     }
 
-    // Info: (20250919 - Tzuhan) 從 cookie 中解析出 challenge
     const { challenge } = JSON.parse(sessionCookie.value);
     if (!challenge) {
-      return NextResponse.json({ error: 'Invalid session: challenge missing.' }, { status: 400 });
+      throw new AppError(ApiCode.VALIDATION_ERROR, 'Invalid session: challenge missing.');
     }
 
-    // Info: (20250919 - Tzuhan) 將所有複雜邏輯交給 Service 層處理
     const result = await webAuthnService.loginOrRegister(fido2Response, challenge);
 
-    // Info: (20250919 - Tzuhan) 清除 session cookie
     cookieStore.delete('webauthn-session');
 
-    // Info: (20250919 - Tzuhan) 回傳成功結果
-    return NextResponse.json(result);
+    return jsonOk(result);
   } catch (error) {
-    console.error('WebAuthn API Error:', error);
-    return NextResponse.json(
-      { error: 'Verification failed', details: (error as Error).message },
-      { status: 400 }
-    );
+    if (error instanceof AppError) {
+      logger.warn('WebAuthn verification failed', { code: error.code, message: error.message });
+      return jsonFail(error.code, error.message);
+    }
+
+    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+    logger.error('WebAuthn API Error', {
+      errorMessage: message,
+      stack: (error as Error).stack ?? '',
+    });
+    return jsonFail(ApiCode.SERVER_ERROR, 'An unexpected server error occurred.');
   }
 }

@@ -4,26 +4,65 @@ export type Db = PrismaClient | Prisma.TransactionClient;
 
 /** Info: (20250815 - Tzuhan) 依公司清單抓每家公司最近 N 筆走勢（升冪回傳） */
 export type TrendRow = { companyId: number; date: string; close: string };
+
+type TrendPriceRow = {
+  stockSymbolId: number;
+  date: Date;
+  close: Prisma.Decimal;
+};
+
 export async function repoFetchTrends(
   db: Db,
   companyIds: number[],
   perCompanyLimit: number
 ): Promise<TrendRow[]> {
   if (companyIds.length === 0) return [];
-  return db.$queryRaw<TrendRow[]>`
+
+  // Info: (20250922 - Tzuhan) 1. 建立 companyId -> symbolId 的對應
+  const symbols = await db.stockSymbol.findMany({
+    where: { company_id: { in: companyIds } },
+    select: { id: true, company_id: true },
+  });
+
+  const companyIdToSymbolIdMap = new Map<number, number>();
+  symbols.forEach((s) => {
+    if (s.company_id) {
+      companyIdToSymbolIdMap.set(s.company_id, s.id);
+    }
+  });
+
+  const stockSymbolIds = Array.from(companyIdToSymbolIdMap.values());
+  if (stockSymbolIds.length === 0) return [];
+
+  // Info: (20250922 - Tzuhan) 2. 查詢價格
+  const prices = await db.$queryRaw<TrendPriceRow[]>`
     WITH ranked AS (
-      SELECT sp.company_id AS "companyId",
-             sp.date::text AS "date",
-             sp.close_price::text AS "close",
-             ROW_NUMBER() OVER (PARTITION BY sp.company_id ORDER BY sp.date DESC) AS rn
-      FROM stock_price sp
-      WHERE sp.company_id IN (${Prisma.join(companyIds)})
+      SELECT
+        mdp.stock_symbol_id AS "stockSymbolId",
+        mdp.date,
+        mdp.close_price AS "close",
+        ROW_NUMBER() OVER (PARTITION BY mdp.stock_symbol_id ORDER BY mdp.date DESC) AS rn
+      FROM market_daily_price mdp
+      WHERE mdp.stock_symbol_id IN (${Prisma.join(stockSymbolIds)}) AND mdp.close_price IS NOT NULL
     )
-    SELECT "companyId","date","close"
+    SELECT "stockSymbolId", "date", "close"
     FROM ranked
     WHERE rn <= ${perCompanyLimit}
-    ORDER BY "companyId","date" ASC;
+    ORDER BY "stockSymbolId", "date" ASC;
   `;
+
+  // Info: (20250922 - Tzuhan) 3. [修正處] 建立反向的 symbolId -> companyId 對應
+  const symbolIdToCompanyIdMap = new Map<number, number>();
+  companyIdToSymbolIdMap.forEach((symbolId, companyId) => {
+    symbolIdToCompanyIdMap.set(symbolId, companyId);
+  });
+
+  // Info: (20250922 - Tzuhan) 4. 轉換為最終的 TrendRow[] 格式
+  return prices.map((p) => ({
+    companyId: symbolIdToCompanyIdMap.get(p.stockSymbolId)!,
+    date: p.date.toISOString(),
+    close: p.close.toString(),
+  }));
 }
 
 /** Info: (20250815 - Tzuhan) 依公司清單抓紅綠旗幟統計 */

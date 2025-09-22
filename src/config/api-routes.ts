@@ -55,7 +55,9 @@ export function withQuery<T extends QueryRecord>(url: string, query?: T): string
 export type LimitQuery = { limit?: number };
 export type PageQuery = { page?: number; pageSize?: number };
 
-export type MarketQuery = { range?: '7d' | '1m' | '3m' | '6m' | '1y'; limit?: number };
+export type MarketQuery = {
+  timeframe?: 'daily' | 'weekly' | 'monthly';
+};
 
 export type NewsQuery = {
   from?: string;
