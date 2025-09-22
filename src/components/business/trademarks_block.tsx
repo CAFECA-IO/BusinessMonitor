@@ -26,7 +26,7 @@ const TrademarkItem: React.FC<{ trademark: ITrademarkRow }> = ({ trademark }) =>
   const isShowImage = imageUrl ? (
     <Image src={imageUrl} alt={`${name}_img`} width={60} height={60} className="shrink-0" />
   ) : (
-    <div className="h-60px w-60px overflow-hidden rounded-full"></div>
+    <div className="size-60px overflow-hidden rounded-full"></div>
   );
 
   return (

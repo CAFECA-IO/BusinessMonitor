@@ -1,5 +1,5 @@
 import { getAgent } from '@/__tests__/helpers/agent';
-import { Routes } from '@/config/api-routes';
+import { routes } from '@/config/api-routes';
 import { ApiCode } from '@/lib/status';
 
 const agent = getAgent();
@@ -7,7 +7,7 @@ const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
 
 describe('GET /api/v1/companies/:id/announcements (integration, black-box)', () => {
   it('200：正常（預設 limit=10）；可回空陣列', async () => {
-    const url = Routes.companies.announcements({ id: companyId });
+    const url = routes.companies.announcements({ id: companyId });
     const res = await agent.get(url).expect(200);
 
     expect(res.body.success).toBe(true);
@@ -42,7 +42,7 @@ describe('GET /api/v1/companies/:id/announcements (integration, black-box)', () 
   });
 
   it('400：limit 非法 (=0)', async () => {
-    const url = Routes.companies.announcementsQ({ id: companyId }, { limit: 0 });
+    const url = routes.companies.announcementsQ({ id: companyId }, { limit: 0 });
     const res = await agent.get(url).expect(400);
 
     expect(res.body.success).toBe(false);
@@ -51,7 +51,7 @@ describe('GET /api/v1/companies/:id/announcements (integration, black-box)', () 
 
   it('400：limit 非法（非數字）', async () => {
     // Info: (20250902 - Tzuhan) 直接在 querystring 模擬非法值
-    const url = `${Routes.companies.announcements({ id: companyId })}?limit=foo`;
+    const url = `${routes.companies.announcements({ id: companyId })}?limit=foo`;
     const res = await agent.get(url).expect(400);
 
     expect(res.body.success).toBe(false);

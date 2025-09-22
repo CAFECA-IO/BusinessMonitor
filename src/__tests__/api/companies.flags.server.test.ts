@@ -1,5 +1,5 @@
 import { getAgent } from '@/__tests__/helpers/agent';
-import { Routes } from '@/config/api-routes';
+import { routes } from '@/config/api-routes';
 import { ApiCode } from '@/lib/status';
 
 const agent = getAgent();
@@ -7,7 +7,7 @@ const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
 
 describe('GET /api/v1/companies/:id/flags (integration, black-box)', () => {
   it('200：預設 type=red；分頁欄位齊全；items 可為空', async () => {
-    const url = Routes.companies.flagsQ({ id: companyId }); // Info: (20250827 - Tzuhan) 不帶 type
+    const url = routes.companies.flagsQ({ id: companyId }); // Info: (20250827 - Tzuhan) 不帶 type
     const res = await agent.get(url).expect(200);
     expect(res.body.success).toBe(true);
     const p = res.body.payload as {
@@ -26,19 +26,19 @@ describe('GET /api/v1/companies/:id/flags (integration, black-box)', () => {
   });
 
   it('200：type=green 也可用', async () => {
-    const url = Routes.companies.flagsQ({ id: companyId }, { type: 'green', page: 1, pageSize: 5 });
+    const url = routes.companies.flagsQ({ id: companyId }, { type: 'green', page: 1, pageSize: 5 });
     const res = await agent.get(url).expect(200);
     expect(res.body.success).toBe(true);
   });
 
   it('400：非法 type', async () => {
-    const url = `${Routes.companies.flags({ id: companyId })}?type=blue`;
+    const url = `${routes.companies.flags({ id: companyId })}?type=blue`;
     const res = await agent.get(url).expect(400);
     expect(res.body.code).toBe(ApiCode.VALIDATION_ERROR);
   });
 
   it('400：pageSize=0', async () => {
-    const url = Routes.companies.flagsQ({ id: companyId }, { pageSize: 0 });
+    const url = routes.companies.flagsQ({ id: companyId }, { pageSize: 0 });
     const res = await agent.get(url).expect(400);
     expect(res.body.code).toBe(ApiCode.VALIDATION_ERROR);
   });

@@ -65,7 +65,7 @@ const createAPIConfig = ({
   path,
 });
 
-export const APIConfig: Record<IAPIName, IAPIConfig> = {
+export const API_CONFIG: Record<IAPIName, IAPIConfig> = {
   [APIName.LIST_NEW_BUSINESSES]: createAPIConfig({
     name: APIName.LIST_NEW_BUSINESSES,
     method: HttpMethod.GET,

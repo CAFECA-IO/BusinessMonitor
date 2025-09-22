@@ -1,5 +1,5 @@
 import { getAgent } from '@/__tests__/helpers/agent';
-import { Routes } from '@/config/api-routes';
+import { routes } from '@/config/api-routes';
 import { ApiCode } from '@/lib/status';
 
 const agent = getAgent();
@@ -7,7 +7,7 @@ const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
 
 describe('GET /api/v1/companies/:id/comments (integration, black-box)', () => {
   it('200：預設分頁，回傳分頁容器；items 為陣列（可為空）', async () => {
-    const url = Routes.companies.comments({ id: companyId });
+    const url = routes.companies.comments({ id: companyId });
     const res = await agent.get(url).expect(200);
 
     expect(res.body.success).toBe(true);
@@ -48,14 +48,14 @@ describe('GET /api/v1/companies/:id/comments (integration, black-box)', () => {
   });
 
   it('400：page 非法 (=0)', async () => {
-    const url = Routes.companies.commentsQ({ id: companyId }, { page: 0, pageSize: 10 });
+    const url = routes.companies.commentsQ({ id: companyId }, { page: 0, pageSize: 10 });
     const res = await agent.get(url).expect(400);
     expect(res.body.success).toBe(false);
     expect(res.body.code).toBe(ApiCode.VALIDATION_ERROR);
   });
 
   it('400：pageSize 非法 (=0)', async () => {
-    const url = Routes.companies.commentsQ({ id: companyId }, { pageSize: 0 });
+    const url = routes.companies.commentsQ({ id: companyId }, { pageSize: 0 });
     const res = await agent.get(url).expect(400);
     expect(res.body.success).toBe(false);
     expect(res.body.code).toBe(ApiCode.VALIDATION_ERROR);

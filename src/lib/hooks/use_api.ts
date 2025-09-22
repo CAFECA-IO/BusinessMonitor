@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ApiResponse } from '@/lib/response';
-import { APIConfig } from '@/constants/api_connection';
+import { IApiResponse } from '@/lib/response';
+import { API_CONFIG } from '@/constants/api_connection';
 import { IAPIName, IAPIInput, IAPIConfig } from '@/interfaces/api_connection';
 
 function getAPIPath(apiConfig: IAPIConfig, input: IAPIInput) {
@@ -28,11 +28,11 @@ function getAPIPath(apiConfig: IAPIConfig, input: IAPIInput) {
 }
 
 function useApi<T>(apiName: IAPIName, options?: IAPIInput) {
-  const [response, setResponse] = useState<ApiResponse<T> | null>(null);
+  const [response, setResponse] = useState<IApiResponse<T> | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const apiConfig = APIConfig[apiName];
+  const apiConfig = API_CONFIG[apiName];
 
   const fetchData = useCallback(
     async (input?: IAPIInput) => {
@@ -43,7 +43,7 @@ function useApi<T>(apiName: IAPIName, options?: IAPIInput) {
 
       try {
         const res = await fetch(apiPath, { method: apiMethod });
-        const result: ApiResponse<T> = await res.json();
+        const result: IApiResponse<T> = await res.json();
         setResponse(result);
       } catch (err) {
         setError(err as Error);

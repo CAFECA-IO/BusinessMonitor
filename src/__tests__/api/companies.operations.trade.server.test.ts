@@ -1,5 +1,5 @@
 import { getAgent } from '@/__tests__/helpers/agent';
-import { Routes } from '@/config/api-routes';
+import { routes } from '@/config/api-routes';
 import { ApiCode } from '@/lib/status';
 
 const agent = getAgent();
@@ -7,7 +7,7 @@ const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
 
 describe('GET /api/v1/companies/:id/operations/trade (integration, black-box)', () => {
   it('200：預設分頁；可回空集合；欄位齊全', async () => {
-    const url = Routes.companies.operations.trade({ id: companyId });
+    const url = routes.companies.operations.trade({ id: companyId });
     const res = await agent.get(url).expect(200);
     expect(res.body.success).toBe(true);
     const payload = res.body.payload as {
@@ -33,7 +33,7 @@ describe('GET /api/v1/companies/:id/operations/trade (integration, black-box)', 
 
   it('200：year 過濾', async () => {
     const sampleYear = Number(process.env.IT_SAMPLE_YEAR ?? '2024');
-    const url = Routes.companies.operations.tradeQ(
+    const url = routes.companies.operations.tradeQ(
       { id: companyId },
       { year: sampleYear, pageSize: 5 }
     );
@@ -44,7 +44,7 @@ describe('GET /api/v1/companies/:id/operations/trade (integration, black-box)', 
   });
 
   it('400：年份格式錯（字串或超出範圍）', async () => {
-    const url = Routes.companies.operations.tradeQ(
+    const url = routes.companies.operations.tradeQ(
       { id: companyId },
       { year: 0 as unknown as number }
     );
@@ -54,7 +54,7 @@ describe('GET /api/v1/companies/:id/operations/trade (integration, black-box)', 
   });
 
   it('400：pageSize 非法 (=0)', async () => {
-    const url = Routes.companies.operations.tradeQ({ id: companyId }, { pageSize: 0 });
+    const url = routes.companies.operations.tradeQ({ id: companyId }, { pageSize: 0 });
     const res = await agent.get(url).expect(400);
     expect(res.body.success).toBe(false);
     expect(res.body.code).toBe(ApiCode.VALIDATION_ERROR);

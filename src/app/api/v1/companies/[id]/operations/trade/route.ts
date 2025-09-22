@@ -3,16 +3,16 @@ import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam, TradeQuerySchema, TradeResponse } from '@/validators';
+import { companyIdParamSchema, tradeQuerySchema, tradeResponseSchema } from '@/validators';
 import { listTrade } from '@/services/company.operations.service';
 
 type Ctx = { params: { id: string } };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
   try {
-    const { id } = CompanyIdParam.parse(ctx.params);
+    const { id } = companyIdParamSchema.parse(ctx.params);
     const url = new URL(req.url);
-    const { year, page, pageSize } = TradeQuerySchema.parse({
+    const { year, page, pageSize } = tradeQuerySchema.parse({
       year: url.searchParams.get('year') ?? undefined,
       page: url.searchParams.get('page') ?? undefined,
       pageSize: url.searchParams.get('pageSize') ?? undefined,
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const payload = await listTrade(id, year, page, pageSize);
 
     // Info: (20250826 - Tzuhan) dev 契約檢查
-    TradeResponse.parse(ok(payload));
+    tradeResponseSchema.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
     res.headers.set('Cache-Control', 's-maxage=300');

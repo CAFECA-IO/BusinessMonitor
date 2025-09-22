@@ -4,7 +4,10 @@ const transformConfig: [string, unknown] = ['ts-jest', { useESM: true }];
 
 const common: Config = {
   transform: { '^.+\\.(ts|tsx)$': transformConfig },
-  moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
+  moduleNameMapper: {
+    '^@/package$': '<rootDir>/package.json',
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/.next/'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],

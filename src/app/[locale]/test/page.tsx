@@ -175,7 +175,7 @@ export default function WebAuthnPlaygroundPage() {
               className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 ${secure ? 'border-green-300 bg-green-50 text-green-700' : secure === false ? 'border-red-300 bg-red-50 text-red-700' : 'border-gray-300 bg-white text-gray-700'}`}
             >
               <span
-                className="h-2 w-2 rounded-full"
+                className="size-2 rounded-full"
                 style={{
                   background: secure ? '#16a34a' : secure === false ? '#dc2626' : '#9ca3af',
                 }}
@@ -203,7 +203,7 @@ export default function WebAuthnPlaygroundPage() {
               </div>
               <div className="p-4">
                 <textarea
-                  className="min-h-[180px] w-full rounded-xl border px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="min-h-180px w-full rounded-xl border px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   value={loginDataInput}
                   onChange={(e) => setLoginDataInput(e.target.value)}
                   spellCheck={false}

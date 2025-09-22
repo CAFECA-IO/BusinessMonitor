@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { CompanyIdParam } from '@/validators';
+import { companyIdParamSchema } from '@/validators';
 import { clientIp, ipUaHash } from '@/lib/request';
 import { recordCompanyView } from '@/services/company.view.service';
 
@@ -40,7 +40,7 @@ export function withCompanyView<C extends CtxWithCompanyId>(
 
     if (methods.includes(req.method as HttpMethod) && shouldTrack && !shouldSkip) {
       try {
-        const { id } = CompanyIdParam.parse(ctx.params);
+        const { id } = companyIdParamSchema.parse(ctx.params);
         const ipHash = ipUaHash(clientIp(req), ua);
         const sessionId = req.headers.get('x-session-id') ?? req.cookies.get('sid')?.value;
         await recordCompanyView(id, ipHash, sessionId);

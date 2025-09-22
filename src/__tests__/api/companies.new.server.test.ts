@@ -1,11 +1,11 @@
 import { getAgent } from '@/__tests__/helpers/agent';
-import { Routes } from '@/config/api-routes';
+import { routes } from '@/config/api-routes';
 
 const agent = getAgent();
 
 describe('GET /api/v1/companies/new (integration, black-box)', () => {
   it('200：正常（預設 limit=10）', async () => {
-    const url = Routes.companies.newest(); // Info: (20250819 - Tzuhan) 無參數走後端預設 10
+    const url = routes.companies.newest(); // Info: (20250819 - Tzuhan) 無參數走後端預設 10
     const res = await agent.get(url).expect(200);
 
     expect(res.body.success).toBe(true);
@@ -28,7 +28,7 @@ describe('GET /api/v1/companies/new (integration, black-box)', () => {
   });
 
   it('200：limit=1', async () => {
-    const url = Routes.companies.newest({ limit: 1 });
+    const url = routes.companies.newest({ limit: 1 });
     const res = await agent.get(url).expect(200);
 
     expect(res.body.success).toBe(true);
@@ -38,7 +38,7 @@ describe('GET /api/v1/companies/new (integration, black-box)', () => {
   });
 
   it('400：limit 非法（=0）', async () => {
-    const url = Routes.companies.newest({ limit: 0 });
+    const url = routes.companies.newest({ limit: 0 });
     const res = await agent.get(url).expect(400);
 
     expect(res.body.success).toBe(false);

@@ -1,19 +1,24 @@
 import { z } from 'zod';
-import { DateParam, PageQuery, StringArrayParam, PaginatedOf } from '@/validators';
+import {
+  dateParamSchema,
+  pageQuerySchema,
+  stringArrayParamSchema,
+  paginatedOfSchema,
+} from '@/validators';
 
 /** Info: (20250821 - Tzuhan) 查詢參數 */
-export const CompanyNewsQuerySchema = PageQuery.extend({
+export const companyNewsQuerySchema = pageQuerySchema.extend({
   q: z.string().min(1).max(200).optional(),
-  from: DateParam.optional(),
-  to: DateParam.optional(),
+  from: dateParamSchema.optional(),
+  to: dateParamSchema.optional(),
   sort: z.enum(['newest', 'relevance']).default('newest'),
   lang: z.string().min(1).max(10).optional(),
-  source: StringArrayParam, // Info: (20250821 - Tzuhan) e.g. ?source=Bloomberg&source=Reuters 或 ?source=Bloomberg,Reuters
+  source: stringArrayParamSchema, // Info: (20250821 - Tzuhan) e.g. ?source=Bloomberg&source=Reuters 或 ?source=Bloomberg,Reuters
 });
-export type CompanyNewsQuery = z.infer<typeof CompanyNewsQuerySchema>;
+export type CompanyNewsQuery = z.infer<typeof companyNewsQuerySchema>;
 
 /** Info: (20250821 - Tzuhan) 回傳項目 */
-export const NewsItemSchema = z.object({
+export const newsItemSchema = z.object({
   id: z.number().int(),
   title: z.string(),
   content: z.string().nullable().optional(),
@@ -23,7 +28,7 @@ export const NewsItemSchema = z.object({
   source: z.string().optional(),
   url: z.string().url().optional(),
 });
-export type NewsItem = z.infer<typeof NewsItemSchema>;
+export type NewsItem = z.infer<typeof newsItemSchema>;
 
-export const CompanyNewsPayloadSchema = PaginatedOf(NewsItemSchema);
-export type CompanyNewsPayload = z.infer<typeof CompanyNewsPayloadSchema>;
+export const companyNewsPayloadSchema = paginatedOfSchema(newsItemSchema);
+export type CompanyNewsPayload = z.infer<typeof companyNewsPayloadSchema>;

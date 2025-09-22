@@ -3,18 +3,18 @@ import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam } from '@/validators';
-import { FlagsQuerySchema, FlagsResponse } from '@/validators';
+import { companyIdParamSchema } from '@/validators';
+import { flagsQuerySchema, flagsResponseSchema } from '@/validators';
 import { listFlags } from '@/services/company.flags.service';
 
 type Ctx = { params: { id: string } };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
   try {
-    const { id } = CompanyIdParam.parse(ctx.params);
+    const { id } = companyIdParamSchema.parse(ctx.params);
 
     const url = new URL(req.url);
-    const { type, page, pageSize } = FlagsQuerySchema.parse({
+    const { type, page, pageSize } = flagsQuerySchema.parse({
       type: url.searchParams.get('type') ?? undefined,
       page: url.searchParams.get('page') ?? undefined,
       pageSize: url.searchParams.get('pageSize') ?? undefined,
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 
     const payload = await listFlags(id, type, page, pageSize);
 
-    FlagsResponse.parse(ok(payload));
+    flagsResponseSchema.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
     res.headers.set('Cache-Control', 's-maxage=300');

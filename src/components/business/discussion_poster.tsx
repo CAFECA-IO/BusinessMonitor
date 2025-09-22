@@ -17,7 +17,7 @@ const DiscussionPoster: React.FC = () => {
   return (
     <div className="flex items-center gap-24px rounded-radius-l bg-surface-primary px-40px py-24px">
       {/* Info: (20250903 - Julian) Avatar */}
-      <div className="h-80px w-80px shrink-0 overflow-hidden rounded-full">
+      <div className="size-80px shrink-0 overflow-hidden rounded-full">
         <Image src={'/fake_avatar/business_img_3.jpg'} width={80} height={80} alt="user_avatar" />
       </div>
       {/* Info: (20250903 - Julian) Input Box */}

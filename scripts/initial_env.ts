@@ -11,15 +11,16 @@ import path from 'path';
  */
 function ensureEnvVar(content: string, key: string, valueFn: () => string): string {
   const regex = new RegExp(`^${key}=.*$`, 'm');
+  let contentResult = content;
   if (!regex.test(content)) {
     console.log(`  -> Adding missing environment variable: ${key}`);
     // Info: (20250911 - Tzuhan)  確保內容以換行符結尾，以便附加
     if (content.length > 0 && !content.endsWith('\n')) {
-      content += '\n';
+      contentResult += '\n';
     }
-    return `${content}${key}=${valueFn()}\n`;
+    return `${contentResult}${key}=${valueFn()}\n`;
   }
-  return content;
+  return contentResult;
 }
 
 async function initializeEnv() {
@@ -39,6 +40,7 @@ async function initializeEnv() {
       console.log('Initialized .env from .env.example.');
     } catch {
       console.log('No .env or .env.example found. A new .env file will be created.');
+      console.log(error);
     }
   }
 

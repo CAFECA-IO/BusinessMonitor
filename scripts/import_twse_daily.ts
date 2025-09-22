@@ -29,6 +29,7 @@ const DailyPriceRow = z.object({
   peRatio: z.string().optional(),
 });
 
+/*
 const SummaryRow = z.object({
   market: z.literal('TWSE'),
   date: z.date(),
@@ -37,6 +38,15 @@ const SummaryRow = z.object({
   tradeVolume: z.bigint().or(z.null()).optional(),
   tradeCount: z.number().int().or(z.null()).optional(),
 });
+*/
+type SummaryRow = {
+  market: 'TWSE';
+  date: Date;
+  category: string;
+  tradeValue?: string | null;
+  tradeVolume?: bigint | null;
+  tradeCount?: number | null;
+};
 
 /** Info: (20250904 - Tzuhan) ===== Helpers ===== */
 function rocToDate(str: string): Date | null {
@@ -75,7 +85,7 @@ function normalizeSymbol(raw: string): string {
 
 type ParsedBlocks = {
   date: Date;
-  summary: Array<z.infer<typeof SummaryRow>>;
+  summary: SummaryRow[];
   prices: Array<z.infer<typeof DailyPriceRow>>;
 };
 
@@ -110,7 +120,7 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
   let date: Date | null = null;
   let priceHeaderIdx = -1;
 
-  const summaryRows: Array<z.infer<typeof SummaryRow>> = [];
+  const summaryRows: SummaryRow[] = [];
   const priceRows: Array<z.infer<typeof DailyPriceRow>> = [];
 
   for (let i = 0; i < records.length; i++) {
@@ -230,7 +240,7 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
 /** Info: (20250904 - Tzuhan) ===== Import One File ===== */
 async function importOneFile(filePath: string, opts: { dryRun: boolean }) {
   const buf = fs.readFileSync(filePath);
-  const { date, summary, prices } = parseTwseCsv(buf);
+  const { summary, prices } = parseTwseCsv(buf);
 
   if (opts.dryRun) {
     console.log(

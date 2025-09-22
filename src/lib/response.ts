@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { ApiCode } from '@/lib/status';
-import { name, version } from '../../package.json'; // ToDo: (20250905 - Tzuhan) 之後要改用 @ 路徑
+import { name, version } from '@/package'; // ToDo: (20250905 - Tzuhan) 之後要改用 @ 路徑
 
 export const POWERBY = `${name} v${version}`;
 
-export interface ApiResponse<T> {
+export interface IApiResponse<T> {
   powerby: string;
   success: boolean;
   code: ApiCode;
@@ -12,7 +12,7 @@ export interface ApiResponse<T> {
   payload: T | null;
 }
 
-export const ok = <T>(payload: T, message = 'OK'): ApiResponse<T> => ({
+export const ok = <T>(payload: T, message = 'OK'): IApiResponse<T> => ({
   powerby: POWERBY,
   success: true,
   code: ApiCode.OK,
@@ -20,7 +20,7 @@ export const ok = <T>(payload: T, message = 'OK'): ApiResponse<T> => ({
   payload,
 });
 
-export const fail = (code: ApiCode, message: string): ApiResponse<null> => ({
+export const fail = (code: ApiCode, message: string): IApiResponse<null> => ({
   powerby: POWERBY,
   success: false,
   code,
@@ -29,10 +29,10 @@ export const fail = (code: ApiCode, message: string): ApiResponse<null> => ({
 });
 
 export const jsonOk = <T>(payload: T, message = 'OK', init?: ResponseInit) =>
-  NextResponse.json<ApiResponse<T>>(ok(payload, message), init);
+  NextResponse.json<IApiResponse<T>>(ok(payload, message), init);
 
 export const jsonFail = (code: ApiCode, message: string, init?: ResponseInit) =>
-  NextResponse.json<ApiResponse<null>>(fail(code, message), {
+  NextResponse.json<IApiResponse<null>>(fail(code, message), {
     status: httpStatusOf(code),
     ...init,
   });

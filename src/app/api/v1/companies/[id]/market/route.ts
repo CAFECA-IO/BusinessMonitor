@@ -3,7 +3,11 @@ import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam, CompanyMarketQuery, CompanyMarketResponseSchema } from '@/validators';
+import {
+  companyIdParamSchema,
+  companyMarketQuerySchema,
+  companyMarketResponseSchema,
+} from '@/validators';
 import { getCompanyMarket, marketLimitOf } from '@/services/company.detail.service';
 import { withCompanyView } from '@/lib/with_company_view';
 
@@ -11,10 +15,10 @@ type Ctx = { params: { id: string } };
 
 export const GET = withCompanyView(async (req: NextRequest, ctx: Ctx) => {
   try {
-    const { id } = CompanyIdParam.parse(ctx.params);
+    const { id } = companyIdParamSchema.parse(ctx.params);
 
     const url = new URL(req.url);
-    const { range, limit } = CompanyMarketQuery.parse({
+    const { range, limit } = companyMarketQuerySchema.parse({
       range: url.searchParams.get('range') ?? undefined,
       limit: url.searchParams.get('limit') ?? undefined,
     });
@@ -23,7 +27,7 @@ export const GET = withCompanyView(async (req: NextRequest, ctx: Ctx) => {
     const payload = await getCompanyMarket(id, effLimit);
 
     // Info: (20250825 - Tzuhan) dev 防呆（上線可移除）
-    CompanyMarketResponseSchema.parse(ok(payload));
+    companyMarketResponseSchema.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
     res.headers.set('Cache-Control', 's-maxage=30');

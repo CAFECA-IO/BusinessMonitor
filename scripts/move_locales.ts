@@ -3,14 +3,14 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 
 // Info: (20250808 - Julian) 用 import.meta.url 取得目前檔案的路徑
-const __filename = fileURLToPath(import.meta.url);
+const filename = fileURLToPath(import.meta.url);
 // Info: (20250808 - Julian) 用 path.dirname 取得目前檔案所在的目錄
-const __dirname = path.dirname(__filename);
+const dirname = path.dirname(filename);
 
 // Info: (20250808 - Julian) i18n 來源目錄 (i18nexus 預設：根目錄)
-const sourceDir = path.join(__dirname, '../locales');
+const sourceDir = path.join(dirname, '../locales');
 // Info: (20250808 - Julian) 目標目錄 (/src)
-const targetDir = path.join(__dirname, '../src/locales');
+const targetDir = path.join(dirname, '../src/locales');
 
 function copyDirSync(src: string, dest: string) {
   if (!fs.existsSync(dest)) {

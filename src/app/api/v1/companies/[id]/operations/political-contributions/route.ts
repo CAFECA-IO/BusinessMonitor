@@ -3,16 +3,16 @@ import { jsonOk, jsonFail, ok } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { ZodError } from 'zod';
 import { AppError } from '@/lib/error';
-import { CompanyIdParam, PageQuery, PoliticalResponse } from '@/validators';
+import { companyIdParamSchema, pageQuerySchema, politicalResponseSchema } from '@/validators';
 import { listPoliticalContributions } from '@/services/company.operations.service';
 
 type Ctx = { params: { id: string } };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
   try {
-    const { id } = CompanyIdParam.parse(ctx.params);
+    const { id } = companyIdParamSchema.parse(ctx.params);
     const url = new URL(req.url);
-    const { page, pageSize } = PageQuery.parse({
+    const { page, pageSize } = pageQuerySchema.parse({
       page: url.searchParams.get('page') ?? undefined,
       pageSize: url.searchParams.get('pageSize') ?? undefined,
     });
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const payload = await listPoliticalContributions(id, page, pageSize);
 
     // Info: (20250826 - Tzuhan) dev 契約檢查
-    PoliticalResponse.parse(ok(payload));
+    politicalResponseSchema.parse(ok(payload));
 
     const res = jsonOk(payload, 'OK');
     res.headers.set('Cache-Control', 's-maxage=300');
