@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { timestampToString, formatNumberWithCommas } from '@/lib/common';
+import { formatNumberWithCommas } from '@/lib/common';
 import InfoBlockLayout from '@/components/business/info_block_layout';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
@@ -49,10 +49,6 @@ const TradeBlock: React.FC<ITradeBlockProps> = ({ businessId }) => {
     params: { id: businessId },
   });
 
-  // ToDo: (20250915 - Julian) Replace 0 with real last update time
-  const formattedTime = timestampToString(0);
-  const timeStr = `${t('business_detail:LAST_UPDATE_TIME')}: ${formattedTime.formattedDate} ${formattedTime.time}`;
-
   const importAndExportRows = isLoading ? (
     <SkeletonTradeItem />
   ) : success && tradeData && tradeData.items.length > 0 ? (
@@ -64,8 +60,6 @@ const TradeBlock: React.FC<ITradeBlockProps> = ({ businessId }) => {
 
   return (
     <div className="col-span-2 flex flex-col gap-16px">
-      {/* Info: (20250901 - Julian) Last Update Time */}
-      <p className="text-right font-normal text-text-primary">{timeStr}</p>
       <InfoBlockLayout
         title={t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE')}
         tooltipContent={t('business_detail:TOOLTIP_IMPORT_AND_EXPORT')}
