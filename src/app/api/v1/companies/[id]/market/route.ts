@@ -20,12 +20,20 @@ export const GET = withCompanyView(async (req: NextRequest, ctx: Ctx) => {
     const { id } = companyIdParamSchema.parse(ctx.params);
     const url = new URL(req.url);
 
-    const { timeframe } = companyMarketQuerySchema.parse({
+    const { timeframe, startDate, endDate, period } = companyMarketQuerySchema.parse({
       timeframe: url.searchParams.get('timeframe') ?? undefined,
+      startDate: url.searchParams.get('startDate') ?? undefined,
+      endDate: url.searchParams.get('endDate') ?? undefined,
+      period: url.searchParams.get('period') ?? undefined,
     });
 
     logger.info(`Fetching market data`, { companyId: id, timeframe });
-    const payload = await getCompanyMarketData(id, timeframe);
+    const payload = await getCompanyMarketData(id, {
+      timeframe,
+      startDate,
+      endDate,
+      period,
+    });
 
     if (process.env.NODE_ENV === 'development') {
       companyMarketResponseSchema.parse(ok(payload));

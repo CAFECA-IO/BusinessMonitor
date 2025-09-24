@@ -102,14 +102,30 @@ export type CompanyCard = z.infer<typeof companyCardSchema>;
  * ================================================================= */
 
 // Info: (20250922 - Tzuhan) Market API 查詢參數 (Query)
-export const companyMarketQuerySchema = z.object({
-  timeframe: z
-    .enum(['daily', 'weekly', 'monthly'], {
-      message: "timeframe 參數僅接受 'daily', 'weekly', 'monthly'",
-    })
-    .default('daily'),
-});
-export type CompanyMarketQuery = z.infer<typeof companyMarketQuerySchema>;
+export const companyMarketQuerySchema = z
+  .object({
+    timeframe: z
+      .enum(['daily', 'weekly', 'monthly'], {
+        message: "timeframe 參數僅接受 'daily', 'weekly', 'monthly'",
+      })
+      .optional()
+      .default('daily'),
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式需為 YYYY-MM-DD')
+      .optional(),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式需為 YYYY-MM-DD')
+      .optional(),
+    period: z.enum(['1m', '3m', '6m', '1y', 'ytd', 'max']).optional(),
+  })
+  .refine((data) => !(data.startDate && !data.endDate), {
+    message: '如果提供 startDate，則必須同時提供 endDate',
+    path: ['endDate'],
+  });
+
+export type CompanyMarketParams = z.infer<typeof companyMarketQuerySchema>;
 export type Timeframe = z.infer<typeof companyMarketQuerySchema.shape.timeframe>;
 
 // Info: (20250922 - Tzuhan)  Market API 回應 (Response) 的 Payload 結構

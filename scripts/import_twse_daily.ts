@@ -95,7 +95,7 @@ function must(idx: number, label: string): number {
 }
 
 /** Info: (20250904 - Tzuhan) ===== Core Parser ===== */
-/** Info: (20250923 - Gemini) 更新版，增強對非 CSV 內容的處理能力 */
+/** Info: (20250923 - Tzuhan) 更新版，增強對非 CSV 內容的處理能力 */
 function parseTwseCsv(buffer: Buffer): ParsedBlocks {
   // Info: (20250904 - Tzuhan) 1) Big5 解碼
   let txt = iconv.decode(buffer, 'big5');
@@ -103,7 +103,7 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
   // Info: (20250904 - Tzuhan) 2) 正規化換行
   txt = txt.replace(/\r\n?/g, '\n');
 
-  // Info: (20250923 - Gemini) 3) 提取「每日收盤行情」和「成交統計」的資料塊
+  // Info: (20250923 - Tzuhan) 3) 提取「每日收盤行情」和「成交統計」的資料塊
   const lines = txt.split('\n');
   let date: Date | null = null;
   const summaryRows: SummaryRow[] = [];
@@ -111,50 +111,61 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
 
   let inSummaryBlock = false;
   let inPriceBlock = false;
+  let foundSummaryTitle = false; // Info: (20250924 - Tzuhan)旗標，用來輔助尋找 Summary 表頭
 
   for (const line of lines) {
-    // Info: (20250923 - Gemini) 從標題行中抓取日期
+    // Info: (20250923 - Tzuhan) 從標題行中抓取日期
     const dateMatch = line.match(/(\d{2,3})年(\d{2})月(\d{2})日/);
     if (dateMatch) {
       const d = rocToDate(line);
       if (d) date = d;
     }
 
-    // Info: (20250923 - Gemini) 尋找「成交統計」區塊
-    if (line.includes('成交統計') && line.includes('成交金額')) {
-      inSummaryBlock = true;
-      continue; // Info: 跳過表頭行
+    // Info: (20250925 - Tzuhan) 增強 Summary 區塊的辨識邏輯
+    if (line.includes('大盤統計資訊')) {
+      foundSummaryTitle = true;
+      continue;
     }
-
-    // Info: (20250923 - Gemini) 尋找「每日收盤行情」區塊的表頭
-    if (line.includes('證券代號') && line.includes('證券名稱')) {
-      inPriceBlock = true;
-      priceLines.push(line); // Info: 加入表頭行
-      inSummaryBlock = false; // Info: 成交統計區塊在此結束
+    if (foundSummaryTitle && line.includes('成交金額') && line.includes('成交筆數')) {
+      inSummaryBlock = true;
+      foundSummaryTitle = false; // Info: (20250925 - Tzuhan)找到後重設旗標
       continue;
     }
 
-    // Info: (20250923 - Gemini) 區塊處理
+    // Info: (20250923 - Tzuhan) 尋找「每日收盤行情」區塊的表頭
+    if (line.includes('證券代號') && line.includes('證券名稱')) {
+      inPriceBlock = true;
+      priceLines.push(line); // Info: (20250925 - Tzuhan) 加入表頭行
+      inSummaryBlock = false; // Info: (20250925 - Tzuhan) 成交統計區塊在此結束
+      continue;
+    }
+
+    // Info: (20250923 - Tzuhan) 區塊處理
     if (inSummaryBlock) {
-      if (/^\d+\./.test(line)) {
+      if (/^\d+\./.test(line) || line.startsWith('證券合計') || line.startsWith('總計')) {
         const [cat, val, vol, cnt] = line.split(',').map((s) => s.trim());
         if (!date) throw new Error('解析成交統計時缺少日期');
+
+        let categoryName = (cat ?? '').replace(/^\d+\.\s*/, '').trim();
+        if (categoryName.startsWith('證券合計')) categoryName = '證券合計';
+        if (categoryName.startsWith('總計')) categoryName = '總計';
+
         summaryRows.push({
           market: 'TWSE',
           date,
-          category: (cat ?? '').replace(/^\d+\.\s*/, '').trim(),
+          category: categoryName,
           tradeValue: cleanNumber(val as string),
           tradeVolume: toBigIntOrNull(vol as string) ?? undefined,
           tradeCount: Number(cleanNumber(cnt as string) ?? '0'),
         });
       } else if (line.trim() === '' || !/^\d/.test(line)) {
-        // Info: 如果遇到空行或不是數字開頭的行，就當作區塊結束
+        // Info: (20250925 - Tzuhan) 如果遇到空行或不是數字開頭的行，就當作區塊結束
         inSummaryBlock = false;
       }
     }
 
     if (inPriceBlock) {
-      // Info: 遇到下一個區塊的標題或說明，就停止擷取
+      // Info: (20250925 - Tzuhan) 遇到下一個區塊的標題或說明，就停止擷取
       if (line.includes('"說明:') || line.includes('ETF')) {
         inPriceBlock = false;
         continue;
@@ -167,13 +178,13 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
     throw new Error('無法從檔案解析出交易日期（民國年格式）。');
   }
 
-  // Info: (20250923 - Gemini) 4) 預清理並解析提取出的「每日收盤行情」
+  // Info: (20250923 - Tzuhan) 4) 預清理並解析提取出的「每日收盤行情」
   let priceTxt = priceLines.join('\n');
   priceTxt = priceTxt.replace(/=\s*"(.*?)"/g, '"$1"');
 
   const priceRows: Array<z.infer<typeof DailyPriceRow>> = [];
   if (priceLines.length > 1) {
-    // Info: 至少要有一行表頭和一行資料
+    // Info: (20250925 - Tzuhan) 至少要有一行表頭和一行資料
     const records: string[][] = parse(priceTxt, {
       delimiter: ',',
       relax_column_count: true,
@@ -206,7 +217,7 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
 
     for (let r = 1; r < records.length; r++) {
       const row = records[r];
-      if (!row || row.length < 5) continue; // Info: 忽略無效行
+      if (!row || row.length < 5) continue;
 
       const symRaw = row[idx.symbol];
       if (!symRaw) {
@@ -328,7 +339,7 @@ function dateFromFileName(fp: string): Date | null {
 }
 
 /**
- * Info: (20250923 - Gemini) 遞迴尋找符合條件的 CSV 檔案
+ * Info: (20250923 - Tzuhan) 遞迴尋找符合條件的 CSV 檔案
  * @param baseDir - 基底資料夾路徑 (e.g., ../market_data)
  * @param options - 選項，可指定 fromYear
  * @returns {string[]} - 找到的檔案路徑陣列
@@ -338,13 +349,13 @@ function findCsvFiles(baseDir: string, options: { fromYear?: number }): string[]
   const yearDirs = fs.readdirSync(baseDir);
 
   for (const yearDir of yearDirs) {
-    // Info: (20250923 - Gemini) 檢查是否為四位數的年份資料夾
+    // Info: (20250923 - Tzuhan) 檢查是否為四位數的年份資料夾
     if (!/^\d{4}$/.test(yearDir)) {
       continue;
     }
 
     const currentYear = parseInt(yearDir, 10);
-    // Info: (20250923 - Gemini) 如果指定了 --from-year，則跳過比它小的年份
+    // Info: (20250923 - Tzuhan) 如果指定了 --from-year，則跳過比它小的年份
     if (options.fromYear && currentYear < options.fromYear) {
       continue;
     }
@@ -370,7 +381,7 @@ async function main() {
   const dirOrFile = process.argv[2];
   const dryRun = process.argv.includes('--dry-run');
 
-  // Info: (20250923 - Gemini) 解析 --from-year 參數
+  // Info: (20250923 - Tzuhan) 解析 --from-year 參數
   const fromYearIndex = process.argv.indexOf('--from-year');
   let fromYear: number | undefined;
   if (fromYearIndex > -1 && process.argv[fromYearIndex + 1]) {
@@ -392,7 +403,7 @@ async function main() {
   const files: string[] = [];
 
   if (stat.isDirectory()) {
-    // Info: (20250923 - Gemini) 使用新的函式來遞迴尋找檔案
+    // Info: (20250923 - Tzuhan) 使用新的函式來遞迴尋找檔案
     const foundFiles = findCsvFiles(dirOrFile, { fromYear });
     files.push(...foundFiles);
     files.sort(); // Info: (20250904 - Tzuhan) 由舊到新（可增量）

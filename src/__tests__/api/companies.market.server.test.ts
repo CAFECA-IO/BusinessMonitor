@@ -4,11 +4,11 @@ import { companyMarketResponseSchema } from '@/validators';
 
 const agent = getAgent();
 
-const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '1');
-const nonExistentCompanyId = 98888889;
+const companyId = Number(process.env.IT_SAMPLE_COMPANY_ID ?? '142');
+const nonExistentCompanyId = 37759808;
 
 // Todo: (20250922 - Tzuhan) 完成市場跟公司資料的關聯後再打開這個測試
-describe.skip('GET /api/v1/companies/:id/market (Refactored)', () => {
+describe('GET /api/v1/companies/:id/market (Refactored)', () => {
   /**
    * Info: (20250922 - Tzuhan)
    * 測試案例 1: 預設行為 (daily)
@@ -27,16 +27,13 @@ describe.skip('GET /api/v1/companies/:id/market (Refactored)', () => {
       expect(payload.companyId).toBe(companyId);
       expect(payload.timeframe).toBe('daily');
       expect(Array.isArray(payload.data)).toBe(true);
-      // ToDo: (20250922 - Tzuhan) 現在還不會有數據，之後市場跟公司資料關聯好了再打開
-      // 確保至少有一筆數據
-      // expect(payload.data.length).toBeGreaterThan(0);
-      // // 抽查第一筆數據的結構是否正確
-      // expect(payload.data[0]).toHaveProperty('date');
-      // expect(payload.data[0]).toHaveProperty('open');
-      // expect(payload.data[0]).toHaveProperty('high');
-      // expect(payload.data[0]).toHaveProperty('low');
-      // expect(payload.data[0]).toHaveProperty('close');
-      // expect(payload.data[0]).toHaveProperty('volume');
+      expect(payload.data.length).toBeGreaterThan(0);
+      expect(payload.data[0]).toHaveProperty('date');
+      expect(payload.data[0]).toHaveProperty('open');
+      expect(payload.data[0]).toHaveProperty('high');
+      expect(payload.data[0]).toHaveProperty('low');
+      expect(payload.data[0]).toHaveProperty('close');
+      expect(payload.data[0]).toHaveProperty('volume');
     }
   });
 
