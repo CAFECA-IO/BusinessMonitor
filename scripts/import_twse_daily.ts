@@ -95,6 +95,7 @@ function must(idx: number, label: string): number {
 }
 
 /** Info: (20250904 - Tzuhan) ===== Core Parser ===== */
+/** Info: (20250923 - Tzuhan) 更新版，增強對非 CSV 內容的處理能力 */
 function parseTwseCsv(buffer: Buffer): ParsedBlocks {
   // Info: (20250904 - Tzuhan) 1) Big5 解碼
   let txt = iconv.decode(buffer, 'big5');
@@ -102,65 +103,97 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
   // Info: (20250904 - Tzuhan) 2) 正規化換行
   txt = txt.replace(/\r\n?/g, '\n');
 
-  // Info: (20250904 - Tzuhan) 3) 預清理："=XXXX" 或 ="XXXX" → "XXXX"
-  // Info: (20250904 - Tzuhan)    僅處理以 ="..." 包裹的型態
-  txt = txt.replace(/=\s*"(.*?)"/g, '"$1"');
-
-  // Info: (20250904 - Tzuhan) 4) CSV 解析（放寬引號）
-  const records: string[][] = parse(txt, {
-    delimiter: ',',
-    record_delimiter: ['\n'],
-    relax_column_count: true,
-    relax_quotes: true,
-    skip_empty_lines: true,
-    trim: true,
-  });
-
-  // Info: (20250904 - Tzuhan) 掃描區塊
+  // Info: (20250923 - Tzuhan) 3) 提取「每日收盤行情」和「成交統計」的資料塊
+  const lines = txt.split('\n');
   let date: Date | null = null;
-  let priceHeaderIdx = -1;
-
   const summaryRows: SummaryRow[] = [];
-  const priceRows: Array<z.infer<typeof DailyPriceRow>> = [];
+  const priceLines: string[] = [];
 
-  for (let i = 0; i < records.length; i++) {
-    const row = records[i];
+  let inSummaryBlock = false;
+  let inPriceBlock = false;
+  let foundSummaryTitle = false; // Info: (20250924 - Tzuhan)旗標，用來輔助尋找 Summary 表頭
 
-    // Info: (20250904 - Tzuhan) 日期行（單欄）
-    if (row.length === 1) {
-      const d = rocToDate(row[0]);
-      if (d) {
-        date = d;
-        if (row[0].includes('每日收盤行情')) {
-          // Info: (20250904 - Tzuhan) 下一兩行：單位、表頭
-          priceHeaderIdx = i + 2;
-        }
-      }
+  for (const line of lines) {
+    // Info: (20250923 - Tzuhan) 從標題行中抓取日期
+    const dateMatch = line.match(/(\d{2,3})年(\d{2})月(\d{2})日/);
+    if (dateMatch) {
+      const d = rocToDate(line);
+      if (d) date = d;
     }
 
-    // Info: (20250904 - Tzuhan) 成交統計表頭
-    if (row[0] === '成交統計' && row.some((c) => c.includes('成交金額'))) {
-      let j = i + 1;
-      while (j < records.length && records[j].length >= 4 && /^\d+\./.test(records[j][0])) {
-        const [cat, val, vol, cnt] = records[j];
+    // Info: (20250925 - Tzuhan) 增強 Summary 區塊的辨識邏輯
+    if (line.includes('大盤統計資訊')) {
+      foundSummaryTitle = true;
+      continue;
+    }
+    if (foundSummaryTitle && line.includes('成交金額') && line.includes('成交筆數')) {
+      inSummaryBlock = true;
+      foundSummaryTitle = false; // Info: (20250925 - Tzuhan)找到後重設旗標
+      continue;
+    }
+
+    // Info: (20250923 - Tzuhan) 尋找「每日收盤行情」區塊的表頭
+    if (line.includes('證券代號') && line.includes('證券名稱')) {
+      inPriceBlock = true;
+      priceLines.push(line); // Info: (20250925 - Tzuhan) 加入表頭行
+      inSummaryBlock = false; // Info: (20250925 - Tzuhan) 成交統計區塊在此結束
+      continue;
+    }
+
+    // Info: (20250923 - Tzuhan) 區塊處理
+    if (inSummaryBlock) {
+      if (/^\d+\./.test(line) || line.startsWith('證券合計') || line.startsWith('總計')) {
+        const [cat, val, vol, cnt] = line.split(',').map((s) => s.trim());
         if (!date) throw new Error('解析成交統計時缺少日期');
+
+        let categoryName = (cat ?? '').replace(/^\d+\.\s*/, '').trim();
+        if (categoryName.startsWith('證券合計')) categoryName = '證券合計';
+        if (categoryName.startsWith('總計')) categoryName = '總計';
+
         summaryRows.push({
           market: 'TWSE',
           date,
-          category: (cat ?? '').replace(/^\d+\.\s*/, '').trim(),
+          category: categoryName,
           tradeValue: cleanNumber(val as string),
           tradeVolume: toBigIntOrNull(vol as string) ?? undefined,
           tradeCount: Number(cleanNumber(cnt as string) ?? '0'),
         });
-        j++;
+      } else if (line.trim() === '' || !/^\d/.test(line)) {
+        // Info: (20250925 - Tzuhan) 如果遇到空行或不是數字開頭的行，就當作區塊結束
+        inSummaryBlock = false;
       }
+    }
+
+    if (inPriceBlock) {
+      // Info: (20250925 - Tzuhan) 遇到下一個區塊的標題或說明，就停止擷取
+      if (line.includes('"說明:') || line.includes('ETF')) {
+        inPriceBlock = false;
+        continue;
+      }
+      priceLines.push(line);
     }
   }
 
-  // Info: (20250904 - Tzuhan) 每日收盤行情（逐檔）
-  if (priceHeaderIdx > -1 && date) {
-    const header = records[priceHeaderIdx];
+  if (!date) {
+    throw new Error('無法從檔案解析出交易日期（民國年格式）。');
+  }
 
+  // Info: (20250923 - Tzuhan) 4) 預清理並解析提取出的「每日收盤行情」
+  let priceTxt = priceLines.join('\n');
+  priceTxt = priceTxt.replace(/=\s*"(.*?)"/g, '"$1"');
+
+  const priceRows: Array<z.infer<typeof DailyPriceRow>> = [];
+  if (priceLines.length > 1) {
+    // Info: (20250925 - Tzuhan) 至少要有一行表頭和一行資料
+    const records: string[][] = parse(priceTxt, {
+      delimiter: ',',
+      relax_column_count: true,
+      relax_quotes: true,
+      skip_empty_lines: true,
+      trim: true,
+    });
+
+    const header = records[0];
     const getIdx = (name: string) => header.findIndex((h) => (h ?? '').includes(name));
     const idx = {
       symbol: must(getIdx('證券代號'), '證券代號'),
@@ -180,12 +213,12 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
       askV: must(getIdx('最後揭示賣量'), '最後揭示賣量'),
       pe: must(getIdx('本益比'), '本益比'),
     };
-
     const badLines: string[] = [];
 
-    for (let r = priceHeaderIdx + 1; r < records.length; r++) {
+    for (let r = 1; r < records.length; r++) {
       const row = records[r];
-      if (row.length === 1) break; // Info: (20250904 - Tzuhan) 下一段開始
+      if (!row || row.length < 5) continue;
+
       const symRaw = row[idx.symbol];
       if (!symRaw) {
         badLines.push(`row ${r}: ${JSON.stringify(row)}`);
@@ -204,7 +237,7 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
         highPrice: cleanNumber(row[idx.high]) ?? undefined,
         lowPrice: cleanNumber(row[idx.low]) ?? undefined,
         closePrice: cleanNumber(row[idx.close]) ?? undefined,
-        changeSign: (row[idx.sign] ?? '').trim() || undefined,
+        changeSign: (row[idx.sign] ?? '').trim().replace('X', '') || undefined,
         changeAmount: cleanNumber(row[idx.chg]) ?? undefined,
         finalBidPrice: cleanNumber(row[idx.bidP]) ?? undefined,
         finalBidVolume: toBigIntOrNull(row[idx.bidV]) ?? undefined,
@@ -228,10 +261,6 @@ function parseTwseCsv(buffer: Buffer): ParsedBlocks {
       );
       console.warn(`WARN: ${badLines.length} bad lines → failed_lines.log`);
     }
-  }
-
-  if (!date) {
-    throw new Error('無法從檔案解析出交易日期（民國年格式）。');
   }
 
   return { date, summary: summaryRows, prices: priceRows };
@@ -309,28 +338,85 @@ function dateFromFileName(fp: string): Date | null {
   return new Date(Date.UTC(y, mo - 1, d));
 }
 
+/**
+ * Info: (20250923 - Tzuhan) 遞迴尋找符合條件的 CSV 檔案
+ * @param baseDir - 基底資料夾路徑 (e.g., ../market_data)
+ * @param options - 選項，可指定 fromYear
+ * @returns {string[]} - 找到的檔案路徑陣列
+ */
+function findCsvFiles(baseDir: string, options: { fromYear?: number }): string[] {
+  const allFiles: string[] = [];
+  const yearDirs = fs.readdirSync(baseDir);
+
+  for (const yearDir of yearDirs) {
+    // Info: (20250923 - Tzuhan) 檢查是否為四位數的年份資料夾
+    if (!/^\d{4}$/.test(yearDir)) {
+      continue;
+    }
+
+    const currentYear = parseInt(yearDir, 10);
+    // Info: (20250923 - Tzuhan) 如果指定了 --from-year，則跳過比它小的年份
+    if (options.fromYear && currentYear < options.fromYear) {
+      continue;
+    }
+
+    const fullYearPath = path.join(baseDir, yearDir);
+    const stat = fs.statSync(fullYearPath);
+
+    if (stat.isDirectory()) {
+      const filesInYear = fs.readdirSync(fullYearPath);
+      for (const file of filesInYear) {
+        if (/^\d{8}\.csv$/i.test(file)) {
+          allFiles.push(path.join(fullYearPath, file));
+        }
+      }
+    }
+  }
+
+  return allFiles;
+}
+
 /** Info: (20250904 - Tzuhan) ===== CLI Entrypoint ===== */
 async function main() {
   const dirOrFile = process.argv[2];
   const dryRun = process.argv.includes('--dry-run');
 
+  // Info: (20250923 - Tzuhan) 解析 --from-year 參數
+  const fromYearIndex = process.argv.indexOf('--from-year');
+  let fromYear: number | undefined;
+  if (fromYearIndex > -1 && process.argv[fromYearIndex + 1]) {
+    fromYear = parseInt(process.argv[fromYearIndex + 1], 10);
+    if (isNaN(fromYear)) {
+      console.error('錯誤：--from-year 後必須接一個有效的年份數字。');
+      process.exit(1);
+    }
+  }
+
   if (!dirOrFile) {
-    console.error('用法：npx tsx scripts/import_twse_daily.ts <檔案或資料夾路徑> [--dry-run]');
+    console.error(
+      '用法：npx tsx scripts/import_twse_daily.ts <檔案或資料夾路徑> [--dry-run] [--resume] [--from-year YYYY]'
+    );
     process.exit(1);
   }
 
   const stat = fs.statSync(dirOrFile);
   const files: string[] = [];
+
   if (stat.isDirectory()) {
-    for (const name of fs.readdirSync(dirOrFile)) {
-      if (/^\d{8}\.csv$/i.test(name)) {
-        files.push(path.join(dirOrFile, name));
-      }
-    }
+    // Info: (20250923 - Tzuhan) 使用新的函式來遞迴尋找檔案
+    const foundFiles = findCsvFiles(dirOrFile, { fromYear });
+    files.push(...foundFiles);
     files.sort(); // Info: (20250904 - Tzuhan) 由舊到新（可增量）
   } else {
     files.push(dirOrFile);
   }
+
+  if (files.length === 0) {
+    console.log('在指定路徑下找不到任何符合條件的 .csv 檔案。');
+    return;
+  }
+
+  console.log(`總共找到 ${files.length} 個檔案準備處理。`);
 
   let ok = 0,
     fail = 0;

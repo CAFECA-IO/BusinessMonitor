@@ -162,16 +162,22 @@ export async function likeCompanyComment(commentId: number) {
  */
 export async function getCompanyMarketData(
   companyId: number,
-  timeframe: Timeframe
+  query: {
+    timeframe: Timeframe;
+    startDate?: string;
+    endDate?: string;
+    period?: '1m' | '3m' | '6m' | '1y' | 'ytd' | 'max';
+  }
 ): Promise<MarketDataPayload> {
   // Info: (20250922 - Tzuhan) 1. 查詢公司對應的股票代碼
+  const { timeframe, startDate, endDate, period } = query;
   const stockSymbol = await findStockSymbolByCompanyId(companyId);
   if (!stockSymbol) {
     throw new AppError(ApiCode.NOT_FOUND, `找不到 ID 為 ${companyId} 的公司或其對應的股票代碼`);
   }
 
   // Info: (20250922 - Tzuhan) 2. 取得市場價格數據
-  const prices = await getMarketPrices(stockSymbol.id, timeframe);
+  const prices = await getMarketPrices(stockSymbol.id, timeframe, startDate, endDate, period);
 
   // Info: (20250922 - Tzuhan) 3. 格式化為 API Response
   const formattedData = prices.map((p) => ({
