@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { CommentSort, Timeframe } from '@/validators';
 import { Prisma } from '@prisma/client';
+import { startOfYear, sub } from 'date-fns';
 
 export type CompanyBasicRow = {
   id: number;
@@ -242,43 +243,112 @@ type AggregatedPriceRow = {
  */
 export async function getMarketPrices(
   stockSymbolId: number,
-  timeframe: Timeframe
+  timeframe: Timeframe,
+  startDate?: string,
+  endDate?: string,
+  period?: string
 ): Promise<AggregatedPriceRow[]> {
-  if (timeframe === 'daily') {
-    // Info: (20250922 - Tzuhan)  每日數據：直接從 MarketDailyPrice 表中查詢最近 90 天的資料
-    const dailyPrices = await prisma.marketDailyPrice.findMany({
-      where: { stock_symbol_id: stockSymbolId },
-      orderBy: { date: 'desc' },
-      take: 90,
-    });
-    // Info: (20250922 - Tzuhan) 轉換欄位名以符合 AggregatedPriceRow 型別
-    return dailyPrices
-      .map((p) => ({
-        date: p.date,
-        open: p.openPrice ?? new Prisma.Decimal(0),
-        high: p.highPrice ?? new Prisma.Decimal(0),
-        low: p.lowPrice ?? new Prisma.Decimal(0),
-        close: p.closePrice ?? new Prisma.Decimal(0),
-        volume: p.tradeVolume ?? BigInt(0),
-      }))
-      .reverse(); // Info: (20250922 - Tzuhan)  反轉陣列，讓日期從舊到新
+  const now = new Date();
+  let whereDateFilter: Prisma.MarketDailyPriceWhereInput['date'] = {};
+  let take: number | undefined;
+
+  // Info: (20250924 - Tzuhan) 根據參數決定日期過濾條件
+  if (startDate && endDate) {
+    whereDateFilter = {
+      gte: new Date(startDate),
+      lte: new Date(endDate),
+    };
+  } else if (period) {
+    if (period !== 'max') {
+      let startDateFromPeriod: Date;
+      switch (period) {
+        case '1m':
+          startDateFromPeriod = sub(now, { months: 1 });
+          break;
+        case '3m':
+          startDateFromPeriod = sub(now, { months: 3 });
+          break;
+        case '6m':
+          startDateFromPeriod = sub(now, { months: 6 });
+          break;
+        case '1y':
+          startDateFromPeriod = sub(now, { years: 1 });
+          break;
+        case 'ytd':
+          startDateFromPeriod = startOfYear(now);
+          break;
+        default:
+          startDateFromPeriod = sub(now, { months: 3 });
+      }
+      whereDateFilter = { gte: startDateFromPeriod };
+    }
+  } else {
+    take = timeframe === 'daily' ? 90 : 12;
   }
 
-  // Info: (20250922 - Tzuhan)  每週/每月數據：使用原生 SQL 查詢進行聚合，效能最佳
-  const result: AggregatedPriceRow[] = await prisma.$queryRaw`
-    SELECT
-      DATE_TRUNC(${timeframe}, date)::DATE AS date,
-      (array_agg(open_price ORDER BY date ASC))[1] AS open,
-      MAX(high_price) AS high,
-      MIN(low_price) AS low,
-      (array_agg(close_price ORDER BY date DESC))[1] AS close,
-      SUM(trade_volume) AS volume
-    FROM "market_daily_price"
-    WHERE stock_symbol_id = ${stockSymbolId}
-    GROUP BY DATE_TRUNC(${timeframe}, date)
-    ORDER BY date DESC
-    LIMIT 12; -- Info: (20250922 - Tzuhan) 取最近 12 個週期 (12 週或 12 個月)
-  `;
+  // Info: (20250924 - Tzuhan) 2. Daily 查詢邏輯 (維持不變)
+  if (timeframe === 'daily') {
+    const dailyPrices = await prisma.marketDailyPrice.findMany({
+      where: {
+        stock_symbol_id: stockSymbolId,
+        date: Object.keys(whereDateFilter).length > 0 ? whereDateFilter : undefined,
+      },
+      orderBy: { date: 'asc' },
+      take: !startDate && !endDate && !period ? take : undefined,
+    });
+    return dailyPrices.map((p) => ({
+      date: p.date,
+      open: p.openPrice ?? new Prisma.Decimal(0),
+      high: p.highPrice ?? new Prisma.Decimal(0),
+      low: p.lowPrice ?? new Prisma.Decimal(0),
+      close: p.closePrice ?? new Prisma.Decimal(0),
+      volume: p.tradeVolume ?? BigInt(0),
+    }));
+  }
 
-  return result.reverse();
+  // Info: (20250924 - Tzuhan) 3. Weekly/Monthly 查詢邏輯
+  const whereClauses = [Prisma.sql`"stock_symbol_id" = ${stockSymbolId}`];
+  if (whereDateFilter.gte) {
+    whereClauses.push(Prisma.sql`"date" >= ${whereDateFilter.gte}`);
+  }
+  if (whereDateFilter.lte) {
+    whereClauses.push(Prisma.sql`"date" <= ${whereDateFilter.lte}`);
+  }
+  const whereSql = Prisma.join(whereClauses, ' AND ');
+
+  // Info: (20250924 - Tzuhan) 根據 timeframe 選擇完整的 SQL 查詢字串
+  const query =
+    timeframe === 'weekly'
+      ? Prisma.sql`
+        SELECT
+          DATE_TRUNC('week', "date")::DATE AS "date",
+          (array_agg("open_price" ORDER BY "date" ASC))[1] AS "open",
+          MAX("high_price") AS "high",
+          MIN("low_price") AS "low",
+          (array_agg("close_price" ORDER BY "date" DESC))[1] AS "close",
+          SUM("trade_volume") AS "volume"
+        FROM "market_daily_price"
+        WHERE ${whereSql}
+        GROUP BY 1
+        ORDER BY 1 ASC`
+      : Prisma.sql`
+        SELECT
+          DATE_TRUNC('month', "date")::DATE AS "date",
+          (array_agg("open_price" ORDER BY "date" ASC))[1] AS "open",
+          MAX("high_price") AS "high",
+          MIN("low_price") AS "low",
+          (array_agg("close_price" ORDER BY "date" DESC))[1] AS "close",
+          SUM("trade_volume") AS "volume"
+        FROM "market_daily_price"
+        WHERE ${whereSql}
+        GROUP BY 1
+        ORDER BY 1 ASC`;
+
+  let result: AggregatedPriceRow[] = await prisma.$queryRaw(query);
+
+  if (take) {
+    result = result.slice(-take);
+  }
+
+  return result;
 }
