@@ -1,8 +1,10 @@
 'use client';
 
-import { routes } from '@/config/api-routes';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import type { IdentityAccount } from '@prisma/client';
+import { routes } from '@/config/api-routes';
 
 // Info: (20250925 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
 const ResultDisplay = ({ title, data }: { title: string; data: object | string | null }) => {
@@ -18,54 +20,76 @@ const ResultDisplay = ({ title, data }: { title: string; data: object | string |
   );
 };
 
+// Info: (20250925 - Tzuhan) 【新增】用於顯示格式化後的使用者資訊
+const UserInfoCard = ({ user }: { user: Partial<IdentityAccount> }) => (
+  <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
+    <h3 className="text-lg font-bold text-green-800">✅ 驗證成功</h3>
+    <p className="mt-1 text-sm text-green-700">成功獲取您的使用者資訊：</p>
+    <div className="mt-3 space-y-2 text-sm">
+      <div>
+        <span className="font-semibold text-gray-600">ID:</span>
+        <span className="ml-2 font-mono text-gray-800">{user.id}</span>
+      </div>
+      <div>
+        <span className="font-semibold text-gray-600">名稱:</span>
+        <span className="ml-2 text-gray-800">{user.name}</span>
+      </div>
+      <div>
+        <span className="font-semibold text-gray-600">以太坊地址:</span>
+        <span className="ml-2 font-mono text-gray-800">{user.ethereumAddress}</span>
+      </div>
+    </div>
+  </div>
+);
+
 export default function DashboardPage() {
+  const [userData, setUserData] = useState<Partial<IdentityAccount> | null>(null);
   const [apiResponse, setApiResponse] = useState<object | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [dewt, setDewt] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    // Info: (20250925 - Tzuhan) 在真實應用中，DeWT (JWT) 應該在登入成功後
-    // 安全地儲存。為了演示，我們暫時將其存在 localStorage。
     const storedDewt = localStorage.getItem('dewt');
+    if (!storedDewt) {
+      router.replace('/demo');
+      return;
+    }
     setDewt(storedDewt);
 
     const fetchUserData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const headers: HeadersInit = {};
-        // Info: (20250925 - Tzuhan) 如果有 token，就加入到 Authorization 標頭中
-        if (storedDewt) {
-          headers['Authorization'] = `Bearer ${storedDewt}`;
-        }
+        const res = await fetch(routes.auth.me(), {
+          headers: { Authorization: `Bearer ${storedDewt}` },
+        });
 
-        // Info: (20250925 - Tzuhan) 使用您定義的 routes 物件來獲取 API 路徑
-        const res = await fetch(routes.auth.me(), { headers });
-
-        // Info: (20250925 - Tzuhan) 解析您定義的 IApiResponse 格式
         const result = await res.json();
-        setApiResponse(result);
+        setApiResponse(result); // Info: (20250925 - Tzuhan) 無論成功失敗，都先儲存原始回應以供偵錯
 
         if (!res.ok || !result.success) {
           throw new Error(result.message || 'Failed to fetch user data');
         }
+
+        // Info: (20250925 - Tzuhan) 【關鍵步驟】API 呼叫成功後，將 payload 中的使用者資料存到 state 中
+        setUserData(result.payload);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-        // Info: (20250925 - Tzuhan) 如果是 401 錯誤，可能是 token 過期，可以考慮導向回登入頁面
-        if (
-          err instanceof Error &&
-          (err.message.includes('UNAUTHENTICATED') || err.message.includes('token'))
-        ) {
-          // window.location.href = '/'; // 可選的自動導向
-        }
+        localStorage.removeItem('dewt');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('dewt');
+    router.push('/demo/auth');
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8 font-sans">
@@ -80,18 +104,35 @@ export default function DashboardPage() {
         <div className="rounded-xl bg-white p-6 shadow-md">
           <h2 className="mb-3 border-b pb-2 text-lg font-semibold text-gray-700">API 呼叫結果</h2>
           {isLoading && <p className="text-gray-600">正在從 /api/v1/secure/me 載入用戶資料...</p>}
+
+          {/* Info: (20250925 - Tzuhan) 【更新】優先顯示格式化後的使用者資訊 */}
+          {userData && <UserInfoCard user={userData} />}
+
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
               <p className="font-bold">錯誤:</p>
               <p className="break-words">{error}</p>
+              <p className="mt-2 text-sm">Token 已被清除，請返回重新登入。</p>
             </div>
           )}
-          {apiResponse && <ResultDisplay title="完整的 API 回應" data={apiResponse} />}
-          {dewt && <ResultDisplay title="目前的 DeWT (用於偵錯)" data={dewt} />}
-          <div className="mt-4 text-center">
-            <Link href="/" className="text-purple-600 hover:underline">
-              返回登入頁面
+
+          {/* Info: (20250925 - Tzuhan) 為了偵錯，我們仍然可以顯示完整的 API 回應和 DeWT */}
+          <div className="mt-4 space-y-4">
+            {apiResponse && <ResultDisplay title="完整的 API 回應 (偵錯用)" data={apiResponse} />}
+            {dewt && <ResultDisplay title="目前的 DeWT (偵錯用)" data={dewt} />}
+          </div>
+
+          <div className="mt-6 flex items-center justify-between border-t pt-4">
+            <Link href="/" className="text-blue-600 hover:underline">
+              &larr; 返回首頁
             </Link>
+            {/* Info: (20250925 - Tzuhan) 【新增】登出按鈕 */}
+            <button
+              onClick={handleLogout}
+              className="rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            >
+              登出
+            </button>
           </div>
         </div>
       </div>
