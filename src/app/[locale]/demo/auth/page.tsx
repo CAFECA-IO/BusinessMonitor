@@ -51,7 +51,7 @@ export default function AuthPage() {
   const handleAuth = useCallback(async () => {
     resetState();
 
-    // --- 步驟一: 嘗試「登入」 ---
+    // Info: (20250925 - Tzuhan) --- 步驟一: 嘗試「登入」 ---
     setStatusMessage('Attempting to sign in with an existing Passkey...');
     try {
       const loginOptionsRes = await fetch('/api/v1/secure/webauthn_options');
@@ -88,7 +88,7 @@ export default function AuthPage() {
       }
     }
 
-    // --- 步驟二: 降級到「註冊」 ---
+    // Info: (20250925 - Tzuhan) --- 步驟二: 降級到「註冊」 ---
     setStatusMessage('No existing Passkey found or used. Attempting to register a new one...');
     try {
       const regOptionsRes = await fetch('/api/v1/secure/webauthn_options?intent=register');
