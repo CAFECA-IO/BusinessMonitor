@@ -1,26 +1,50 @@
 import { promises as fs } from 'fs';
 import crypto from 'crypto';
 import path from 'path';
+import { generateKeyPair, exportPKCS8 } from 'jose';
 
 /**
- * Info: (20250911 - Tzuhan) 確保環境變數存在於文件內容中，如果不存在則附加。
+ * Info: (20250925 - Tzuhan) 【更新】確保環境變數存在且有值。如果不存在或值為空，則會移除舊行並添加新行。
  * @param content - 當前的 .env 文件內容
  * @param key - 要檢查的變數名
- * @param valueFn - 一個回傳變數值的函式（延遲執行以提高效率）
+ * @param valueFn - 一個回傳變數值的函式
  * @returns 更新後的 .env 文件內容
  */
-function ensureEnvVar(content: string, key: string, valueFn: () => string): string {
-  const regex = new RegExp(`^${key}=.*$`, 'm');
-  let contentResult = content;
-  if (!regex.test(content)) {
-    console.log(`  -> Adding missing environment variable: ${key}`);
-    // Info: (20250911 - Tzuhan)  確保內容以換行符結尾，以便附加
-    if (content.length > 0 && !content.endsWith('\n')) {
-      contentResult += '\n';
-    }
-    return `${contentResult}${key}=${valueFn()}\n`;
+async function ensureEnvVar(
+  content: string,
+  key: string,
+  valueFn: () => string | Promise<string>
+): Promise<string> {
+  // Info: (20250925 - Tzuhan) 正則表達式現在檢查 key 後面是否至少有一個字符 (.+)
+  const hasKeyWithNonEmptyValue = new RegExp(`^${key}=.+$`, 'm');
+
+  // Info: (20250925 - Tzuhan) 如果變數已存在且有值，直接返回，不做任何操作。
+  if (hasKeyWithNonEmptyValue.test(content)) {
+    return content;
   }
-  return contentResult;
+
+  // Info: (20250925 - Tzuhan) 如果代碼執行到這裡，表示 key 不存在或其值為空。
+  // 我們先移除可能存在的無效行 (例如 DEWT_PRIVATE_KEY_PEM=)。
+  const contentWithoutKey = content.replace(new RegExp(`^${key}=.*\n?`, 'm'), '');
+
+  console.log(`  -> Setting or updating environment variable: ${key}`);
+
+  let newContent = contentWithoutKey;
+  if (newContent.length > 0 && !newContent.endsWith('\n')) {
+    newContent += '\n';
+  }
+  const value = await valueFn();
+  return `${newContent}${key}=${value}\n`;
+}
+
+/**
+ * Info: (20250925 - Tzuhan) 生成 ES256 金鑰對並回傳格式化後的 PEM 私鑰。
+ */
+async function generateFormattedPrivateKey(): Promise<string> {
+  // Info: (20250925 - Tzuhan) 【修正】新增 { extractable: true } 選項，允許私鑰被匯出。
+  const { privateKey } = await generateKeyPair('ES256', { extractable: true });
+  const pem = await exportPKCS8(privateKey);
+  return `"${pem.replace(/\n/g, '\\n')}"`;
 }
 
 async function initializeEnv() {
@@ -29,63 +53,55 @@ async function initializeEnv() {
   const sampleFile = path.resolve(process.cwd(), '.env.example');
   let originalContent = '';
 
-  // Info: (20250911 - Tzuhan) 只讀取一次檔案，並處理檔案不存在的情況
   try {
     originalContent = await fs.readFile(envFile, 'utf-8');
-  } catch (error) {
-    // Info: (20250911 - Tzuhan) 如果 .env 不存在，嘗試從 .env.example 複製
+  } catch {
     try {
       await fs.copyFile(sampleFile, envFile);
       originalContent = await fs.readFile(envFile, 'utf-8');
       console.log('Initialized .env from .env.example.');
     } catch {
       console.log('No .env or .env.example found. A new .env file will be created.');
-      console.log(error);
     }
   }
 
   let modifiedContent = originalContent;
 
-  // Info: (20250917 - Tzuhan) --- 確保所有必要的變數都存在 ---
-
-  // Info: (20250917 - Tzuhan) 1. 通用應用程式變數
-  modifiedContent = ensureEnvVar(modifiedContent, 'UUID', () => crypto.randomUUID());
-
-  // Info: (20250917 - Tzuhan) 2. FIDO2 / WebAuthn 相關變數
-  //    - NEXT_PUBLIC_ORIGIN 是 FIDO2 安全模型的核心，用於驗證請求來源。
-  //    - NEXT_PUBLIC_ 前綴讓此變數在 Next.js 前端也能被讀取。
-  modifiedContent = ensureEnvVar(
+  modifiedContent = await ensureEnvVar(modifiedContent, 'UUID', () => crypto.randomUUID());
+  modifiedContent = await ensureEnvVar(
     modifiedContent,
     'NEXT_PUBLIC_ORIGIN',
-    () => 'http://localhost:3000'
+    () => '"http://localhost:3000"'
+  );
+  modifiedContent = await ensureEnvVar(
+    modifiedContent,
+    'ENCRYPTION_KEY',
+    () => `"${crypto.randomBytes(32).toString('base64url')}"`
+  );
+  modifiedContent = await ensureEnvVar(
+    modifiedContent,
+    'DEWT_PRIVATE_KEY_PEM',
+    generateFormattedPrivateKey
   );
 
-  // Info: (20250917 - Tzuhan)3. 安全與加密金鑰
-  //    - JWT_SECRET 用於簽發和驗證 DeWT (JWT)，是 API 安全的基礎。
-  modifiedContent = ensureEnvVar(modifiedContent, 'JWT_SECRET', () =>
-    crypto.randomBytes(32).toString('base64url')
-  );
+  const hasJwtSecret = /^JWT_SECRET=.*$/m.test(modifiedContent);
+  if (modifiedContent.trim() !== originalContent.trim() || hasJwtSecret) {
+    if (hasJwtSecret) {
+      modifiedContent = modifiedContent.replace(/^JWT_SECRET=.*\n?/m, '');
+      console.log('  -> Removed obsolete JWT_SECRET.');
+    }
 
-  //    - ENCRYPTION_KEY 用於在資料庫中加密敏感資料（如以太坊私鑰）。
-  modifiedContent = ensureEnvVar(modifiedContent, 'ENCRYPTION_KEY', () =>
-    crypto.randomBytes(32).toString('base64url')
-  );
-
-  // Info: (20250911 - Tzuhan) 只在內容有變動時才寫入檔案
-  if (modifiedContent !== originalContent) {
-    await fs.writeFile(envFile, modifiedContent, 'utf-8');
+    await fs.writeFile(envFile, modifiedContent.trim(), 'utf-8');
     console.log('.env file has been updated successfully.');
   } else {
     console.log('.env file is already up to date. No changes were made.');
   }
 
-  // Info: (20250911 - Tzuhan) 檢查 DATABASE_URL 是否存在，如果不存在則給予提醒
   if (!/^DATABASE_URL=.*$/m.test(modifiedContent)) {
     console.warn('\n[!] IMPORTANT: Please manually set your DATABASE_URL in the .env file.');
   }
 }
 
-// Info: (20250911 - Tzuhan) 執行主函式
 initializeEnv().catch((error) => {
   console.error('An error occurred during .env initialization:', error);
   process.exit(1);

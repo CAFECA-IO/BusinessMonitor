@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
-import { listCompanyNews } from '@/services/news.service';
+import { listCompanyNews } from '@/services/company.news.service';
 import { companyNewsQuerySchema } from '@/validators';
 import { withCompanyView } from '@/lib/with_company_view';
 
