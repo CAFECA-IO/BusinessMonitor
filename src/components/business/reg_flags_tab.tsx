@@ -22,10 +22,18 @@ interface IFlagItemProps extends IFlag {
 const SkeletonItem: React.FC = () => {
   return (
     <>
-      <Skeleton width={100} height={20} />
-      <Skeleton width={150} height={20} />
-      <Skeleton width={20} height={20} />
-      <Skeleton width={100} height={20} />
+      <div className="col-span-2">
+        <Skeleton width={100} height={20} />
+      </div>
+      <div className="col-span-3">
+        <Skeleton width={150} height={20} />
+      </div>
+      <div className="col-span-1">
+        <Skeleton width={30} height={20} />
+      </div>
+      <div className="col-span-2">
+        <Skeleton width={100} height={20} />
+      </div>
     </>
   );
 };
@@ -70,18 +78,24 @@ const RedFlagsTab: React.FC<IRedFlagsTabProps> = ({ businessId }) => {
   const redFlags = redFlagData?.items ?? [];
   const greenFlags = greenFlagData?.items ?? [];
 
-  const isShowRedFlag = !isRedFlagLoading && redFlagData && redFlags.length > 0;
-  const isShowGreenFlag = !isGreenFlagLoading && greenFlagData && greenFlags.length > 0;
+  const isShowRedFlag = redFlagData && redFlags.length > 0;
+  const isShowGreenFlag = greenFlagData && greenFlags.length > 0;
 
-  const redFlagRow = isShowRedFlag ? (
+  const redFlagRow = isRedFlagLoading ? (
+    <SkeletonItem />
+  ) : isShowRedFlag ? (
     redFlags.map((flag) => <FlagItem key={flag.title} {...flag} type={FlagType.RED} />)
   ) : (
-    <SkeletonItem />
+    // ToDo: (20250926 - Julian) No data design
+    <div className="col-span-8 row-span-3 flex flex-col items-center justify-center">no data</div>
   );
-  const greenFlagRow = isShowGreenFlag ? (
+  const greenFlagRow = isGreenFlagLoading ? (
+    <SkeletonItem />
+  ) : isShowGreenFlag ? (
     greenFlags.map((flag) => <FlagItem key={flag.title} {...flag} type={FlagType.GREEN} />)
   ) : (
-    <SkeletonItem />
+    // ToDo: (20250926 - Julian) No data design
+    <div className="col-span-8 row-span-3 flex flex-col items-center justify-center">no data</div>
   );
 
   return (
