@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { startRegistration, startLogin } from '@/lib/fido2-client';
 
-// Info: (20250919 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
+// Info: (20250925 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
 const ResultDisplay = ({ title, data }: { title: string; data: object | string | null }) => {
   if (!data) return null;
   const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
@@ -18,11 +20,12 @@ const ResultDisplay = ({ title, data }: { title: string; data: object | string |
   );
 };
 
-export default function WebAuthnFinalDemoPage() {
+export default function AuthPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Ready to begin the seamless flow.');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<object | null>(null);
+  const router = useRouter();
 
   const resetState = () => {
     setIsLoading(true);
@@ -30,13 +33,27 @@ export default function WebAuthnFinalDemoPage() {
     setResult(null);
   };
 
+  const handleAuthSuccess = (data: { dewt: string; backupKey?: string }) => {
+    setStatusMessage('✅ Success! Redirecting...');
+    localStorage.setItem('dewt', data.dewt);
+    setResult(data);
+
+    if (data.backupKey) {
+      alert(`Registration successful! Please save your backup key: ${data.backupKey}`);
+    }
+
+    // Info: (20250925 - Tzuhan) 【關鍵步驟】延遲一小段時間後跳轉，讓使用者看到成功訊息
+    setTimeout(() => {
+      router.push('/demo/me');
+    }, 1000);
+  };
+
   const handleAuth = useCallback(async () => {
     resetState();
 
-    // Info: (20250919 - Tzuhan) --- 步驟一: 先假設用戶已註冊，嘗試「登入」 ---
+    // Info: (20250925 - Tzuhan) --- 步驟一: 嘗試「登入」 ---
     setStatusMessage('Attempting to sign in with an existing Passkey...');
     try {
-      // Info: (20250919 - Tzuhan) 請求登入選項 (不帶 intent)
       const loginOptionsRes = await fetch('/api/v1/secure/webauthn_options');
       if (!loginOptionsRes.ok) throw new Error('Could not fetch login options from server.');
       const loginOptions = await loginOptionsRes.json();
@@ -50,19 +67,14 @@ export default function WebAuthnFinalDemoPage() {
         body: JSON.stringify(authData),
       });
 
-      if (!verifyLoginRes.ok) {
-        const errData = await verifyLoginRes.json();
-        throw new Error(errData.details || 'Login verification failed.');
+      const data = await verifyLoginRes.json();
+      if (!verifyLoginRes.ok || !data.success) {
+        throw new Error(data.message || 'Login verification failed.');
       }
 
-      const data = await verifyLoginRes.json();
-      setStatusMessage('✅ Login Successful!');
-      setResult(data);
-      setIsLoading(false);
-      return; // Info: (20250919 - Tzuhan) 登入成功，流程結束
+      handleAuthSuccess(data.payload);
+      return;
     } catch (loginError) {
-      // Info: (20250919 - Tzuhan) 如果用戶取消登入，或瀏覽器找不到可用 Passkey，就會觸發 NotAllowedError。
-      // Info: (20250919 - Tzuhan) 我們將此視為需要註冊的信號，並自動降級。
       if (
         typeof loginError === 'object' &&
         loginError !== null &&
@@ -72,14 +84,13 @@ export default function WebAuthnFinalDemoPage() {
         setStatusMessage('❌ Login attempt failed');
         setError((loginError as { message?: string }).message || 'Login attempt failed');
         setIsLoading(false);
-        return; // Info: (20250919 - Tzuhan) 其他無法處理的錯誤，終止流程
+        return;
       }
     }
 
-    // Info: (20250919 - Tzuhan) --- 步驟二: 「登入」失敗，自動降級到「註冊」流程 ---
+    // Info: (20250925 - Tzuhan) --- 步驟二: 降級到「註冊」 ---
     setStatusMessage('No existing Passkey found or used. Attempting to register a new one...');
     try {
-      // Info: (20250919 - Tzuhan) 請求註冊選項 (附上 intent=register 參數)
       const regOptionsRes = await fetch('/api/v1/secure/webauthn_options?intent=register');
       if (!regOptionsRes.ok) throw new Error('Could not fetch registration options from server.');
       const regOptions = await regOptionsRes.json();
@@ -94,17 +105,12 @@ export default function WebAuthnFinalDemoPage() {
         body: JSON.stringify(registrationData),
       });
 
-      if (!verifyRegRes.ok) {
-        const errData = await verifyRegRes.json();
-        throw new Error(errData.details || 'Registration verification failed.');
+      const data = await verifyRegRes.json();
+      if (!verifyRegRes.ok || !data.success) {
+        throw new Error(data.message || 'Registration verification failed.');
       }
 
-      const data = await verifyRegRes.json();
-      setStatusMessage('✅ Registration Successful! You are now logged in.');
-      setResult(data);
-      if (data.backupKey) {
-        alert(`Registration successful! Please save your backup key: ${data.backupKey}`);
-      }
+      handleAuthSuccess(data.payload);
     } catch (regError) {
       let msg: string;
       if (regError && typeof regError === 'object' && 'name' in regError && 'message' in regError) {
@@ -118,17 +124,16 @@ export default function WebAuthnFinalDemoPage() {
       }
       setStatusMessage('❌ Registration Failed');
       setError(msg);
-    } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [router]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8 font-sans">
       <div className="w-full max-w-2xl">
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-gray-800">CAFECA Digital ID</h1>
-          <p className="mt-2 text-lg text-gray-500">Final Architecture Demo</p>
+          <p className="mt-2 text-lg text-gray-500">FIDO2/WebAuthn Login</p>
         </div>
 
         <div className="flex flex-col items-center rounded-xl bg-white p-8 shadow-md">
@@ -159,6 +164,11 @@ export default function WebAuthnFinalDemoPage() {
             </div>
           )}
           <ResultDisplay title="Server Response" data={result} />
+          <div className="mt-4 flex justify-between">
+            <Link href="/" className="text-blue-600 hover:underline">
+              &larr; 返回首頁
+            </Link>
+          </div>
         </div>
       </div>
     </main>

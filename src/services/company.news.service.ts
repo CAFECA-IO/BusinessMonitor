@@ -1,4 +1,4 @@
-import { countCompanyNews, findCompanyNews, NewsWhere } from '@/repositories/news.repo';
+import { countCompanyNews, findCompanyNews, NewsWhere } from '@/repositories/company.news.repo';
 import { CompanyNewsPayload } from '@/validators';
 import { prisma } from '@/lib/prisma';
 import { makePaginated } from '@/types/common';
