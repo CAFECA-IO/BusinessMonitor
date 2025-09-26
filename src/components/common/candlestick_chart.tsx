@@ -3,7 +3,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
-import { ICandlestickChartNode, IBarGraphNode } from '@/interfaces/chart';
+import { ICandlestickChartNode /* IBarGraphNode */ } from '@/interfaces/chart';
 // import { MONTH_LIST } from '@/constants/date';
 
 // Info: (20250908 - Julian) 動態載入，避免 SSR 錯誤

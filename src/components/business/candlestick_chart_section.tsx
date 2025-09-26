@@ -1,23 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState /* useEffect */ } from 'react';
 import { IoTriangle } from 'react-icons/io5';
 import { useTranslation } from 'react-i18next';
 import { formatNumberWithCommas } from '@/lib/common';
 import CandlestickChart from '@/components/common/candlestick_chart';
-import { ICandlestickChartNode, IBarGraphNode } from '@/interfaces/chart';
+import { ICandlestickChartNode /* IBarGraphNode */ } from '@/interfaces/chart';
 // import { MarketPayload as IMarket } from '@/types/company';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
 
-interface INodeData {
-  timestamp: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
+// interface INodeData {
+//   timestamp: number;
+//   open: number;
+//   high: number;
+//   low: number;
+//   close: number;
+//   volume: number;
+// }
 
 interface ICandlestickChartSectionProps {
   open: number;
@@ -36,10 +36,10 @@ enum ChartRange {
   '1Y' = '1y',
 }
 
-interface IChartData {
-  candlestickData: ICandlestickChartNode[];
-  barGraphData: IBarGraphNode[];
-}
+// interface IChartData {
+//   candlestickData: ICandlestickChartNode[];
+//   barGraphData: IBarGraphNode[];
+// }
 
 const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
   open,
@@ -54,7 +54,12 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
 
   const businessId = '291652';
 
-  const { payload, refetch } = useApi<{
+  const {
+    // success,
+    payload,
+    // refetch,
+    // isLoading,
+  } = useApi<{
     companyId: number;
     stockSymbol: string;
     timeframe: string;
@@ -81,24 +86,24 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
   // const [chartData, setChartData] = useState<ICandlestickChartNode[]>(firstData);
 
   // ToDo: (20250909 - Julian) get chart data from API
-  useEffect(() => {
-    switch (currentRange) {
-      case ChartRange['1M']:
-        refetch({ params: { id: businessId }, query: { range: ChartRange['1M'], limit: 10 } });
-        break;
-      case ChartRange['3M']:
-        refetch({ params: { id: businessId }, query: { range: ChartRange['3M'], limit: 10 } });
-        break;
-      case ChartRange['6M']:
-        refetch({ params: { id: businessId }, query: { range: ChartRange['6M'], limit: 10 } });
-        break;
-      case ChartRange['1Y']:
-        refetch({ params: { id: businessId }, query: { range: ChartRange['1Y'], limit: 10 } });
-        break;
-      default:
-        break;
-    }
-  }, [currentRange]);
+  // useEffect(() => {
+  //   switch (currentRange) {
+  //     case ChartRange['1M']:
+  //       refetch({ params: { id: businessId }, query: { range: ChartRange['1M'], limit: 10 } });
+  //       break;
+  //     case ChartRange['3M']:
+  //       refetch({ params: { id: businessId }, query: { range: ChartRange['3M'], limit: 10 } });
+  //       break;
+  //     case ChartRange['6M']:
+  //       refetch({ params: { id: businessId }, query: { range: ChartRange['6M'], limit: 10 } });
+  //       break;
+  //     case ChartRange['1Y']:
+  //       refetch({ params: { id: businessId }, query: { range: ChartRange['1Y'], limit: 10 } });
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  // }, [currentRange]);
 
   const isPosition = change >= 0;
 
