@@ -12,20 +12,22 @@ const toInt = (v: string): number => {
   return n;
 };
 
-export const GET = withCompanyView(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const log = loggerFromRequest({ method: 'GET', url: `/api/v1/companies/${params.id}` });
-    try {
-      const id = toInt(params.id);
-      const company = await prisma.company.findUnique({ where: { id } });
-      if (!company) throw new AppError(ApiCode.NOT_FOUND, 'Company not found');
+const getCompany = async (req: NextRequest, { params }: { params: { id: string } }) => {
+  const log = loggerFromRequest({ method: 'GET', url: `/api/v1/companies/${params.id}` });
+  try {
+    const id = toInt(params.id);
+    const company = await prisma.company.findUnique({ where: { id } });
 
-      return NextResponse.json(ok(company));
-    } catch (e) {
-      const err = e as AppError;
-      const status = err.http ?? 500;
-      log.error('get company failed', { code: err.code, message: err.message });
-      return NextResponse.json(fail(err.code ?? ApiCode.SERVER_ERROR, err.message), { status });
-    }
+    if (!company) throw new AppError(ApiCode.NOT_FOUND, 'Company not found');
+
+    return NextResponse.json(ok(company));
+  } catch (e) {
+    const err = e as AppError;
+    const status = err.http ?? 500;
+    log.error('get company failed', { code: err.code, message: err.message });
+    return NextResponse.json(fail(err.code ?? ApiCode.SERVER_ERROR, err.message), { status });
   }
-);
+};
+
+// export const GET = getCompany;
+export const GET = withCompanyView(getCompany);
