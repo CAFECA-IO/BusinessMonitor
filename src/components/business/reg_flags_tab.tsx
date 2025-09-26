@@ -5,41 +5,84 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { timestampToString } from '@/lib/common';
 import InfoBlockLayout from '@/components/business/info_block_layout';
+import Skeleton from '@/components/common/skeleton';
 import { FlagType } from '@/constants/flag';
-import { mockFlags, IFlags } from '@/interfaces/flag';
+import useApi from '@/lib/hooks/use_api';
+import { APIName } from '@/constants/api_connection';
+import { Paginated as IPaginated } from '@/types/common';
+import { FlagItem as IFlag } from '@/types/company';
+interface IRedFlagsTabProps {
+  businessId: string;
+}
 
-const FlagItem: React.FC<IFlags> = ({ id, flagType, date, eventTitle, level }) => {
+interface IFlagItemProps extends IFlag {
+  type: FlagType;
+}
+
+const SkeletonItem: React.FC = () => {
+  return (
+    <>
+      <Skeleton width={100} height={20} />
+      <Skeleton width={150} height={20} />
+      <Skeleton width={20} height={20} />
+      <Skeleton width={100} height={20} />
+    </>
+  );
+};
+
+const FlagItem: React.FC<IFlagItemProps> = ({ type, date, title, level, sourceUrl }) => {
   const { t } = useTranslation(['business_detail']);
 
-  const flagColor = flagType === FlagType.RED ? 'text-text-error' : 'text-text-success';
-  const readMoreLink = `/flags/${id}`;
+  const timestamp = new Date(date).getTime() / 1000;
+  const dateStr = timestampToString(timestamp).formattedDate;
+
+  const flagColor = type === FlagType.RED ? 'text-text-error' : 'text-text-success';
 
   return (
     <>
-      <p className="col-span-2">{timestampToString(date).formattedDate}</p>
-      <p className="col-span-3">{eventTitle}</p>
+      <p className="col-span-2">{dateStr}</p>
+      <p className="col-span-3">{title}</p>
       <p className={`col-span-1 text-center font-medium ${flagColor}`}>{level}</p>
       <div className="col-span-2 text-center">
-        <Link href={readMoreLink} className="text-button-link hover:text-button-primary-hover">
-          {t('business_detail:FLAGS_BLOCK_READ_MORE')}
-        </Link>
+        {sourceUrl && (
+          <Link href={sourceUrl} className="text-button-link hover:text-button-primary-hover">
+            {t('business_detail:FLAGS_BLOCK_READ_MORE')}
+          </Link>
+        )}
       </div>
     </>
   );
 };
 
-const RedFlagsTab: React.FC = () => {
+const RedFlagsTab: React.FC<IRedFlagsTabProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
 
-  // ToDo: (20250902 - Julian) Replace with actual data fetching logic
-  const flagData = mockFlags;
+  const { payload: redFlagData, isLoading: isRedFlagLoading } = useApi<IPaginated<IFlag>>(
+    APIName.GET_FLAGS_BY_COMPANY_ID,
+    { params: { id: businessId }, query: { type: 'red' } }
+  );
 
-  // Info: (20250902 - Julian) Separate red and green flags
-  const redFlags = flagData.filter((flag) => flag.flagType === FlagType.RED);
-  const greenFlags = flagData.filter((flag) => flag.flagType === FlagType.GREEN);
+  const { payload: greenFlagData, isLoading: isGreenFlagLoading } = useApi<IPaginated<IFlag>>(
+    APIName.GET_FLAGS_BY_COMPANY_ID,
+    { params: { id: businessId }, query: { type: 'green' } }
+  );
 
-  const redFlagRow = redFlags.map((flag) => <FlagItem key={flag.id} {...flag} />);
-  const greenFlagRow = greenFlags.map((flag) => <FlagItem key={flag.id} {...flag} />);
+  const redFlags = redFlagData?.items ?? [];
+  const greenFlags = greenFlagData?.items ?? [];
+
+  const isShowRedFlag = !isRedFlagLoading && redFlagData && redFlags.length > 0;
+  const isShowGreenFlag = !isGreenFlagLoading && greenFlagData && greenFlags.length > 0;
+
+  const redFlagRow = isShowRedFlag ? (
+    redFlags.map((flag) => <FlagItem key={flag.title} {...flag} type={FlagType.RED} />)
+  ) : (
+    <SkeletonItem />
+  );
+  const greenFlagRow = isShowGreenFlag ? (
+    greenFlags.map((flag) => <FlagItem key={flag.title} {...flag} type={FlagType.GREEN} />)
+  ) : (
+    <SkeletonItem />
+  );
 
   return (
     <div className="grid grid-cols-2 gap-60px">
@@ -50,10 +93,12 @@ const RedFlagsTab: React.FC = () => {
         className="flex flex-col gap-40px"
       >
         <div className="grid grid-cols-8 gap-40px font-medium text-text-note">
-          <p className="col-span-2">{t('business_detail:FLAGS_BLOCK_DATE')}</p>
-          <p className="col-span-3">{t('business_detail:FLAGS_BLOCK_EVENTS')}</p>
-          <p className="col-span-1 text-center">{t('business_detail:FLAGS_BLOCK_LEVEL')}</p>
-          <p className="col-span-2"></p>
+          <p className="col-span-2 whitespace-nowrap">{t('business_detail:FLAGS_BLOCK_DATE')}</p>
+          <p className="col-span-3 whitespace-nowrap">{t('business_detail:FLAGS_BLOCK_EVENTS')}</p>
+          <p className="col-span-1 whitespace-nowrap text-center">
+            {t('business_detail:FLAGS_BLOCK_LEVEL')}
+          </p>
+          <p className="col-span-2 whitespace-nowrap"></p>
         </div>
         <div className="grid grid-cols-8 gap-40px overflow-y-auto text-base font-normal">
           {redFlagRow}
@@ -66,10 +111,12 @@ const RedFlagsTab: React.FC = () => {
         className="flex flex-col gap-40px"
       >
         <div className="grid grid-cols-8 gap-40px font-medium text-text-note">
-          <p className="col-span-2">{t('business_detail:FLAGS_BLOCK_DATE')}</p>
-          <p className="col-span-3">{t('business_detail:FLAGS_BLOCK_EVENTS')}</p>
-          <p className="col-span-1 text-center">{t('business_detail:FLAGS_BLOCK_LEVEL')}</p>
-          <p className="col-span-2"></p>
+          <p className="col-span-2 whitespace-nowrap">{t('business_detail:FLAGS_BLOCK_DATE')}</p>
+          <p className="col-span-3 whitespace-nowrap">{t('business_detail:FLAGS_BLOCK_EVENTS')}</p>
+          <p className="col-span-1 whitespace-nowrap text-center">
+            {t('business_detail:FLAGS_BLOCK_LEVEL')}
+          </p>
+          <p className="col-span-2 whitespace-nowrap"></p>
         </div>
         <div className="grid grid-cols-8 gap-40px overflow-y-auto text-base font-normal">
           {greenFlagRow}
