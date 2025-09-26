@@ -3,7 +3,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
-import { ICandlestickChartNode, IBarGraphNode } from '@/interfaces/chart';
+import { ICandlestickChartNode /* IBarGraphNode */ } from '@/interfaces/chart';
 // import { MONTH_LIST } from '@/constants/date';
 
 // Info: (20250908 - Julian) 動態載入，避免 SSR 錯誤
@@ -11,10 +11,13 @@ const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface ICandlestickChartProps {
   candlestickData: ICandlestickChartNode[];
-  volumeData: IBarGraphNode[];
+  // volumeData: IBarGraphNode[];
 }
 
-const CandlestickChart: React.FC<ICandlestickChartProps> = ({ candlestickData, volumeData }) => {
+const CandlestickChart: React.FC<ICandlestickChartProps> = ({
+  candlestickData,
+  // volumeData
+}) => {
   const axisStyle = { colors: '#8181A0', fontFamily: 'Jost', fontSize: '12px', fontWeight: 500 };
 
   const options: ApexOptions = {
@@ -84,7 +87,7 @@ const CandlestickChart: React.FC<ICandlestickChartProps> = ({ candlestickData, v
     {
       name: 'Volume',
       type: 'column', // Info: (20250908 - Julian) 柱狀圖
-      data: volumeData,
+      data: [], //volumeData,
     },
   ];
 

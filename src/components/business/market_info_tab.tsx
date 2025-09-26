@@ -10,6 +10,7 @@ import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
 import { Paginated as IPaginated } from '@/types/common';
 import { INews } from '@/interfaces/news';
+// import {NewsItem as INews} from '@/types/news';
 import { mockMarketInfo } from '@/interfaces/market';
 import CandlestickChartSection from '@/components/business/candlestick_chart_section';
 import NewsItem from '@/components/business/news_item';
