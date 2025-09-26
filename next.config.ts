@@ -13,7 +13,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // 應用到所有的 API 路由
+        // Info: (20250925 - Tzuhan) 應用到所有的 API 路由
         source: '/api/:path*',
         headers: CORS_HEADERS,
       },

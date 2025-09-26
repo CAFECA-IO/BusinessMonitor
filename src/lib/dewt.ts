@@ -3,14 +3,14 @@ import type { IdentityAccount } from '@prisma/client';
 import type { JWTPayload, KeyObject, CryptoKey, JWK } from 'jose';
 import { logger } from './logger';
 
-// --- 環境變數與常數定義 ---
+// Info: (20250925 - Tzuhan) --- 環境變數與常數定義 ---
 const DEWT_ALG = 'ES256';
 const DEWT_ISSUER = process.env.DEWT_ISS ?? 'urn:cafeca:id';
 const DEWT_AUDIENCE = process.env.DEWT_AUD ?? 'urn:cafeca:app';
 const DEWT_EXPIRATION_TIME = process.env.DEWT_EXPIRATION_TIME ?? '8h';
 const PEM_PRIVATE_KEY = process.env.DEWT_PRIVATE_KEY_PEM;
 
-// --- 金鑰載入與管理 ---
+// Info: (20250925 - Tzuhan) --- 金鑰載入與管理 ---
 interface ILoadedKeys {
   privateKey: KeyObject | CryptoKey;
   publicKey: KeyObject | CryptoKey;
@@ -95,5 +95,5 @@ export const verifyDeWT = async (dewt: string): Promise<JWTPayload> => {
 
 // Info: (20250925 - Tzuhan) 應用程式啟動時預先載入金鑰，以便及早發現設定錯誤。
 loadKeys().catch(() => {
-  // 錯誤已在 loadKeys 內部記錄，此處無需額外操作。
+  // Info: (20250925 - Tzuhan) 錯誤已在 loadKeys 內部記錄，此處無需額外操作。
 });
