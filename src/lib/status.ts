@@ -1,12 +1,17 @@
 export enum ApiCode {
+  // Info: (20250925 - Tzuhan) --- 成功 ---
   OK = 'OK',
-  VALIDATION_ERROR = 'VALIDATION_ERROR',
-  UNAUTHENTICATED = 'UNAUTHENTICATED',
-  FORBIDDEN = 'FORBIDDEN',
-  NOT_FOUND = 'NOT_FOUND',
-  CONFLICT = 'CONFLICT',
-  RATE_LIMIT = 'RATE_LIMIT',
-  SERVER_ERROR = 'SERVER_ERROR',
+
+  // Info: (20250925 - Tzuhan) --- 客戶端錯誤 ---
+  VALIDATION_ERROR = 'VALIDATION_ERROR', // Info: (20250925 - Tzuhan) 400: 請求參數驗證失敗
+  UNAUTHENTICATED = 'UNAUTHENTICATED', // Info: (20250925 - Tzuhan) 401: 未經身份驗證
+  FORBIDDEN = 'FORBIDDEN', // Info: (20250925 - Tzuhan) 403: 權限不足
+  NOT_FOUND = 'NOT_FOUND', // Info: (20250925 - Tzuhan) 404: 資源不存在
+  CONFLICT = 'CONFLICT', // Info: (20250925 - Tzuhan) 409: 資源衝突 (例如：重複註冊)
+  RATE_LIMIT = 'RATE_LIMIT', // Info: (20250925 - Tzuhan) 429: 請求過於頻繁
+
+  // Info: (20250925 - Tzuhan) --- 伺服器端錯誤 ---
+  SERVER_ERROR = 'SERVER_ERROR', // Info: (20250925 - Tzuhan) 500: 未知的伺服器錯誤
 }
 
 export const HTTP_MAP: Record<ApiCode, number> = {
