@@ -34,7 +34,7 @@ export default function RecoverPage() {
     setResult(null);
 
     try {
-      // --- 步驟一: 提交備份碼，獲取 FIDO2 註冊選項 ---
+      // Info: (20250926 - Tzuhan) --- 步驟一: 提交備份碼，獲取 FIDO2 註冊選項 ---
       setStatusMessage('正在驗證備份碼...');
       const initiateRes = await fetch(routes.auth.recover.initiate(), {
         method: 'POST',
@@ -48,11 +48,11 @@ export default function RecoverPage() {
       }
       const registrationOptions = initiateData.payload;
 
-      // --- 步驟二: 使用獲取的選項，在新裝置上註冊 Passkey ---
+      // Info: (20250926 - Tzuhan) --- 步驟二: 使用獲取的選項，在新裝置上註冊 Passkey ---
       setStatusMessage('備份碼驗證成功。請在此裝置上建立一個新的 Passkey...');
       const registrationData = await startRegistration(registrationOptions);
 
-      // --- 步驟三: 提交新 Passkey 的註冊資料以完成恢復流程 ---
+      // Info: (20250926 - Tzuhan) --- 步驟三: 提交新 Passkey 的註冊資料以完成恢復流程 ---
       setStatusMessage('正在向伺服器驗證新的 Passkey...');
       const completeRes = await fetch(routes.auth.recover.complete(), {
         method: 'POST',
@@ -65,7 +65,7 @@ export default function RecoverPage() {
         throw new Error(completeData.message || '完成恢復流程失敗。');
       }
 
-      // --- 成功 ---
+      // Info: (20250926 - Tzuhan) --- 成功 ---
       setStatusMessage('✅ 裝置新增成功！正在將您導向...');
       const { dewt } = completeData.payload;
       localStorage.setItem('dewt', dewt);
