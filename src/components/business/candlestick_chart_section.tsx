@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IoTriangle } from 'react-icons/io5';
 import { useTranslation } from 'react-i18next';
 import { formatNumberWithCommas } from '@/lib/common';
 import CandlestickChart from '@/components/common/candlestick_chart';
 import { ICandlestickChartNode, IBarGraphNode } from '@/interfaces/chart';
-import { MarketPayload as IMarket } from '@/types/company';
+// import { MarketPayload as IMarket } from '@/types/company';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
 
@@ -19,191 +19,6 @@ interface INodeData {
   volume: number;
 }
 
-const dayData: INodeData[] = [
-  {
-    open: 451.98,
-    high: 493.29,
-    low: 401.59,
-    close: 420.85,
-    timestamp: 1675224000,
-    volume: 5142342,
-  },
-  {
-    open: 353.66,
-    high: 374.99,
-    low: 281.35,
-    close: 320.95,
-    timestamp: 1675227600,
-    volume: 6523423,
-  },
-  {
-    open: 352.96,
-    high: 403.78,
-    low: 351.54,
-    close: 388.48,
-    timestamp: 1675231200,
-    volume: 5538913,
-  },
-  {
-    open: 402.54,
-    high: 462.79,
-    low: 407.88,
-    close: 349.24,
-    timestamp: 1675234800,
-    volume: 3381931,
-  },
-  {
-    open: 449.17,
-    high: 482.86,
-    low: 417.7,
-    close: 491.78,
-    timestamp: 1675238400,
-    volume: 1938421,
-  },
-  {
-    open: 500.31,
-    high: 550.35,
-    low: 480.54,
-    close: 530.34,
-    timestamp: 1675242000,
-    volume: 1534234,
-  },
-  {
-    open: 530.25,
-    high: 600.56,
-    low: 520.62,
-    close: 580.56,
-    timestamp: 1675245600,
-    volume: 1534234,
-  },
-  {
-    open: 580.34,
-    high: 620.47,
-    low: 570.68,
-    close: 600.23,
-    timestamp: 1675249200,
-    volume: 1534234,
-  },
-];
-
-const weekData: INodeData[] = [
-  {
-    open: 451.98,
-    high: 493.29,
-    low: 401.59,
-    close: 420.85,
-    timestamp: 1672502400,
-    volume: 1542342,
-  },
-  {
-    open: 580.34,
-    high: 620.47,
-    low: 570.68,
-    close: 600.23,
-    timestamp: 1673107200,
-    volume: 1534234,
-  },
-  {
-    open: 600.12,
-    high: 630.89,
-    low: 590.45,
-    close: 620.78,
-    timestamp: 1673712000,
-    volume: 1534234,
-  },
-  {
-    open: 620.5,
-    high: 650.32,
-    low: 610.23,
-    close: 640.12,
-    timestamp: 1674316800,
-    volume: 1720134,
-  },
-  {
-    open: 640.78,
-    high: 670.45,
-    low: 630.56,
-    close: 660.34,
-    timestamp: 1674921600,
-    volume: 2334234,
-  },
-  {
-    open: 660.23,
-    high: 700.12,
-    low: 650.34,
-    close: 680.56,
-    timestamp: 1675526400,
-    volume: 1634234,
-  },
-  {
-    open: 680.45,
-    high: 720.67,
-    low: 670.89,
-    close: 700.78,
-    timestamp: 1676131200,
-    volume: 2123648,
-  },
-];
-
-const monthData: INodeData[] = [
-  {
-    open: 449.17,
-    high: 482.86,
-    low: 417.7,
-    close: 491.78,
-    timestamp: 1672502400,
-    volume: 8938421,
-  },
-  {
-    open: 281.66,
-    high: 304.99,
-    low: 231.35,
-    close: 220.95,
-    timestamp: 1675180800,
-    volume: 7238423,
-  },
-  {
-    open: 324.24,
-    high: 382.25,
-    low: 239.34,
-    close: 318.34,
-    timestamp: 1677600000,
-    volume: 9193842,
-  },
-  {
-    open: 402.54,
-    high: 462.79,
-    low: 407.88,
-    close: 349.24,
-    timestamp: 1680278400,
-    volume: 7429372,
-  },
-  {
-    open: 352.96,
-    high: 403.78,
-    low: 351.54,
-    close: 388.48,
-    timestamp: 1682870400,
-    volume: 7836824,
-  },
-  {
-    open: 434.14,
-    high: 471.35,
-    low: 405.48,
-    close: 405.99,
-    timestamp: 1685548800,
-    volume: 6951421,
-  },
-  {
-    open: 728.32,
-    high: 783.42,
-    low: 530.24,
-    close: 623.03,
-    timestamp: 1688140800,
-    volume: 1938421,
-  },
-];
-
 interface ICandlestickChartSectionProps {
   open: number;
   high: number;
@@ -215,9 +30,10 @@ interface ICandlestickChartSectionProps {
 }
 
 enum ChartRange {
-  DAY = 'DAY',
-  WEEK = 'WEEK',
-  MONTH = 'MONTH',
+  '1M' = '1m',
+  '3M' = '3m',
+  '6M' = '6m',
+  '1Y' = '1y',
 }
 
 interface IChartData {
@@ -236,71 +52,53 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
 }) => {
   const { t } = useTranslation(['business_detail']);
 
-  const businessId = '1234';
+  const businessId = '291652';
 
-  // Info: (20250910 - Julian) 將原始資料轉換為圖表所需格式
-  function transformNodeToCandlestickData(data: INodeData[]): ICandlestickChartNode[] {
-    return data.map((item) => ({
-      x: item.timestamp,
-      y: [item.open, item.high, item.low, item.close],
-    }));
-  }
-  function transformNodeToBarGraphData(data: INodeData[]): IBarGraphNode[] {
-    return data.map((item) => ({
-      x: item.timestamp,
-      y: item.volume,
-      fillColor: item.close >= item.open ? '#3DD08C' : '#FF5959',
-    }));
-  }
-
-  const dayChartData: IChartData = useMemo(() => {
-    return {
-      candlestickData: transformNodeToCandlestickData(dayData),
-      barGraphData: transformNodeToBarGraphData(dayData),
-    };
-  }, []);
-  const weekChartData: IChartData = useMemo(() => {
-    return {
-      candlestickData: transformNodeToCandlestickData(weekData),
-      barGraphData: transformNodeToBarGraphData(weekData),
-    };
-  }, []);
-  const monthChartData: IChartData = useMemo(() => {
-    return {
-      candlestickData: transformNodeToCandlestickData(monthData),
-      barGraphData: transformNodeToBarGraphData(monthData),
-    };
-  }, []);
-
-  const [currentRange, setCurrentRange] = useState<ChartRange>(ChartRange.DAY);
-  const [chartData, setChartData] = useState<IChartData>(dayChartData);
-
-  // ToDo: (20250912 - Julian) During development
-  const {
-    // success,
-    // payload: marketInfo,
-    // isLoading,
-  } = useApi<IMarket>(APIName.GET_MARKET_INFO_BY_COMPANY_ID, {
+  const { payload, refetch } = useApi<{
+    companyId: number;
+    stockSymbol: string;
+    timeframe: string;
+    data: {
+      date: string;
+      open: number;
+      high: number;
+      low: number;
+      close: number;
+      volume: string;
+    }[];
+  }>(APIName.GET_MARKET_INFO_BY_COMPANY_ID, {
     params: { id: businessId },
-    query: { range: '1y', limit: 10 }, // ToDo: (20250912 - Julian) Make range & limit dynamic
+    query: { range: ChartRange['1M'], limit: 10 }, // ToDo: (20250912 - Julian) Make range & limit dynamic
   });
+
+  const chartData: ICandlestickChartNode[] =
+    payload?.data.map((point) => ({
+      x: new Date(point.date).getTime(),
+      y: [point.open, point.high, point.low, point.close],
+    })) ?? [];
+
+  const [currentRange, setCurrentRange] = useState<ChartRange>(ChartRange['1M']);
+  // const [chartData, setChartData] = useState<ICandlestickChartNode[]>(firstData);
 
   // ToDo: (20250909 - Julian) get chart data from API
   useEffect(() => {
     switch (currentRange) {
-      case ChartRange.DAY:
-        setChartData(dayChartData);
+      case ChartRange['1M']:
+        refetch({ params: { id: businessId }, query: { range: ChartRange['1M'], limit: 10 } });
         break;
-      case ChartRange.WEEK:
-        setChartData(weekChartData);
+      case ChartRange['3M']:
+        refetch({ params: { id: businessId }, query: { range: ChartRange['3M'], limit: 10 } });
         break;
-      case ChartRange.MONTH:
-        setChartData(monthChartData);
+      case ChartRange['6M']:
+        refetch({ params: { id: businessId }, query: { range: ChartRange['6M'], limit: 10 } });
+        break;
+      case ChartRange['1Y']:
+        refetch({ params: { id: businessId }, query: { range: ChartRange['1Y'], limit: 10 } });
         break;
       default:
-        setChartData(dayChartData);
+        break;
     }
-  }, [currentRange, dayChartData, weekChartData, monthChartData]);
+  }, [currentRange]);
 
   const isPosition = change >= 0;
 
@@ -322,7 +120,8 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
             : 'bg-transparent text-text-primary hover:bg-grey-100'
         } w-60px rounded-full px-12px py-2px text-sm`}
       >
-        {t(`business_detail:GRAPH_${range.toUpperCase()}_BTN`)}
+        {/* {t(`business_detail:GRAPH_${range.toUpperCase()}_BTN`)} */}
+        {range.toUpperCase()}
       </button>
     );
   });
@@ -361,8 +160,8 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
 
       {/* Info: (20250909 - Julian) candlestick chart */}
       <CandlestickChart
-        candlestickData={chartData.candlestickData}
-        volumeData={chartData.barGraphData}
+        candlestickData={chartData}
+        // volumeData={chartData.barGraphData}
       />
 
       {/* Info: (20250909 - Julian) chart range button */}
