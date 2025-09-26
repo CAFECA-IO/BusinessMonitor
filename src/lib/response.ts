@@ -12,13 +12,20 @@ export interface IApiResponse<T> {
   payload: T | null;
 }
 
-export const ok = <T>(payload: T, message = 'OK'): IApiResponse<T> => ({
-  powerby: POWERBY,
-  success: true,
-  code: ApiCode.OK,
-  message,
-  payload,
-});
+export const ok = <T>(payload: T, message = 'OK'): IApiResponse<T> => {
+  // Info: (20250926 - Luphia) jsonstringify 無法解析 bigint，這邊做個轉換
+  const safePayload = JSON.parse(
+    JSON.stringify(payload, (key, value) => (typeof value === 'bigint' ? value.toString() : value))
+  );
+
+  return {
+    powerby: POWERBY,
+    success: true,
+    code: ApiCode.OK,
+    message,
+    payload: safePayload,
+  };
+};
 
 export const fail = (code: ApiCode, message: string): IApiResponse<null> => ({
   powerby: POWERBY,
