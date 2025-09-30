@@ -9,19 +9,18 @@ import { TbThumbUp, TbThumbDown, TbMessageReport } from 'react-icons/tb';
 import { LuTrash2 } from 'react-icons/lu';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import { timestampToString, formatNumberWithCommas } from '@/lib/common';
-import { IPost } from '@/interfaces/post';
+import { CommentItem as ICommentItem } from '@/types/company';
 
-const PostItem: React.FC<IPost> = ({
-  author,
-  content,
-  createdAt,
-  countOfLikes,
-  countOfDislikes,
-  countOfComments,
-}) => {
+interface IPostItemProps {
+  post: ICommentItem;
+}
+
+const PostItem: React.FC<IPostItemProps> = ({ post }) => {
   const { t } = useTranslation(['business_detail']);
+  const { userName, userAvatar, content, createdAt, likes, comments, likedByMe } = post;
 
-  const formattedCreatedTime = timestampToString(createdAt);
+  const timestamp = new Date(createdAt).getTime() / 1000;
+  const formattedCreatedTime = timestampToString(timestamp);
 
   const {
     targetRef: moreRef,
@@ -30,7 +29,10 @@ const PostItem: React.FC<IPost> = ({
   } = useOuterClick<HTMLDivElement>(false);
 
   // Info: (20250903 - Julian) True = liked, False = disliked, Null = no action
-  const [isLiked, setIsLiked] = useState<boolean | null>(null);
+  const [isLiked, setIsLiked] = useState<boolean | undefined>(likedByMe);
+
+  const countOfLikes = likes + (isLiked === true ? 1 : 0);
+  const countOfDislikes = 0 + (isLiked === false ? 1 : 0);
 
   // ToDo: (20250904 - Julian) 判斷是否有檢舉權限
   const isReportAvailable = true;
@@ -46,7 +48,7 @@ const PostItem: React.FC<IPost> = ({
   // ToDo: (20250903 - Julian) Send like/dislike action to backend via API
   const handleLike = () => {
     if (isLikeActive) {
-      setIsLiked(null);
+      setIsLiked(undefined);
     } else {
       setIsLiked(true);
     }
@@ -54,11 +56,17 @@ const PostItem: React.FC<IPost> = ({
 
   const handleDislike = () => {
     if (isDislikeActive) {
-      setIsLiked(null);
+      setIsLiked(undefined);
     } else {
       setIsLiked(false);
     }
   };
+
+  const isShowAvatar = userAvatar ? (
+    <Image src={userAvatar} width={80} height={80} alt="user_avatar" className="shrink-0" />
+  ) : (
+    <div className="size-80px overflow-hidden rounded-full bg-surface-background"></div>
+  );
 
   const moreDropdown = (
     <div
@@ -99,11 +107,9 @@ const PostItem: React.FC<IPost> = ({
       {/* Info: (20250903 - Julian) Author */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-16px">
-          <div className="size-80px overflow-hidden rounded-full">
-            <Image src={author.avatarUrl} width={80} height={80} alt="user_avatar" />
-          </div>
+          <div className="size-80px overflow-hidden rounded-full">{isShowAvatar}</div>
           <div className="flex flex-col gap-8px font-medium">
-            <p className="text-base text-text-primary">{author.name}</p>
+            <p className="text-base text-text-primary">{userName}</p>
             <p className="text-xs text-text-note">
               {formattedCreatedTime.formattedDate} {formattedCreatedTime.time}
             </p>
@@ -148,7 +154,7 @@ const PostItem: React.FC<IPost> = ({
             <AiOutlineMessage size={20} />
             <Trans
               i18nKey="business_detail:DISCUSSION_COMMENTS"
-              values={{ count: formatNumberWithCommas(countOfComments) }}
+              values={{ count: formatNumberWithCommas(comments) }}
             />
           </button>
           <button

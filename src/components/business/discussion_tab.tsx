@@ -7,22 +7,39 @@ import { FiSearch } from 'react-icons/fi';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import { timestampToString } from '@/lib/common';
 import { mockAnnouncements } from '@/interfaces/announcement';
-import { mockPosts } from '@/interfaces/post';
 import InfoBlockLayout from '@/components/business/info_block_layout';
 import DiscussionPoster from '@/components/business/discussion_poster';
 import PostItem from '@/components/business/post_item';
+import useApi from '@/lib/hooks/use_api';
+import { APIName } from '@/constants/api_connection';
+import { CommentItem as ICommentItem } from '@/types/company';
+import { Paginated as IPaginated } from '@/types/common';
 
 enum SortOrder {
   NEWEST = 'newest',
   OLDEST = 'oldest',
 }
 
-const DiscussionTab: React.FC = () => {
+interface IDiscussionTabProps {
+  businessId: string;
+}
+
+const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
 
   // ToDo: (20250903 - Julian) Fetch real announcements from backend
   const importantAnnouncements = mockAnnouncements;
-  const posts = mockPosts;
+  // const posts: ICommentItem[] = [];
+
+  const {
+    // success,
+    payload,
+    // isLoading
+  } = useApi<IPaginated<ICommentItem>>(APIName.GET_COMMENTS_BY_COMPANY_ID, {
+    params: { id: businessId },
+  });
+
+  const posts = payload?.items ?? [];
 
   const {
     targetRef: sortRef,
@@ -92,7 +109,7 @@ const DiscussionTab: React.FC = () => {
     </button>
   ));
 
-  const postRows = posts.map((post) => <PostItem key={post.id} {...post} />);
+  const postRows = posts.map((post) => <PostItem key={post.id} post={post} />);
 
   return (
     <div className="flex gap-24px">
