@@ -57,7 +57,7 @@ export async function apiMiddleware(req: NextRequest) {
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
 
   if (!token) {
-    return jsonFail(ApiCode.UNAUTHENTICATED, 'Missing token', {
+    return jsonFail(ApiCode.UNAUTHORIZED, 'Missing token', {
       headers: { 'x-request-id': requestId },
     });
   }
@@ -82,7 +82,7 @@ export async function apiMiddleware(req: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid token';
-    return jsonFail(ApiCode.UNAUTHENTICATED, message, {
+    return jsonFail(ApiCode.UNAUTHORIZED, message, {
       headers: { 'x-request-id': requestId },
     });
   }

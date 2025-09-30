@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { startRegistration, startLogin } from '@/lib/fido2-client';
+import { routes } from '@/config/api-routes';
 
 // Info: (20250925 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
 const ResultDisplay = ({ title, data }: { title: string; data: object | string | null }) => {
@@ -54,14 +55,14 @@ export default function AuthPage() {
     // Info: (20250925 - Tzuhan) --- 步驟一: 嘗試「登入」 ---
     setStatusMessage('Attempting to sign in with an existing Passkey...');
     try {
-      const loginOptionsRes = await fetch('/api/v1/secure/webauthn_options');
+      const loginOptionsRes = await fetch(routes.auth.webauthn.options());
       if (!loginOptionsRes.ok) throw new Error('Could not fetch login options from server.');
       const loginOptions = await loginOptionsRes.json();
 
       const authData = await startLogin(loginOptions);
 
       setStatusMessage('Verifying login with server...');
-      const verifyLoginRes = await fetch('/api/v1/secure/webauthn', {
+      const verifyLoginRes = await fetch(routes.auth.webauthn.verify(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(authData),
@@ -91,7 +92,7 @@ export default function AuthPage() {
     // Info: (20250925 - Tzuhan) --- 步驟二: 降級到「註冊」 ---
     setStatusMessage('No existing Passkey found or used. Attempting to register a new one...');
     try {
-      const regOptionsRes = await fetch('/api/v1/secure/webauthn_options?intent=register');
+      const regOptionsRes = await fetch(routes.auth.webauthn.options('register'));
       if (!regOptionsRes.ok) throw new Error('Could not fetch registration options from server.');
       const regOptions = await regOptionsRes.json();
 
@@ -99,7 +100,7 @@ export default function AuthPage() {
       const registrationData = await startRegistration(regOptions);
 
       setStatusMessage('Verifying new passkey with server...');
-      const verifyRegRes = await fetch('/api/v1/secure/webauthn', {
+      const verifyRegRes = await fetch(routes.auth.webauthn.verify(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(registrationData),

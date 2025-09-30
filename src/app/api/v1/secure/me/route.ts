@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     if (!identityId) {
       log.error('Missing x-identity-id header in /me route. Middleware might be misconfigured.');
       // Info: (20250925 - Tzuhan) 這理論上不應該發生，因為 middleware 應該已經攔截了無效請求
-      throw new AppError(ApiCode.UNAUTHENTICATED, 'Cannot identify user.');
+      throw new AppError(ApiCode.UNAUTHORIZED, 'Cannot identify user.');
     }
 
     log.info('Fetching user data for identity', { identityId });

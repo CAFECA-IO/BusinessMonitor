@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+139",
+  "version": "0.1.0+140",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "smoke:db_health": "tsx scripts/db_health.ts",
     "predev": "npm run gen:env",
     "dev": "next dev --turbopack",
+    "ws:dev": "ts-node-dev --respawn --transpile-only server.ts",
     "prebuild": "npm run gen:env",
     "build": "npm run gen:prisma && next build",
     "start": "next start",
@@ -52,6 +53,7 @@
     "next": "15.4.4",
     "next-i18n-router": "^5.5.3",
     "postcss": "^8.5.6",
+    "qrcode": "^1.5.4",
     "react": "19.1.0",
     "react-apexcharts": "^1.7.0",
     "react-dom": "19.1.0",
@@ -61,6 +63,7 @@
     "secp256k1": "^5.0.1",
     "supertest": "^7.0.0",
     "tailwindcss": "^3.4.17",
+    "ws": "^8.18.3",
     "zod": "^4.1.5"
   },
   "devDependencies": {
@@ -76,9 +79,11 @@
     "@types/json2csv": "^5.0.7",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.19.15",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/secp256k1": "^4.0.6",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
     "cbor": "^10.0.11",

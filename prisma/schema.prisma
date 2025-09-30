@@ -507,3 +507,25 @@ model Authenticator {
 
   @@map("authenticator")
 }
+
+enum PairingStatus {
+  PENDING    // Info: (20250930 - Tzuhan) 等待掃碼
+  AUTHORIZED // Info: (20250930 - Tzuhan) 已掃碼，已驗證 FIDO2，等待推送 DeWT
+  COMPLETED  // Info: (20250930 - Tzuhan) DeWT 已成功推送
+  EXPIRED    // Info: (20250930 - Tzuhan) 已過期
+}
+
+model DevicePairingSession {
+  id        String        @id @default(cuid())
+  status    PairingStatus @default(PENDING)
+  challenge String        // Info: (20250930 - Tzuhan) FIDO2 登入用的 challenge
+  expiresAt DateTime      // Info: (20250930 - Tzuhan) 會話過期時間
+
+  // Info: (20250930 - Tzuhan) 登入成功後，可以選擇性地儲存授權的用戶資訊
+  identityId String?
+
+  createdAt DateTime      @default(now())
+
+  @@index([expiresAt])
+  @@map("device_pairing_session")
+}

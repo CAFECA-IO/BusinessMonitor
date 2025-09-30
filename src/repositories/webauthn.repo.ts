@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/prisma';
-import { WebAuthnAlgo, type IdentityAccount, type Authenticator } from '@prisma/client';
+import {
+  WebAuthnAlgo,
+  type IdentityAccount,
+  type Authenticator,
+  type DevicePairingSession,
+} from '@prisma/client';
 
 export interface ICreateIdentityData {
   name: string;
@@ -15,7 +20,6 @@ export interface ICreateIdentityData {
   };
 }
 
-// Info: (20250926 - Tzuhan) 【新增】定義新增 Authenticator 所需的資料結構
 export interface IAddAuthenticatorData {
   credentialID: string;
   credentialPublicKey: string;
@@ -29,13 +33,12 @@ export interface IWebAuthnRepository {
   findIdentityAccountById(id: string): Promise<IdentityAccount | null>;
   updateAuthenticatorCounter(id: string, newCounter: number): Promise<void>;
   createIdentityAndAuthenticator(data: ICreateIdentityData): Promise<IdentityAccount>;
-  // Info: (20250926 - Tzuhan) 【新增】透過備份碼雜湊值尋找身份帳戶
   findIdentityByBackupKeyHash(backupKeyHash: string): Promise<IdentityAccount | null>;
-  // Info: (20250926 - Tzuhan) 【新增】將一個新的 Authenticator (裝置) 關聯到現有的身份帳戶
   addAuthenticatorToIdentity(
     identityAccountId: string,
     data: IAddAuthenticatorData
   ): Promise<Authenticator>;
+  findPairingSessionById(id: string): Promise<DevicePairingSession | null>;
 }
 
 class WebAuthnRepository implements IWebAuthnRepository {
@@ -43,6 +46,11 @@ class WebAuthnRepository implements IWebAuthnRepository {
     credentialID: string
   ): Promise<Authenticator | null> {
     return prisma.authenticator.findUnique({ where: { credentialID } });
+  }
+
+  // Info: (20250930 - Tzuhan) 實作 findPairingSessionById 方法
+  public async findPairingSessionById(id: string): Promise<DevicePairingSession | null> {
+    return prisma.devicePairingSession.findUnique({ where: { id } });
   }
 
   public async findIdentityAccountById(id: string): Promise<IdentityAccount | null> {
@@ -88,9 +96,7 @@ class WebAuthnRepository implements IWebAuthnRepository {
     });
   }
 
-  // Info: (20250926 - Tzuhan) 【新增】透過備份碼雜湊值尋找身份帳戶
   public async findIdentityByBackupKeyHash(backupKeyHash: string): Promise<IdentityAccount | null> {
-    // Info: (20250926 - Tzuhan) backupKeyHash 在 prisma schema 中應被設為 @unique
     return prisma.identityAccount.findUnique({
       where: { backupKeyHash },
       select: {
@@ -105,7 +111,6 @@ class WebAuthnRepository implements IWebAuthnRepository {
     });
   }
 
-  // Info: (20250926 - Tzuhan) 【新增】將一個新的 Authenticator (裝置) 關聯到現有的身份帳戶
   public async addAuthenticatorToIdentity(
     identityAccountId: string,
     data: IAddAuthenticatorData
@@ -113,7 +118,6 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.authenticator.create({
       data: {
         ...data,
-        // Info: (20250926 - Tzuhan) 透過 connect 將此新紀錄關聯到指定的 IdentityAccount
         identityAccount: {
           connect: {
             id: identityAccountId,
