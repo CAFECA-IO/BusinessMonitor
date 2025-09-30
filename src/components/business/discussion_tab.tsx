@@ -6,13 +6,16 @@ import { FaCircleChevronUp, FaChevronDown } from 'react-icons/fa6';
 import { FiSearch } from 'react-icons/fi';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import { timestampToString } from '@/lib/common';
-import { mockAnnouncements } from '@/interfaces/announcement';
 import InfoBlockLayout from '@/components/business/info_block_layout';
 import DiscussionPoster from '@/components/business/discussion_poster';
 import PostItem from '@/components/business/post_item';
+import Skeleton from '@/components/common/skeleton';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
-import { CommentItem as ICommentItem } from '@/types/company';
+import {
+  CommentItem as ICommentItem,
+  // AnnouncementItem as IAnnouncementItem,
+} from '@/types/company';
 import { Paginated as IPaginated } from '@/types/common';
 
 enum SortOrder {
@@ -24,22 +27,91 @@ interface IDiscussionTabProps {
   businessId: string;
 }
 
+interface IAnnouncementItem {
+  id: number;
+  title: string;
+  date: string;
+  content?: string | null;
+  imageUrl?: string | null;
+  views?: number;
+  shares?: number;
+  isPinned?: boolean;
+}
+
+const AnnouncementItem: React.FC<{ announcement: IAnnouncementItem }> = ({ announcement }) => {
+  const { id, date, content } = announcement;
+
+  const timestamp = new Date(date).getTime() / 1000;
+  const formatted = timestampToString(timestamp);
+
+  const clickHandler = () => {
+    // ToDo: (20250930 - Julian) open announcement modal
+  };
+
+  return (
+    <button
+      type="button"
+      key={id}
+      onClick={clickHandler}
+      className="group flex items-center gap-40px text-sm font-medium"
+    >
+      <p className="whitespace-nowrap text-text-secondary">{formatted.formattedDate}</p>
+      <p className="w-fit truncate whitespace-nowrap text-text-primary group-hover:text-button-link-hover">
+        {content}
+      </p>
+    </button>
+  );
+};
+
+const SkeletonPostItem: React.FC = () => (
+  <div className="flex w-full flex-col gap-32px rounded-radius-l bg-surface-primary px-36px py-24px">
+    <div className="flex items-center gap-16px">
+      <Skeleton width={80} height={80} rounded />
+      <div className="flex flex-col gap-8px">
+        <Skeleton width={100} height={15} />
+        <Skeleton width={150} height={15} />
+      </div>
+    </div>
+    <div className="flex flex-col gap-8px">
+      <Skeleton width={250} height={20} />
+      <Skeleton width={300} height={20} />
+    </div>
+
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-40px">
+        <Skeleton width={80} height={30} />
+        <Skeleton width={80} height={30} />
+      </div>
+      <div className="flex items-center gap-20px">
+        <Skeleton width={120} height={30} />
+        <Skeleton width={80} height={30} />
+      </div>
+    </div>
+  </div>
+);
+
 const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
 
-  // ToDo: (20250903 - Julian) Fetch real announcements from backend
-  const importantAnnouncements = mockAnnouncements;
-  // const posts: ICommentItem[] = [];
+  const {
+    success: annSuccess,
+    payload: annData,
+    isLoading: isAnnLoading,
+    // ToDo: (20250930 - Julian) interface may change later
+  } = useApi<IAnnouncementItem[]>(APIName.GET_ANNOUNCEMENTS_BY_COMPANY_ID, {
+    params: { id: businessId },
+  });
 
   const {
-    // success,
-    payload,
-    // isLoading
+    success: postSuccess,
+    payload: postData,
+    isLoading: isPostLoading,
   } = useApi<IPaginated<ICommentItem>>(APIName.GET_COMMENTS_BY_COMPANY_ID, {
     params: { id: businessId },
   });
 
-  const posts = payload?.items ?? [];
+  const posts: readonly ICommentItem[] = postData?.items ?? [];
+  const announcements: IAnnouncementItem[] = annData ?? [];
 
   const {
     targetRef: sortRef,
@@ -62,8 +134,8 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
     };
   }, []);
 
-  // Info: (20250903 - Julian) 在頂部時隱藏按鈕
-  const scrollBtnDisabled = scrollTop === 0;
+  // Info: (20250903 - Julian) 在頂部時/沒有 post 資料時隱藏按鈕
+  const scrollBtnDisabled = scrollTop === 0 || posts.length === 0;
 
   const toggleSortDropdown = () => setIsSortOpen((prev) => !prev);
 
@@ -81,6 +153,7 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
       setSortOrder(order);
       setIsSortOpen(false);
     };
+
     return (
       <button
         type="button"
@@ -93,23 +166,29 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
     );
   });
 
-  const annRows = importantAnnouncements.map((ann) => (
-    // ToDo: (20250903 - Julian) Add onClick to open announcement modal
-    <button
-      type="button"
-      key={ann.id}
-      className="group flex items-center gap-40px text-sm font-medium"
-    >
-      <p className="whitespace-nowrap text-text-secondary">
-        {timestampToString(ann.date).formattedDate}
-      </p>
-      <p className="w-fit truncate whitespace-nowrap text-text-primary group-hover:text-button-link-hover">
-        {ann.content}
-      </p>
-    </button>
-  ));
+  const annRows = isAnnLoading ? (
+    <div className="flex items-center gap-40px">
+      <Skeleton width={60} height={20} />
+      <Skeleton width={150} height={20} />
+    </div>
+  ) : annSuccess && announcements.length > 0 ? (
+    announcements
+      // Info: (20250930 - Julian) 置頂公告排序在前
+      .sort((a, b) => (a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1))
+      .map((ann) => <AnnouncementItem key={ann.id} announcement={ann} />)
+  ) : (
+    // ToDo: (20250930 - Julian) no data design
+    <div>no data</div>
+  );
 
-  const postRows = posts.map((post) => <PostItem key={post.id} post={post} />);
+  const postRows = isPostLoading ? (
+    <SkeletonPostItem />
+  ) : postSuccess && posts.length > 0 ? (
+    posts.map((post) => <PostItem key={post.id} post={post} />)
+  ) : (
+    // ToDo: (20250930 - Julian) no data design
+    <div className="flex items-center justify-center px-36px py-24px">no data</div>
+  );
 
   return (
     <div className="flex gap-24px">
