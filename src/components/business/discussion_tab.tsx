@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCircleChevronUp, FaChevronDown } from 'react-icons/fa6';
 import { FiSearch } from 'react-icons/fi';
-import { RxCross1 } from 'react-icons/rx';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import { timestampToString } from '@/lib/common';
 import InfoBlockLayout from '@/components/business/info_block_layout';
@@ -18,8 +17,7 @@ import {
   // AnnouncementItem as IAnnouncementItem,
 } from '@/types/company';
 import { Paginated as IPaginated } from '@/types/common';
-import Button from '@/components/common/button';
-import Image from 'next/image';
+import AnnouncementModal from '@/components/common/announcement_modal';
 
 enum SortOrder {
   NEWEST = 'newest',
@@ -262,43 +260,7 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
       </div>
 
       {/* Info: (20251001 - Julian) Announcement Modal */}
-      <div className="absolute left-0 top-0 z-50 flex size-full flex-col items-center justify-center bg-black/50">
-        <div className="relative flex flex-col gap-24px rounded-radius-l bg-surface-primary px-40px py-24px">
-          {/* Info: (20251001 - Julian) Modal Type */}
-          <div className="flex items-center">
-            <p className="flex-1 text-center text-lg font-bold text-text-primary">Announcement</p>
-            <button type="button" className="p-10px text-text-primary">
-              <RxCross1 size={24} />
-            </button>
-          </div>
-
-          <hr className="border-border-secondary" />
-          <div className="flex h-750px flex-col gap-24px overflow-y-auto">
-            {/* Info: (20251001 - Julian) Main Title */}
-            <div className="relative flex flex-col items-center gap-24px">
-              <h4 className="text-h4 font-bold">Exciting News Ahead!</h4>
-              <p className="text-sm font-bold text-button-secondary">2025-06-13 14:06</p>
-
-              <div className="absolute right-0 flex items-center gap-12px">
-                <Button type="button" variant="secondaryBorderless">
-                  Delete
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-12px">
-              <div className="relative h-300px w-800px">
-                <Image
-                  src="/elements/kv_mask.png"
-                  alt="announcement sample"
-                  objectFit="cover"
-                  fill
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AnnouncementModal />
     </div>
   );
 };
