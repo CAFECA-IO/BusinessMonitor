@@ -21,7 +21,8 @@ const TabBar: React.FC<ITabBarProps> = ({ currentTab, onTabChange }) => {
         key={item}
         type="button"
         onClick={clickHandler}
-        className={`rounded-full px-48px py-12px text-base font-medium hover:bg-tab-active hover:text-text-note ${isActive ? 'bg-button-primary text-text-invert' : 'bg-transparent text-text-secondary'}`}
+        disabled={isActive}
+        className={`rounded-full px-48px py-12px text-base font-medium enabled:hover:bg-tab-active enabled:hover:text-text-note ${isActive ? 'bg-button-primary text-text-invert' : 'bg-transparent text-text-secondary'}`}
       >
         {t(`DETAIL_TAB_${item}`)}
       </button>
