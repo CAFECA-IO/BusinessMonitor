@@ -8,7 +8,7 @@ import { AppError } from '@/lib/error';
 export async function POST() {
   try {
     const challenge = generateChallenge();
-    const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 設置 3 分鐘後過期
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // Info: (20251001-tzuhan) 設置 3 分鐘後過期
 
     const session = await webAuthnRepo.createPairingSession({
       challenge,
