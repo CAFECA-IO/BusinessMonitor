@@ -67,7 +67,7 @@ export default function AuthPage() {
 
   const handleAuth = useCallback(async () => {
     if (!isFidoAvailable) {
-      return; // 如果 FIDO 不可用，不執行任何操作
+      return; // Info: (20251001-tzuhan) 如果 FIDO 不可用，不執行任何操作
     }
     resetState();
 
@@ -96,7 +96,7 @@ export default function AuthPage() {
       handleAuthSuccess(data.payload);
       return;
     } catch (loginError) {
-      // 捕獲所有登入錯誤，包括 NotAllowedError (使用者取消)
+      // Info: (20251001-tzuhan) 捕獲所有登入錯誤，包括 NotAllowedError (使用者取消)
       const err = loginError as Error;
       if (err.name !== 'NotAllowedError') {
         setStatusMessage('❌ Login attempt failed');
@@ -104,7 +104,7 @@ export default function AuthPage() {
         setIsLoading(false);
         return;
       }
-      // 如果是 NotAllowedError，則靜默地繼續到註冊流程
+      // Info: (20251001-tzuhan) 如果是 NotAllowedError，則靜默地繼續到註冊流程
     }
 
     // Info: (20250925 - Tzuhan) --- 步驟二: 降級到「註冊」 ---
