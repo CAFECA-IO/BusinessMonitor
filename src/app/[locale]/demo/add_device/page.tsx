@@ -10,7 +10,8 @@ import { getPusherInstance } from '@/lib/pusher_client';
 
 // Info: (20251001-tzuhan) 【偵錯步驟 1】讀取環境變數
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
-console.log('[DEBUG] 讀取到的 NEXT_PUBLIC_ORIGIN:', origin); // 在這裡印出，檢查是否正確讀取
+// Info: (20251001-tzuhan) 在這裡印出，檢查是否正確讀取
+console.log('[DEBUG] 讀取到的 NEXT_PUBLIC_ORIGIN:', origin);
 
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
@@ -27,9 +28,9 @@ export default function QrLoginPage() {
 
     const initializeLoginSession = async () => {
       try {
-        // 1. 從後端獲取 sessionId 和 challenge
-        // Info: (20251001-tzuhan) 【偵錯步驟 2】印出 fetch 請求的完整 URL
+        // Info: (20251001-tzuhan) 1. 從後端獲取 sessionId 和 challenge
         const initiateUrl = routes.pairing.initiate();
+        // Info: (20251001-tzuhan) 【偵錯步驟 2】印出 fetch 請求的完整 URL
         console.log('[DEBUG] 準備 fetch:', initiateUrl);
         const res = await fetch(initiateUrl, { method: 'POST' });
         const data = await res.json();
@@ -40,26 +41,26 @@ export default function QrLoginPage() {
 
         const { sessionId, challenge } = data.payload;
 
-        // 2. 建立包含完整 URL 的 QR Code
-        // Info: (20251001-tzuhan) 【偵錯步驟 3】印出用於建立 new URL 的字串
+        // Info: (20251001-tzuhan) 2. 建立包含完整 URL 的 QR Code
         const scanUrlString = `${origin}/demo/scan`;
         const scanUrl = new URL(scanUrlString);
         scanUrl.searchParams.set('sessionId', sessionId);
         scanUrl.searchParams.set('challenge', challenge);
         const qrPayload = scanUrl.toString();
+        // Info: (20251001-tzuhan) 【偵錯步驟 3】印出用於建立 new URL 的字串
         console.log('[DEBUG] 準備 new URL, 傳入的字串是:', qrPayload);
 
         setStatusMessage('請使用您的手機相機掃描 QR Code 以登入。');
         const dataUrl = await QRCode.toDataURL(qrPayload, { width: 300 });
         setQrCodeDataUrl(dataUrl);
 
-        // 3. 初始化 Pusher 並訂閱私有頻道
+        // Info: (20251001-tzuhan) 3. 初始化 Pusher 並訂閱私有頻道
         pusherClient = getPusherInstance();
 
         const channelName = `private-login-session-${sessionId}`;
         const channel = pusherClient.subscribe(channelName);
 
-        // 4. 綁定事件
+        // Info: (20251001-tzuhan) 4. 綁定事件
         channel.bind('pusher:subscription_succeeded', () => {
           console.log(`Successfully subscribed to ${channelName}`);
         });
@@ -78,14 +79,15 @@ export default function QrLoginPage() {
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : '發生未知錯誤。';
-        console.error('[DEBUG] 捕捉到錯誤:', message); // 印出錯誤
+        // Info: (20251001-tzuhan) 印出錯誤
+        console.error('[DEBUG] 捕捉到錯誤:', message);
         setError(message);
       }
     };
 
     initializeLoginSession();
 
-    // 5. 組件卸載時清理
+    // Info: (20251001-tzuhan) 5. 組件卸載時清理
     return () => {
       if (pusherClient) {
         pusherClient.disconnect();
