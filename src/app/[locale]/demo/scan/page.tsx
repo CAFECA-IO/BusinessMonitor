@@ -30,7 +30,7 @@ export default function ScanPage() {
   const searchParams = useSearchParams();
 
   // Info: (20251001-tzuhan) 在真實 App 中，這段邏輯會由 QR Code 掃描器觸發
-  // 這裡我們用 URL query 參數來模擬掃碼結果
+  // Info: (20251001-tzuhan) 這裡我們用 URL query 參數來模擬掃碼結果
   useEffect(() => {
     const session = searchParams.get('sessionId');
     const challenge = searchParams.get('challenge');
@@ -57,14 +57,14 @@ export default function ScanPage() {
       if (!fido2ClientService.isAvailable()) {
         throw new Error('WebAuthn 在此瀏覽器或環境中不可用（例如，非安全來源）。');
       }
-      // 1. 執行 FIDO2 登入
+      // Info: (20251001-tzuhan) 1. 執行 FIDO2 登入
       const fido2Assertion = await fido2ClientService.startLogin({
         challenge: qrData.challenge,
       });
 
       setStatusMessage('FIDO2 驗證成功！正在將授權傳送至伺服器...');
 
-      // 2. 將驗證結果發送到後端
+      // Info: (20251001-tzuhan) 2. 將驗證結果發送到後端
       const res = await fetch(routes.auth.verifyQrLogin(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,7 +82,7 @@ export default function ScanPage() {
       }
 
       setStatusMessage('✅ 授權成功！桌面端應該會自動登入。');
-      // 可選擇在短暫延遲後跳轉回手機 App 的主畫面
+      // Info: (20251001-tzuhan) 可選擇在短暫延遲後跳轉回手機 App 的主畫面
       setTimeout(() => router.push('/demo/me'), 2000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
