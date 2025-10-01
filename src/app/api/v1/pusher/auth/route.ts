@@ -8,9 +8,11 @@ import { AppError } from '@/lib/error';
 
 export async function POST(request: NextRequest) {
   try {
-    // Info: (20251001-tzuhan) 【關鍵修正】
-    // Pusher-js 發送的是 x-www-form-urlencoded 格式，不能用 formData() 解析。
-    // 我們需要先讀取 body 為文字，再用 URLSearchParams 解析。
+    /**
+     * Info: (20251001-tzuhan) 【關鍵修正】
+     * Pusher-js 發送的是 x-www-form-urlencoded 格式，不能用 formData() 解析。
+     * 我們需要先讀取 body 為文字，再用 URLSearchParams 解析。
+     */
     const body = await request.text();
     const params = new URLSearchParams(body);
     const socketId = params.get('socket_id');
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
       throw new AppError(ApiCode.VALIDATION_ERROR, 'Invalid channel name, missing session ID.');
     }
 
-    // 驗證 session 是否存在且有效
+    // Info: (20251001-tzuhan) 驗證 session 是否存在且有效
     const session = await webAuthnRepo.findPairingSessionById(sessionId);
     if (!session || session.status !== 'PENDING') {
       return jsonFail(ApiCode.FORBIDDEN, 'Forbidden: No active pairing session found.');
