@@ -4,47 +4,50 @@ import { webAuthnRepo } from '@/repositories/webauthn.repo';
 import { jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { logger } from '@/lib/logger';
+import { AppError } from '@/lib/error';
 
-/**
- * Info: (20251001-tzuhan)
- * POST /api/pusher/auth
- *
- * 這個 API 路由是 Pusher 客戶端函式庫專用的授權端點。
- * 當前端嘗試訂閱一個 `private-` 開頭的頻道時，
- * Pusher 客戶端會自動向此端點發送 POST 請求以獲取授權。
- */
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const socketId = formData.get('socket_id') as string;
-    const channel = formData.get('channel_name') as string;
+    // Info: (20251001-tzuhan) 【關鍵修正】
+    // Pusher-js 發送的是 x-www-form-urlencoded 格式，不能用 formData() 解析。
+    // 我們需要先讀取 body 為文字，再用 URLSearchParams 解析。
+    const body = await request.text();
+    const params = new URLSearchParams(body);
+    const socketId = params.get('socket_id');
+    const channelName = params.get('channel_name');
 
-    // 從頻道名稱中解析出 sessionId
-    const sessionId = channel.substring('private-login-session-'.length);
-
-    if (!socketId || !channel || !sessionId) {
-      return jsonFail(
-        ApiCode.VALIDATION_ERROR,
-        'Bad Request: socket_id and channel_name are required.'
-      );
+    if (!socketId || !channelName) {
+      throw new AppError(ApiCode.VALIDATION_ERROR, 'socket_id and channel_name are required.');
     }
 
-    // 驗證這個 session 是否存在且有效，這是確保安全性的關鍵步驟
+    const sessionId = channelName.substring('private-login-session-'.length);
+    if (!sessionId) {
+      throw new AppError(ApiCode.VALIDATION_ERROR, 'Invalid channel name, missing session ID.');
+    }
+
+    // 驗證 session 是否存在且有效
     const session = await webAuthnRepo.findPairingSessionById(sessionId);
     if (!session || session.status !== 'PENDING') {
-      logger.warn('Pusher auth denied for invalid or non-pending session', { sessionId });
       return jsonFail(ApiCode.FORBIDDEN, 'Forbidden: No active pairing session found.');
     }
 
+    const userData = {
+      user_id: `desktop-client-${socketId}`,
+    };
+
     const pusherServer = getPusherInstance();
 
-    // 如果 session 驗證通過，則授權該 socket 訂閱此頻道
-    const authResponse = pusherServer.authorizeChannel(socketId, channel);
+    const authResponse = pusherServer.authorizeChannel(socketId, channelName, userData);
 
     return NextResponse.json(authResponse);
   } catch (error) {
+    const isAppError = error instanceof AppError;
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
     logger.error('Pusher auth error', { errorMessage: message });
-    return jsonFail(ApiCode.SERVER_ERROR, 'Pusher authentication failed.');
+
+    return jsonFail(
+      isAppError ? error.code : ApiCode.SERVER_ERROR,
+      `An internal error occurred during Pusher authentication.${isAppError ? ` (${message})` : ''}`
+    );
   }
 }

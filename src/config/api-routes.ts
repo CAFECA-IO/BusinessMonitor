@@ -220,8 +220,7 @@ export const routes = {
   },
 
   pusher: {
-    // POST /api/pusher/auth
-    auth: () => `/api/pusher/auth`,
+    auth: () => `${API_PREFIX}/pusher/auth`,
   },
 
   comments: {

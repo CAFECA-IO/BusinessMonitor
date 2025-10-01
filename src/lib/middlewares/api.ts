@@ -27,7 +27,7 @@ export async function apiMiddleware(req: NextRequest) {
     pathname.startsWith('/api/v1/public') ||
     pathname.startsWith('/api/v1/companies') ||
     pathname === '/api/v1/pairing/initiate' || // QR Code 登入流程
-    pathname === '/api/pusher/auth' // Pusher 頻道授權
+    pathname === '/api/v1/pusher/auth' // Pusher 頻道授權
   ) {
     const res = NextResponse.next();
     res.headers.set('x-request-id', requestId);

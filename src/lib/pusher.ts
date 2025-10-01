@@ -13,6 +13,7 @@ const pusherConfig = {
 let pusherInstance: Pusher | null = null;
 
 export const getPusherInstance = (): Pusher => {
+  console.log('pusherConfig', pusherConfig);
   if (!pusherInstance) {
     pusherInstance = new Pusher(pusherConfig);
   }

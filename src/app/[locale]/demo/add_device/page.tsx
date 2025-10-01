@@ -4,19 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
 import Link from 'next/link';
-import { routes } from '@/config/api-routes';
 import Pusher from 'pusher-js';
+import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 
-// Info: (20251001-tzuhan) 確保 Pusher Key 和 Cluster 已在環境變數中設定
-if (
-  !process.env.NEXT_PUBLIC_PUSHER_KEY ||
-  !process.env.NEXT_PUBLIC_PUSHER_CLUSTER ||
-  !process.env.NEXT_PUBLIC_ORIGIN // Info: (20251001-tzuhan) 【新增】也檢查 ORIGIN
-) {
-  throw new Error(
-    'NEXT_PUBLIC_PUSHER_KEY, NEXT_PUBLIC_PUSHER_CLUSTER, and NEXT_PUBLIC_ORIGIN are not set in .env'
-  );
+// Info: (20251001-tzuhan) 【偵錯步驟 1】讀取環境變數
+const origin = process.env.NEXT_PUBLIC_ORIGIN;
+console.log('[DEBUG] 讀取到的 NEXT_PUBLIC_ORIGIN:', origin); // 在這裡印出，檢查是否正確讀取
+
+if (!origin) {
+  throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
 
 export default function QrLoginPage() {
@@ -30,8 +27,11 @@ export default function QrLoginPage() {
 
     const initializeLoginSession = async () => {
       try {
-        // 1. 從後端獲取 sessionId 和 challenge 來生成 QR Code
-        const res = await fetch(routes.pairing.initiate(), { method: 'POST' });
+        // 1. 從後端獲取 sessionId 和 challenge
+        // Info: (20251001-tzuhan) 【偵錯步驟 2】印出 fetch 請求的完整 URL
+        const initiateUrl = routes.pairing.initiate();
+        console.log('[DEBUG] 準備 fetch:', initiateUrl);
+        const res = await fetch(initiateUrl, { method: 'POST' });
         const data = await res.json();
 
         if (!res.ok || !data.success) {
@@ -40,24 +40,26 @@ export default function QrLoginPage() {
 
         const { sessionId, challenge } = data.payload;
 
-        // Info: (20251001-tzuhan) 直接生成一個完整的 URL 給 QR Code
-        // 這樣手機掃碼後可以直接在瀏覽器中打開
-        const scanUrl = new URL(`${process.env.NEXT_PUBLIC_ORIGIN}/demo/scan`);
+        // 2. 建立包含完整 URL 的 QR Code
+        // Info: (20251001-tzuhan) 【偵錯步驟 3】印出用於建立 new URL 的字串
+        const scanUrlString = `${origin}/demo/scan`;
+        const scanUrl = new URL(scanUrlString);
         scanUrl.searchParams.set('sessionId', sessionId);
         scanUrl.searchParams.set('challenge', challenge);
         const qrPayload = scanUrl.toString();
+        console.log('[DEBUG] 準備 new URL, 傳入的字串是:', qrPayload);
 
         setStatusMessage('請使用您的手機相機掃描 QR Code 以登入。');
         const dataUrl = await QRCode.toDataURL(qrPayload, { width: 300 });
         setQrCodeDataUrl(dataUrl);
 
-        // 2. 初始化 Pusher 並訂閱私有頻道
+        // 3. 初始化 Pusher 並訂閱私有頻道
         pusherClient = getPusherInstance();
 
         const channelName = `private-login-session-${sessionId}`;
         const channel = pusherClient.subscribe(channelName);
 
-        // 3. 綁定成功與失敗事件
+        // 4. 綁定事件
         channel.bind('pusher:subscription_succeeded', () => {
           console.log(`Successfully subscribed to ${channelName}`);
         });
@@ -76,14 +78,14 @@ export default function QrLoginPage() {
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : '發生未知錯誤。';
-        console.error(message);
+        console.error('[DEBUG] 捕捉到錯誤:', message); // 印出錯誤
         setError(message);
       }
     };
 
     initializeLoginSession();
 
-    // 4. 組件卸載時，清理 Pusher 連線
+    // 5. 組件卸載時清理
     return () => {
       if (pusherClient) {
         pusherClient.disconnect();

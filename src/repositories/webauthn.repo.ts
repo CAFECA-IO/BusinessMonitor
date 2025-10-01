@@ -70,7 +70,7 @@ class WebAuthnRepository implements IWebAuthnRepository {
         name: true,
         email: true,
         photo: true,
-        encryptedPrivateKey: true, // Info: (20251001-tzuhan) 簽發 dewt 不需要私鑰
+        encryptedPrivateKey: true,
         backupKeyHash: true,
       },
     });
