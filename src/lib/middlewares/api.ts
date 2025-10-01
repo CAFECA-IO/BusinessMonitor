@@ -21,9 +21,14 @@ export async function apiMiddleware(req: NextRequest) {
     return res;
   }
 
-  // Info: (20250925 - Tzuhan) 2. 處理公開路由
-  // 根據您的舊版 middleware， /companies 也是公開的
-  if (pathname.startsWith('/api/v1/public') || pathname.startsWith('/api/v1/companies')) {
+  // Info: (20251001-tzuhan) 【更新】2. 處理公開路由
+  // 將 QR Code 登入和 Pusher 授權所需的路徑加入白名單
+  if (
+    pathname.startsWith('/api/v1/public') ||
+    pathname.startsWith('/api/v1/companies') ||
+    pathname === '/api/v1/pairing/initiate' || // QR Code 登入流程
+    pathname === '/api/pusher/auth' // Pusher 頻道授權
+  ) {
     const res = NextResponse.next();
     res.headers.set('x-request-id', requestId);
     return res;
