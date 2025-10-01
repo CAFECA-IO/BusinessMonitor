@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+142",
+  "version": "0.1.0+143",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,7 +15,7 @@
     "db:logs": "docker compose logs -f postgres",
     "smoke:db_health": "tsx scripts/db_health.ts",
     "predev": "npm run gen:env",
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack -H 0.0.0.0",
     "prebuild": "npm run gen:env",
     "build": "npm run gen:prisma && next build",
     "start": "next start",

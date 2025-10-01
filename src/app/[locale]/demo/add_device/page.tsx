@@ -7,9 +7,15 @@ import Link from 'next/link';
 import Pusher from 'pusher-js';
 import { routes } from '@/config/api-routes';
 
-// Info: (20251001-tzuhan) 確保 Pusher Key 已在環境變數中設定
-if (!process.env.NEXT_PUBLIC_PUSHER_KEY || !process.env.NEXT_PUBLIC_PUSHER_CLUSTER) {
-  throw new Error('NEXT_PUBLIC_PUSHER_KEY and NEXT_PUBLIC_PUSHER_CLUSTER are not set in .env');
+// Info: (20251001-tzuhan) 確保 Pusher Key 和 Cluster 已在環境變數中設定
+if (
+  !process.env.NEXT_PUBLIC_PUSHER_KEY ||
+  !process.env.NEXT_PUBLIC_PUSHER_CLUSTER ||
+  !process.env.NEXT_PUBLIC_ORIGIN // Info: (20251001-tzuhan) 【新增】也檢查 ORIGIN
+) {
+  throw new Error(
+    'NEXT_PUBLIC_PUSHER_KEY, NEXT_PUBLIC_PUSHER_CLUSTER, and NEXT_PUBLIC_ORIGIN are not set in .env'
+  );
 }
 
 export default function QrLoginPage() {
@@ -32,9 +38,15 @@ export default function QrLoginPage() {
         }
 
         const { sessionId, challenge } = data.payload;
-        const qrPayload = JSON.stringify({ sessionId, challenge });
 
-        setStatusMessage('請使用您的手機 App 掃描 QR Code 以登入。');
+        // Info: (20251001-tzuhan) 直接生成一個完整的 URL 給 QR Code
+        // 這樣手機掃碼後可以直接在瀏覽器中打開
+        const scanUrl = new URL(`${process.env.NEXT_PUBLIC_ORIGIN}/demo/scan`);
+        scanUrl.searchParams.set('sessionId', sessionId);
+        scanUrl.searchParams.set('challenge', challenge);
+        const qrPayload = scanUrl.toString();
+
+        setStatusMessage('請使用您的手機相機掃描 QR Code 以登入。');
         const dataUrl = await QRCode.toDataURL(qrPayload, { width: 300 });
         setQrCodeDataUrl(dataUrl);
 
