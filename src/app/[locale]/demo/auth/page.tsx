@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { startRegistration, startLogin } from '@/lib/fido2-client';
+import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 
 // Info: (20250925 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
@@ -26,7 +26,20 @@ export default function AuthPage() {
   const [statusMessage, setStatusMessage] = useState<string>('Ready to begin the seamless flow.');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<object | null>(null);
+  // Info: (20251001-tzuhan) 新增狀態來追蹤 FIDO 是否可用
+  const [isFidoAvailable, setIsFidoAvailable] = useState<boolean>(true);
   const router = useRouter();
+
+  // Info: (20251001-tzuhan) 在組件掛載時檢查 WebAuthn 是否可用
+  useEffect(() => {
+    if (!fido2ClientService.isAvailable()) {
+      setIsFidoAvailable(false);
+      setStatusMessage('❌ 錯誤');
+      setError(
+        '此瀏覽器不支援 WebAuthn/Passkey，或您正在一個不安全的來源 (non-secure origin) 上。請使用 HTTPS 或 localhost。'
+      );
+    }
+  }, []);
 
   const resetState = () => {
     setIsLoading(true);
@@ -40,16 +53,22 @@ export default function AuthPage() {
     setResult(data);
 
     if (data.backupKey) {
-      alert(`Registration successful! Please save your backup key: ${data.backupKey}`);
+      // Info: (20251001-tzuhan) 改用更友善的提示方式，避免使用 alert
+      prompt(
+        'Registration successful! Please save your backup key in a safe place:',
+        data.backupKey
+      );
     }
 
-    // Info: (20250925 - Tzuhan) 【關鍵步驟】延遲一小段時間後跳轉，讓使用者看到成功訊息
     setTimeout(() => {
       router.push('/demo/me');
     }, 1000);
   };
 
   const handleAuth = useCallback(async () => {
+    if (!isFidoAvailable) {
+      return; // Info: (20251001-tzuhan) 如果 FIDO 不可用，不執行任何操作
+    }
     resetState();
 
     // Info: (20250925 - Tzuhan) --- 步驟一: 嘗試「登入」 ---
@@ -59,7 +78,8 @@ export default function AuthPage() {
       if (!loginOptionsRes.ok) throw new Error('Could not fetch login options from server.');
       const loginOptions = await loginOptionsRes.json();
 
-      const authData = await startLogin(loginOptions);
+      // Info: (20251001-tzuhan) 【修正】使用 fido2ClientService 的方法
+      const authData = await fido2ClientService.startLogin(loginOptions);
 
       setStatusMessage('Verifying login with server...');
       const verifyLoginRes = await fetch(routes.auth.webauthn.verify(), {
@@ -76,17 +96,15 @@ export default function AuthPage() {
       handleAuthSuccess(data.payload);
       return;
     } catch (loginError) {
-      if (
-        typeof loginError === 'object' &&
-        loginError !== null &&
-        'name' in loginError &&
-        (loginError as { name?: string }).name !== 'NotAllowedError'
-      ) {
+      // Info: (20251001-tzuhan) 捕獲所有登入錯誤，包括 NotAllowedError (使用者取消)
+      const err = loginError as Error;
+      if (err.name !== 'NotAllowedError') {
         setStatusMessage('❌ Login attempt failed');
-        setError((loginError as { message?: string }).message || 'Login attempt failed');
+        setError(err.message || 'Login attempt failed');
         setIsLoading(false);
         return;
       }
+      // Info: (20251001-tzuhan) 如果是 NotAllowedError，則靜默地繼續到註冊流程
     }
 
     // Info: (20250925 - Tzuhan) --- 步驟二: 降級到「註冊」 ---
@@ -97,7 +115,8 @@ export default function AuthPage() {
       const regOptions = await regOptionsRes.json();
 
       setStatusMessage('Please create your Passkey in the browser prompt...');
-      const registrationData = await startRegistration(regOptions);
+      // Info: (20251001-tzuhan) 【修正】使用 fido2ClientService 的方法
+      const registrationData = await fido2ClientService.startRegistration(regOptions);
 
       setStatusMessage('Verifying new passkey with server...');
       const verifyRegRes = await fetch(routes.auth.webauthn.verify(), {
@@ -113,34 +132,27 @@ export default function AuthPage() {
 
       handleAuthSuccess(data.payload);
     } catch (regError) {
-      let msg: string;
-      if (regError && typeof regError === 'object' && 'name' in regError && 'message' in regError) {
-        const errorObj = regError as { name: string; message: string };
-        msg =
-          errorObj.name === 'NotAllowedError'
-            ? 'Registration was canceled by user.'
-            : errorObj.message;
-      } else {
-        msg = 'An unknown error occurred during registration.';
-      }
+      const err = regError as Error;
+      const msg =
+        err.name === 'NotAllowedError' ? 'Registration was canceled by user.' : err.message;
       setStatusMessage('❌ Registration Failed');
       setError(msg);
       setIsLoading(false);
     }
-  }, [router]);
+  }, [router, isFidoAvailable]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8 font-sans">
       <div className="w-full max-w-2xl">
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-gray-800">CAFECA Digital ID</h1>
-          <p className="mt-2 text-lg text-gray-500">FIDO2/WebAuthn Login</p>
+          <p className="text-lg text-gray-500">FIDO2/WebAuthn Login</p>
         </div>
 
         <div className="flex flex-col items-center rounded-xl bg-white p-8 shadow-md">
           <button
             onClick={handleAuth}
-            disabled={isLoading}
+            disabled={isLoading || !isFidoAvailable} // Info: (20251001-tzuhan) 如果 FIDO 不可用，也禁用按鈕
             className="w-full max-w-xs rounded-lg bg-purple-600 px-6 py-4 font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
             {isLoading ? 'Processing...' : 'Sign in / Register with Passkey'}
@@ -156,7 +168,7 @@ export default function AuthPage() {
           </h2>
           <div className="mb-4">
             <p className="text-sm font-medium text-gray-500">Status:</p>
-            <p className="text-md font-bold text-gray-800">{statusMessage}</p>
+            <p className="text-lg font-bold text-gray-800">{statusMessage}</p>
           </div>
           {error && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">

@@ -1,43 +1,46 @@
 import { NextRequest } from 'next/server';
-import { jsonOk, jsonFail } from '@/lib/response';
-import { AppError } from '@/lib/error';
-import { ApiCode } from '@/lib/status';
-import { logger } from '@/lib/logger';
+import { getPusherInstance } from '@/lib/pusher';
 import { webAuthnRepo } from '@/repositories/webauthn.repo';
+import { jsonOk, jsonFail } from '@/lib/response';
+import { ApiCode } from '@/lib/status';
 import { verifyAuthentication } from '@/lib/fido2-server';
+import { AppError } from '@/lib/error';
+import { logger } from '@/lib/logger';
+import { signDeWT } from '@/lib/dewt';
 import type { AuthenticationJSON } from '@passwordless-id/webauthn/dist/esm/types';
 
 export async function POST(request: NextRequest) {
+  const pusherServer = getPusherInstance();
+  let sessionId = '';
   try {
-    const { sessionId, fido2Assertion }: { sessionId: string; fido2Assertion: AuthenticationJSON } =
-      await request.json();
+    const {
+      sessionId: reqSessionId,
+      fido2Assertion,
+    }: { sessionId: string; fido2Assertion: AuthenticationJSON } = await request.json();
+
+    sessionId = reqSessionId;
 
     if (!sessionId || !fido2Assertion) {
       throw new AppError(ApiCode.VALIDATION_ERROR, 'sessionId and fido2Assertion are required.');
     }
 
-    // 1. 從資料庫中查找會話
+    // Info: (20251001-tzuhan) 1. 查找會話並驗證
     const session = await webAuthnRepo.findPairingSessionById(sessionId);
-    if (!session || session.status !== 'PENDING') {
-      throw new AppError(ApiCode.NOT_FOUND, 'Session not found or already used.');
-    }
-
-    if (new Date() > session.expiresAt) {
-      throw new AppError(ApiCode.UNAUTHORIZED, 'Session has expired.');
+    if (!session || session.status !== 'PENDING' || new Date() > session.expiresAt) {
+      throw new AppError(ApiCode.UNAUTHORIZED, 'Session not found, expired, or already used.');
     }
 
     if (!session.challenge) {
       throw new AppError(ApiCode.VALIDATION_ERROR, 'Session is missing a valid challenge.');
     }
 
-    // 2. 【關鍵修正】根據您的經驗，改用 credentialID 來查找對應的 authenticator
+    // Info: (20251001-tzuhan) 2. 根據 credentialID 查找 authenticator
     const authenticator = await webAuthnRepo.findAuthenticatorByCredentialId(fido2Assertion.id);
-
     if (!authenticator) {
-      throw new AppError(ApiCode.NOT_FOUND, 'Authenticator not found.');
+      throw new AppError(ApiCode.NOT_FOUND, 'Authenticator not recognized.');
     }
 
-    // 3. 驗證 FIDO2 登入憑證
+    // Info: (20251001-tzuhan) 3. 驗證 FIDO2 登入
     const verificationResult = await verifyAuthentication(
       fido2Assertion,
       authenticator,
@@ -48,39 +51,56 @@ export async function POST(request: NextRequest) {
       throw new AppError(ApiCode.UNAUTHORIZED, 'FIDO2 authentication failed.');
     }
 
-    // 4. 更新資料庫中的計數器
+    // Info: (20251001-tzuhan) 4. 更新計數器
     await webAuthnRepo.updateAuthenticatorCounter(authenticator.id, verificationResult.counter);
 
-    // 5. 透過內部 HTTP 請求通知 WebSocket 伺服器
-    const wsNotifyUrl = `http://localhost:${
-      process.env.WS_PORT || 3001
-    }/api/v1/internal/notify-login`;
-    const notifyResponse = await fetch(wsNotifyUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: sessionId,
-        identityId: authenticator.identityAccountId,
-      }),
-    });
-
-    if (!notifyResponse.ok) {
-      logger.error('Failed to notify WebSocket server after successful login.', { sessionId });
+    // Info: (20251001-tzuhan) 5. 簽發 DeWT
+    const identityAccount = await webAuthnRepo.findIdentityAccountById(
+      authenticator.identityAccountId
+    );
+    if (!identityAccount) {
+      throw new AppError(
+        ApiCode.NOT_FOUND,
+        'Identity account not found after successful verification.'
+      );
     }
+    const dewt = await signDeWT(identityAccount);
 
-    // 6. 回應手機端，告知授權成功
-    return jsonOk({
-      message: 'Login authorized. The desktop client should now be logged in.',
-    });
+    // Info: (20251001-tzuhan) 6. 透過 Pusher 發送成功事件
+    const channelName = `private-login-session-${sessionId}`;
+    await pusherServer.trigger(channelName, 'login-success', { dewt });
+
+    // Info: (20251001-tzuhan) 7. 更新 session 狀態
+    await webAuthnRepo.updatePairingSessionStatus(
+      sessionId,
+      'COMPLETED',
+      authenticator.identityAccountId
+    );
+
+    return jsonOk({ message: 'Login authorized and notification sent.' });
   } catch (error) {
     const isAppError = error instanceof AppError;
-    logger.warn('QR Login verification failed', {
-      code: isAppError ? error.code : 'UNKNOWN',
-      message: error instanceof Error ? error.message : 'Unknown error',
+    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+    logger.error('Verify QR Login Error', {
+      sessionId,
+      errorMessage: message,
+      isAppError,
+      code: isAppError ? (error as AppError).code : 'SERVER_ERROR',
     });
-    return jsonFail(
-      isAppError ? error.code : ApiCode.SERVER_ERROR,
-      error instanceof Error ? error.message : 'An unknown server error occurred'
-    );
+
+    // Info: (20251001-tzuhan) 如果錯誤發生在 Pusher，也通知前端
+    if (sessionId) {
+      try {
+        await pusherServer.trigger(`private-login-session-${sessionId}`, 'login-error', {
+          message: 'Failed to complete login on the server.',
+        });
+      } catch (pusherError) {
+        logger.error('Failed to send login-error event via Pusher', {
+          pusherError: JSON.stringify(pusherError ?? {}),
+        });
+      }
+    }
+
+    return jsonFail(isAppError ? (error as AppError).code : ApiCode.SERVER_ERROR, message);
   }
 }

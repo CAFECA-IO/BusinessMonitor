@@ -10,35 +10,69 @@ import type {
 } from '@passwordless-id/webauthn/dist/esm/types';
 
 /**
- * Info: (20250917 - Tzuhan)啟動瀏覽器端的 FIDO2 註冊流程。
- * @param {RegisterOptions} options - 由我們後端 API 生成的註冊選項。
- * @returns {Promise<RegistrationJSON>} 返回一個 Promise，解析後為 RegistrationJSON 物件，需發送到後端進行驗證。
+ * Info: (20251001-tzuhan)
+ * 封裝 FIDO2 WebAuthn 客戶端邏輯的單例服務。
+ * 透過 isAvailable() 方法檢查 WebAuthn 功能是否可用。
  */
-export const startRegistration = async (options: RegisterOptions): Promise<RegistrationJSON> => {
-  try {
-    // Info: (20250917 - Tzuhan) 呼叫 client.register 並傳入完整的 options 物件
-    const registration = await client.register(options);
-    return registration;
-  } catch (error) {
-    // Info: (20250917 - Tzuhan) 統一處理錯誤，例如用戶點擊了「取消」
-    console.error('FIDO2 Registration failed:', error);
-    // Info: (20250917 - Tzuhan) 拋出錯誤，讓呼叫它的 UI 元件可以捕獲並顯示對應的錯誤訊息
-    throw error;
-  }
-};
+class Fido2ClientService {
+  private client: typeof client | null;
 
-/**
- * Info: (20250917 - Tzuhan) 啟動瀏覽器端的 FIDO2 登入(認證)流程。
- * @param {AuthenticationOptions} options - 由我們後端 API 生成的登入選項。
- * @returns {Promise<AuthenticationJSON>} 返回一個 Promise，解析後為 AuthenticationJSON 物件，需發送到後端進行驗證。
- */
-export const startLogin = async (options: AuthenticateOptions): Promise<AuthenticationJSON> => {
-  try {
-    // Info: (20250917 - Tzuhan) 根據 .d.ts 檔案，`authenticate` 函數接收一個單一的 options 物件
-    const authentication = await client.authenticate(options);
-    return authentication;
-  } catch (error) {
-    console.error('FIDO2 Authentication failed:', error);
-    throw error;
+  constructor() {
+    // Info: (20251001-tzuhan) 在建構函式中立即檢查 client 是否存在
+    this.client = client ?? null;
   }
-};
+
+  /**
+   * Info: (20251001-tzuhan) 檢查 WebAuthn 是否在此環境中可用
+   * (例如，在不安全的來源上，client 會是 null)
+   * @returns {boolean}
+   */
+  public isAvailable(): boolean {
+    return this.client !== null;
+  }
+
+  private getClientOrThrow(): typeof client {
+    if (!this.client) {
+      throw new Error(
+        'WebAuthn is not available in this browser or context (e.g., non-secure origin).'
+      );
+    }
+    return this.client;
+  }
+
+  /**
+   * Info: (20250917 - Tzuhan) 啟動 FIDO2 註冊流程。
+   * @param options - 從伺服器獲取的註冊選項。
+   * @returns {Promise<RegistrationEncoded>} 註冊成功後的憑證資訊。
+   */
+  public async startRegistration(options: RegisterOptions): Promise<RegistrationJSON> {
+    const client = this.getClientOrThrow();
+    try {
+      const registration = await client.register(options);
+      console.log('FIDO2 Registration successful:', registration);
+      return registration;
+    } catch (error) {
+      console.error('FIDO2 Registration failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Info: (20250917 - Tzuhan) 啟動 FIDO2 登入流程。
+   * @param options - 從伺服器獲取的登入選項。
+   * @returns {Promise<AuthenticationEncoded>} 登入成功後的驗證資訊。
+   */
+  public async startLogin(options: AuthenticateOptions): Promise<AuthenticationJSON> {
+    const client = this.getClientOrThrow();
+    try {
+      const authentication = await client.authenticate(options);
+      return authentication;
+    } catch (error) {
+      console.error('FIDO2 Authentication failed:', error);
+      throw error;
+    }
+  }
+}
+
+// Info: (20251001-tzuhan) 導出單例實例，確保整個應用程式只使用一個 Fido2ClientService
+export const fido2ClientService = new Fido2ClientService();

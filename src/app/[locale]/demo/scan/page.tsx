@@ -2,11 +2,11 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { startLogin } from '@/lib/fido2-client';
+import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import Link from 'next/link';
 
-// Info: (20250930 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
+// Info: (20251001-tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
 const ResultDisplay = ({ title, data }: { title: string; data: object | string | null }) => {
   if (!data) return null;
   const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
@@ -29,8 +29,8 @@ export default function ScanPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Info: (20250930 - Tzuhan) 在真實 App 中，這段邏輯會由 QR Code 掃描器觸發
-  // 這裡我們用 URL query 參數來模擬掃碼結果
+  // Info: (20251001-tzuhan) 在真實 App 中，這段邏輯會由 QR Code 掃描器觸發
+  // Info: (20251001-tzuhan) 這裡我們用 URL query 參數來模擬掃碼結果
   useEffect(() => {
     const session = searchParams.get('sessionId');
     const challenge = searchParams.get('challenge');
@@ -54,14 +54,17 @@ export default function ScanPage() {
     setStatusMessage('請透過您的裝置進行生物辨識或 PIN 驗證...');
 
     try {
-      // 1. 執行 FIDO2 登入
-      const fido2Assertion = await startLogin({
+      if (!fido2ClientService.isAvailable()) {
+        throw new Error('WebAuthn 在此瀏覽器或環境中不可用（例如，非安全來源）。');
+      }
+      // Info: (20251001-tzuhan) 1. 執行 FIDO2 登入
+      const fido2Assertion = await fido2ClientService.startLogin({
         challenge: qrData.challenge,
       });
 
       setStatusMessage('FIDO2 驗證成功！正在將授權傳送至伺服器...');
 
-      // 2. 將驗證結果發送到後端
+      // Info: (20251001-tzuhan) 2. 將驗證結果發送到後端
       const res = await fetch(routes.auth.verifyQrLogin(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,8 +81,8 @@ export default function ScanPage() {
         throw new Error(apiResult.message || '伺服器驗證失敗。');
       }
 
-      setStatusMessage('授權成功！桌面端應該會自動登入。');
-      // 可選擇在短暫延遲後跳轉回手機 App 的主畫面
+      setStatusMessage('✅ 授權成功！桌面端應該會自動登入。');
+      // Info: (20251001-tzuhan) 可選擇在短暫延遲後跳轉回手機 App 的主畫面
       setTimeout(() => router.push('/demo/me'), 2000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
@@ -113,7 +116,7 @@ export default function ScanPage() {
 
           <div className="mt-6">
             <h2 className="mb-3 border-b pb-2 text-lg font-semibold text-gray-700">處理狀態</h2>
-            <p className="text-md font-bold text-gray-800">{statusMessage}</p>
+            <p className="text-lg font-bold text-gray-800">{statusMessage}</p>
             {error && (
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
                 <p className="font-bold">錯誤:</p>

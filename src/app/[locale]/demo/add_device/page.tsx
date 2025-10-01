@@ -1,85 +1,97 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
 import Link from 'next/link';
+import Pusher from 'pusher-js';
+import { routes } from '@/config/api-routes';
+import { getPusherInstance } from '@/lib/pusher_client';
+
+// Info: (20251001-tzuhan) 【偵錯步驟 1】讀取環境變數
+const origin = process.env.NEXT_PUBLIC_ORIGIN;
+// Info: (20251001-tzuhan) 在這裡印出，檢查是否正確讀取
+console.log('[DEBUG] 讀取到的 NEXT_PUBLIC_ORIGIN:', origin);
+
+if (!origin) {
+  throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
+}
 
 export default function QrLoginPage() {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
-  const [statusMessage, setStatusMessage] = useState<string>('正在連線至伺服器...');
+  const [statusMessage, setStatusMessage] = useState<string>('正在初始化登入連線...');
   const [error, setError] = useState<string | null>(null);
-  const ws = useRef<WebSocket | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Info: (20250930 - Tzuhan) 使用 'ws://' 或 'wss://' 取決於環境
-    const wsUrl =
-      process.env.NODE_ENV === 'production'
-        ? `wss://${window.location.host}/ws`
-        : // 注意: 開發環境下，WS 伺服器在不同埠
-          `ws://localhost:3001/ws`;
+    let pusherClient: Pusher | null = null;
 
-    ws.current = new WebSocket(wsUrl);
+    const initializeLoginSession = async () => {
+      try {
+        // Info: (20251001-tzuhan) 1. 從後端獲取 sessionId 和 challenge
+        const initiateUrl = routes.pairing.initiate();
+        // Info: (20251001-tzuhan) 【偵錯步驟 2】印出 fetch 請求的完整 URL
+        console.log('[DEBUG] 準備 fetch:', initiateUrl);
+        const res = await fetch(initiateUrl, { method: 'POST' });
+        const data = await res.json();
 
-    ws.current.onopen = () => {
-      console.log('WebSocket connected');
-      setStatusMessage('連線成功！正在取得 QR Code...');
-      // Info: (20250930 - Tzuhan) 連線成功後，請求 QR Code
-      ws.current?.send(JSON.stringify({ type: 'REQUEST_QR_CODE' }));
-    };
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || '無法初始化登入連線。');
+        }
 
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+        const { sessionId, challenge } = data.payload;
 
-      switch (data.type) {
-        case 'QR_CODE_DATA':
-          setStatusMessage('請使用您的手機 App 掃描 QR Code 以登入。');
-          const qrPayload = JSON.stringify(data.payload);
-          QRCode.toDataURL(qrPayload, { width: 300 })
-            .then((url) => setQrCodeDataUrl(url))
-            .catch((err) => {
-              console.error(err);
-              setError('無法生成 QR Code。');
-            });
-          break;
+        // Info: (20251001-tzuhan) 2. 建立包含完整 URL 的 QR Code
+        const scanUrlString = `${origin}/demo/scan`;
+        const scanUrl = new URL(scanUrlString);
+        scanUrl.searchParams.set('sessionId', sessionId);
+        scanUrl.searchParams.set('challenge', challenge);
+        const qrPayload = scanUrl.toString();
+        // Info: (20251001-tzuhan) 【偵錯步驟 3】印出用於建立 new URL 的字串
+        console.log('[DEBUG] 準備 new URL, 傳入的字串是:', qrPayload);
 
-        case 'LOGIN_SUCCESS':
-          setStatusMessage('驗證成功！即將將您導向儀表板...');
-          localStorage.setItem('dewt', data.payload.dewt);
+        setStatusMessage('請使用您的手機相機掃描 QR Code 以登入。');
+        const dataUrl = await QRCode.toDataURL(qrPayload, { width: 300 });
+        setQrCodeDataUrl(dataUrl);
+
+        // Info: (20251001-tzuhan) 3. 初始化 Pusher 並訂閱私有頻道
+        pusherClient = getPusherInstance();
+
+        const channelName = `private-login-session-${sessionId}`;
+        const channel = pusherClient.subscribe(channelName);
+
+        // Info: (20251001-tzuhan) 4. 綁定事件
+        channel.bind('pusher:subscription_succeeded', () => {
+          console.log(`Successfully subscribed to ${channelName}`);
+        });
+
+        channel.bind('pusher:subscription_error', (status: unknown) => {
+          console.error(`Pusher subscription failed with status ${JSON.stringify(status)}`);
+          setError('無法建立安全的即時通訊頻道，請重試。');
+        });
+
+        channel.bind('login-success', (eventData: { dewt: string }) => {
+          setStatusMessage('✅ 驗證成功！即將將您導向儀表板...');
+          localStorage.setItem('dewt', eventData.dewt);
           setTimeout(() => {
             router.push('/demo/me');
           }, 1500);
-          break;
-
-        case 'LOGIN_ERROR':
-          setError(data.payload.message || '登入失敗或已逾時。');
-          setStatusMessage('請重新整理頁面再試一次。');
-          setQrCodeDataUrl(''); // 清除舊的 QR Code
-          break;
-
-        case 'ERROR':
-          setError(data.payload.message || '發生未知錯誤。');
-          break;
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : '發生未知錯誤。';
+        // Info: (20251001-tzuhan) 印出錯誤
+        console.error('[DEBUG] 捕捉到錯誤:', message);
+        setError(message);
       }
     };
 
-    ws.current.onclose = () => {
-      console.log('WebSocket disconnected');
-      if (!localStorage.getItem('dewt')) {
-        // Info: (20250930 - Tzuhan) 如果不是因為成功登入而關閉，就顯示提示
-        setStatusMessage('連線已中斷。');
-      }
-    };
+    initializeLoginSession();
 
-    ws.current.onerror = (err) => {
-      console.error('WebSocket error:', err);
-      setError('無法建立安全連線。請確認後端 WebSocket 伺服器是否正在運行。');
-    };
-
-    // Info: (20250930 - Tzuhan) 組件卸載時，清理 WebSocket 連線
+    // Info: (20251001-tzuhan) 5. 組件卸載時清理
     return () => {
-      ws.current?.close();
+      if (pusherClient) {
+        pusherClient.disconnect();
+      }
     };
   }, [router]);
 
@@ -102,7 +114,7 @@ export default function QrLoginPage() {
           ) : qrCodeDataUrl ? (
             <img src={qrCodeDataUrl} alt="Login QR Code" />
           ) : (
-            <div className="text-gray-400">正在載入 QR Code...</div>
+            <div className="animate-pulse text-gray-400">正在載入 QR Code...</div>
           )}
         </div>
 
