@@ -214,6 +214,16 @@ export const routes = {
     verifyQrLogin: () => `${API_PREFIX}/secure/verify-login`,
   },
 
+  pairing: {
+    // POST /api/v1/pairing/initiate
+    initiate: () => `${API_PREFIX}/pairing/initiate`,
+  },
+
+  pusher: {
+    // POST /api/pusher/auth
+    auth: () => `/api/pusher/auth`,
+  },
+
   comments: {
     // Info: (20250818 - Tzuhan) POST /api/v1/comments/:id/like
     like: buildPath(`${API_PREFIX}/comments/:id/like`),

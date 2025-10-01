@@ -39,6 +39,14 @@ export interface IWebAuthnRepository {
     data: IAddAuthenticatorData
   ): Promise<Authenticator>;
   findPairingSessionById(id: string): Promise<DevicePairingSession | null>;
+  // Info: (20251001-tzuhan) 【新增】為 QR Code 登入流程建立一個新的裝置配對會話
+  createPairingSession(data: { challenge: string; expiresAt: Date }): Promise<DevicePairingSession>;
+  // Info: (20251001-tzuhan) 【新增】在登入成功後更新會話狀態
+  updatePairingSessionStatus(
+    id: string,
+    status: 'COMPLETED' | 'AUTHORIZED',
+    identityId: string
+  ): Promise<DevicePairingSession>;
 }
 
 class WebAuthnRepository implements IWebAuthnRepository {
@@ -48,12 +56,12 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.authenticator.findUnique({ where: { credentialID } });
   }
 
-  // Info: (20250930 - Tzuhan) 實作 findPairingSessionById 方法
   public async findPairingSessionById(id: string): Promise<DevicePairingSession | null> {
     return prisma.devicePairingSession.findUnique({ where: { id } });
   }
 
   public async findIdentityAccountById(id: string): Promise<IdentityAccount | null> {
+    // Info: (20251001-tzuhan) 確保關聯查詢中包含必要的 dewt 欄位
     return prisma.identityAccount.findUnique({
       where: { id },
       select: {
@@ -62,7 +70,7 @@ class WebAuthnRepository implements IWebAuthnRepository {
         name: true,
         email: true,
         photo: true,
-        encryptedPrivateKey: true,
+        encryptedPrivateKey: true, // Info: (20251001-tzuhan) 簽發 dewt 不需要私鑰
         backupKeyHash: true,
       },
     });
@@ -124,6 +132,26 @@ class WebAuthnRepository implements IWebAuthnRepository {
           },
         },
       },
+    });
+  }
+
+  // Info: (20251001-tzuhan) 【新增】建立一個新的裝置配對會話
+  public async createPairingSession(data: {
+    challenge: string;
+    expiresAt: Date;
+  }): Promise<DevicePairingSession> {
+    return prisma.devicePairingSession.create({ data });
+  }
+
+  // Info: (20251001-tzuhan) 【新增】在登入成功後更新會話狀態
+  public async updatePairingSessionStatus(
+    id: string,
+    status: 'COMPLETED' | 'AUTHORIZED',
+    identityId: string
+  ): Promise<DevicePairingSession> {
+    return prisma.devicePairingSession.update({
+      where: { id },
+      data: { status, identityId },
     });
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+140",
+  "version": "0.1.0+141",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,7 +16,6 @@
     "smoke:db_health": "tsx scripts/db_health.ts",
     "predev": "npm run gen:env",
     "dev": "next dev --turbopack",
-    "ws:dev": "ts-node-dev --respawn --transpile-only server.ts",
     "prebuild": "npm run gen:env",
     "build": "npm run gen:prisma && next build",
     "start": "next start",
@@ -53,6 +52,8 @@
     "next": "15.4.4",
     "next-i18n-router": "^5.5.3",
     "postcss": "^8.5.6",
+    "pusher": "^5.2.0",
+    "pusher-js": "^8.4.0",
     "qrcode": "^1.5.4",
     "react": "19.1.0",
     "react-apexcharts": "^1.7.0",

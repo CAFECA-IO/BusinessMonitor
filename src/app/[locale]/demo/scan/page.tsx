@@ -6,7 +6,7 @@ import { startLogin } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import Link from 'next/link';
 
-// Info: (20250930 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
+// Info: (20251001-tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
 const ResultDisplay = ({ title, data }: { title: string; data: object | string | null }) => {
   if (!data) return null;
   const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
@@ -29,7 +29,7 @@ export default function ScanPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Info: (20250930 - Tzuhan) 在真實 App 中，這段邏輯會由 QR Code 掃描器觸發
+  // Info: (20251001-tzuhan) 在真實 App 中，這段邏輯會由 QR Code 掃描器觸發
   // 這裡我們用 URL query 參數來模擬掃碼結果
   useEffect(() => {
     const session = searchParams.get('sessionId');
@@ -78,7 +78,7 @@ export default function ScanPage() {
         throw new Error(apiResult.message || '伺服器驗證失敗。');
       }
 
-      setStatusMessage('授權成功！桌面端應該會自動登入。');
+      setStatusMessage('✅ 授權成功！桌面端應該會自動登入。');
       // 可選擇在短暫延遲後跳轉回手機 App 的主畫面
       setTimeout(() => router.push('/demo/me'), 2000);
     } catch (err) {
@@ -113,7 +113,7 @@ export default function ScanPage() {
 
           <div className="mt-6">
             <h2 className="mb-3 border-b pb-2 text-lg font-semibold text-gray-700">處理狀態</h2>
-            <p className="text-md font-bold text-gray-800">{statusMessage}</p>
+            <p className="text-lg font-bold text-gray-800">{statusMessage}</p>
             {error && (
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
                 <p className="font-bold">錯誤:</p>
