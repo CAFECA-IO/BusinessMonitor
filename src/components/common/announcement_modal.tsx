@@ -22,7 +22,7 @@ const AnnouncementModal: React.FC = () => {
 
         <hr className="border-border-secondary" />
 
-        <div className="flex h-750px flex-col gap-24px overflow-y-auto">
+        <div className="flex h-500px flex-col gap-24px overflow-y-auto">
           {/* Info: (20251001 - Julian) Main Title */}
           <div className="relative flex flex-col items-center justify-center gap-24px">
             <h4 className="text-h4 font-bold">Exciting News Ahead!</h4>

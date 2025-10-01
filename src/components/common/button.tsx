@@ -21,7 +21,7 @@ const buttonVariants = cva('group rounded-full font-bold flex items-center', {
     },
     size: {
       small: 'px-24px py-12px text-sm',
-      medium: 'px-48px py-16px text-base',
+      medium: 'px-48px py-12px text-base',
       large: 'px-54px py-18px text-lg',
       icon: 'p-18px',
     },

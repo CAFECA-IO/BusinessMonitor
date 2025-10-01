@@ -21,7 +21,7 @@ const Navbar: React.FC = () => {
   const isActiveBusinessMonitor = pathname.includes(BM_URL.BUSINESS_MONITOR);
 
   return (
-    <nav className="z-30 flex w-full items-center justify-between gap-40px bg-surface-background px-80px py-16px">
+    <nav className="z-30 flex w-full items-center justify-between gap-40px bg-surface-background px-spacing-2xl py-spacing-2xs">
       {/* Info: (20250807 - Julian) Logo */}
       <Link href={BM_URL.HOME}>
         <Image src="/logos/cafeca_logo.svg" alt="Cafeca_Logo" width={120} height={36} />
@@ -37,7 +37,7 @@ const Navbar: React.FC = () => {
           >
             <div className="shrink-0">
               <GrHomeRounded
-                size={24}
+                size={20}
                 className={isActiveHome ? '' : 'text-text-secondary group-hover:text-text-brand'}
               />
             </div>
@@ -53,7 +53,7 @@ const Navbar: React.FC = () => {
           >
             <div className="shrink-0">
               <RiComputerLine
-                size={24}
+                size={20}
                 className={
                   isActiveBusinessMonitor ? '' : 'text-text-secondary group-hover:text-text-brand'
                 }
