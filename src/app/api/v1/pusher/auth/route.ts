@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pusherServer } from '@/lib/pusher';
+import { getPusherInstance } from '@/lib/pusher';
 import { webAuthnRepo } from '@/repositories/webauthn.repo';
 import { jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
@@ -35,6 +35,8 @@ export async function POST(request: NextRequest) {
       logger.warn('Pusher auth denied for invalid or non-pending session', { sessionId });
       return jsonFail(ApiCode.FORBIDDEN, 'Forbidden: No active pairing session found.');
     }
+
+    const pusherServer = getPusherInstance();
 
     // 如果 session 驗證通過，則授權該 socket 訂閱此頻道
     const authResponse = pusherServer.authorizeChannel(socketId, channel);

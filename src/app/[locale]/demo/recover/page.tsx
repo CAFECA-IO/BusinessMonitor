@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { startRegistration } from '@/lib/fido2-client';
+import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 
 // Info: (20250926 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
@@ -34,6 +34,9 @@ export default function RecoverPage() {
     setResult(null);
 
     try {
+      if (!fido2ClientService.isAvailable()) {
+        throw new Error('WebAuthn 在此瀏覽器或環境中不可用（例如，非安全來源）。');
+      }
       // Info: (20250926 - Tzuhan) --- 步驟一: 提交備份碼，獲取 FIDO2 註冊選項 ---
       setStatusMessage('正在驗證備份碼...');
       const initiateRes = await fetch(routes.auth.recover.initiate(), {
@@ -50,7 +53,7 @@ export default function RecoverPage() {
 
       // Info: (20250926 - Tzuhan) --- 步驟二: 使用獲取的選項，在新裝置上註冊 Passkey ---
       setStatusMessage('備份碼驗證成功。請在此裝置上建立一個新的 Passkey...');
-      const registrationData = await startRegistration(registrationOptions);
+      const registrationData = await fido2ClientService.startRegistration(registrationOptions);
 
       // Info: (20250926 - Tzuhan) --- 步驟三: 提交新 Passkey 的註冊資料以完成恢復流程 ---
       setStatusMessage('正在向伺服器驗證新的 Passkey...');

@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
 import Link from 'next/link';
-import Pusher from 'pusher-js';
 import { routes } from '@/config/api-routes';
+import Pusher from 'pusher-js';
+import { getPusherInstance } from '@/lib/pusher_client';
 
 // Info: (20251001-tzuhan) 確保 Pusher Key 和 Cluster 已在環境變數中設定
 if (
@@ -51,11 +52,7 @@ export default function QrLoginPage() {
         setQrCodeDataUrl(dataUrl);
 
         // 2. 初始化 Pusher 並訂閱私有頻道
-        pusherClient = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-          cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-          authEndpoint: routes.pusher.auth(), // 使用 routes 來取得授權路徑
-          authTransport: 'ajax',
-        });
+        pusherClient = getPusherInstance();
 
         const channelName = `private-login-session-${sessionId}`;
         const channel = pusherClient.subscribe(channelName);

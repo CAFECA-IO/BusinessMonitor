@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { startLogin } from '@/lib/fido2-client';
+import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import Link from 'next/link';
 
@@ -54,8 +54,11 @@ export default function ScanPage() {
     setStatusMessage('請透過您的裝置進行生物辨識或 PIN 驗證...');
 
     try {
+      if (!fido2ClientService.isAvailable()) {
+        throw new Error('WebAuthn 在此瀏覽器或環境中不可用（例如，非安全來源）。');
+      }
       // 1. 執行 FIDO2 登入
-      const fido2Assertion = await startLogin({
+      const fido2Assertion = await fido2ClientService.startLogin({
         challenge: qrData.challenge,
       });
 
