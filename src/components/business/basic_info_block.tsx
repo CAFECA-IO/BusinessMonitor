@@ -43,11 +43,11 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
   );
 
   return (
-    <div className="col-span-2 flex w-full flex-col gap-40px rounded-radius-l bg-white px-60px py-40px">
+    <div className="col-span-2 flex w-full flex-col gap-24px rounded-radius-l bg-white px-60px py-36px">
       <p className="text-h5 font-bold text-text-brand">
         {t('business_detail:BASIC_INFO_TAB_TITLE')}
       </p>
-      <hr className="border-border-secondary" />
+      <hr className="bg-border-secondary" />
       {/* Info: (20250812 - Julian) Content */}
       <div className="flex items-center justify-between">
         <div className="flex flex-col items-center gap-40px">

@@ -71,7 +71,7 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
     <Layout
       crumbsItems={crumbsItems}
       pageBgColor="bg-surface-background"
-      className="gap-60px px-80px"
+      className="gap-40px px-80px pb-120px"
     >
       {/* Info: (20250811 - Julian) Tab Bar */}
       <TabBar currentTab={currentTab} onTabChange={onTabChange} />
@@ -87,9 +87,6 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
         {/* Info: (20250811 - Julian) Tab Content */}
         {currentTabContent}
       </div>
-
-      {/* Info: (20250930 - Julian) Announcement Modal */}
-      {/* <div className="absolute left-0 top-0 z-10 h-screen w-screen bg-black"></div> */}
     </Layout>
   );
 };

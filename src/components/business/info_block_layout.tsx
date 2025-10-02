@@ -19,13 +19,13 @@ const InfoBlockLayout: React.FC<IInfoBlockLayoutProps> = ({
   );
 
   return (
-    <div className="flex h-420px flex-col gap-40px rounded-radius-l bg-white px-60px py-40px">
+    <div className="flex h-420px flex-col gap-24px rounded-radius-l bg-white px-60px py-36px">
       <div className="flex items-center gap-8px">
         <p className="text-h5 font-bold text-text-brand">{title}</p>
 
         {tooltip}
       </div>
-      <hr className="border-border-secondary" />
+      <hr className="bg-border-secondary" />
       {/* Info: (20250812 - Julian) Content */}
       <div className={`${className} overflow-hidden`}>{children}</div>
     </div>
