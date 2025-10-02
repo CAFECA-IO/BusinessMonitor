@@ -20,7 +20,7 @@ interface ISkeletonBlockProps {
 const SkeletonBlock: React.FC<ISkeletonBlockProps> = ({ className }) => {
   return (
     <div
-      className={`${className} flex h-420px flex-col gap-40px rounded-radius-l bg-white px-60px py-40px`}
+      className={`${className} flex h-420px flex-col gap-24px rounded-radius-l bg-white px-60px py-36px`}
     >
       <p className="text-h5 font-bold text-text-brand">--</p>
       <hr className="border-border-secondary" />

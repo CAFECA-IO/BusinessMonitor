@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCircleChevronUp, FaChevronDown } from 'react-icons/fa6';
+import { FaCircleChevronUp, FaChevronDown, FaPlus } from 'react-icons/fa6';
 import { FiSearch } from 'react-icons/fi';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import { timestampToString } from '@/lib/common';
@@ -10,8 +10,11 @@ import InfoBlockLayout from '@/components/business/info_block_layout';
 import DiscussionPoster from '@/components/business/discussion_poster';
 import PostItem from '@/components/business/post_item';
 import Skeleton from '@/components/common/skeleton';
+import Button from '@/components/common/button';
+import AnnouncementModal from '@/components/common/announcement_modal';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
+import { IAnnouncementItem } from '@/interfaces/announcement';
 import {
   CommentItem as ICommentItem,
   // AnnouncementItem as IAnnouncementItem,
@@ -27,26 +30,16 @@ interface IDiscussionTabProps {
   businessId: string;
 }
 
-interface IAnnouncementItem {
-  id: number;
-  title: string;
-  date: string;
-  content?: string | null;
-  imageUrl?: string | null;
-  views?: number;
-  shares?: number;
-  isPinned?: boolean;
+interface IAnnouncementItemProps {
+  announcement: IAnnouncementItem;
+  clickHandler: () => void;
 }
 
-const AnnouncementItem: React.FC<{ announcement: IAnnouncementItem }> = ({ announcement }) => {
+const AnnouncementItem: React.FC<IAnnouncementItemProps> = ({ announcement, clickHandler }) => {
   const { id, date, content } = announcement;
 
   const timestamp = new Date(date).getTime() / 1000;
   const formatted = timestampToString(timestamp);
-
-  const clickHandler = () => {
-    // ToDo: (20250930 - Julian) open announcement modal
-  };
 
   return (
     <button
@@ -122,6 +115,9 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
   const [scrollTop, setScrollTop] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.NEWEST);
+  // Info: (20251001 - Julian) 公告 Modal 的顯示
+  const [isAnnModalVisible, setIsAnnModalVisible] = useState<boolean>(false);
+  const [activeAnnouncement, setActiveAnnouncement] = useState<IAnnouncementItem | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -137,7 +133,13 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
   // Info: (20250903 - Julian) 在頂部時/沒有 post 資料時隱藏按鈕
   const scrollBtnDisabled = scrollTop === 0 || posts.length === 0;
 
+  // ToDo: (20251001 - Julian) 開發中，目前先停用新增公告功能
+  const createAnnouncementDisabled = true;
+
   const toggleSortDropdown = () => setIsSortOpen((prev) => !prev);
+
+  const closeAnnModalHandler = () => setIsAnnModalVisible(false);
+  const openAnnModalHandler = () => setIsAnnModalVisible(true);
 
   // Info: (20250903 - Julian) 捲動到頂部
   const scrollToTop = () => {
@@ -175,7 +177,13 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
     announcements
       // Info: (20250930 - Julian) 置頂公告排序在前
       .sort((a, b) => (a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1))
-      .map((ann) => <AnnouncementItem key={ann.id} announcement={ann} />)
+      .map((ann) => {
+        const clickHandler = () => {
+          openAnnModalHandler();
+          setActiveAnnouncement(ann);
+        };
+        return <AnnouncementItem key={ann.id} announcement={ann} clickHandler={clickHandler} />;
+      })
   ) : (
     // ToDo: (20250930 - Julian) no data design
     <div>no data</div>
@@ -197,6 +205,17 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
         title={t('business_detail:IMPORTANT_ANNOUNCEMENT_BLOCK_TITLE')}
         className="flex h-400px w-300px flex-col gap-40px overflow-y-auto"
       >
+        {/* Info: (20251001 - Julian) Add New Announcement */}
+        <Button
+          type="button"
+          size="small"
+          className="gap-spacing-3xs py-8px"
+          disabled={createAnnouncementDisabled}
+        >
+          <FaPlus size={16} />
+          <p>Add New Announcement</p>
+        </Button>
+        {/* Info: (20251001 - Julian) Announcement Rows */}
         {annRows}
       </InfoBlockLayout>
 
@@ -257,6 +276,14 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
           <div className="flex flex-col items-center gap-12px">{postRows}</div>
         </div>
       </div>
+
+      {/* Info: (20251001 - Julian) Announcement Modal */}
+      {isAnnModalVisible && (
+        <AnnouncementModal
+          announcement={activeAnnouncement}
+          visibleHandler={closeAnnModalHandler}
+        />
+      )}
     </div>
   );
 };

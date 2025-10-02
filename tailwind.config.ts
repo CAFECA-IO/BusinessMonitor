@@ -70,12 +70,14 @@ module.exports = {
         '180px': '180px',
         '200px': '200px',
         '220px': '220px',
+        '250px': '250px',
         '300px': '300px',
         '350px': '350px',
         '400px': '400px',
         '420px': '420px',
         '500px': '500px',
         '800px': '800px',
+        '900px': '900px',
         '1200px': '1200px',
 
         '1/5': '20%',
@@ -118,6 +120,7 @@ module.exports = {
         'grey-60': 'var(--color-grey-grey-60)',
 
         'tab-bar-bg': '#ececf4',
+        'tab-active': 'var(--color-brand-brand-purple-500-10)',
       },
       borderRadius: {
         'radius-none': '0px',

@@ -28,7 +28,7 @@ const Layout: React.FC<ILayoutProps> = ({
       <Navbar />
 
       <main
-        className={`flex grow flex-col gap-60px ${pageBgColor} ${isLandingPage ? '' : 'py-80px'}`}
+        className={`flex grow flex-col gap-40px ${pageBgColor} ${isLandingPage ? '' : 'py-20px'}`}
       >
         {/* Info: (20250805 - Julian) Breadcrumbs & Search bar */}
         {isShowCrumbs && (
