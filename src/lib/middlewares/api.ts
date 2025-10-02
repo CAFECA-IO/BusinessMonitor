@@ -12,8 +12,10 @@ export async function apiMiddleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const requestId = crypto.randomUUID();
 
-  // Info: (20250925 - Tzuhan) 1. 處理 CORS 預檢請求 (OPTIONS)
-  // 雖然 headers 已在 next.config.js 設定，但 OPTIONS 請求仍需回傳 204
+  /**
+   * Info: (20250925 - Tzuhan) 1. 處理 CORS 預檢請求 (OPTIONS)
+   * 雖然 headers 已在 next.config.js 設定，但 OPTIONS 請求仍需回傳 204
+   */
   if (req.method === 'OPTIONS') {
     const res = NextResponse.json({}, { status: 204 });
     // Info: (20250925 - Tzuhan) 仍然可以附加 request-id
@@ -21,9 +23,16 @@ export async function apiMiddleware(req: NextRequest) {
     return res;
   }
 
-  // Info: (20250925 - Tzuhan) 2. 處理公開路由
-  // 根據您的舊版 middleware， /companies 也是公開的
-  if (pathname.startsWith('/api/v1/public') || pathname.startsWith('/api/v1/companies')) {
+  /**
+   * Info: (20251001-tzuhan) 【更新】2. 處理公開路由
+   * 將 QR Code 登入和 Pusher 授權所需的路徑加入白名單
+   */
+  if (
+    pathname.startsWith('/api/v1/public') ||
+    pathname.startsWith('/api/v1/companies') ||
+    pathname === '/api/v1/pairing/initiate' || // Info: (20251001-tzuhan) QR Code 登入流程
+    pathname === '/api/v1/pusher/auth' // Info: (20251001-tzuhan) Pusher 頻道授權
+  ) {
     const res = NextResponse.next();
     res.headers.set('x-request-id', requestId);
     return res;
@@ -36,28 +45,28 @@ export async function apiMiddleware(req: NextRequest) {
       const authHeader = req.headers.get('authorization');
       const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
       if (!token) {
-        // 如果沒有 token，重寫到訪客 API
+        // Info: (20251001-tzuhan) 如果沒有 token，重寫到訪客 API
         const rewriteUrl = req.nextUrl.clone();
         rewriteUrl.pathname = '/api/v1/public/guest-info';
         const res = NextResponse.rewrite(rewriteUrl);
         res.headers.set('x-request-id', requestId);
         return res;
       }
-      // 如果有 token，則繼續往下走，進入下面的 DeWT 驗證邏輯
+      // Info: (20251001-tzuhan) 如果有 token，則繼續往下走，進入下面的 DeWT 驗證邏輯
     } else {
-      // /secure 下的其他路由（如 webauthn_options）直接放行
+      // Info: (20251001-tzuhan) /secure 下的其他路由（如 webauthn_options）直接放行
       const res = NextResponse.next();
       res.headers.set('x-request-id', requestId);
       return res;
     }
   }
 
-  // 4. 處理所有需要 DeWT 的路由 (/auth, /service, /admin, 以及帶有 token 的 /me)
+  // Info: (20251001-tzuhan) 4. 處理所有需要 DeWT 的路由 (/auth, /service, /admin, 以及帶有 token 的 /me)
   const authHeader = req.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
 
   if (!token) {
-    return jsonFail(ApiCode.UNAUTHENTICATED, 'Missing token', {
+    return jsonFail(ApiCode.UNAUTHORIZED, 'Missing token', {
       headers: { 'x-request-id': requestId },
     });
   }
@@ -72,7 +81,7 @@ export async function apiMiddleware(req: NextRequest) {
       requestHeaders.set('x-user-scope', (payload.scope as string[]).join(','));
     }
 
-    // 檢查管理員權限
+    // Info: (20251001-tzuhan) 檢查管理員權限
     if (pathname.startsWith('/api/v1/admin') && !(payload.scope as string[])?.includes('admin')) {
       return jsonFail(ApiCode.FORBIDDEN, 'Insufficient permissions', {
         headers: { 'x-request-id': requestId },
@@ -82,7 +91,7 @@ export async function apiMiddleware(req: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid token';
-    return jsonFail(ApiCode.UNAUTHENTICATED, message, {
+    return jsonFail(ApiCode.UNAUTHORIZED, message, {
       headers: { 'x-request-id': requestId },
     });
   }

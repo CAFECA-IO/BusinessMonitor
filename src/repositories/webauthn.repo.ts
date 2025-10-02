@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/prisma';
-import { WebAuthnAlgo, type IdentityAccount, type Authenticator } from '@prisma/client';
+import {
+  WebAuthnAlgo,
+  type IdentityAccount,
+  type Authenticator,
+  type DevicePairingSession,
+} from '@prisma/client';
 
 export interface ICreateIdentityData {
   name: string;
@@ -15,7 +20,6 @@ export interface ICreateIdentityData {
   };
 }
 
-// Info: (20250926 - Tzuhan) 【新增】定義新增 Authenticator 所需的資料結構
 export interface IAddAuthenticatorData {
   credentialID: string;
   credentialPublicKey: string;
@@ -29,13 +33,20 @@ export interface IWebAuthnRepository {
   findIdentityAccountById(id: string): Promise<IdentityAccount | null>;
   updateAuthenticatorCounter(id: string, newCounter: number): Promise<void>;
   createIdentityAndAuthenticator(data: ICreateIdentityData): Promise<IdentityAccount>;
-  // Info: (20250926 - Tzuhan) 【新增】透過備份碼雜湊值尋找身份帳戶
   findIdentityByBackupKeyHash(backupKeyHash: string): Promise<IdentityAccount | null>;
-  // Info: (20250926 - Tzuhan) 【新增】將一個新的 Authenticator (裝置) 關聯到現有的身份帳戶
   addAuthenticatorToIdentity(
     identityAccountId: string,
     data: IAddAuthenticatorData
   ): Promise<Authenticator>;
+  findPairingSessionById(id: string): Promise<DevicePairingSession | null>;
+  // Info: (20251001-tzuhan) 【新增】為 QR Code 登入流程建立一個新的裝置配對會話
+  createPairingSession(data: { challenge: string; expiresAt: Date }): Promise<DevicePairingSession>;
+  // Info: (20251001-tzuhan) 【新增】在登入成功後更新會話狀態
+  updatePairingSessionStatus(
+    id: string,
+    status: 'COMPLETED' | 'AUTHORIZED',
+    identityId: string
+  ): Promise<DevicePairingSession>;
 }
 
 class WebAuthnRepository implements IWebAuthnRepository {
@@ -45,7 +56,12 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.authenticator.findUnique({ where: { credentialID } });
   }
 
+  public async findPairingSessionById(id: string): Promise<DevicePairingSession | null> {
+    return prisma.devicePairingSession.findUnique({ where: { id } });
+  }
+
   public async findIdentityAccountById(id: string): Promise<IdentityAccount | null> {
+    // Info: (20251001-tzuhan) 確保關聯查詢中包含必要的 dewt 欄位
     return prisma.identityAccount.findUnique({
       where: { id },
       select: {
@@ -88,9 +104,7 @@ class WebAuthnRepository implements IWebAuthnRepository {
     });
   }
 
-  // Info: (20250926 - Tzuhan) 【新增】透過備份碼雜湊值尋找身份帳戶
   public async findIdentityByBackupKeyHash(backupKeyHash: string): Promise<IdentityAccount | null> {
-    // Info: (20250926 - Tzuhan) backupKeyHash 在 prisma schema 中應被設為 @unique
     return prisma.identityAccount.findUnique({
       where: { backupKeyHash },
       select: {
@@ -105,7 +119,6 @@ class WebAuthnRepository implements IWebAuthnRepository {
     });
   }
 
-  // Info: (20250926 - Tzuhan) 【新增】將一個新的 Authenticator (裝置) 關聯到現有的身份帳戶
   public async addAuthenticatorToIdentity(
     identityAccountId: string,
     data: IAddAuthenticatorData
@@ -113,13 +126,32 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.authenticator.create({
       data: {
         ...data,
-        // Info: (20250926 - Tzuhan) 透過 connect 將此新紀錄關聯到指定的 IdentityAccount
         identityAccount: {
           connect: {
             id: identityAccountId,
           },
         },
       },
+    });
+  }
+
+  // Info: (20251001-tzuhan) 【新增】建立一個新的裝置配對會話
+  public async createPairingSession(data: {
+    challenge: string;
+    expiresAt: Date;
+  }): Promise<DevicePairingSession> {
+    return prisma.devicePairingSession.create({ data });
+  }
+
+  // Info: (20251001-tzuhan) 【新增】在登入成功後更新會話狀態
+  public async updatePairingSessionStatus(
+    id: string,
+    status: 'COMPLETED' | 'AUTHORIZED',
+    identityId: string
+  ): Promise<DevicePairingSession> {
+    return prisma.devicePairingSession.update({
+      where: { id },
+      data: { status, identityId },
     });
   }
 }

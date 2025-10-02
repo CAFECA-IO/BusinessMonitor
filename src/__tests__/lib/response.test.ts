@@ -44,7 +44,7 @@ describe('lib/response', () => {
 describe('lib/response http status mapping', () => {
   it.each([
     [ApiCode.VALIDATION_ERROR, 400],
-    [ApiCode.UNAUTHENTICATED, 401],
+    [ApiCode.UNAUTHORIZED, 401],
     [ApiCode.FORBIDDEN, 403],
     [ApiCode.NOT_FOUND, 404],
     [ApiCode.SERVER_ERROR, 500],

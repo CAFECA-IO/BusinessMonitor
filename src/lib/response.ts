@@ -50,7 +50,7 @@ function httpStatusOf(code: ApiCode): number {
       return 200;
     case ApiCode.VALIDATION_ERROR:
       return 400;
-    case ApiCode.UNAUTHENTICATED:
+    case ApiCode.UNAUTHORIZED:
       return 401;
     case ApiCode.FORBIDDEN:
       return 403;

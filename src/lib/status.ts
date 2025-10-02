@@ -4,7 +4,7 @@ export enum ApiCode {
 
   // Info: (20250925 - Tzuhan) --- 客戶端錯誤 ---
   VALIDATION_ERROR = 'VALIDATION_ERROR', // Info: (20250925 - Tzuhan) 400: 請求參數驗證失敗
-  UNAUTHENTICATED = 'UNAUTHENTICATED', // Info: (20250925 - Tzuhan) 401: 未經身份驗證
+  UNAUTHORIZED = 'UNAUTHORIZED', // Info: (20250925 - Tzuhan) 401: 未經身份驗證
   FORBIDDEN = 'FORBIDDEN', // Info: (20250925 - Tzuhan) 403: 權限不足
   NOT_FOUND = 'NOT_FOUND', // Info: (20250925 - Tzuhan) 404: 資源不存在
   CONFLICT = 'CONFLICT', // Info: (20250925 - Tzuhan) 409: 資源衝突 (例如：重複註冊)
@@ -17,7 +17,7 @@ export enum ApiCode {
 export const HTTP_MAP: Record<ApiCode, number> = {
   [ApiCode.OK]: 200,
   [ApiCode.VALIDATION_ERROR]: 400,
-  [ApiCode.UNAUTHENTICATED]: 401,
+  [ApiCode.UNAUTHORIZED]: 401,
   [ApiCode.FORBIDDEN]: 403,
   [ApiCode.NOT_FOUND]: 404,
   [ApiCode.CONFLICT]: 409,

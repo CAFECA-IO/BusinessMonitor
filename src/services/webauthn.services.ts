@@ -122,7 +122,7 @@ class WebAuthnService {
     const identityAccount = await this.repo.findIdentityByBackupKeyHash(hashedKey);
 
     if (!identityAccount) {
-      throw new AppError(ApiCode.UNAUTHENTICATED, ERROR_MESSAGES.INVALID_BACKUP_KEY);
+      throw new AppError(ApiCode.UNAUTHORIZED, ERROR_MESSAGES.INVALID_BACKUP_KEY);
     }
 
     // Info: (20250926 - Tzuhan) 為這個新裝置生成一個新的 userHandle

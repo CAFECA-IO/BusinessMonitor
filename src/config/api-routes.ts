@@ -186,7 +186,14 @@ export const routes = {
     // Info: (20250911 - Tzuhan) GET /api/v1/secure/me
     me: () => `${API_PREFIX}/secure/me`,
 
-    // Info: (20250911 - Tzuhan) FIDO2 註冊流程 (預留)
+    // Info: (20250930 - Tzuhan) 通用 WebAuthn 流程
+    webauthn: {
+      options: (intent?: 'register') =>
+        withQuery(`${API_PREFIX}/secure/webauthn-options`, intent ? { intent } : undefined),
+      verify: () => `${API_PREFIX}/secure/webauthn`,
+    },
+
+    // Info: (20250911 - Tzuhan) FIDO2 註冊流程 (專用)
     register: {
       // Info: (20250911 - Tzuhan) POST /api/v1/secure/register/challenge (取得註冊選項)
       challenge: () => `${API_PREFIX}/secure/register/challenge`,
@@ -201,6 +208,19 @@ export const routes = {
       // POST /api/v1/secure/recover/complete (提交新裝置的註冊憑證)
       complete: () => `${API_PREFIX}/secure/recover/complete`,
     },
+
+    // Info: (20250930 - Tzuhan) 跨裝置掃碼登入驗證
+    // POST /api/v1/secure/verify-login
+    verifyQrLogin: () => `${API_PREFIX}/secure/verify-login`,
+  },
+
+  pairing: {
+    // POST /api/v1/pairing/initiate
+    initiate: () => `${API_PREFIX}/pairing/initiate`,
+  },
+
+  pusher: {
+    auth: () => `${API_PREFIX}/pusher/auth`,
   },
 
   comments: {
