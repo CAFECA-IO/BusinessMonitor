@@ -426,11 +426,10 @@ model MarketDailyPrice {
   peRatio         Decimal?      @map("pe_ratio") @db.Decimal(10, 2)
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
-  stock_symbol_id Int?
-  stock_symbol    StockSymbol? @relation(fields: [stock_symbol_id], references: [id])
+  stock_symbol    StockSymbol? @relation(fields: [symbol], references: [symbol])
 
   @@unique([market, date, symbol], name: "market_date_symbol_unique")
-  @@index([stock_symbol_id])
+  @@index([symbol])
   @@map("market_daily_price")
 }
 

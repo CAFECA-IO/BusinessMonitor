@@ -6,7 +6,8 @@ import {
   apiResponseSchema,
   paginationSchema,
   pageQuerySchema,
-} from '@/validators';
+  isoDateTimeStringSchema,
+} from '@/validators/common';
 
 /* Info: (20250814 - Tzuhan) ========== 基本 Company ========== */
 export const companySchema = z.object({
@@ -54,15 +55,7 @@ export type CompanyIdParam = z.infer<typeof companyIdParamSchema>;
 
 /* =================================================================
  * Info: (20250922 - Tzuhan) 公司列表卡片 (Company Card) 相關結構
- * Note: 這部分的 marketSchema 是用於卡片上的「摘要」圖表，應予保留。
  * ================================================================= */
-
-const isoDateTimeStringSchema = z
-  .string()
-  .regex(
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/,
-    'Must be ISO-8601 datetime (e.g., 2025-08-14T02:34:56Z)'
-  );
 
 const trendPointSchema = z.object({
   date: isoDateTimeStringSchema,
@@ -75,7 +68,6 @@ const flagsSchema = z.object({
   red: z.number().int().nonnegative(),
 });
 
-// Info: (20250922 - Tzuhan) 此 marketSchema 為列表卡片上的「摘要」版本，與 market detail API 的 payload 不同。
 const marketSummarySchema = z.object({
   last: decimalStringSchema.nullable(),
   change: decimalStringSchema.nullable(),
@@ -92,61 +84,59 @@ export const companyCardSchema = z.object({
   address: z.string().nullable(),
   foreignCompanyName: z.string().nullable(),
   flags: flagsSchema,
-  market: marketSummarySchema, // Info: (20250922 - Tzuhan) 使用摘要版的 market schema
+  market: marketSummarySchema,
 });
 export type CompanyCard = z.infer<typeof companyCardSchema>;
 
 /* =================================================================
- * Info: (20250922 - Tzuhan) : Market API (/companies/:id/market)
- * Note: 這是本次重構的核心，用來取代舊的 mock data 結構。
+ * Info: (20251002 - Tzuhan) Market API (/companies/:id/market) - 最終版
  * ================================================================= */
 
-// Info: (20250922 - Tzuhan) Market API 查詢參數 (Query)
 export const companyMarketQuerySchema = z
   .object({
     timeframe: z
-      .enum(['daily', 'weekly', 'monthly'], {
-        message: "timeframe 參數僅接受 'daily', 'weekly', 'monthly'",
+      .enum(['1d', '1w', '1m', '3m', '6m', '1y', 'ytd', 'all'], {
+        message: "timeframe 參數僅接受 '1d', '1w', '1m', '3m', '6m', '1y', 'ytd', 'all'",
       })
-      .optional()
-      .default('daily'),
-    startDate: z
+      .optional(),
+    from: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式需為 YYYY-MM-DD')
       .optional(),
-    endDate: z
+    to: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式需為 YYYY-MM-DD')
       .optional(),
-    period: z.enum(['1m', '3m', '6m', '1y', 'ytd', 'max']).optional(),
   })
-  .refine((data) => !(data.startDate && !data.endDate), {
-    message: '如果提供 startDate，則必須同時提供 endDate',
-    path: ['endDate'],
+  .refine((data) => !(data.timeframe && (data.from || data.to)), {
+    message: 'timeframe 參數不可與 from/to 參數同時使用',
+    path: ['timeframe'],
+  })
+  .refine((data) => (data.from && data.to) || (!data.from && !data.to), {
+    message: 'from 和 to 參數必須同時提供',
+    path: ['from'],
   });
 
-export type CompanyMarketParams = z.infer<typeof companyMarketQuerySchema>;
+export type CompanyMarketQuery = z.infer<typeof companyMarketQuerySchema>;
 export type Timeframe = z.infer<typeof companyMarketQuerySchema.shape.timeframe>;
 
-// Info: (20250922 - Tzuhan)  Market API 回應 (Response) 的 Payload 結構
 const marketDataPointSchema = z.object({
-  date: isoDateTimeStringSchema, // Info: (20250922 - Tzuhan)  YYYY-MM-DDTHH:mm:ss.sssZ
+  date: isoDateTimeStringSchema,
   open: z.number(),
   high: z.number(),
   low: z.number(),
   close: z.number(),
-  volume: bigIntStringSchema, // Info: (20250922 - Tzuhan)  使用字串以避免 BigInt 精度問題
+  volume: bigIntStringSchema,
 });
 
 const marketDataPayloadSchema = z.object({
   companyId: z.number(),
   stockSymbol: z.string(),
-  timeframe: z.string(),
+  timeframe: z.enum(['1d', '1w', '1m', '3m', '6m', '1y', 'ytd', 'all', 'custom']),
   data: z.array(marketDataPointSchema),
 });
 export type MarketDataPayload = z.infer<typeof marketDataPayloadSchema>;
 
-// Info: (20250922 - Tzuhan) Market API 最終的完整 Response 結構
 export const companyMarketResponseSchema = apiResponseSchema(marketDataPayloadSchema);
 export type CompanyMarketResponse = z.infer<typeof companyMarketResponseSchema>;
 
@@ -182,28 +172,3 @@ export type NewCompaniesResponse = z.infer<typeof newCompaniesResponseSchema>;
 
 export const mostViewedCompaniesResponseSchema = apiResponseSchema(z.array(companyCardSchema));
 export type MostViewedCompaniesResponse = z.infer<typeof mostViewedCompaniesResponseSchema>;
-
-/* =================================================================
- * Info: (20250922 - Tzuhan) [舊版/待移除]
- * Note: 以下 trendPointSchema 和 marketSchema 是舊版的定義，
- * 它們的功能已被上面新的 marketData... schemas 取代或整合。
- * 確認前端與其他地方不再使用後即可刪除。
- * ================================================================= */
-
-// [標註為待移除] - 已被 Market API 新結構中的 marketDataPointSchema 取代
-/*
-export const trendPointSchema = z.object({
-  date: isoDateTimeStringSchema,
-  close: decimalStringSchema,
-});
-*/
-
-// [標註為待移除] - 已被 Market API 新結構中的 marketDataPayloadSchema 取代
-/*
-export const marketSchema = z.object({
-  last: decimalStringSchema.nullable(),
-  change: decimalStringSchema.nullable(),
-  changePct: decimalStringSchema.nullable(),
-  sparkline: z.array(trendPointSchema).max(30),
-});
-*/
