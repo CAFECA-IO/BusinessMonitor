@@ -1,21 +1,21 @@
 import { i18nConfig } from '@/i18nconfig';
-import initTranslations from '@/lib/i18n';
+// import initTranslations from '@/lib/i18n';
 import type { Metadata } from 'next';
 import Kv from '@/components/landing_page/kv';
 import IntroCard from '@/components/landing_page/intro_card';
 import Cta from '@/components/landing_page/cta';
 import Layout from '@/components/common/layout';
 
-// Info: (20250904 - Julian) 網頁標題 i18n
-export async function generateMetadata({
-  params,
-}: {
+interface ILandingPageProps {
   params: { locale: string };
-}): Promise<Metadata> {
-  const { locale } = await params;
-  const { t } = await initTranslations(locale, ['landing_page']);
+}
+
+// Info: (20250904 - Julian) 網頁標題 i18n
+export async function generateMetadata({} /* params */ : ILandingPageProps): Promise<Metadata> {
+  // const { locale } = await params;
+  // const { t } = await initTranslations(locale, ['landing_page']);
   return {
-    title: `CAFECA - ${t('landing_page:HEAD_TITLE')}`,
+    title: `CAFECA - Cyber Avatar Fusion Evidence Certification Assembler`,
   };
 }
 
