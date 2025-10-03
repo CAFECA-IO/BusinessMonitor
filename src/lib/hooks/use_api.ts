@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { IApiResponse } from '@/lib/response';
+import { ApiCode } from '@/lib/status';
 import { API_CONFIG } from '@/constants/api_connection';
 import { IAPIName, IAPIInput, IAPIConfig } from '@/interfaces/api_connection';
+import { IResponseData } from '@/interfaces/response_data';
+import { HttpMethod } from '@/constants/http_method';
+
+const DEFAULT_HEADERS = {
+  'Content-Type': 'application/json',
+};
 
 function getAPIPath(apiConfig: IAPIConfig, input: IAPIInput) {
   const originalPath = apiConfig.path;
@@ -27,39 +33,146 @@ function getAPIPath(apiConfig: IAPIConfig, input: IAPIInput) {
   return resultPath;
 }
 
-function useApi<T>(apiName: IAPIName, options?: IAPIInput) {
-  const [response, setResponse] = useState<IApiResponse<T> | null>(null);
+export async function fetchData<Data>(
+  apiConfig: IAPIConfig,
+  options: IAPIInput,
+  signal?: AbortSignal
+): Promise<IResponseData<Data>> {
+  const fetchOptions: RequestInit = {
+    method: apiConfig.method,
+    signal,
+  };
+  const path = getAPIPath(apiConfig, options);
+
+  if (apiConfig.method !== HttpMethod.GET) {
+    if (options.body) {
+      if (options.body instanceof FormData) {
+        fetchOptions.body = options.body;
+      } else {
+        fetchOptions.body = JSON.stringify(options.body);
+        fetchOptions.headers = {
+          ...DEFAULT_HEADERS,
+          ...(options.header || {}),
+        };
+      }
+    }
+  } else {
+    fetchOptions.headers = {
+      ...DEFAULT_HEADERS,
+      ...(options.header || {}),
+    };
+  }
+
+  const response = await fetch(path, fetchOptions);
+  const result = (await response.json()) as IResponseData<Data>;
+
+  return result;
+}
+
+function useApi<Data>(apiName: IAPIName, options?: IAPIInput) {
+  const [success, setSuccess] = useState<boolean | undefined>(undefined);
+  const [code, setCode] = useState<string | undefined>(undefined);
+  const [data, setData] = useState<Data | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState<boolean | undefined>(undefined);
   const [error, setError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const apiConfig = API_CONFIG[apiName];
 
-  const fetchData = useCallback(
-    async (input?: IAPIInput) => {
+  const handleError = useCallback((e: Error) => {
+    setError(e);
+  }, []);
+
+  const trigger = useCallback(
+    async (
+      input?: IAPIInput,
+      signal?: AbortSignal
+    ): Promise<{
+      success: boolean;
+      data: Data | null;
+      code: string;
+      error: Error | null;
+    }> => {
       setIsLoading(true);
-
-      const apiPath = getAPIPath(apiConfig, input ?? {});
-      const apiMethod = apiConfig.method;
-
+      setSuccess(undefined);
+      setCode(undefined);
+      setError(null);
+      setData(undefined);
       try {
-        const res = await fetch(apiPath, { method: apiMethod });
-        const result: IApiResponse<T> = await res.json();
-        setResponse(result);
-      } catch (err) {
-        setError(err as Error);
-        setResponse(null);
+        const response = await fetchData<Data>(
+          apiConfig,
+          {
+            ...options,
+            header: input?.header || options?.header,
+            params: input?.params || options?.params,
+            query: input?.query || options?.query,
+            body: input?.body || options?.body,
+          },
+          signal
+        );
+        setCode(response.code);
+        setData(response.payload as Data);
+        setSuccess(response.success);
+
+        if (!response.success) {
+          const apiError = new Error(response.message || ApiCode.SERVER_ERROR); // Info: (20240716 - Shirley) 實際上這裡應該要顯示從後端 API response 的錯誤訊息
+          setError(apiError);
+          return {
+            success: false,
+            data: null,
+            code: response.code,
+            error: apiError,
+          };
+        }
+
+        return {
+          success: response.success,
+          data: response.payload as Data,
+          code: response.code,
+          error: null,
+        };
+      } catch (e) {
+        handleError(e as Error);
+        setSuccess(false);
+        setCode(ApiCode.SERVER_ERROR);
+        return {
+          success: false,
+          data: null,
+          code: ApiCode.SERVER_ERROR,
+          error: e as Error,
+        };
       } finally {
         setIsLoading(false);
       }
     },
-    [apiName]
+    [apiConfig, options, handleError]
   );
 
-  useEffect(() => {
-    fetchData(options);
-  }, [fetchData]);
+  // const fetchData: (input?: IAPIInput) => Promise<void> = useCallback(
+  //   async (input?: IAPIInput) => {
+  //     setIsLoading(true);
 
-  return { ...response, error, isLoading, refetch: fetchData };
+  //     const apiPath = getAPIPath(apiConfig, input ?? {});
+  //     const apiMethod = apiConfig.method;
+
+  //     try {
+  //       const res = await fetch(apiPath, { method: apiMethod });
+  //       const result: IApiResponse<Data> = await res.json();
+  //       setResponse(result);
+  //     } catch (err) {
+  //       setError(err as Error);
+  //       setResponse(null);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   },
+  //   [apiName]
+  // );
+
+  useEffect(() => {
+    trigger(options);
+  }, [apiConfig.name]);
+
+  return { trigger, success, code, isLoading, payload: data, error };
 }
 
 export default useApi;
