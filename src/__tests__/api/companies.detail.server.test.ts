@@ -3,24 +3,12 @@ import { routes } from '@/config/api-routes';
 
 const agent = getAgent();
 
-async function pickSampleCompanyId(): Promise<number> {
-  const name = process.env.IT_SAMPLE_COMPANY_NAME ?? '台積電';
-  const url = routes.companies.search({ q: name, page: 1, pageSize: 5 });
-  const res = await agent.get(url).expect(200);
-  const items = res.body.payload.items as Array<{ id: number }>;
-  if (!items?.length) throw new Error('No sample company found from search');
-  return items[0].id;
-}
+const companyId = 291652;
+const nonExistentCompanyId = 37759808;
 
 describe('Company Detail APIs (integration, black-box)', () => {
-  let sampleId = 0;
-
-  beforeAll(async () => {
-    sampleId = await pickSampleCompanyId();
-  });
-
   it('GET /companies/:id/basic → 200 基本資訊', async () => {
-    const url = routes.companies.basic({ id: sampleId });
+    const url = routes.companies.basic({ id: companyId });
     const res = await agent.get(url).expect(200);
 
     expect(res.body.success).toBe(true);
@@ -33,7 +21,7 @@ describe('Company Detail APIs (integration, black-box)', () => {
     };
 
     expect(payload.card).toMatchObject({
-      id: sampleId,
+      id: companyId,
       name: expect.any(String),
       registrationNo: expect.any(String),
       lastUpdateTime: expect.any(String),
@@ -46,7 +34,7 @@ describe('Company Detail APIs (integration, black-box)', () => {
   });
 
   it('GET /companies/:id/basic → 404 不存在的 id', async () => {
-    const url = routes.companies.basic({ id: 987654321 });
+    const url = routes.companies.basic({ id: nonExistentCompanyId });
     const res = await agent.get(url).expect(404);
     expect(res.body.success).toBe(false);
   });

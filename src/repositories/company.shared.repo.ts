@@ -6,7 +6,7 @@ export type Db = PrismaClient | Prisma.TransactionClient;
 export type TrendRow = { companyId: number; date: string; close: string };
 
 type TrendPriceRow = {
-  stockSymbolId: number;
+  stockSymbol: string;
   date: Date;
   close: Prisma.Decimal;
 };
@@ -18,48 +18,45 @@ export async function repoFetchTrends(
 ): Promise<TrendRow[]> {
   if (companyIds.length === 0) return [];
 
-  // Info: (20250922 - Tzuhan) 1. 建立 companyId -> symbolId 的對應
+  // Info: (20251003 - Tzuhan) 步驟 1: 建立 companyId <-> symbol 的雙向對應 Map
   const symbols = await db.stockSymbol.findMany({
     where: { company_id: { in: companyIds } },
-    select: { id: true, company_id: true },
+    select: { symbol: true, company_id: true },
   });
 
-  const companyIdToSymbolIdMap = new Map<number, number>();
+  const companyIdToSymbolMap = new Map<number, string>();
+  const symbolToCompanyIdMap = new Map<string, number>();
   symbols.forEach((s) => {
     if (s.company_id) {
-      companyIdToSymbolIdMap.set(s.company_id, s.id);
+      companyIdToSymbolMap.set(s.company_id, s.symbol);
+      symbolToCompanyIdMap.set(s.symbol, s.company_id);
     }
   });
 
-  const stockSymbolIds = Array.from(companyIdToSymbolIdMap.values());
-  if (stockSymbolIds.length === 0) return [];
+  const stockSymbols = Array.from(companyIdToSymbolMap.values());
+  if (stockSymbols.length === 0) return [];
 
-  // Info: (20250922 - Tzuhan) 2. 查詢價格
+  // Info: (20251003 - Tzuhan) 步驟 2: 使用 symbol 進行分區查詢，獲取每支股票最新的 N 筆收盤價
   const prices = await db.$queryRaw<TrendPriceRow[]>`
     WITH ranked AS (
       SELECT
-        mdp.stock_symbol_id AS "stockSymbolId",
+        mdp.symbol,
         mdp.date,
         mdp.close_price AS "close",
-        ROW_NUMBER() OVER (PARTITION BY mdp.stock_symbol_id ORDER BY mdp.date DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY mdp.symbol ORDER BY mdp.date DESC) AS rn
       FROM market_daily_price mdp
-      WHERE mdp.stock_symbol_id IN (${Prisma.join(stockSymbolIds)}) AND mdp.close_price IS NOT NULL
+      WHERE mdp.symbol IN (${Prisma.join(stockSymbols)}) AND mdp.close_price IS NOT NULL
     )
-    SELECT "stockSymbolId", "date", "close"
+    SELECT "symbol", "date", "close"
     FROM ranked
     WHERE rn <= ${perCompanyLimit}
-    ORDER BY "stockSymbolId", "date" ASC;
+    ORDER BY "symbol", "date" ASC;
   `;
 
-  // Info: (20250922 - Tzuhan) 3. [修正處] 建立反向的 symbolId -> companyId 對應
-  const symbolIdToCompanyIdMap = new Map<number, number>();
-  companyIdToSymbolIdMap.forEach((symbolId, companyId) => {
-    symbolIdToCompanyIdMap.set(symbolId, companyId);
-  });
-
-  // Info: (20250922 - Tzuhan) 4. 轉換為最終的 TrendRow[] 格式
+  // Info: (20251003 - Tzuhan) 步驟 3: 將查詢結果轉換為最終的 TrendRow[] 格式
   return prices.map((p) => ({
-    companyId: symbolIdToCompanyIdMap.get(p.stockSymbolId)!,
+    // Info: (20251003 - Tzuhan) 使用 symbolToCompanyIdMap 將 symbol 轉換回 companyId
+    companyId: symbolToCompanyIdMap.get(p.stockSymbol)!,
     date: p.date.toISOString(),
     close: p.close.toString(),
   }));

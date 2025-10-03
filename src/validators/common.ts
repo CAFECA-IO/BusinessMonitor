@@ -16,7 +16,6 @@ const jsonPrimitiveSchema = z.union([z.string(), z.number(), z.boolean(), z.null
 export const jsonValueSchema: z.ZodType<JSONValue> = z.lazy(() =>
   z.union([jsonPrimitiveSchema, z.array(jsonValueSchema), z.record(z.string(), jsonValueSchema)])
 );
-// export const jsonValueSchema: z.ZodType<unknown> = z.unknown();
 
 /* Info: (20250822 - Tzuhan) ========== 排序 ========== */
 export const sortOrderSchema = z.enum(['asc', 'desc']);
@@ -53,6 +52,14 @@ export const dateYMDParamSchema = z
     const d = new Date(`${s}T00:00:00Z`);
     return !Number.isNaN(d.valueOf()) && d.toISOString().slice(0, 10) === s;
   }, 'Invalid date');
+
+/** Info: (20251002 - Tzuhan) 完整 ISO 8601 日期時間字串 (輸出用) */
+export const isoDateTimeStringSchema = z
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/,
+    'Must be ISO-8601 datetime (e.g., 2025-08-14T02:34:56Z)'
+  );
 
 /** Info: (20250822 - Tzuhan) 分頁 Query（default 只有在值為 undefined 時生效；請在 route 用 `?? undefined` 餵值） */
 export const pageQuerySchema = z.object({
