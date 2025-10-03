@@ -9,12 +9,13 @@ import { z } from 'zod';
 const prisma = new PrismaClient();
 
 /**
+ * Info: (20251003 - Tzuhan)
  * =================================================================
  * 1. 核心解析與匯入邏輯 (從 import_twse_daily.ts 整合而來)
  * =================================================================
  */
 
-// --- Zod Schema for Data Validation ---
+// Info: (20251003 - Tzuhan) --- 用於資料驗證的 Zod Schema ---
 const DailyPriceRowSchema = z.object({
   market: z.literal('TWSE'),
   date: z.date(),
@@ -45,7 +46,7 @@ type SummaryRow = {
   tradeCount?: number | null;
 };
 
-// --- Helper Functions for Data Transformation ---
+// Info: (20251003 - Tzuhan) --- 用於資料轉換的輔助函式 ---
 
 function rocToDate(str: string): Date | null {
   const m = str.match(/(\d{2,3})年(\d{2})月(\d{2})日/);
@@ -78,9 +79,12 @@ function normalizeSymbol(raw: string): string {
   return raw.replace(/^="?/, '').replace(/"?$/, '').trim();
 }
 
-// --- Core CSV Parser (Refactored for Clarity) ---
+// Info: (20251003 - Tzuhan) --- 核心 CSV 解析器 (已重構以提高可讀性) ---
 
-function parseTwseCsv(buffer: Buffer): {
+function parseTwseCsv(
+  buffer: Buffer,
+  filePath: string
+): {
   date: Date;
   summary: SummaryRow[];
   prices: Array<z.infer<typeof DailyPriceRowSchema>>;
@@ -89,6 +93,7 @@ function parseTwseCsv(buffer: Buffer): {
   const lines = txt.split('\n');
   let date: Date | null = null;
 
+  // Info: (20251003 - Tzuhan) 1. 區塊分割：將檔案內容分割為 Summary 和 Price 兩個區塊
   const summaryLines: string[] = [];
   const priceLines: string[] = [];
   let currentBlock: 'summary' | 'price' | null = null;
@@ -126,8 +131,9 @@ function parseTwseCsv(buffer: Buffer): {
     }
   }
 
-  if (!date) throw new Error('無法從檔案解析出交易日期。');
+  if (!date) throw new Error(`無法從檔案 ${path.basename(filePath)} 解析出交易日期。`);
 
+  // Info: (20251003 - Tzuhan) 2. 解析 Summary 區塊
   const summaryRows: SummaryRow[] = [];
   for (const line of summaryLines) {
     if (/^\d+\./.test(line) || line.startsWith('證券合計') || line.startsWith('總計')) {
@@ -146,7 +152,7 @@ function parseTwseCsv(buffer: Buffer): {
     }
   }
 
-  // Info: (20251003 - Tzuhan) 4. 解析 Price 區塊
+  // Info: (20251003 - Tzuhan) 3. 解析 Price 區塊
   const priceRows: Array<z.infer<typeof DailyPriceRowSchema>> = [];
   if (priceLines.length > 1) {
     const records: string[][] = parse(priceLines.join('\n').replace(/=\s*"(.*?)"/g, '"$1"'), {
@@ -174,7 +180,8 @@ function parseTwseCsv(buffer: Buffer): {
       askV: getIdx('最後揭示賣量'),
       pe: getIdx('本益比'),
     };
-    if (Object.values(idx).some((i) => i < 0)) throw new Error('CSV 表頭不完整或格式錯誤');
+    if (Object.values(idx).some((i) => i < 0))
+      throw new Error(`檔案 ${path.basename(filePath)} 的 CSV 表頭不完整或格式錯誤`);
 
     for (let r = 1; r < records.length; r++) {
       const row = records[r];
@@ -203,7 +210,7 @@ function parseTwseCsv(buffer: Buffer): {
         priceRows.push(DailyPriceRowSchema.parse(data));
       } catch (e) {
         console.warn(
-          `[WARN] 解析檔案 ${path.basename(buffer.toString())} 的某一行失敗: ${JSON.stringify(row)} -> ${(e as Error).message}`
+          `[WARN] 解析檔案 ${path.basename(filePath)} 的某一行失敗: ${JSON.stringify(row)} -> ${(e as Error).message}`
         );
       }
     }
@@ -212,7 +219,8 @@ function parseTwseCsv(buffer: Buffer): {
 }
 
 async function importOneFile(filePath: string) {
-  const { summary, prices } = parseTwseCsv(fs.readFileSync(filePath));
+  const fileBuffer = fs.readFileSync(filePath);
+  const { summary, prices } = parseTwseCsv(fileBuffer, filePath);
   if (prices.length > 0) {
     await prisma.marketDailyPrice.createMany({
       data: prices.map((p) => ({
@@ -257,19 +265,20 @@ async function importOneFile(filePath: string) {
 }
 
 /**
+ * Info: (20251003 - Tzuhan)
  * =================================================================
- * Info: (20251003 - Tzuhan) 2. 全新整合後的匯入與驗證流程
+ * 2. 全新整合後的匯入與驗證流程
  * =================================================================
  */
 
-// --- 效能優化：一次性載入所有已存在的日期 ---
+// Info: (20251003 - Tzuhan) --- 效能優化：一次性載入所有已存在的日期 ---
 async function loadExistingDates(): Promise<Set<string>> {
   console.log('🔍 正在從資料庫載入所有已存在的市場行情日期...');
   const dates = await prisma.marketDailyPrice.findMany({
     select: { date: true },
     distinct: ['date'],
   });
-  // 將日期轉換為 'YYYYMMDD' 格式以便快速比對
+  // Info: (20251003 - Tzuhan) 將日期轉換為 'YYYYMMDD' 格式以便快速比對
   const dateSet = new Set(dates.map((d) => format(d.date, 'yyyyMMdd')));
   console.log(`✅ 已載入 ${dateSet.size} 個已存在的日期。`);
   return dateSet;
@@ -335,7 +344,7 @@ async function importDailyFiles(dataPath: string, fromDate: Date, existingDates:
       console.error(`[FAIL] 處理檔案 ${path.basename(f)} 失敗: ${(e as Error).message}`);
     }
   }
-  console.log(`🟢 匯入完成。成功: ${ok} 檔案, 失敗: ${fail} 檔案。`);
+  console.log(`🟢 匯入完成。成功匯入 ${ok} 個新檔案, 失敗: ${fail} 個檔案。`);
 }
 
 async function auditNewSymbols(fromDate: Date, existingSymbols: Set<string>) {
@@ -363,45 +372,74 @@ async function auditNewSymbols(fromDate: Date, existingSymbols: Set<string>) {
 }
 
 /**
+ * Info: (20251003 - Tzuhan)
  * =================================================================
- * Info: (20251003 - Tzuhan) 3. 指令碼主程式 (CLI Entrypoint)
+ * 3. 指令碼主程式 (CLI Entrypoint)
  * =================================================================
  */
 async function main() {
   console.log('🚀 啟動常態化市場資料匯入與驗證任務...');
 
-  // Info: (20251003 - Tzuhan) --- 參數解析 ---
+  // Info: (20251003 - Tzuhan) --- 參數解析  ---
   const args = process.argv.slice(2);
+  const parsedArgs: { [key: string]: string | boolean } = {};
+  let targetPath: string | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('--')) {
+      const [key, value] = arg.split('=');
+      const cleanKey = key.substring(2);
+      if (value !== undefined) {
+        parsedArgs[cleanKey] = value;
+      } else if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+        // Info: (20251003 - Tzuhan) 處理 --key value 這種格式
+        parsedArgs[cleanKey] = args[i + 1];
+        i++; // Info: (20251003 - Tzuhan) 跳過下一個值，因為它已經被當作參數值了
+      } else {
+        // Info: (20251003 - Tzuhan) 處理 --flag 這種布林旗標
+        parsedArgs[cleanKey] = true;
+      }
+    } else if (!targetPath) {
+      // Info: (20251003 - Tzuhan) 第一個不以 '--' 開頭的參數被視為 targetPath
+      targetPath = arg;
+    }
+  }
+
   let fromDate: Date;
-  const targetPath = args.find((arg) => !arg.startsWith('--'));
+  const fromDateRaw = parsedArgs['from-date'] as string;
+  const fromMonthRaw = parsedArgs['from-month'] as string;
+  const fromYearRaw = parsedArgs['from-year'] as string;
 
-  const fromDateArg = args.find((arg) => arg.startsWith('--from-date='));
-  const fromMonthArg = args.find((arg) => arg.startsWith('--from-month='));
-  const fromYearArg = args.find((arg) => arg.startsWith('--from-year='));
-
-  if (fromDateArg) {
-    const dateStr = fromDateArg.split('=')[1];
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || isNaN(new Date(dateStr).getTime())) {
-      console.error('❌ 錯誤: --from-date 格式需為 YYYY-MM-DD');
-      process.exit(1);
+  try {
+    if (fromDateRaw) {
+      let dateStr = fromDateRaw;
+      // Info: (20251003 - Tzuhan) 支援 YYYYMMDD 格式
+      if (/^\d{8}$/.test(dateStr)) {
+        dateStr = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || isNaN(new Date(dateStr).getTime())) {
+        throw new Error('❌ 錯誤: --from-date 格式需為 YYYY-MM-DD 或 YYYYMMDD');
+      }
+      fromDate = startOfDay(new Date(dateStr));
+    } else if (fromMonthRaw) {
+      const [year, month] = fromMonthRaw.split('-').map(Number);
+      if (!year || !month || month < 1 || month > 12) {
+        throw new Error('❌ 錯誤: --from-month 格式需為 YYYY-MM');
+      }
+      fromDate = new Date(year, month - 1, 1);
+    } else if (fromYearRaw) {
+      const year = parseInt(fromYearRaw, 10);
+      if (isNaN(year)) {
+        throw new Error('❌ 錯誤: --from-year 需為有效的年份');
+      }
+      fromDate = new Date(year, 0, 1);
+    } else {
+      fromDate = startOfDay(subDays(new Date(), 1));
     }
-    fromDate = startOfDay(new Date(dateStr));
-  } else if (fromMonthArg) {
-    const [year, month] = fromMonthArg.split('=')[1].split('-').map(Number);
-    if (!year || !month || month < 1 || month > 12) {
-      console.error('❌ 錯誤: --from-month 格式需為 YYYY-MM');
-      process.exit(1);
-    }
-    fromDate = new Date(year, month - 1, 1);
-  } else if (fromYearArg) {
-    const year = parseInt(fromYearArg.split('=')[1], 10);
-    if (isNaN(year)) {
-      console.error('❌ 錯誤: --from-year 需為有效的年份');
-      process.exit(1);
-    }
-    fromDate = new Date(year, 0, 1);
-  } else {
-    fromDate = startOfDay(subDays(new Date(), 1));
+  } catch (e) {
+    console.error((e as Error).message);
+    process.exit(1);
   }
 
   if (!targetPath) {
@@ -412,8 +450,8 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`   資料來源路徑: ${targetPath}`);
-  console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 之後的資料...`);
+  console.log(`資料來源路徑: ${targetPath}`);
+  console.log(`將處理 ${format(fromDate, 'yyyy-MM-dd')} 之後的資料...`);
 
   try {
     const [existingDates, existingSymbols] = await Promise.all([
