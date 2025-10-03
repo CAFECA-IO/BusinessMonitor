@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState /* useEffect */ } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IoTriangle } from 'react-icons/io5';
 import { useTranslation } from 'react-i18next';
 import { formatNumberWithCommas } from '@/lib/common';
@@ -57,7 +57,7 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
   const {
     // success,
     payload,
-    // refetch,
+    trigger,
     // isLoading,
   } = useApi<{
     companyId: number;
@@ -86,24 +86,24 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
   // const [chartData, setChartData] = useState<ICandlestickChartNode[]>(firstData);
 
   // ToDo: (20250909 - Julian) get chart data from API
-  // useEffect(() => {
-  //   switch (currentRange) {
-  //     case ChartRange['1M']:
-  //       refetch({ params: { id: businessId }, query: { range: ChartRange['1M'], limit: 10 } });
-  //       break;
-  //     case ChartRange['3M']:
-  //       refetch({ params: { id: businessId }, query: { range: ChartRange['3M'], limit: 10 } });
-  //       break;
-  //     case ChartRange['6M']:
-  //       refetch({ params: { id: businessId }, query: { range: ChartRange['6M'], limit: 10 } });
-  //       break;
-  //     case ChartRange['1Y']:
-  //       refetch({ params: { id: businessId }, query: { range: ChartRange['1Y'], limit: 10 } });
-  //       break;
-  //     default:
-  //       break;
-  //   }
-  // }, [currentRange]);
+  useEffect(() => {
+    switch (currentRange) {
+      case ChartRange['1M']:
+        trigger({ params: { id: businessId }, query: { range: ChartRange['1M'], limit: 10 } });
+        break;
+      case ChartRange['3M']:
+        trigger({ params: { id: businessId }, query: { range: ChartRange['3M'], limit: 10 } });
+        break;
+      case ChartRange['6M']:
+        trigger({ params: { id: businessId }, query: { range: ChartRange['6M'], limit: 10 } });
+        break;
+      case ChartRange['1Y']:
+        trigger({ params: { id: businessId }, query: { range: ChartRange['1Y'], limit: 10 } });
+        break;
+      default:
+        break;
+    }
+  }, [currentRange]);
 
   const isPosition = change >= 0;
 
