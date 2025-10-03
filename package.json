@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+150",
+  "version": "0.1.0+151",
   "private": true,
   "type": "module",
   "scripts": {
@@ -31,7 +31,8 @@
     "import-data": "tsx scripts/import_data.ts",
     "prepare": "husky",
     "i18n:pull": "i18nexus pull && tsx scripts/move_locales.ts",
-    "swarm": "next start -p 10002"
+    "swarm": "next start -p 10002",
+    "import:market-data": "tsx scripts/004_import_market_data.ts"
   },
   "dependencies": {
     "@passwordless-id/webauthn": "^2.3.1",
