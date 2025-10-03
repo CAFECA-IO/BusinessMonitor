@@ -119,12 +119,12 @@ npx tsx scripts/003_backfill_company_ids.ts <path/to/mapping_data_folder>
    * **指定起始日期**：
 
      ```bash
-     npm run import:market-data -- <path/to/twse_daily_data> --from-date=2025-09-01
+     npm run import:market-data -- <path/to/twse_daily_data> --from-date=20250901
      ```
    * **指定起始月份**：
 
      ```bash
-     npm run import:market-data -- <path/to/twse_daily_data> --from-month=2025-09
+     npm run import:market-data -- <path/to/twse_daily_data> --from-month=202509
      ```
    * **指定起始年份（大量補全歷史）**：
 

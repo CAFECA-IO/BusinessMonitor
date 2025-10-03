@@ -10,10 +10,11 @@ const prisma = new PrismaClient();
 
 /**
  * =================================================================
- * Info: (20251003 - Tzuhan) 1. 核心解析與匯入邏輯
+ * 1. 核心解析與匯入邏輯 (從 import_twse_daily.ts 整合而來)
  * =================================================================
  */
 
+// --- Zod Schema for Data Validation ---
 const DailyPriceRowSchema = z.object({
   market: z.literal('TWSE'),
   date: z.date(),
@@ -44,40 +45,41 @@ type SummaryRow = {
   tradeCount?: number | null;
 };
 
-// Info: (20251003 - Tzuhan) --- Helper Functions ---
+// --- Helper Functions for Data Transformation ---
+
 function rocToDate(str: string): Date | null {
   const m = str.match(/(\d{2,3})年(\d{2})月(\d{2})日/);
   if (!m) return null;
-  const y = 1911 + parseInt(m[1], 10);
-  return new Date(Date.UTC(y, parseInt(m[2], 10) - 1, parseInt(m[3], 10)));
+  return new Date(Date.UTC(parseInt(m[1], 10) + 1911, parseInt(m[2], 10) - 1, parseInt(m[3], 10)));
 }
+
 function cleanNumber(s?: string | null): string | null {
   if (!s) return null;
   const t = s.replace(/,/g, '').trim();
   return t === '' || t === '--' ? null : t;
 }
+
 function toBigIntOrNull(s?: string | null): bigint | null {
   const t = cleanNumber(s);
-  if (t === null) return null;
+  if (t == null) return null;
   try {
     return BigInt(t);
   } catch {
     return null;
   }
 }
+
 function toDecimalOrNull(s?: string | null): Prisma.Decimal | null {
   const t = cleanNumber(s);
-  return t === null ? null : new Prisma.Decimal(t);
+  return t == null ? null : new Prisma.Decimal(t);
 }
+
 function normalizeSymbol(raw: string): string {
   return raw.replace(/^="?/, '').replace(/"?$/, '').trim();
 }
-function must(idx: number, label: string): number {
-  if (idx < 0) throw new Error(`表頭缺少欄位：「${label}」`);
-  return idx;
-}
 
-// Info: (20251003 - Tzuhan) --- Core CSV Parser ---
+// --- Core CSV Parser (Refactored for Clarity) ---
+
 function parseTwseCsv(buffer: Buffer): {
   date: Date;
   summary: SummaryRow[];
@@ -85,41 +87,50 @@ function parseTwseCsv(buffer: Buffer): {
 } {
   const txt = iconv.decode(buffer, 'big5').replace(/\r\n?/g, '\n');
   const lines = txt.split('\n');
+  let date: Date | null = null;
 
-  // Info: (20251003 - Tzuhan) 1. 尋找並解析日期
-  const dateLine = lines.find((line) => /(\d{2,3})年(\d{2})月(\d{2})日/.test(line));
-  const date = dateLine ? rocToDate(dateLine) : null;
-  if (!date) throw new Error('無法從檔案解析出交易日期。');
-
-  // Info: (20251003 - Tzuhan) 2. 更有彈性地分割出 Summary 和 Price 的資料區塊
-  const summaryBlock: string[] = [];
-  const priceBlock: string[] = [];
+  const summaryLines: string[] = [];
+  const priceLines: string[] = [];
   let currentBlock: 'summary' | 'price' | null = null;
+  let foundSummaryTitle = false;
 
   for (const line of lines) {
+    if (!date) {
+      const d = rocToDate(line);
+      if (d) date = d;
+    }
     if (line.includes('大盤統計資訊')) {
+      foundSummaryTitle = true;
+      currentBlock = null;
+      continue;
+    }
+    if (foundSummaryTitle && line.includes('成交金額')) {
       currentBlock = 'summary';
+      foundSummaryTitle = false;
       continue;
     }
     if (line.includes('證券代號') && line.includes('證券名稱')) {
       currentBlock = 'price';
+      priceLines.push(line);
+      continue;
     }
-    if (line.includes('"說明:')) {
+    if (line.includes('"說明:') || line.includes('ETF')) {
       currentBlock = null;
       continue;
     }
 
-    if (currentBlock === 'summary' && line.trim()) summaryBlock.push(line);
-    if (currentBlock === 'price' && line.trim()) priceBlock.push(line);
+    if (currentBlock === 'summary') {
+      summaryLines.push(line);
+    } else if (currentBlock === 'price') {
+      priceLines.push(line);
+    }
   }
 
-  // Info: (20251003 - Tzuhan) 3. 解析 Summary 區塊
+  if (!date) throw new Error('無法從檔案解析出交易日期。');
+
   const summaryRows: SummaryRow[] = [];
-  const summaryHeaderIndex = summaryBlock.findIndex((l) => l.includes('成交金額'));
-  if (summaryHeaderIndex !== -1) {
-    for (let i = summaryHeaderIndex + 1; i < summaryBlock.length; i++) {
-      const line = summaryBlock[i];
-      if (!/^\d+\./.test(line) && !line.startsWith('證券合計') && !line.startsWith('總計')) break;
+  for (const line of summaryLines) {
+    if (/^\d+\./.test(line) || line.startsWith('證券合計') || line.startsWith('總計')) {
       const [cat, val, vol, cnt] = line.split(',').map((s) => s.trim());
       let categoryName = (cat ?? '').replace(/^\d+\.\s*/, '').trim();
       if (categoryName.startsWith('證券合計')) categoryName = '證券合計';
@@ -137,79 +148,33 @@ function parseTwseCsv(buffer: Buffer): {
 
   // Info: (20251003 - Tzuhan) 4. 解析 Price 區塊
   const priceRows: Array<z.infer<typeof DailyPriceRowSchema>> = [];
-  if (priceBlock.length > 1) {
-    const records: string[][] = parse(priceBlock.join('\n').replace(/=\s*"(.*?)"/g, '"$1"'), {
+  if (priceLines.length > 1) {
+    const records: string[][] = parse(priceLines.join('\n').replace(/=\s*"(.*?)"/g, '"$1"'), {
       relax_column_count: true,
       skip_empty_lines: true,
       trim: true,
     });
     const header = records[0];
+    const getIdx = (name: string) => header.findIndex((h) => h.includes(name));
     const idx = {
-      symbol: must(
-        header.findIndex((h) => h.includes('證券代號')),
-        '證券代號'
-      ),
-      name: must(
-        header.findIndex((h) => h.includes('證券名稱')),
-        '證券名稱'
-      ),
-      vol: must(
-        header.findIndex((h) => h.includes('成交股數')),
-        '成交股數'
-      ),
-      cnt: must(
-        header.findIndex((h) => h.includes('成交筆數')),
-        '成交筆數'
-      ),
-      val: must(
-        header.findIndex((h) => h.includes('成交金額')),
-        '成交金額'
-      ),
-      open: must(
-        header.findIndex((h) => h.includes('開盤價')),
-        '開盤價'
-      ),
-      high: must(
-        header.findIndex((h) => h.includes('最高價')),
-        '最高價'
-      ),
-      low: must(
-        header.findIndex((h) => h.includes('最低價')),
-        '最低價'
-      ),
-      close: must(
-        header.findIndex((h) => h.includes('收盤價')),
-        '收盤價'
-      ),
-      sign: must(
-        header.findIndex((h) => h.includes('漲跌')),
-        '漲跌'
-      ),
-      chg: must(
-        header.findIndex((h) => h.includes('漲跌價差')),
-        '漲跌價差'
-      ),
-      bidP: must(
-        header.findIndex((h) => h.includes('最後揭示買價')),
-        '最後揭示買價'
-      ),
-      bidV: must(
-        header.findIndex((h) => h.includes('最後揭示買量')),
-        '最後揭示買量'
-      ),
-      askP: must(
-        header.findIndex((h) => h.includes('最後揭示賣價')),
-        '最後揭示賣價'
-      ),
-      askV: must(
-        header.findIndex((h) => h.includes('最後揭示賣量')),
-        '最後揭示賣量'
-      ),
-      pe: must(
-        header.findIndex((h) => h.includes('本益比')),
-        '本益比'
-      ),
+      symbol: getIdx('證券代號'),
+      name: getIdx('證券名稱'),
+      vol: getIdx('成交股數'),
+      cnt: getIdx('成交筆數'),
+      val: getIdx('成交金額'),
+      open: getIdx('開盤價'),
+      high: getIdx('最高價'),
+      low: getIdx('最低價'),
+      close: getIdx('收盤價'),
+      sign: getIdx('漲跌'),
+      chg: getIdx('漲跌價差'),
+      bidP: getIdx('最後揭示買價'),
+      bidV: getIdx('最後揭示買量'),
+      askP: getIdx('最後揭示賣價'),
+      askV: getIdx('最後揭示賣量'),
+      pe: getIdx('本益比'),
     };
+    if (Object.values(idx).some((i) => i < 0)) throw new Error('CSV 表頭不完整或格式錯誤');
 
     for (let r = 1; r < records.length; r++) {
       const row = records[r];
@@ -238,89 +203,57 @@ function parseTwseCsv(buffer: Buffer): {
         priceRows.push(DailyPriceRowSchema.parse(data));
       } catch (e) {
         console.warn(
-          `[WARN] 解析檔案 ${date.toISOString().slice(0, 10)} 中的行失敗: ${JSON.stringify(row)} -> ${(e as Error).message}`
+          `[WARN] 解析檔案 ${path.basename(buffer.toString())} 的某一行失敗: ${JSON.stringify(row)} -> ${(e as Error).message}`
         );
       }
     }
   }
-
   return { date, summary: summaryRows, prices: priceRows };
 }
 
-// Info: (20251003 - Tzuhan) --- DB Writer ---
-async function importOneFile(
-  filePath: string
-): Promise<{ priceCount: number; summaryCount: number }> {
+async function importOneFile(filePath: string) {
   const { summary, prices } = parseTwseCsv(fs.readFileSync(filePath));
   if (prices.length > 0) {
-    const data = prices.map((p) => ({
-      market: p.market,
-      date: p.date,
-      symbol: p.symbol,
-      name: p.name,
-      tradeVolume: p.tradeVolume,
-      tradeValue: toDecimalOrNull(p.tradeValue),
-      tradeCount: p.tradeCount,
-      openPrice: toDecimalOrNull(p.openPrice),
-      highPrice: toDecimalOrNull(p.highPrice),
-      lowPrice: toDecimalOrNull(p.lowPrice),
-      closePrice: toDecimalOrNull(p.closePrice),
-      changeSign: p.changeSign,
-      changeAmount: toDecimalOrNull(p.changeAmount),
-      finalBidPrice: toDecimalOrNull(p.finalBidPrice),
-      finalBidVolume: p.finalBidVolume,
-      finalAskPrice: toDecimalOrNull(p.finalAskPrice),
-      finalAskVolume: p.finalAskVolume,
-      peRatio: toDecimalOrNull(p.peRatio),
-    }));
-    await prisma.marketDailyPrice.createMany({ data, skipDuplicates: true });
+    await prisma.marketDailyPrice.createMany({
+      data: prices.map((p) => ({
+        market: p.market,
+        date: p.date,
+        symbol: p.symbol,
+        name: p.name,
+        tradeVolume: p.tradeVolume,
+        tradeValue: toDecimalOrNull(p.tradeValue),
+        tradeCount: p.tradeCount,
+        openPrice: toDecimalOrNull(p.openPrice),
+        highPrice: toDecimalOrNull(p.highPrice),
+        lowPrice: toDecimalOrNull(p.lowPrice),
+        closePrice: toDecimalOrNull(p.closePrice),
+        changeSign: p.changeSign,
+        changeAmount: toDecimalOrNull(p.changeAmount),
+        finalBidPrice: toDecimalOrNull(p.finalBidPrice),
+        finalBidVolume: p.finalBidVolume,
+        finalAskPrice: toDecimalOrNull(p.finalAskPrice),
+        finalAskVolume: p.finalAskVolume,
+        peRatio: toDecimalOrNull(p.peRatio),
+      })),
+      skipDuplicates: true,
+    });
   }
   if (summary.length > 0) {
-    const data = summary.map((s) => ({
-      market: s.market,
-      date: s.date,
-      category: s.category,
-      tradeValue: toDecimalOrNull(s.tradeValue),
-      tradeVolume: s.tradeVolume,
-      tradeCount: s.tradeCount,
-    }));
-    await prisma.marketDailySummary.createMany({ data, skipDuplicates: true });
+    await prisma.marketDailySummary.createMany({
+      data: summary.map((s) => ({
+        market: s.market,
+        date: s.date,
+        category: s.category,
+        tradeValue: toDecimalOrNull(s.tradeValue),
+        tradeVolume: s.tradeVolume,
+        tradeCount: s.tradeCount,
+      })),
+      skipDuplicates: true,
+    });
   }
-  return { priceCount: prices.length, summaryCount: summary.length };
-}
-
-// Info: (20251003 - Tzuhan) --- File Finder ---
-function findCsvFiles(baseDir: string, fromDate: Date): string[] {
-  const allFiles: string[] = [];
-  if (!fs.existsSync(baseDir)) return [];
-
-  const fromYear = fromDate.getUTCFullYear();
-  const fromMonth = fromDate.getUTCMonth() + 1;
-  const fromDay = fromDate.getUTCDate();
-
-  for (const yearDir of fs.readdirSync(baseDir).sort()) {
-    const year = parseInt(yearDir, 10);
-    if (!/^\d{4}$/.test(yearDir) || year < fromYear) continue;
-
-    const fullYearPath = path.join(baseDir, yearDir);
-    if (fs.statSync(fullYearPath).isDirectory()) {
-      for (const file of fs.readdirSync(fullYearPath).sort()) {
-        if (!/^\d{8}\.csv$/i.test(file)) continue;
-
-        const y = parseInt(file.slice(0, 4), 10);
-        const m = parseInt(file.slice(4, 6), 10);
-        const d = parseInt(file.slice(6, 8), 10);
-
-        if (
-          y > fromYear ||
-          (y === fromYear && (m > fromMonth || (m === fromMonth && d >= fromDay)))
-        ) {
-          allFiles.push(path.join(fullYearPath, file));
-        }
-      }
-    }
-  }
-  return allFiles;
+  console.log(
+    `[OK] ${path.basename(filePath)} → ${prices.length} rows (prices), ${summary.length} rows (summary)`
+  );
 }
 
 /**
@@ -328,6 +261,19 @@ function findCsvFiles(baseDir: string, fromDate: Date): string[] {
  * Info: (20251003 - Tzuhan) 2. 全新整合後的匯入與驗證流程
  * =================================================================
  */
+
+// --- 效能優化：一次性載入所有已存在的日期 ---
+async function loadExistingDates(): Promise<Set<string>> {
+  console.log('🔍 正在從資料庫載入所有已存在的市場行情日期...');
+  const dates = await prisma.marketDailyPrice.findMany({
+    select: { date: true },
+    distinct: ['date'],
+  });
+  // 將日期轉換為 'YYYYMMDD' 格式以便快速比對
+  const dateSet = new Set(dates.map((d) => format(d.date, 'yyyyMMdd')));
+  console.log(`✅ 已載入 ${dateSet.size} 個已存在的日期。`);
+  return dateSet;
+}
 
 async function loadExistingSymbols(): Promise<Set<string>> {
   console.log('🔍 正在從資料庫載入所有已知的股票代號...');
@@ -337,21 +283,34 @@ async function loadExistingSymbols(): Promise<Set<string>> {
   return symbolSet;
 }
 
-// Info: (20251003 - Tzuhan) --- Main Import Logic ---
-async function importDailyFiles(dataPath: string, fromDate: Date) {
+function findCsvFiles(baseDir: string, fromDate: Date): string[] {
+  const allFiles: string[] = [];
+  const fromDateStr = format(fromDate, 'yyyyMMdd');
+
+  if (!fs.existsSync(baseDir)) return [];
+
+  for (const yearDir of fs.readdirSync(baseDir)) {
+    // Info: (20251003 - Tzuhan) 只處理年份大於等於起始年份的資料夾
+    if (!/^\d{4}$/.test(yearDir) || parseInt(yearDir, 10) < fromDate.getFullYear()) continue;
+    const fullYearPath = path.join(baseDir, yearDir);
+
+    if (fs.statSync(fullYearPath).isDirectory()) {
+      for (const file of fs.readdirSync(fullYearPath)) {
+        const fileDateStr = file.slice(0, 8);
+        // Info: (20251003 - Tzuhan) 直接比較 YYYYMMDD 字串，確保日期過濾完全正確
+        if (/^\d{8}\.csv$/i.test(file) && fileDateStr >= fromDateStr) {
+          allFiles.push(path.join(fullYearPath, file));
+        }
+      }
+    }
+  }
+  return allFiles.sort();
+}
+
+async function importDailyFiles(dataPath: string, fromDate: Date, existingDates: Set<string>) {
   console.log(`\n🔵 開始從 ${dataPath} 匯入市場行情檔案...`);
   console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 及之後的檔案。`);
 
-  // Info: (20251003 - Tzuhan) 1. 一次性讀取所有已存在的日期
-  const existingDatesResult = await prisma.marketDailyPrice.findMany({
-    where: { date: { gte: fromDate } },
-    select: { date: true },
-    distinct: ['date'],
-  });
-  const existingDates = new Set(existingDatesResult.map((d) => format(d.date, 'yyyy-MM-dd')));
-  console.log(`   資料庫中已有 ${existingDates.size} 天的近期資料，將會跳過。`);
-
-  // Info: (20251003 - Tzuhan) 2. 從源頭過濾檔案
   const files = findCsvFiles(dataPath, fromDate);
   if (files.length === 0) {
     console.log('在指定路徑下找不到任何需要處理的新 .csv 檔案。');
@@ -360,28 +319,23 @@ async function importDailyFiles(dataPath: string, fromDate: Date) {
   console.log(`總共找到 ${files.length} 個可能需要處理的檔案。`);
 
   let ok = 0,
-    fail = 0,
-    skipped = 0;
+    fail = 0;
   for (const f of files) {
     const fileDateStr = path.basename(f).slice(0, 8);
-    const formattedFileDate = `${fileDateStr.slice(0, 4)}-${fileDateStr.slice(4, 6)}-${fileDateStr.slice(6, 8)}`;
-
-    // Info: (20251003 - Tzuhan) 3. 使用 Set 快速檢查，避免 DB 查詢
-    if (existingDates.has(formattedFileDate)) {
-      skipped++;
+    // Info: (20251003 - Tzuhan) 使用記憶體 Set 進行高效比對，避免資料庫查詢
+    if (existingDates.has(fileDateStr)) {
+      console.log(`[SKIP] ${path.basename(f)} 的資料已存在於資料庫中。`);
       continue;
     }
-
     try {
-      const { priceCount, summaryCount } = await importOneFile(f);
-      console.log(`[OK] ${path.basename(f)} → ${priceCount} prices, ${summaryCount} summary`);
+      await importOneFile(f);
       ok++;
     } catch (e) {
       fail++;
       console.error(`[FAIL] 處理檔案 ${path.basename(f)} 失敗: ${(e as Error).message}`);
     }
   }
-  console.log(`\n🟢 匯入完成。成功: ${ok} 檔案, 失敗: ${fail} 檔案, 跳過: ${skipped} 檔案。`);
+  console.log(`🟢 匯入完成。成功: ${ok} 檔案, 失敗: ${fail} 檔案。`);
 }
 
 async function auditNewSymbols(fromDate: Date, existingSymbols: Set<string>) {
@@ -418,35 +372,29 @@ async function main() {
 
   // Info: (20251003 - Tzuhan) --- 參數解析 ---
   const args = process.argv.slice(2);
-  const params: { [key: string]: string } = {};
+  let fromDate: Date;
   const targetPath = args.find((arg) => !arg.startsWith('--'));
 
-  args
-    .filter((arg) => arg.startsWith('--'))
-    .forEach((arg) => {
-      const [key, value] = arg.substring(2).split('=');
-      if (key && value) params[key] = value;
-    });
+  const fromDateArg = args.find((arg) => arg.startsWith('--from-date='));
+  const fromMonthArg = args.find((arg) => arg.startsWith('--from-month='));
+  const fromYearArg = args.find((arg) => arg.startsWith('--from-year='));
 
-  let fromDate: Date;
-  if (params['from-date']) {
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(params['from-date']) ||
-      isNaN(new Date(params['from-date']).getTime())
-    ) {
+  if (fromDateArg) {
+    const dateStr = fromDateArg.split('=')[1];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || isNaN(new Date(dateStr).getTime())) {
       console.error('❌ 錯誤: --from-date 格式需為 YYYY-MM-DD');
       process.exit(1);
     }
-    fromDate = startOfDay(new Date(params['from-date']));
-  } else if (params['from-month']) {
-    const [year, month] = params['from-month'].split('-').map(Number);
+    fromDate = startOfDay(new Date(dateStr));
+  } else if (fromMonthArg) {
+    const [year, month] = fromMonthArg.split('=')[1].split('-').map(Number);
     if (!year || !month || month < 1 || month > 12) {
       console.error('❌ 錯誤: --from-month 格式需為 YYYY-MM');
       process.exit(1);
     }
     fromDate = new Date(year, month - 1, 1);
-  } else if (params['from-year']) {
-    const year = parseInt(params['from-year'], 10);
+  } else if (fromYearArg) {
+    const year = parseInt(fromYearArg.split('=')[1], 10);
     if (isNaN(year)) {
       console.error('❌ 錯誤: --from-year 需為有效的年份');
       process.exit(1);
@@ -459,17 +407,20 @@ async function main() {
   if (!targetPath) {
     console.error('❌ 錯誤: 請提供每日市場行情資料的來源路徑。');
     console.error(
-      '用法: npx tsx scripts/import_market_data.ts <dataPath> [--from-date=YYYY-MM-DD | --from-month=YYYY-MM | --from-year=YYYY]'
+      '用法: npx tsx scripts/004_import_market_data.ts <dataPath> [--from-date=YYYY-MM-DD | --from-month=YYYY-MM | --from-year=YYYY]'
     );
     process.exit(1);
   }
 
-  console.log(`資料來源路徑: ${targetPath}`);
-  console.log(`將處理 ${format(fromDate, 'yyyy-MM-dd')} 之後的資料...`);
+  console.log(`   資料來源路徑: ${targetPath}`);
+  console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 之後的資料...`);
 
   try {
-    const existingSymbols = await loadExistingSymbols();
-    await importDailyFiles(targetPath, fromDate);
+    const [existingDates, existingSymbols] = await Promise.all([
+      loadExistingDates(),
+      loadExistingSymbols(),
+    ]);
+    await importDailyFiles(targetPath, fromDate, existingDates);
     await auditNewSymbols(fromDate, existingSymbols);
     console.log('\n✅✅✅ 市場資料匯入與驗證任務已成功完成！ ✅✅✅');
   } catch (error) {
