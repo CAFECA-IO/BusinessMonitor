@@ -92,6 +92,10 @@ const DatePicker: React.FC<IDatePickerProps> = ({
 }) => {
   const today = new Date(); // Info: (20250904 - Julian) 取得今天日期
 
+  // Info: (20251007 - Julian) 年份和月份的初始值
+  const defaultYear = initialSelectedYear ?? today.getFullYear();
+  const defaultMonth = initialSelectedMonth ?? today.getMonth() + 1;
+
   const { t } = useTranslation(['business_detail']);
 
   const {
@@ -100,12 +104,8 @@ const DatePicker: React.FC<IDatePickerProps> = ({
     setComponentVisible: setOpenDatePicker,
   } = useOuterClick<HTMLDivElement>(false);
 
-  const [selectedYear, setSelectedYear] = useState<number>(
-    initialSelectedYear ?? today.getFullYear()
-  );
-  const [selectedMonth, setSelectedMonth] = useState<number>(
-    initialSelectedMonth ?? today.getMonth() + 1
-  );
+  const [selectedYear, setSelectedYear] = useState<number>(defaultYear);
+  const [selectedMonth, setSelectedMonth] = useState<number>(defaultMonth);
   const [dateOne, setDateOne] = useState<number | null>(null);
   const [dateTwo, setDateTwo] = useState<number | null>(null);
 
@@ -130,6 +130,19 @@ const DatePicker: React.FC<IDatePickerProps> = ({
     }
   }, [selectedPeriod]);
 
+  useEffect(() => {
+    // Info: (20251007 - Julian) 每次打開 Date Picker 都會重置為今天的月份
+    if (isOpenDatePicker) {
+      setSelectedYear(defaultYear);
+      setSelectedMonth(defaultMonth);
+    }
+    // Info: (20251007 - Julian) 如果 pickerType === Period，且選擇了第一個日期（尚未選擇完成），則清除第一個日期
+    if (pickerType === DatePickerType.PERIOD && dateOne !== null && dateTwo === null) {
+      setDateOne(null);
+      setSelectedPeriod({ startTimestamp: 0, endTimestamp: 0 });
+    }
+  }, [isOpenDatePicker]);
+
   // Info: (20250903 - Julian) 單選的圓形樣式
   const isOnlyOneDate =
     (dateOne !== null && dateTwo === null) ||
@@ -138,7 +151,7 @@ const DatePicker: React.FC<IDatePickerProps> = ({
 
   // Info: (20250904 - Julian) Banner 上的日期顯示
   const dateStr = `${timestampToString(selectedPeriod.startTimestamp).formattedDate}`;
-  const periodStr = `${timestampToString(selectedPeriod.startTimestamp).formattedDate} to ${timestampToString(selectedPeriod.endTimestamp).formattedDate}`;
+  const periodStr = `${timestampToString(selectedPeriod.startTimestamp).formattedDate} ${t('date_picker:TO')} ${timestampToString(selectedPeriod.endTimestamp).formattedDate}`;
   const bannerStr = pickerType === DatePickerType.DATE ? dateStr : periodStr;
   const placeholder =
     pickerType === DatePickerType.DATE
