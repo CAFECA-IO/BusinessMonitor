@@ -55,8 +55,8 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
     mktCap,
     divYield,
     volume,
-    sellersPercent,
-    buyersPercent,
+    // sellersPercent,
+    // buyersPercent,
   } = mockMarketInfo;
 
   const formatNumber = (num: number) => {
@@ -199,8 +199,9 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
           changePercent={changePercent}
         />
 
+        {/* ToDo: (20251007 - Julian) 目前沒有資料，先隱藏 */}
         {/* Info: (20250826 - Julian) Traders’ Sentiment */}
-        <div className="flex flex-col gap-24px">
+        {/* <div className="flex flex-col gap-24px">
           <p className="font-medium text-text-secondary">
             {t('business_detail:TRADERS_SENTIMENT_TITLE')}
           </p>
@@ -220,7 +221,7 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
               ></span>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Info: (20250826 - Julian) News Part */}

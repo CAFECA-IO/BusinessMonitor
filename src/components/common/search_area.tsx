@@ -18,7 +18,6 @@ const SearchArea: React.FC<ISearchAreaProps> = ({ isShowTags }) => {
 
   // ToDo: (20250917 - Julian) Get tags from API
   const dummyTag = ['Business'];
-
   const tagData = dummyTag;
 
   // Info: (20250917 - Julian) 從 URL 參數取得預設關鍵字，若無則設為空字串
@@ -73,7 +72,7 @@ const SearchArea: React.FC<ISearchAreaProps> = ({ isShowTags }) => {
           onChange={handleInputChange}
           onKeyDown={enterPressHandler}
           className="flex-1 bg-transparent outline-none placeholder:text-text-note"
-          placeholder={t('search_page:SEARCH_AREA_PLACEHOLDER') as string}
+          placeholder={t('search_page:SEARCH_AREA_PLACEHOLDER')}
         />
       </div>
 

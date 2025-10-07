@@ -49,6 +49,7 @@ const FinancialReportTab: React.FC = () => {
         key={report}
         type="button"
         onClick={handleClick}
+        disabled={isSelected}
         className={`${isSelected ? 'border-text-brand text-text-brand' : 'border-text-secondary text-text-secondary'} px-70px group flex flex-col items-center gap-16px rounded-radius-m border py-24px text-sm font-medium hover:border-button-primary-hover hover:text-button-primary-hover`}
       >
         <div className="relative shrink-0">
