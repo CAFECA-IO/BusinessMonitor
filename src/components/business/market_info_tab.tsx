@@ -91,7 +91,21 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
   const displayedNews = newsIsLoading ? (
     <Skeleton width={200} height={150} />
   ) : newsSuccess && newsData && newsData.items.length > 0 ? (
-    newsData.items.map((news) => <NewsItem key={news.id} news={news} />)
+    <>
+      <div className="flex flex-col gap-24px">
+        {newsData.items.map((news) => (
+          <NewsItem key={news.id} news={news} />
+        ))}
+      </div>
+      {/* ToDo: (20250826 - Julian) Link to news page */}
+      <Link
+        href={'/'}
+        className="flex items-center justify-center gap-8px text-base font-normal text-button-link hover:underline"
+      >
+        <p>{t('business_detail:NEWS_SEE_MORE')}</p>
+        <FaChevronRight size={18} />
+      </Link>
+    </>
   ) : (
     // ToDo: (20250912 - Julian) 設計 no data 畫面
     <div>no news</div>
@@ -213,15 +227,7 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
       <div className="flex flex-col gap-40px">
         <p className="text-h5 font-bold text-text-brand">{t('business_detail:NEWS_TITLE')}</p>
         <hr className="h-px border-border-secondary" />
-        <div className="flex flex-col gap-24px">{displayedNews}</div>
-        {/* ToDo: (20250826 - Julian) Link to news page */}
-        <Link
-          href={'/'}
-          className="flex items-center justify-center gap-8px text-base font-normal text-button-link hover:underline"
-        >
-          <p>{t('business_detail:NEWS_SEE_MORE')}</p>
-          <FaChevronRight size={18} />
-        </Link>
+        {displayedNews}
       </div>
     </div>
   );

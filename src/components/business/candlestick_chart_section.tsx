@@ -31,10 +31,9 @@ interface ICandlestickChartSectionProps {
 }
 
 enum ChartRange {
-  '1M' = '1m',
-  '3M' = '3m',
-  '6M' = '6m',
-  '1Y' = '1y',
+  '1D' = '1d',
+  '1W' = '1w',
+  '1M' = '1M',
 }
 
 // interface IChartData {
@@ -54,7 +53,7 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
 }) => {
   const { t } = useTranslation(['business_detail']);
 
-  const { success, payload, trigger } = useApi<{
+  const { success, payload, trigger, isLoading } = useApi<{
     companyId: number;
     stockSymbol: string;
     timeframe: string;
@@ -68,7 +67,8 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
     }[];
   }>(APIName.GET_MARKET_INFO_BY_COMPANY_ID, {
     params: { id: businessId },
-    query: { range: ChartRange['1M'], limit: 10 }, // ToDo: (20250912 - Julian) Make range & limit dynamic
+    // ToDo: (20251007 - Julian) range 之後要改成 timeframe
+    query: { range: ChartRange['1D'] },
   });
 
   const chartData: ICandlestickChartNode[] =
@@ -77,21 +77,18 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
       y: [point.open, point.high, point.low, point.close],
     })) ?? [];
 
-  const [currentRange, setCurrentRange] = useState<ChartRange>(ChartRange['1M']);
+  const [currentRange, setCurrentRange] = useState<ChartRange>(ChartRange['1D']);
 
   useEffect(() => {
     switch (currentRange) {
+      case ChartRange['1D']:
+        trigger({ params: { id: businessId }, query: { range: ChartRange['1D'] } });
+        break;
+      case ChartRange['1W']:
+        trigger({ params: { id: businessId }, query: { range: ChartRange['1W'] } });
+        break;
       case ChartRange['1M']:
-        trigger({ params: { id: businessId }, query: { range: ChartRange['1M'], limit: 10 } });
-        break;
-      case ChartRange['3M']:
-        trigger({ params: { id: businessId }, query: { range: ChartRange['3M'], limit: 10 } });
-        break;
-      case ChartRange['6M']:
-        trigger({ params: { id: businessId }, query: { range: ChartRange['6M'], limit: 10 } });
-        break;
-      case ChartRange['1Y']:
-        trigger({ params: { id: businessId }, query: { range: ChartRange['1Y'], limit: 10 } });
+        trigger({ params: { id: businessId }, query: { range: ChartRange['1M'] } });
         break;
       default:
         break;
@@ -118,13 +115,17 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
             : 'bg-transparent text-text-primary hover:bg-grey-100'
         } w-60px rounded-full px-12px py-2px text-sm`}
       >
-        {/* {t(`business_detail:GRAPH_${range.toUpperCase()}_BTN`)} */}
-        {range.toUpperCase()}
+        {t(`business_detail:GRAPH_${range.toUpperCase()}_BTN`)}
       </button>
     );
   });
 
-  if (success && payload) {
+  if (isLoading) {
+    return (
+      // ToDo: (20251007 - Julian) loading design
+      <div className="flex flex-col items-center justify-center p-80px">Loading...</div>
+    );
+  } else if (success && payload) {
     return (
       <div className="relative flex w-full flex-col">
         {/* Info: (20250909 - Julian) chart meta data */}

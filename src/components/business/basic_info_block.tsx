@@ -112,7 +112,7 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
 
           <div className="flex flex-col items-start gap-12px text-sm font-medium">
             <p className="text-text-note">{t('business_detail:BASIC_INFO_TAB_CAPITAL_RANKING')}</p>
-            <p className="text-text-primary"># {capitalRanking ?? '-'}</p>
+            <p className="text-text-primary"> {capitalRanking ? `#${capitalRanking}` : '-'}</p>
           </div>
 
           <div className="col-span-3 flex flex-col items-start gap-12px text-sm font-medium">

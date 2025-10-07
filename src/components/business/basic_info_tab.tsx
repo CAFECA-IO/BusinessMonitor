@@ -39,9 +39,7 @@ const SkeletonBlock: React.FC<ISkeletonBlockProps> = ({ className }) => {
 const BasicInfoTab: React.FC<IBasicInfoTabProps> = ({ businessId }) => {
   const { payload: companyData, isLoading } = useApi<IBasicResponse>(
     APIName.GET_BASIC_INFO_BY_COMPANY_ID,
-    {
-      params: { id: businessId },
-    }
+    { params: { id: businessId } }
   );
 
   const isShowSkeleton = isLoading || !companyData;
