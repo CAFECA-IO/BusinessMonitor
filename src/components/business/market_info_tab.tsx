@@ -9,6 +9,7 @@ import { FaChevronRight } from 'react-icons/fa6';
 import useApi from '@/lib/hooks/use_api';
 import { APIName } from '@/constants/api_connection';
 import { Paginated as IPaginated } from '@/types/common';
+import { CompanyBasicCard as IBasicInfo } from '@/types/company';
 import { INews } from '@/interfaces/news';
 // import {NewsItem as INews} from '@/types/news';
 import { mockMarketInfo } from '@/interfaces/market';
@@ -24,10 +25,17 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
 
   const {
+    success: companySuccess,
+    payload: companyData,
+    isLoading: companyIsLoading,
+  } = useApi<IBasicInfo>(APIName.GET_BUSINESS_BY_COMPANY_ID, {
+    params: { id: businessId },
+  });
+
+  const {
     success: newsSuccess,
     payload: newsData,
     isLoading: newsIsLoading,
-    // ToDo: (20250912 - Julian) interface may change later
   } = useApi<IPaginated<INews>>(APIName.GET_NEWS_BY_COMPANY_ID, {
     params: { id: businessId },
   });
@@ -72,6 +80,14 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
       ''
     );
 
+  const displayedBusinessName = companyIsLoading ? (
+    <Skeleton width={250} height={30} />
+  ) : companySuccess && companyData && companyData.name.length > 0 ? (
+    <h3>{companyData.name}</h3>
+  ) : (
+    <h3>N/A</h3>
+  );
+
   const displayedNews = newsIsLoading ? (
     <Skeleton width={200} height={150} />
   ) : newsSuccess && newsData && newsData.items.length > 0 ? (
@@ -88,7 +104,7 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
         {/* Info: (20250826 - Julian) Business Name */}
         <div className="flex items-center gap-4px whitespace-nowrap text-h3 font-bold text-text-primary">
           <Image src="/icons/verified.svg" width={32} height={32} alt="verified_icon" />
-          <h3>Im Business Name</h3>
+          {displayedBusinessName}
         </div>
         {/* Info: (20250826 - Julian) Stock Info */}
         <div className="flex items-center justify-between gap-60px px-24px py-12px">
@@ -159,6 +175,7 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
 
         {/* Info: (20250905 - Julian) Stock Chart */}
         <CandlestickChartSection
+          businessId={businessId}
           open={open}
           high={high}
           low={low}

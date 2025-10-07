@@ -20,6 +20,7 @@ import { APIName } from '@/constants/api_connection';
 // }
 
 interface ICandlestickChartSectionProps {
+  businessId: string;
   open: number;
   high: number;
   low: number;
@@ -42,6 +43,7 @@ enum ChartRange {
 // }
 
 const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
+  businessId,
   open,
   high,
   low,
@@ -52,14 +54,7 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
 }) => {
   const { t } = useTranslation(['business_detail']);
 
-  const businessId = '291652';
-
-  const {
-    // success,
-    payload,
-    trigger,
-    // isLoading,
-  } = useApi<{
+  const { success, payload, trigger } = useApi<{
     companyId: number;
     stockSymbol: string;
     timeframe: string;
@@ -83,9 +78,7 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
     })) ?? [];
 
   const [currentRange, setCurrentRange] = useState<ChartRange>(ChartRange['1M']);
-  // const [chartData, setChartData] = useState<ICandlestickChartNode[]>(firstData);
 
-  // ToDo: (20250909 - Julian) get chart data from API
   useEffect(() => {
     switch (currentRange) {
       case ChartRange['1M']:
@@ -110,7 +103,7 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
   const rangeOption = Object.values(ChartRange);
   const changeColor = isPosition ? 'text-text-success' : 'text-text-error';
 
-  const rangeBtns = rangeOption.map((range) => {
+  const rangeButtons = rangeOption.map((range) => {
     const isActive = currentRange === range;
     const clickHandler = () => setCurrentRange(range);
 
@@ -131,48 +124,53 @@ const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({
     );
   });
 
-  return (
-    <div className="relative flex w-full flex-col">
-      {/* Info: (20250909 - Julian) chart meta data */}
-      <div className="absolute left-24px top-24px z-50 flex items-center gap-16px bg-surface-background px-4px text-sm font-medium text-text-secondary">
-        <p>
-          {t('business_detail:GRAPH_OPEN')}{' '}
-          <span className={changeColor}>{formatNumberWithCommas(open, true)}</span>
-        </p>
-        <p>
-          {t('business_detail:GRAPH_HIGH')}{' '}
-          <span className="text-text-success">{formatNumberWithCommas(high, true)}</span>
-        </p>
-        <p>
-          {t('business_detail:GRAPH_LOW')}{' '}
-          <span className="text-text-error">{formatNumberWithCommas(low, true)}</span>
-        </p>
-        <p>
-          {t('business_detail:GRAPH_CLOSE')}{' '}
-          <span className="text-text-success">{formatNumberWithCommas(close, true)}</span>
-        </p>
-        <div className={`flex items-center gap-4px ${changeColor}`}>
-          <IoTriangle size={8} className={isPosition ? '' : 'rotate-180'} />
+  if (success && payload) {
+    return (
+      <div className="relative flex w-full flex-col">
+        {/* Info: (20250909 - Julian) chart meta data */}
+        <div className="absolute left-24px top-24px z-50 flex items-center gap-16px bg-surface-background px-4px text-sm font-medium text-text-secondary">
           <p>
-            {change} ({changePercent}%)
+            {t('business_detail:GRAPH_OPEN')}{' '}
+            <span className={changeColor}>{formatNumberWithCommas(open, true)}</span>
+          </p>
+          <p>
+            {t('business_detail:GRAPH_HIGH')}{' '}
+            <span className="text-text-success">{formatNumberWithCommas(high, true)}</span>
+          </p>
+          <p>
+            {t('business_detail:GRAPH_LOW')}{' '}
+            <span className="text-text-error">{formatNumberWithCommas(low, true)}</span>
+          </p>
+          <p>
+            {t('business_detail:GRAPH_CLOSE')}{' '}
+            <span className="text-text-success">{formatNumberWithCommas(close, true)}</span>
+          </p>
+          <div className={`flex items-center gap-4px ${changeColor}`}>
+            <IoTriangle size={8} className={isPosition ? '' : 'rotate-180'} />
+            <p>
+              {change} ({changePercent}%)
+            </p>
+          </div>
+          <p>
+            {t('business_detail:GRAPH_VOLUME')}{' '}
+            <span className="text-text-success">{formatNumberWithCommas(volume)}</span>
           </p>
         </div>
-        <p>
-          {t('business_detail:GRAPH_VOLUME')}{' '}
-          <span className="text-text-success">{formatNumberWithCommas(volume)}</span>
-        </p>
+
+        {/* Info: (20250909 - Julian) candlestick chart */}
+        <CandlestickChart
+          candlestickData={chartData}
+          // volumeData={chartData.barGraphData}
+        />
+
+        {/* Info: (20250909 - Julian) chart range button */}
+        <div className="flex items-center justify-end gap-5px py-12px">{rangeButtons}</div>
       </div>
-
-      {/* Info: (20250909 - Julian) candlestick chart */}
-      <CandlestickChart
-        candlestickData={chartData}
-        // volumeData={chartData.barGraphData}
-      />
-
-      {/* Info: (20250909 - Julian) chart range button */}
-      <div className="flex items-center justify-end gap-5px py-12px">{rangeBtns}</div>
-    </div>
-  );
+    );
+  } else {
+    // ToDo: (20251007 - Julian) no data design
+    return <div className="flex flex-col items-center justify-center p-80px">no data</div>;
+  }
 };
 
 export default CandlestickChartSection;
