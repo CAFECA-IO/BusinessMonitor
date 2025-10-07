@@ -45,7 +45,7 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
   const crumbsItems = [
     { name: 'HOME', link: BM_URL.HOME },
     { name: 'BUSINESS_MONITOR', link: BM_URL.BUSINESS_MONITOR },
-    { name: businessName, link: '' }, // ToDo: (20250811 - Julian) 應改為 Business name
+    { name: businessName, link: '' },
   ];
 
   const onTabChange = (tab: TabBarItem) => {

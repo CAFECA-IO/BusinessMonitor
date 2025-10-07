@@ -55,7 +55,6 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
   const isShowLogo = logoUrl ? (
     <Image src={logoUrl} width={40} height={40} alt="business_avatar" />
   ) : (
-    // ToDo: (20250911 - Julian) Default Logo
     <div className="size-40px animate-pulse rounded-full bg-grey-100"></div>
   );
 

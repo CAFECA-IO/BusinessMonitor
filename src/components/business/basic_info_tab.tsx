@@ -37,13 +37,12 @@ const SkeletonBlock: React.FC<ISkeletonBlockProps> = ({ className }) => {
 };
 
 const BasicInfoTab: React.FC<IBasicInfoTabProps> = ({ businessId }) => {
-  const {
-    payload: companyData,
-    isLoading,
-    // ToDo: (20250915 - Julian) interface may change later
-  } = useApi<IBasicResponse>(APIName.GET_BASIC_INFO_BY_COMPANY_ID, {
-    params: { id: businessId },
-  });
+  const { payload: companyData, isLoading } = useApi<IBasicResponse>(
+    APIName.GET_BASIC_INFO_BY_COMPANY_ID,
+    {
+      params: { id: businessId },
+    }
+  );
 
   const isShowSkeleton = isLoading || !companyData;
 
