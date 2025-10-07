@@ -147,27 +147,6 @@ function useApi<Data>(apiName: IAPIName, options?: IAPIInput) {
     [apiConfig, options, handleError]
   );
 
-  // const fetchData: (input?: IAPIInput) => Promise<void> = useCallback(
-  //   async (input?: IAPIInput) => {
-  //     setIsLoading(true);
-
-  //     const apiPath = getAPIPath(apiConfig, input ?? {});
-  //     const apiMethod = apiConfig.method;
-
-  //     try {
-  //       const res = await fetch(apiPath, { method: apiMethod });
-  //       const result: IApiResponse<Data> = await res.json();
-  //       setResponse(result);
-  //     } catch (err) {
-  //       setError(err as Error);
-  //       setResponse(null);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   },
-  //   [apiName]
-  // );
-
   useEffect(() => {
     trigger(options);
   }, [apiConfig.name]);

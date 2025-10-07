@@ -2,10 +2,7 @@ import { i18nConfig } from 'i18n-config';
 import initTranslations from '@/lib/i18n';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { BM_URL } from '@/constants/url';
-import SearchArea from '@/components/common/search_area';
-import SearchResultList from '@/components/search/search_result_list';
-import Layout from '@/components/common/layout';
+import SearchResultPageBody from '@/components/search/search_result_page_body';
 
 // Info: (20250904 - Julian) 網頁標題 i18n
 export async function generateMetadata({
@@ -25,30 +22,10 @@ export async function generateStaticParams() {
 }
 
 export default function SearchingResultPage() {
-  const crumbsItems = [
-    { name: 'HOME', link: BM_URL.HOME },
-    { name: 'BUSINESS_MONITOR', link: BM_URL.BUSINESS_MONITOR },
-    { name: 'SEARCH', link: BM_URL.SEARCH },
-  ];
-
   return (
     // Info: (20250917 - Julian) 使用 Suspense 來包裹需要讀取搜尋參數 `useSearchParams()` 的元件，避免整個頁面進入客戶端渲染
     <Suspense fallback={<>...</>}>
-      <Layout
-        crumbsItems={crumbsItems}
-        pageBgColor="bg-surface-background"
-        className="items-center gap-60px px-80px pb-60px"
-      >
-        {/* Info: (20250804 - Julian) Search Area */}
-        <div className="w-3/4">
-          <SearchArea />
-        </div>
-
-        {/* Info: (20250804 - Julian) Search Result List */}
-        <div className="w-3/4">
-          <SearchResultList />
-        </div>
-      </Layout>
+      <SearchResultPageBody />
     </Suspense>
   );
 }
