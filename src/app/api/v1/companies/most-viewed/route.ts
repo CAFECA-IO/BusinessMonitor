@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     res.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     return res;
   } catch (err) {
+    console.error('[GET] /api/v1/companies/most-viewed', err);
     if (err instanceof AppError) return jsonFail(err.code, err.message);
     if (err instanceof ZodError) {
       return jsonFail(ApiCode.VALIDATION_ERROR, err.issues.map((i) => i.message).join('; '));

@@ -19,7 +19,7 @@ import {
 } from '@/repositories/company.detail.repo';
 import { AppError } from '@/lib/error';
 import { ApiCode } from '@/lib/status';
-import { CommentSort, MarketDataPayload, Timeframe } from '@/validators';
+import { CommentSort, type CompanyMarketQuery, type MarketDataPayload } from '@/validators';
 import { makePaginated } from '@/types/common';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
@@ -83,7 +83,6 @@ export async function getCompanyBasic(id: number) {
     flags,
   };
 
-  // Info: (20250819 - Tzuhan) 預設各卡片 10 筆
   const limit = 10;
   const [inv, scopes, hist, rel] = await Promise.all([
     listInvestors(id, limit, 0),
@@ -155,31 +154,29 @@ export async function likeCompanyComment(commentId: number) {
 }
 
 /**
- * Info: (20250922 - Tzuhan)  獲取公司的市場行情數據（重構後版本）
- * @param companyId 公司 ID
- * @param timeframe 時間維度 ('daily', 'weekly', 'monthly')
- * @returns 格式化後的市場數據
+ * Info: (20251002 - Tzuhan) [Corrected Version]
+ * 獲取公司的市場行情數據。此 service 層僅負責串接流程，將參數透傳給 repo 層。
+ * @param companyId - 公司 ID。
+ * @param query - API 查詢參數。
+ * @returns - 格式化後的市場數據。
  */
 export async function getCompanyMarketData(
   companyId: number,
-  query: {
-    timeframe: Timeframe;
-    startDate?: string;
-    endDate?: string;
-    period?: '1m' | '3m' | '6m' | '1y' | 'ytd' | 'max';
-  }
+  query: CompanyMarketQuery
 ): Promise<MarketDataPayload> {
-  // Info: (20250922 - Tzuhan) 1. 查詢公司對應的股票代碼
-  const { timeframe, startDate, endDate, period } = query;
   const stockSymbol = await findStockSymbolByCompanyId(companyId);
+  console.log(
+    `Fetching market data for companyId: ${companyId}, stockSymbol: ${stockSymbol?.symbol}, name: ${stockSymbol?.name}`
+  );
   if (!stockSymbol) {
     throw new AppError(ApiCode.NOT_FOUND, `找不到 ID 為 ${companyId} 的公司或其對應的股票代碼`);
   }
 
-  // Info: (20250922 - Tzuhan) 2. 取得市場價格數據
-  const prices = await getMarketPrices(stockSymbol.id, timeframe, startDate, endDate, period);
+  const prices = await getMarketPrices(stockSymbol.symbol, query);
 
-  // Info: (20250922 - Tzuhan) 3. 格式化為 API Response
+  /// Info: (20251002 - Tzuhan) 決定回應中的 timeframe 欄位值
+  const timeframeForPayload = query.from && query.to ? 'custom' : (query.timeframe ?? '3m');
+
   const formattedData = prices.map((p) => ({
     date: p.date.toISOString(),
     open: p.open.toNumber(),
@@ -192,7 +189,7 @@ export async function getCompanyMarketData(
   return {
     companyId,
     stockSymbol: stockSymbol.symbol,
-    timeframe,
+    timeframe: timeframeForPayload,
     data: formattedData,
   };
 }
