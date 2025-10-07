@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, Board } from '@prisma/client';
 import { format, subDays, startOfDay } from 'date-fns';
 import { parse } from 'csv-parse/sync';
 import iconv from 'iconv-lite';
@@ -9,13 +9,13 @@ import { z } from 'zod';
 const prisma = new PrismaClient();
 
 /**
- * Info: (20251003 - Tzuhan)
+ * Info: (20251007 - Tzuhan)
  * =================================================================
- * 1. 核心解析與匯入邏輯 (從 import_twse_daily.ts 整合而來)
+ * 1. 核心解析與匯入邏輯
  * =================================================================
  */
 
-// Info: (20251003 - Tzuhan) --- 用於資料驗證的 Zod Schema ---
+// Info: (20251007 - Tzuhan) --- Zod Schema，允許價格欄位為 null ---
 const DailyPriceRowSchema = z.object({
   market: z.literal('TWSE'),
   date: z.date(),
@@ -24,17 +24,17 @@ const DailyPriceRowSchema = z.object({
   tradeVolume: z.bigint().or(z.null()),
   tradeValue: z.string().or(z.null()).optional(),
   tradeCount: z.number().int().or(z.null()),
-  openPrice: z.string().optional(),
-  highPrice: z.string().optional(),
-  lowPrice: z.string().optional(),
-  closePrice: z.string().optional(),
+  openPrice: z.string().nullable(),
+  highPrice: z.string().nullable(),
+  lowPrice: z.string().nullable(),
+  closePrice: z.string().nullable(),
   changeSign: z.string().optional(),
-  changeAmount: z.string().optional(),
-  finalBidPrice: z.string().optional(),
+  changeAmount: z.string().nullable(),
+  finalBidPrice: z.string().nullable(),
   finalBidVolume: z.bigint().or(z.null()).optional(),
-  finalAskPrice: z.string().optional(),
+  finalAskPrice: z.string().nullable(),
   finalAskVolume: z.bigint().or(z.null()).optional(),
-  peRatio: z.string().optional(),
+  peRatio: z.string().nullable(),
 });
 
 type SummaryRow = {
@@ -46,7 +46,7 @@ type SummaryRow = {
   tradeCount?: number | null;
 };
 
-// Info: (20251003 - Tzuhan) --- 用於資料轉換的輔助函式 ---
+// Info: (20251007 - Tzuhan) --- 用於資料轉換的輔助函式 ---
 
 function rocToDate(str: string): Date | null {
   const m = str.match(/(\d{2,3})年(\d{2})月(\d{2})日/);
@@ -79,7 +79,11 @@ function normalizeSymbol(raw: string): string {
   return raw.replace(/^="?/, '').replace(/"?$/, '').trim();
 }
 
-// Info: (20251003 - Tzuhan) --- 核心 CSV 解析器 (已重構以提高可讀性) ---
+function classifyBoard(symbol: string): Board {
+  return /^\d{4}$/.test(symbol.trim()) ? Board.LISTED : Board.OTC;
+}
+
+// Info: (20251007 - Tzuhan) --- 核心 CSV 解析器 ---
 
 function parseTwseCsv(
   buffer: Buffer,
@@ -93,7 +97,6 @@ function parseTwseCsv(
   const lines = txt.split('\n');
   let date: Date | null = null;
 
-  // Info: (20251003 - Tzuhan) 1. 區塊分割：將檔案內容分割為 Summary 和 Price 兩個區塊
   const summaryLines: string[] = [];
   const priceLines: string[] = [];
   let currentBlock: 'summary' | 'price' | null = null;
@@ -119,11 +122,10 @@ function parseTwseCsv(
       priceLines.push(line);
       continue;
     }
-    if (line.includes('"說明:') || line.includes('ETF')) {
+    if (line.includes('"說明:') || line.includes('ETF') || line.includes('備註:')) {
       currentBlock = null;
       continue;
     }
-
     if (currentBlock === 'summary') {
       summaryLines.push(line);
     } else if (currentBlock === 'price') {
@@ -133,7 +135,6 @@ function parseTwseCsv(
 
   if (!date) throw new Error(`無法從檔案 ${path.basename(filePath)} 解析出交易日期。`);
 
-  // Info: (20251003 - Tzuhan) 2. 解析 Summary 區塊
   const summaryRows: SummaryRow[] = [];
   for (const line of summaryLines) {
     if (/^\d+\./.test(line) || line.startsWith('證券合計') || line.startsWith('總計')) {
@@ -152,7 +153,6 @@ function parseTwseCsv(
     }
   }
 
-  // Info: (20251003 - Tzuhan) 3. 解析 Price 區塊
   const priceRows: Array<z.infer<typeof DailyPriceRowSchema>> = [];
   if (priceLines.length > 1) {
     const records: string[][] = parse(priceLines.join('\n').replace(/=\s*"(.*?)"/g, '"$1"'), {
@@ -185,7 +185,7 @@ function parseTwseCsv(
 
     for (let r = 1; r < records.length; r++) {
       const row = records[r];
-      if (!row || !row[idx.symbol]) continue;
+      if (!row || !row[idx.symbol] || row[idx.symbol].includes('備註')) continue;
       const data = {
         market: 'TWSE' as const,
         date,
@@ -209,8 +209,9 @@ function parseTwseCsv(
       try {
         priceRows.push(DailyPriceRowSchema.parse(data));
       } catch (e) {
+        // Info: (20251007 - Tzuhan) 記錄解析失敗的行，但不中斷流程
         console.warn(
-          `[WARN] 解析檔案 ${path.basename(filePath)} 的某一行失敗: ${JSON.stringify(row)} -> ${(e as Error).message}`
+          `[WARN] 解析檔案 ${path.basename(filePath)} 的某一行因格式問題被跳過: ${JSON.stringify(row)} -> ${(e as Error).message}`
         );
       }
     }
@@ -218,9 +219,49 @@ function parseTwseCsv(
   return { date, summary: summaryRows, prices: priceRows };
 }
 
-async function importOneFile(filePath: string) {
+async function importOneFile(
+  filePath: string,
+  existingSymbols: Set<string>,
+  newSymbolLog: Set<string>
+) {
   const fileBuffer = fs.readFileSync(filePath);
   const { summary, prices } = parseTwseCsv(fileBuffer, filePath);
+
+  // Info: (20251007 - Tzuhan) --- 核心邏輯變更：找出新 Symbol 並動態建立 ---
+  const symbolsInFile = new Set(prices.map((p) => p.symbol));
+  const newSymbols = new Set<string>();
+  symbolsInFile.forEach((s) => {
+    if (!existingSymbols.has(s)) {
+      newSymbols.add(s);
+    }
+  });
+
+  if (newSymbols.size > 0) {
+    const newSymbolData = Array.from(newSymbols).map((symbol) => {
+      const priceData = prices.find((p) => p.symbol === symbol);
+      return {
+        symbol,
+        name: priceData?.name || 'N/A',
+        board: classifyBoard(symbol),
+        updated_at: new Date(),
+      };
+    });
+
+    await prisma.stockSymbol.createMany({
+      data: newSymbolData,
+      skipDuplicates: true,
+    });
+
+    // Info: (20251007 - Tzuhan) 更新記憶體中的 Set 並記錄到日誌
+    newSymbols.forEach((s) => {
+      existingSymbols.add(s);
+      newSymbolLog.add(s);
+    });
+    console.log(
+      `[INFO] 在 ${path.basename(filePath)} 中發現並新增了 ${newSymbols.size} 個股票代號。`
+    );
+  }
+
   if (prices.length > 0) {
     await prisma.marketDailyPrice.createMany({
       data: prices.map((p) => ({
@@ -260,7 +301,7 @@ async function importOneFile(filePath: string) {
     });
   }
   console.log(
-    `[OK] ${path.basename(filePath)} → ${prices.length} rows (prices), ${summary.length} rows (summary)`
+    `[OK] ${path.basename(filePath)} → 寫入 ${prices.length} 筆 (prices), ${summary.length} 筆 (summary)`
   );
 }
 
@@ -271,14 +312,12 @@ async function importOneFile(filePath: string) {
  * =================================================================
  */
 
-// Info: (20251003 - Tzuhan) --- 效能優化：一次性載入所有已存在的日期 ---
 async function loadExistingDates(): Promise<Set<string>> {
   console.log('🔍 正在從資料庫載入所有已存在的市場行情日期...');
   const dates = await prisma.marketDailyPrice.findMany({
     select: { date: true },
     distinct: ['date'],
   });
-  // Info: (20251003 - Tzuhan) 將日期轉換為 'YYYYMMDD' 格式以便快速比對
   const dateSet = new Set(dates.map((d) => format(d.date, 'yyyyMMdd')));
   console.log(`✅ 已載入 ${dateSet.size} 個已存在的日期。`);
   return dateSet;
@@ -296,48 +335,62 @@ function findCsvFiles(baseDir: string, fromDate: Date): string[] {
   const allFiles: string[] = [];
   const fromDateStr = format(fromDate, 'yyyyMMdd');
 
-  if (!fs.existsSync(baseDir)) return [];
-
-  for (const yearDir of fs.readdirSync(baseDir)) {
-    // Info: (20251003 - Tzuhan) 只處理年份大於等於起始年份的資料夾
-    if (!/^\d{4}$/.test(yearDir) || parseInt(yearDir, 10) < fromDate.getFullYear()) continue;
-    const fullYearPath = path.join(baseDir, yearDir);
-
-    if (fs.statSync(fullYearPath).isDirectory()) {
-      for (const file of fs.readdirSync(fullYearPath)) {
-        const fileDateStr = file.slice(0, 8);
-        // Info: (20251003 - Tzuhan) 直接比較 YYYYMMDD 字串，確保日期過濾完全正確
-        if (/^\d{8}\.csv$/i.test(file) && fileDateStr >= fromDateStr) {
-          allFiles.push(path.join(fullYearPath, file));
+  function walk(currentDir: string) {
+    if (!fs.existsSync(currentDir)) return;
+    try {
+      const entries = fs.readdirSync(currentDir);
+      for (const entry of entries) {
+        const fullPath = path.join(currentDir, entry);
+        try {
+          const stat = fs.statSync(fullPath);
+          if (stat.isDirectory()) {
+            walk(fullPath);
+          } else {
+            const fileDateStr = path.basename(entry).slice(0, 8);
+            if (/^\d{8}\.csv$/i.test(entry) && fileDateStr >= fromDateStr) {
+              allFiles.push(fullPath);
+            }
+          }
+        } catch (e) {
+          console.error(`[WARN] 無法讀取路徑屬性: ${fullPath}`, e);
         }
       }
+    } catch (e) {
+      console.error(`[WARN] 無法讀取資料夾: ${currentDir}`, e);
     }
   }
+
+  walk(baseDir);
   return allFiles.sort();
 }
 
-async function importDailyFiles(dataPath: string, fromDate: Date, existingDates: Set<string>) {
+async function importDailyFiles(
+  dataPath: string,
+  fromDate: Date,
+  existingDates: Set<string>,
+  existingSymbols: Set<string>
+) {
   console.log(`\n🔵 開始從 ${dataPath} 匯入市場行情檔案...`);
   console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 及之後的檔案。`);
 
   const files = findCsvFiles(dataPath, fromDate);
   if (files.length === 0) {
-    console.log('在指定路徑下找不到任何需要處理的新 .csv 檔案。');
-    return;
+    console.log('   在指定路徑下找不到任何需要處理的新 .csv 檔案。');
+    return new Set<string>(); // Info: (20251007 - Tzuhan) 回傳空的 Set
   }
-  console.log(`總共找到 ${files.length} 個可能需要處理的檔案。`);
+  console.log(`   總共找到 ${files.length} 個檔案準備處理。`);
 
+  const newSymbolLog = new Set<string>();
   let ok = 0,
     fail = 0;
+
   for (const f of files) {
     const fileDateStr = path.basename(f).slice(0, 8);
-    // Info: (20251003 - Tzuhan) 使用記憶體 Set 進行高效比對，避免資料庫查詢
     if (existingDates.has(fileDateStr)) {
-      console.log(`[SKIP] ${path.basename(f)} 的資料已存在於資料庫中。`);
       continue;
     }
     try {
-      await importOneFile(f);
+      await importOneFile(f, existingSymbols, newSymbolLog);
       ok++;
     } catch (e) {
       fail++;
@@ -345,30 +398,22 @@ async function importDailyFiles(dataPath: string, fromDate: Date, existingDates:
     }
   }
   console.log(`🟢 匯入完成。成功匯入 ${ok} 個新檔案, 失敗: ${fail} 個檔案。`);
+  return newSymbolLog;
 }
 
-async function auditNewSymbols(fromDate: Date, existingSymbols: Set<string>) {
-  console.log(`\n🔵 開始驗證 ${format(fromDate, 'yyyy-MM-dd')} 之後的新資料...`);
-  const newPriceEntries = await prisma.marketDailyPrice.findMany({
-    where: { date: { gte: fromDate } },
-    select: { symbol: true },
-    distinct: ['symbol'],
-  });
+// Info: (20251007 - Tzuhan) --- 新增：將新發現的 Symbol 寫入日誌檔案 ---
+function writeNewSymbolsLog(newSymbols: Set<string>) {
+  if (newSymbols.size === 0) return;
 
-  const missingSymbols = new Set<string>();
-  newPriceEntries.forEach((entry) => {
-    if (!existingSymbols.has(entry.symbol)) missingSymbols.add(entry.symbol);
-  });
-
-  if (missingSymbols.size > 0) {
-    console.warn(
-      `\n🟡 警告: 發現 ${missingSymbols.size} 個新的股票代號不存在於 StockSymbol 表中！`
-    );
-    console.warn('   建議您更新對照表並重新執行 `seed_stock_symbols` 以建立關聯。');
-    console.warn('   未知代號列表:', Array.from(missingSymbols).join(', '));
-  } else {
-    console.log(`🟢 資料驗證完成，所有新匯入的股票代號都已存在於 StockSymbol 表中。`);
+  const logDir = path.resolve(process.cwd(), 'logs');
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
   }
+  const logFile = path.join(logDir, 'new_symbols_to_backfill.log');
+  const content = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}] 發現 ${newSymbols.size} 個新代號:\n${Array.from(newSymbols).join('\n')}\n\n`;
+
+  fs.appendFileSync(logFile, content);
+  console.log(`\n📝 已將 ${newSymbols.size} 個新發現的股票代號記錄至 ${logFile}`);
 }
 
 /**
@@ -380,7 +425,6 @@ async function auditNewSymbols(fromDate: Date, existingSymbols: Set<string>) {
 async function main() {
   console.log('🚀 啟動常態化市場資料匯入與驗證任務...');
 
-  // Info: (20251003 - Tzuhan) --- 參數解析  ---
   const args = process.argv.slice(2);
   const parsedArgs: { [key: string]: string | boolean } = {};
   let targetPath: string | undefined;
@@ -393,15 +437,12 @@ async function main() {
       if (value !== undefined) {
         parsedArgs[cleanKey] = value;
       } else if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
-        // Info: (20251003 - Tzuhan) 處理 --key value 這種格式
         parsedArgs[cleanKey] = args[i + 1];
-        i++; // Info: (20251003 - Tzuhan) 跳過下一個值，因為它已經被當作參數值了
+        i++;
       } else {
-        // Info: (20251003 - Tzuhan) 處理 --flag 這種布林旗標
         parsedArgs[cleanKey] = true;
       }
     } else if (!targetPath) {
-      // Info: (20251003 - Tzuhan) 第一個不以 '--' 開頭的參數被視為 targetPath
       targetPath = arg;
     }
   }
@@ -414,7 +455,6 @@ async function main() {
   try {
     if (fromDateRaw) {
       let dateStr = fromDateRaw;
-      // Info: (20251003 - Tzuhan) 支援 YYYYMMDD 格式
       if (/^\d{8}$/.test(dateStr)) {
         dateStr = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
       }
@@ -423,9 +463,16 @@ async function main() {
       }
       fromDate = startOfDay(new Date(dateStr));
     } else if (fromMonthRaw) {
-      const [year, month] = fromMonthRaw.split('-').map(Number);
+      let year: number | undefined;
+      let month: number | undefined;
+      if (/^\d{6}$/.test(fromMonthRaw)) {
+        year = parseInt(fromMonthRaw.slice(0, 4), 10);
+        month = parseInt(fromMonthRaw.slice(4, 6), 10);
+      } else if (/^\d{4}-\d{2}$/.test(fromMonthRaw)) {
+        [year, month] = fromMonthRaw.split('-').map(Number);
+      }
       if (!year || !month || month < 1 || month > 12) {
-        throw new Error('❌ 錯誤: --from-month 格式需為 YYYY-MM');
+        throw new Error('❌ 錯誤: --from-month 格式需為 YYYY-MM 或 YYYYMM');
       }
       fromDate = new Date(year, month - 1, 1);
     } else if (fromYearRaw) {
@@ -450,16 +497,33 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`資料來源路徑: ${targetPath}`);
-  console.log(`將處理 ${format(fromDate, 'yyyy-MM-dd')} 之後的資料...`);
+  console.log(`   資料來源路徑: ${targetPath}`);
+  console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 之後的資料...`);
 
   try {
     const [existingDates, existingSymbols] = await Promise.all([
       loadExistingDates(),
       loadExistingSymbols(),
     ]);
-    await importDailyFiles(targetPath, fromDate, existingDates);
-    await auditNewSymbols(fromDate, existingSymbols);
+    const newSymbolsFound = await importDailyFiles(
+      targetPath,
+      fromDate,
+      existingDates,
+      existingSymbols
+    );
+
+    if (newSymbolsFound.size > 0) {
+      writeNewSymbolsLog(newSymbolsFound);
+      console.warn(`\n🟡 警告: 發現 ${newSymbolsFound.size} 個新的股票代號！`);
+      console.warn('   這些代號已被自動新增至 StockSymbol 表，但尚未關聯公司。');
+      console.warn(
+        '   請更新您的公司對照表，並執行 `npx tsx scripts/003_backfill_company_ids.ts <path/to/mapping_data>` 以完成關聯。'
+      );
+      console.warn('   新代號列表:', Array.from(newSymbolsFound).join(', '));
+    } else {
+      console.log(`\n🟢 資料驗證完成，沒有發現新的股票代號。`);
+    }
+
     console.log('\n✅✅✅ 市場資料匯入與驗證任務已成功完成！ ✅✅✅');
   } catch (error) {
     console.error('\n❌❌❌ 任務過程中發生嚴重錯誤，已中斷。 ❌❌❌', error);
