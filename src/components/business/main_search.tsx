@@ -18,7 +18,7 @@ const MainSearch: React.FC = () => {
       </div>
 
       {/* Info: (20250904 - Julian) Search Area */}
-      <SearchArea />
+      <SearchArea isShowTags />
     </div>
   );
 };

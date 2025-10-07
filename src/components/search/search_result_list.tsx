@@ -26,7 +26,7 @@ const SearchResultList: React.FC = () => {
     success,
     payload: searchResult,
     isLoading,
-    refetch,
+    trigger,
   } = useApi<IPaginated<ICompanyCard>>(APIName.LIST_SEARCHED_BUSINESSES, {
     query: apiQuery,
   });
@@ -42,7 +42,7 @@ const SearchResultList: React.FC = () => {
 
   useEffect(() => {
     // Info: (20250917 - Julian) 當 keyword 或 page 改變時，重新取得資料
-    refetch({ query: apiQuery });
+    trigger({ query: apiQuery });
   }, [keyword, page]);
 
   const totalPages = searchResult ? searchResult.pages : 0;

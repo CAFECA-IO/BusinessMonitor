@@ -2,6 +2,7 @@ import React from 'react';
 import Navbar from '@/components/common/navbar';
 import Footer from '@/components/common/footer';
 import Breadcrumb from '@/components/common/breadcrumb';
+import SearchArea from '@/components/common/search_area';
 import { IBreadcrumbItem } from '@/interfaces/breadcrumb';
 
 interface ILayoutProps {
@@ -34,12 +35,7 @@ const Layout: React.FC<ILayoutProps> = ({
         {isShowCrumbs && (
           <div className="flex items-center justify-between px-80px">
             <Breadcrumb items={crumbsItems} />
-            {isSearchBar && (
-              <div className="flex items-center">
-                {/* Info: (20250805 - Julian) Placeholder for Search Bar Component */}
-                <input type="text" placeholder="Search..." className="rounded border px-3 py-2" />
-              </div>
-            )}
+            {isSearchBar && <SearchArea />}
           </div>
         )}
 

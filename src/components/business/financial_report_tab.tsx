@@ -49,6 +49,7 @@ const FinancialReportTab: React.FC = () => {
         key={report}
         type="button"
         onClick={handleClick}
+        disabled={isSelected}
         className={`${isSelected ? 'border-text-brand text-text-brand' : 'border-text-secondary text-text-secondary'} px-70px group flex flex-col items-center gap-16px rounded-radius-m border py-24px text-sm font-medium hover:border-button-primary-hover hover:text-button-primary-hover`}
       >
         <div className="relative shrink-0">
@@ -86,7 +87,7 @@ const FinancialReportTab: React.FC = () => {
       {/* Info: (20250901 - Julian) Report Tabs */}
       <div className="grid grid-cols-6 gap-8px">{reportSelections}</div>
 
-      {/* ToDo: (20250901 - Julian) Developing */}
+      {/* Info: (20251007 - Julian) Date Picker */}
       <DatePicker
         label={t('business_detail:REPORT_PERIOD')}
         pickerType={DatePickerType.PERIOD}

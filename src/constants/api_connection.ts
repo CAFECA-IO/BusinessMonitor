@@ -1,15 +1,8 @@
 import { IAPIConfig, IAPIName, IHttpMethod } from '@/interfaces/api_connection';
+import { HttpMethod } from '@/constants/http_method';
 
 const apiVersion = 'v1';
 const apiPrefix = `/api/${apiVersion}`;
-
-export enum HttpMethod {
-  GET = 'GET',
-  POST = 'POST',
-  PUT = 'PUT',
-  DELETE = 'DELETE',
-  PATCH = 'PATCH',
-}
 
 export enum APIName {
   LIST_NEW_BUSINESSES = 'LIST_NEW_BUSINESSES',

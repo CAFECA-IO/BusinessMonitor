@@ -39,7 +39,6 @@ export const metadata: Metadata = {
   icons: {
     icon: '/logos/cafeca_icon.svg',
   },
-  // ToDo: (20250805 - Julian) Add Open Graph metadata
   openGraph: {
     title: '企業觀測站',
     description:
