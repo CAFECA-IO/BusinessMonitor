@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
 import { FiCalendar } from 'react-icons/fi';
 import { timestampToString } from '@/lib/common';
@@ -91,6 +92,8 @@ const DatePicker: React.FC<IDatePickerProps> = ({
 }) => {
   const today = new Date(); // Info: (20250904 - Julian) 取得今天日期
 
+  const { t } = useTranslation(['business_detail']);
+
   const {
     targetRef: dateRef,
     componentVisible: isOpenDatePicker,
@@ -137,13 +140,17 @@ const DatePicker: React.FC<IDatePickerProps> = ({
   const dateStr = `${timestampToString(selectedPeriod.startTimestamp).formattedDate}`;
   const periodStr = `${timestampToString(selectedPeriod.startTimestamp).formattedDate} to ${timestampToString(selectedPeriod.endTimestamp).formattedDate}`;
   const bannerStr = pickerType === DatePickerType.DATE ? dateStr : periodStr;
+  const placeholder =
+    pickerType === DatePickerType.DATE
+      ? t('date_picker:SELECT_DATE')
+      : t('date_picker:SELECT_PERIOD');
 
   const showingStr =
-    selectedPeriod.startTimestamp && selectedPeriod.endTimestamp ? bannerStr : 'YYYY-MM-DD';
+    selectedPeriod.startTimestamp && selectedPeriod.endTimestamp ? bannerStr : placeholder;
 
   // Info: (20250904 - Julian) 月/年
   const monthStr = MONTH_LIST[selectedMonth - 1];
-  const formattedMonth = monthStr.length > 3 ? `${monthStr.slice(0, 3)}.` : monthStr;
+  const formattedMonth = t(`date_picker:ABBR_${monthStr.slice(0, 3).toUpperCase()}`);
   const monthAndYearStr = `${formattedMonth} ${selectedYear}`;
 
   const toggleDatePicker = () => setOpenDatePicker((prev) => !prev);
@@ -240,7 +247,7 @@ const DatePicker: React.FC<IDatePickerProps> = ({
   // Info: (20250904 - Julian) 星期標頭
   const weekHeader = WEEK_LIST.map((day) => (
     <p key={day} className="font-bold text-text-note">
-      {day.slice(0, 1)}
+      {t(`date_picker:ABBR_${day.slice(0, 3).toUpperCase()}`)}
     </p>
   ));
 
@@ -301,7 +308,7 @@ const DatePicker: React.FC<IDatePickerProps> = ({
               onClick={clearDate}
               className="text-xs font-bold text-text-secondary hover:text-text-brand"
             >
-              Clear
+              {t('date_picker:CLEAR')}
             </button>
           </div>
         </div>
