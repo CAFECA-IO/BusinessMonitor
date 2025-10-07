@@ -89,7 +89,7 @@ export const companyCardSchema = z.object({
 export type CompanyCard = z.infer<typeof companyCardSchema>;
 
 /* =================================================================
- * Info: (20251002 - Tzuhan) Market API (/companies/:id/market) - 最終版
+ * Info: (20251007 - Tzuhan) : Market API (/companies/:id/market) - 擴充版
  * ================================================================= */
 
 export const companyMarketQuerySchema = z
@@ -129,10 +129,26 @@ const marketDataPointSchema = z.object({
   volume: bigIntStringSchema,
 });
 
+// Info: (20251007 - Tzuhan) 【新增】彙總數據 (Summary) 的 Schema
+export const marketSummaryPayloadSchema = z.object({
+  open: z.number().nullable(),
+  low: z.number().nullable(),
+  high: z.number().nullable(),
+  fiftyTwoWeekHigh: z.number().nullable(),
+  fiftyTwoWeekLow: z.number().nullable(),
+  avgVolume3Month: bigIntStringSchema.nullable(),
+  sharesOutstanding: bigIntStringSchema.nullable(),
+  mktCap: decimalStringSchema.nullable(),
+  divYield: decimalStringSchema.nullable(),
+});
+export type MarketSummaryPayload = z.infer<typeof marketSummaryPayloadSchema>;
+
+// Info: (20251007 - Tzuhan) 【更新】主要的 Payload Schema，加入 summary
 const marketDataPayloadSchema = z.object({
   companyId: z.number(),
   stockSymbol: z.string(),
   timeframe: z.enum(['1d', '1w', '1m', '3m', '6m', '1y', 'ytd', 'all', 'custom']),
+  summary: marketSummaryPayloadSchema,
   data: z.array(marketDataPointSchema),
 });
 export type MarketDataPayload = z.infer<typeof marketDataPayloadSchema>;
@@ -149,12 +165,6 @@ export type CompaniesSearchQuery = z.infer<typeof companiesSearchQuerySchema>;
 export const paginatedCompanyCardSchema = z
   .object({ items: z.array(companyCardSchema) })
   .and(paginationSchema);
-export type CompaniesSearchPayload = z.infer<typeof paginatedCompanyCardSchema>;
-
-export const companiesSearchResponseSchema = apiResponseSchema(paginatedCompanyCardSchema);
-export type CompaniesSearchResponse = z.infer<typeof companiesSearchResponseSchema>;
-
-// Info: (20250922 - Tzuhan)  --- Autocomplete API ---
 export const autocompleteQuerySchema = z.object({
   q: z.string(),
   limit: z.coerce.number().int().min(1).max(20).default(10),

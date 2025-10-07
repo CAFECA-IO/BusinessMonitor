@@ -36,21 +36,21 @@ export async function repoFetchTrends(
   const stockSymbols = Array.from(companyIdToSymbolMap.values());
   if (stockSymbols.length === 0) return [];
 
-  // Info: (20251003 - Tzuhan) 步驟 2: 使用 symbol 進行分區查詢，獲取每支股票最新的 N 筆收盤價
+  // Info: (20251007 - Tzuhan) 步驟 2: 執行 SQL 查詢
   const prices = await db.$queryRaw<TrendPriceRow[]>`
     WITH ranked AS (
       SELECT
-        mdp.symbol,
+        mdp.symbol AS "stockSymbol",
         mdp.date,
         mdp.close_price AS "close",
         ROW_NUMBER() OVER (PARTITION BY mdp.symbol ORDER BY mdp.date DESC) AS rn
       FROM market_daily_price mdp
       WHERE mdp.symbol IN (${Prisma.join(stockSymbols)}) AND mdp.close_price IS NOT NULL
     )
-    SELECT "symbol", "date", "close"
+    SELECT "stockSymbol", "date", "close"
     FROM ranked
     WHERE rn <= ${perCompanyLimit}
-    ORDER BY "symbol", "date" ASC;
+    ORDER BY "stockSymbol", "date" ASC;
   `;
 
   // Info: (20251003 - Tzuhan) 步驟 3: 將查詢結果轉換為最終的 TrendRow[] 格式
@@ -76,6 +76,7 @@ export async function repoFetchFlags(db: Db, companyIds: number[]): Promise<Flag
   `;
 }
 
+/** Info: (20250820 - Tzuhan) Company Card 所需的基本欄位 */
 export type CompanyCardBaseRow = {
   id: number;
   name: string;
