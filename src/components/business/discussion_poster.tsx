@@ -30,7 +30,7 @@ const DiscussionPoster: React.FC = () => {
           value={inputValue}
           onChange={handleInputChange}
           placeholder={t('business_detail:POSTING_INPUT_PLACEHOLDER')}
-          className="flex-1 text-base font-normal text-text-primary placeholder:text-text-note"
+          className="flex-1 text-base font-normal text-text-primary outline-none placeholder:text-text-note"
         />
         <button type="button" className="text-text-note hover:text-button-accent-hover">
           <PiPaperPlaneTiltBold size={20} />

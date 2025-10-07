@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FiSearch } from 'react-icons/fi';
@@ -13,6 +14,7 @@ interface ISearchAreaProps {
 const SearchArea: React.FC<ISearchAreaProps> = ({ isShowTags }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation(['search_page']);
 
   // ToDo: (20250917 - Julian) Get tags from API
   const dummyTag = ['Business'];
@@ -70,8 +72,8 @@ const SearchArea: React.FC<ISearchAreaProps> = ({ isShowTags }) => {
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={enterPressHandler}
-          className="flex-1 bg-transparent placeholder:text-text-note"
-          placeholder="Enter business name or business ID"
+          className="flex-1 bg-transparent outline-none placeholder:text-text-note"
+          placeholder={t('search_page:SEARCH_AREA_PLACEHOLDER') as string}
         />
       </div>
 

@@ -39,7 +39,12 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
 
   const isPositive = numChangePct >= 0;
   const lineColor = isPositive ? '#3DD08C' : '#FF5959';
-  const changeColor = isPositive ? 'text-text-success' : 'text-text-error';
+  const changeColor =
+    graphData.length === 0
+      ? 'text-text-secondary'
+      : isPositive
+        ? 'text-text-success'
+        : 'text-text-error';
 
   const changeSign = isPositive ? (
     <IoTriangle size={8} />
