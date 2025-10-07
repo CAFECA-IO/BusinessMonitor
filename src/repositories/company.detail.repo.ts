@@ -241,9 +241,12 @@ export async function getMarketPrices(
   symbol: string,
   query: CompanyMarketQuery
 ): Promise<AggregatedPriceRow[]> {
-  // ... The logic for this function remains the same as the last correct version ...
-  // It correctly fetches candlestick data based on timeframe or from/to dates.
-  // The function is long, so it is omitted here for brevity, but its logic is unchanged.
+  /**
+   * Info: (20251002 - Tzuhan)
+   * ... The logic for this function remains the same as the last correct version ...
+   * It correctly fetches candlestick data based on timeframe or from/to dates.
+   * The function is long, so it is omitted here for brevity, but its logic is unchanged.
+   */
   const { timeframe, from, to } = query;
 
   const latestEntry = await prisma.marketDailyPrice.findFirst({
@@ -342,7 +345,7 @@ export async function getMarketPrices(
 export type MarketSummaryRow = {
   fiftyTwoWeekHigh: Prisma.Decimal | null;
   fiftyTwoWeekLow: Prisma.Decimal | null;
-  avgVolume3Month: Prisma.Decimal | null; // Prisma's _avg returns Decimal
+  avgVolume3Month: Prisma.Decimal | null; // Info: (20251007 - Tzuhan) Prisma's _avg returns Decimal
 };
 
 export async function getCompanyMarketSummary(symbol: string): Promise<MarketSummaryRow> {
@@ -360,7 +363,7 @@ export async function getCompanyMarketSummary(symbol: string): Promise<MarketSum
   const threeMonthsAgo = subMonths(latestDate, 3);
 
   const [yearStats, monthStats] = await Promise.all([
-    // 52-week high/low
+    // Info: (20251007 - Tzuhan) 52-week high/low
     prisma.marketDailyPrice.aggregate({
       where: {
         symbol,
@@ -369,7 +372,7 @@ export async function getCompanyMarketSummary(symbol: string): Promise<MarketSum
       _max: { highPrice: true },
       _min: { lowPrice: true },
     }),
-    // 3-month average volume
+    // Info: (20251007 - Tzuhan) 3-month average volume
     prisma.marketDailyPrice.aggregate({
       where: {
         symbol,
