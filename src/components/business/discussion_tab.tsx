@@ -245,7 +245,7 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
                 placeholder={t('business_detail:SEARCH_COMMENT_INPUT_PLACEHOLDER')}
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="flex-1 text-text-primary placeholder:text-text-note"
+                className="flex-1 text-text-primary outline-none placeholder:text-text-note"
               />
             </div>
             {/* Info: (20250903 - Julian) Sorting */}
