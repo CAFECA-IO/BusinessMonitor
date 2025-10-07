@@ -22,24 +22,33 @@ const jost = Jost({
 });
 
 export const metadata: Metadata = {
-  title: 'CAFECA',
+  title: '企業觀測站',
   description:
-    'CAFECA is a decentralized identity verification platform that allows you to own and control your identity without relying on third parties.',
+    '提供上市、上櫃及興櫃公司之重要資訊，涵蓋財務報告、重大訊息與股東會資料，協助投資人快速掌握公司動態與市場趨勢，同時亦揭露未公開發行公司的相關資訊。',
   authors: [{ name: 'CAFECA Team' }],
   keywords: [
-    'CAFECA',
-    'Decentralized Identity',
-    'Identity Verification',
-    'Zero-Knowledge Proof',
-    'FIDO2 Protocol',
-    'OAuth2',
-    'Privacy Protection',
+    '企業觀測站',
+    '財務報告',
+    '股東會資料',
+    '投資人服務',
+    '市場趨勢',
+    '企業透明度',
+    '投資決策',
+    '財經資訊',
   ],
   icons: {
     icon: '/logos/cafeca_icon.svg',
   },
   // ToDo: (20250805 - Julian) Add Open Graph metadata
-  // openGraph: {},
+  openGraph: {
+    title: '企業觀測站',
+    description:
+      '提供上市、上櫃及興櫃公司之重要資訊，涵蓋財務報告、重大訊息與股東會資料，協助投資人快速掌握公司動態與市場趨勢，同時亦揭露未公開發行公司的相關資訊。',
+    url: 'https://cafeca.io/',
+    siteName: '企業觀測站',
+    locale: 'zh_TW',
+    type: 'website',
+  },
 };
 
 interface IRootLayoutProps {
