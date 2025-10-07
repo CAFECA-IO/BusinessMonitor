@@ -310,6 +310,17 @@ async function importOneFile(
  * =================================================================
  */
 
+async function loadExistingDates(): Promise<Set<string>> {
+  console.log('🔍 正在從資料庫載入所有已存在的市場行情日期...');
+  const dates = await prisma.marketDailyPrice.findMany({
+    select: { date: true },
+    distinct: ['date'],
+  });
+  const dateSet = new Set(dates.map((d) => format(d.date, 'yyyyMMdd')));
+  console.log(`✅ 已載入 ${dateSet.size} 個已存在的日期。`);
+  return dateSet;
+}
+
 async function loadExistingSymbols(): Promise<Set<string>> {
   console.log('🔍 正在從資料庫載入所有已知的股票代號...');
   const symbols = await prisma.stockSymbol.findMany({ select: { symbol: true } });
@@ -351,7 +362,12 @@ function findCsvFiles(baseDir: string, fromDate: Date): string[] {
   return allFiles.sort();
 }
 
-async function importDailyFiles(dataPath: string, fromDate: Date, existingSymbols: Set<string>) {
+async function importDailyFiles(
+  dataPath: string,
+  fromDate: Date,
+  existingDates: Set<string>,
+  existingSymbols: Set<string>
+) {
   console.log(`\n🔵 開始從 ${dataPath} 匯入市場行情檔案...`);
   console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 及之後的檔案。`);
 
@@ -367,6 +383,10 @@ async function importDailyFiles(dataPath: string, fromDate: Date, existingSymbol
     fail = 0;
 
   for (const f of files) {
+    const fileDateStr = path.basename(f).slice(0, 8);
+    if (existingDates.has(fileDateStr)) {
+      continue;
+    }
     try {
       // Info: (20251007 - Tzuhan) 核心修正：移除日期檢查，總是處理檔案
       await importOneFile(f, existingSymbols, newSymbolLog);
@@ -480,8 +500,16 @@ async function main() {
 
   try {
     // Info: (20251007 - Tzuhan) 核心修正：不再需要 loadExistingDates
-    const existingSymbols = await loadExistingSymbols();
-    const newSymbolsFound = await importDailyFiles(targetPath, fromDate, existingSymbols);
+    const [existingDates, existingSymbols] = await Promise.all([
+      loadExistingDates(),
+      loadExistingSymbols(),
+    ]);
+    const newSymbolsFound = await importDailyFiles(
+      targetPath,
+      fromDate,
+      existingDates,
+      existingSymbols
+    );
 
     if (newSymbolsFound.size > 0) {
       writeNewSymbolsLog(newSymbolsFound);
