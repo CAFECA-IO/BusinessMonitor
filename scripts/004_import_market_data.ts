@@ -227,7 +227,6 @@ async function importOneFile(
   const fileBuffer = fs.readFileSync(filePath);
   const { summary, prices } = parseTwseCsv(fileBuffer, filePath);
 
-  // Info: (20251007 - Tzuhan) --- 核心邏輯變更：找出新 Symbol 並動態建立 ---
   const symbolsInFile = new Set(prices.map((p) => p.symbol));
   const newSymbols = new Set<string>();
   symbolsInFile.forEach((s) => {
@@ -252,7 +251,6 @@ async function importOneFile(
       skipDuplicates: true,
     });
 
-    // Info: (20251007 - Tzuhan) 更新記憶體中的 Set 並記錄到日誌
     newSymbols.forEach((s) => {
       existingSymbols.add(s);
       newSymbolLog.add(s);
@@ -301,27 +299,16 @@ async function importOneFile(
     });
   }
   console.log(
-    `[OK] ${path.basename(filePath)} → 寫入 ${prices.length} 筆 (prices), ${summary.length} 筆 (summary)`
+    `[OK] ${path.basename(filePath)} → 寫入/更新 ${prices.length} 筆 (prices), ${summary.length} 筆 (summary)`
   );
 }
 
 /**
- * Info: (20251003 - Tzuhan)
+ * Info: (20251007 - Tzuhan)
  * =================================================================
  * 2. 全新整合後的匯入與驗證流程
  * =================================================================
  */
-
-async function loadExistingDates(): Promise<Set<string>> {
-  console.log('🔍 正在從資料庫載入所有已存在的市場行情日期...');
-  const dates = await prisma.marketDailyPrice.findMany({
-    select: { date: true },
-    distinct: ['date'],
-  });
-  const dateSet = new Set(dates.map((d) => format(d.date, 'yyyyMMdd')));
-  console.log(`✅ 已載入 ${dateSet.size} 個已存在的日期。`);
-  return dateSet;
-}
 
 async function loadExistingSymbols(): Promise<Set<string>> {
   console.log('🔍 正在從資料庫載入所有已知的股票代號...');
@@ -364,19 +351,14 @@ function findCsvFiles(baseDir: string, fromDate: Date): string[] {
   return allFiles.sort();
 }
 
-async function importDailyFiles(
-  dataPath: string,
-  fromDate: Date,
-  existingDates: Set<string>,
-  existingSymbols: Set<string>
-) {
+async function importDailyFiles(dataPath: string, fromDate: Date, existingSymbols: Set<string>) {
   console.log(`\n🔵 開始從 ${dataPath} 匯入市場行情檔案...`);
   console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 及之後的檔案。`);
 
   const files = findCsvFiles(dataPath, fromDate);
   if (files.length === 0) {
     console.log('   在指定路徑下找不到任何需要處理的新 .csv 檔案。');
-    return new Set<string>(); // Info: (20251007 - Tzuhan) 回傳空的 Set
+    return new Set<string>();
   }
   console.log(`   總共找到 ${files.length} 個檔案準備處理。`);
 
@@ -385,11 +367,8 @@ async function importDailyFiles(
     fail = 0;
 
   for (const f of files) {
-    const fileDateStr = path.basename(f).slice(0, 8);
-    if (existingDates.has(fileDateStr)) {
-      continue;
-    }
     try {
+      // Info: (20251007 - Tzuhan) 核心修正：移除日期檢查，總是處理檔案
       await importOneFile(f, existingSymbols, newSymbolLog);
       ok++;
     } catch (e) {
@@ -397,11 +376,10 @@ async function importDailyFiles(
       console.error(`[FAIL] 處理檔案 ${path.basename(f)} 失敗: ${(e as Error).message}`);
     }
   }
-  console.log(`🟢 匯入完成。成功匯入 ${ok} 個新檔案, 失敗: ${fail} 個檔案。`);
+  console.log(`🟢 匯入完成。成功處理 ${ok} 個檔案, 失敗: ${fail} 個檔案。`);
   return newSymbolLog;
 }
 
-// Info: (20251007 - Tzuhan) --- 新增：將新發現的 Symbol 寫入日誌檔案 ---
 function writeNewSymbolsLog(newSymbols: Set<string>) {
   if (newSymbols.size === 0) return;
 
@@ -417,7 +395,7 @@ function writeNewSymbolsLog(newSymbols: Set<string>) {
 }
 
 /**
- * Info: (20251003 - Tzuhan)
+ * Info: (20251007 - Tzuhan)
  * =================================================================
  * 3. 指令碼主程式 (CLI Entrypoint)
  * =================================================================
@@ -501,16 +479,9 @@ async function main() {
   console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 之後的資料...`);
 
   try {
-    const [existingDates, existingSymbols] = await Promise.all([
-      loadExistingDates(),
-      loadExistingSymbols(),
-    ]);
-    const newSymbolsFound = await importDailyFiles(
-      targetPath,
-      fromDate,
-      existingDates,
-      existingSymbols
-    );
+    // Info: (20251007 - Tzuhan) 核心修正：不再需要 loadExistingDates
+    const existingSymbols = await loadExistingSymbols();
+    const newSymbolsFound = await importDailyFiles(targetPath, fromDate, existingSymbols);
 
     if (newSymbolsFound.size > 0) {
       writeNewSymbolsLog(newSymbolsFound);
