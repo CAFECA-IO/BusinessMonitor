@@ -70,6 +70,7 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
   return (
     <Layout
       crumbsItems={crumbsItems}
+      isSearchBar
       pageBgColor="bg-surface-background"
       className="gap-40px px-80px pb-120px"
     >

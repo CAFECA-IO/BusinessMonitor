@@ -26,7 +26,7 @@ const SearchResultPageBody: React.FC = () => {
     >
       {/* Info: (20250804 - Julian) Search Area */}
       <div className="w-3/4">
-        <SearchArea />
+        <SearchArea isShowTags />
       </div>
 
       {/* Info: (20250804 - Julian) Search Result List */}

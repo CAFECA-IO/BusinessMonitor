@@ -6,21 +6,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FiSearch } from 'react-icons/fi';
 import { BM_URL } from '@/constants/url';
 
-const SearchArea: React.FC = () => {
+interface ISearchAreaProps {
+  isShowTags?: boolean;
+}
+
+const SearchArea: React.FC<ISearchAreaProps> = ({ isShowTags }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // ToDo: (20250917 - Julian) Get tags from API
-  const dummyTag = [
-    'Business',
-    'Search',
-    'Input',
-    'Component',
-    'Tag',
-    'Generic',
-    'Example',
-    'Demo',
-  ];
+  const dummyTag = ['Business'];
 
   const tagData = dummyTag;
 
@@ -81,7 +76,7 @@ const SearchArea: React.FC = () => {
       </div>
 
       {/* Info: (20250804 - Julian) Search Tags */}
-      <div className="flex flex-wrap items-center gap-12px">{tags}</div>
+      {isShowTags && <div className="flex flex-wrap items-center gap-12px">{tags}</div>}
     </div>
   );
 };
