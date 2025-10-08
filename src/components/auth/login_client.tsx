@@ -26,25 +26,6 @@ const StatusDisplay = ({ status, error }: { status: string; error: string | null
   </div>
 );
 
-const CafecaLogo = () => (
-  <svg
-    className="size-12 text-purple-600"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
-      fill="currentColor"
-    />
-    <path
-      d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"
-      fill="currentColor"
-      opacity="0.3"
-    />
-  </svg>
-);
-
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('準備登入...');
@@ -102,42 +83,43 @@ export default function LoginClient() {
   }, [router, isFidoAvailable]);
 
   return (
-    <div className="w-full max-w-xl px-4 sm:px-0">
-      <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-lg sm:p-12">
-        <CafecaLogo />
-        <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-          登入您的 Digital ID
-        </h1>
-        <p className="mt-2 text-gray-500">使用已註冊的 Passkey 快速登入</p>
+    <div className="flex w-full grow flex-col items-center justify-center p-4">
+      <div className="w-full max-w-xl">
+        <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-lg sm:p-12">
+          <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+            登入您的 Digital ID
+          </h1>
+          <p className="mt-2 text-gray-500">使用已註冊的 Passkey 快速登入</p>
 
-        <div className="mt-10 w-full space-y-4 sm:max-w-sm">
-          <button
-            onClick={handleLogin}
-            disabled={isLoading || !isFidoAvailable}
-            className="w-full rounded-lg bg-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
-          >
-            {isLoading ? '處理中...' : '使用 Passkey 登入'}
-          </button>
-          <Link
-            href="/auth/add-device"
-            className="block w-full rounded-lg bg-gray-700 px-5 py-3.5 text-center text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-gray-800"
-          >
-            在新裝置上登入
-          </Link>
+          <div className="mt-10 w-full space-y-4 sm:max-w-sm">
+            <button
+              onClick={handleLogin}
+              disabled={isLoading || !isFidoAvailable}
+              className="w-full rounded-lg bg-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
+            >
+              {isLoading ? '處理中...' : '使用 Passkey 登入'}
+            </button>
+            <Link
+              href="/auth/add-device"
+              className="block w-full rounded-lg bg-gray-700 px-5 py-3.5 text-center text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-gray-800"
+            >
+              在新裝置上登入
+            </Link>
+          </div>
+          <p className="mt-8 text-center text-sm text-gray-500">
+            還沒有 Digital ID?{' '}
+            <Link
+              href="/auth/signup"
+              className="font-semibold leading-6 text-purple-600 hover:text-purple-500 hover:underline"
+            >
+              立即建立一個
+            </Link>
+          </p>
         </div>
-        <p className="mt-8 text-center text-sm text-gray-500">
-          還沒有 Digital ID?{' '}
-          <Link
-            href="/auth/signup"
-            className="font-semibold leading-6 text-purple-600 hover:text-purple-500 hover:underline"
-          >
-            立即建立一個
-          </Link>
-        </p>
-      </div>
 
-      <div className="mt-8 w-full">
-        <StatusDisplay status={statusMessage} error={error} />
+        <div className="mt-8 w-full">
+          <StatusDisplay status={statusMessage} error={error} />
+        </div>
       </div>
     </div>
   );

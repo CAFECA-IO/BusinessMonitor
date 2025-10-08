@@ -97,69 +97,71 @@ export default function SignupClient() {
   const canSubmit = name.trim() !== '' && agreed && !isLoading && isFidoAvailable;
 
   return (
-    <div className="w-full max-w-xl px-4 sm:px-0">
-      <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-lg sm:p-12">
-        <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-          建立您的 Digital ID
-        </h1>
-        <p className="mt-2 text-gray-500">只需一步，即可擁有安全的去中心化身份</p>
+    <div className="flex w-full grow flex-col items-center justify-center p-4">
+      <div className="w-full max-w-xl">
+        <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-lg sm:p-12">
+          <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+            建立您的 Digital ID
+          </h1>
+          <p className="mt-2 text-gray-500">只需一步，即可擁有安全的去中心化身份</p>
 
-        <div className="mt-10 w-full space-y-6 sm:max-w-sm">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
-              您的全名
-            </label>
-            <div className="mt-2">
+          <div className="mt-10 w-full space-y-6 sm:max-w-sm">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
+                您的全名
+              </label>
+              <div className="mt-2">
+                <input
+                  type="text"
+                  id="name"
+                  aria-labelledby="name-label"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="block w-full rounded-md border-0 px-3 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600"
+                  placeholder="例如：王小明"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-x-3">
               <input
-                type="text"
-                id="name"
-                aria-labelledby="name-label"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="block w-full rounded-md border-0 px-3 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600"
-                placeholder="例如：王小明"
+                id="terms"
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="size-4 rounded border-gray-300 text-purple-600 focus:ring-purple-600"
                 disabled={isLoading}
+                aria-labelledby="terms-label"
               />
+              <label htmlFor="terms" className="block text-sm leading-6 text-gray-900">
+                我已閱讀並同意
+                <Link href="/terms" className="ml-1 font-semibold text-purple-600 hover:underline">
+                  服務條款
+                </Link>
+              </label>
+            </div>
+
+            <div className="flex flex-col gap-4 pt-4">
+              <button
+                onClick={handleRegister}
+                disabled={!canSubmit}
+                className="w-full rounded-lg bg-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
+              >
+                {isLoading ? '處理中...' : '註冊並以 Passkey 驗證'}
+              </button>
+              <Link
+                href={BM_URL.AUTH_LOGIN}
+                className="w-full rounded-lg bg-white px-5 py-3.5 text-center text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 transition-transform hover:scale-105 hover:bg-gray-50"
+              >
+                取消
+              </Link>
             </div>
           </div>
-
-          <div className="flex items-center gap-x-3">
-            <input
-              id="terms"
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="size-4 rounded border-gray-300 text-purple-600 focus:ring-purple-600"
-              disabled={isLoading}
-              aria-labelledby="terms-label"
-            />
-            <label htmlFor="terms" className="block text-sm leading-6 text-gray-900">
-              我已閱讀並同意
-              <Link href="/terms" className="ml-1 font-semibold text-purple-600 hover:underline">
-                服務條款
-              </Link>
-            </label>
-          </div>
-
-          <div className="flex flex-col gap-4 pt-4">
-            <button
-              onClick={handleRegister}
-              disabled={!canSubmit}
-              className="w-full rounded-lg bg-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
-            >
-              {isLoading ? '處理中...' : '註冊並以 Passkey 驗證'}
-            </button>
-            <Link
-              href={BM_URL.AUTH_LOGIN}
-              className="w-full rounded-lg bg-white px-5 py-3.5 text-center text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 transition-transform hover:scale-105 hover:bg-gray-50"
-            >
-              取消
-            </Link>
-          </div>
         </div>
-      </div>
-      <div className="mt-8 w-full">
-        <StatusDisplay status={statusMessage} error={error} />
+        <div className="mt-8 w-full">
+          <StatusDisplay status={statusMessage} error={error} />
+        </div>
       </div>
     </div>
   );
