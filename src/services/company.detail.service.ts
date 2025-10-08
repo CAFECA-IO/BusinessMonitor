@@ -187,11 +187,22 @@ export async function getCompanyMarketData(
   let periodOpen: number | null = null;
   let periodLow: number | null = null;
   let periodHigh: number | null = null;
+  let periodClose: number | null = null;
+  let periodVolume: string | null = null;
+  let periodChange: number | null = null;
+  let periodChangePct: number | null = null;
 
   if (prices.length > 0) {
     periodOpen = prices[0].open.toNumber();
     periodLow = Math.min(...prices.map((p) => p.low.toNumber()));
     periodHigh = Math.max(...prices.map((p) => p.high.toNumber()));
+    periodClose = prices[prices.length - 1].close.toNumber();
+    periodChange = prices[prices.length - 1].close.toNumber() - periodOpen;
+    periodChangePct =
+      ((prices[prices.length - 1].close.toNumber() - periodOpen) / periodOpen) * 100;
+    periodVolume = prices
+      .reduce((sum, p) => sum + BigInt(p.volume.toString()), BigInt(0))
+      .toString();
   }
 
   // Info: (20251007 - Tzuhan) 4. 組合 Summary 物件
@@ -199,6 +210,10 @@ export async function getCompanyMarketData(
     open: periodOpen,
     low: periodLow,
     high: periodHigh,
+    close: periodClose,
+    change: periodChange,
+    changePct: periodChangePct,
+    volume: periodVolume,
     fiftyTwoWeekHigh: summaryStats.fiftyTwoWeekHigh?.toNumber() ?? null,
     fiftyTwoWeekLow: summaryStats.fiftyTwoWeekLow?.toNumber() ?? null,
     avgVolume3Month: summaryStats.avgVolume3Month
