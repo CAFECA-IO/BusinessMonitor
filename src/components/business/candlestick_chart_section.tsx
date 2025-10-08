@@ -4,7 +4,7 @@ import React from 'react';
 import CandlestickChart from '@/components/common/candlestick_chart';
 import { ICandlestickChartNode /* IBarGraphNode */ } from '@/interfaces/chart';
 // import { MarketPayload as IMarket } from '@/types/company';
-import { IMarketInfo } from '@/interfaces/market';
+import { IMarketChartPoint } from '@/interfaces/market';
 
 // interface INodeData {
 //   timestamp: number;
@@ -16,7 +16,7 @@ import { IMarketInfo } from '@/interfaces/market';
 // }
 
 interface ICandlestickChartSectionProps {
-  marketInfo: IMarketInfo;
+  chartPoints: IMarketChartPoint[];
 }
 
 // interface IChartData {
@@ -24,11 +24,9 @@ interface ICandlestickChartSectionProps {
 //   barGraphData: IBarGraphNode[];
 // }
 
-const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({ marketInfo }) => {
-  const marketData = marketInfo.data;
-
+const CandlestickChartSection: React.FC<ICandlestickChartSectionProps> = ({ chartPoints }) => {
   const chartData: ICandlestickChartNode[] =
-    marketData.map((point) => ({
+    chartPoints.map((point) => ({
       x: new Date(point.date).getTime(),
       y: [point.open, point.high, point.low, point.close],
     })) ?? [];

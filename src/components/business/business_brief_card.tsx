@@ -9,6 +9,7 @@ import { PiFlagPennantFill } from 'react-icons/pi';
 import { CompanyCard as ICompanyCard } from '@/types/company';
 import { BM_URL } from '@/constants/url';
 import LineGraph from '@/components/common/line_graph';
+import { formatNumberWithCommas } from '@/lib/common';
 
 interface IBusinessBriefCardProps {
   business: ICompanyCard;
@@ -31,8 +32,9 @@ const BusinessBriefCard: React.FC<IBusinessBriefCardProps> = ({ business }) => {
   const countOfGreenFlags = flags ? flags.green : 0;
   const countOfRedFlags = flags ? flags.red : 0;
 
-  const stockPrice = market && market.last ? market.last : '--';
-  const stockPriceChange = market && market.changePct ? market.changePct : '--';
+  const stockPrice = market && market.last ? formatNumberWithCommas(market.last, true) : '--';
+  const stockPriceChange =
+    market && market.changePct ? formatNumberWithCommas(market.changePct, true) : '--';
   const numChangePct = parseFloat(stockPriceChange);
 
   const graphData = market && market.sparkline ? market.sparkline : [];

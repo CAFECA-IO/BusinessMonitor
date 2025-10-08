@@ -12,7 +12,7 @@ import { Paginated as IPaginated } from '@/types/common';
 import { CompanyBasicCard as IBasicInfo } from '@/types/company';
 import { INews } from '@/interfaces/news';
 // import {NewsItem as INews} from '@/types/news';
-import { IMarketInfo, mockMarketInfo } from '@/interfaces/market';
+import { IMarketInfo } from '@/interfaces/market';
 import { ChartRange } from '@/constants/chart_range';
 import CandlestickChartSection from '@/components/business/candlestick_chart_section';
 import NewsItem from '@/components/business/news_item';
@@ -60,6 +60,7 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
     query: { timeframe: ChartRange['1D'] },
   });
 
+  // Info: (20251008 - Julian) 切換時間區間時，重新取得資料
   useEffect(() => {
     switch (currentRange) {
       case ChartRange['1D']:
@@ -103,31 +104,15 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
     divYield,
   } = marketInfo;
 
-  // ToDo: (20250826 - Julian) Fetch real stock & news data
-  const {
-    price,
-    change,
-    changePercent,
-    volume,
-    close,
-    // open,
-    // low,
-    // high,
-    // fiftyTwoWeekHigh,
-    // fiftyTwoWeekLow,
-    // avgVolume3Month,
-    // sharesOutstanding,
-    // mktCap,
-    // divYield,
-    // volume,
-    // sellersPercent,
-    // buyersPercent,
-  } = mockMarketInfo;
+  // ToDo: (20251008 - Julian) Fetch real data
+  const close = 0;
+  const volume = 0;
+
+  // Info: (20251008 - Julian) 收盤價 - 開盤價 = 漲跌幅
+  const change = close - open;
+  const changePercent = open !== 0 ? ((change / open) * 100).toFixed(2) : '0.00';
 
   const rangeOption = Object.values(ChartRange);
-
-  const isPosition = change >= 0;
-  const changeColor = isPosition ? 'text-text-success' : 'text-text-error';
 
   const pulseStyle = marketIsLoading ? 'animate-pulse' : '';
 
@@ -196,34 +181,34 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
       <div className="absolute left-24px top-24px z-50 flex items-center gap-16px bg-surface-background px-4px text-sm font-medium text-text-secondary">
         <p>
           {t('business_detail:GRAPH_OPEN')}{' '}
-          <span className={changeColor}>{formatNumberWithCommas(open, true)}</span>
+          <span className={stockColor}>{formatNumberWithCommas(open, true)}</span>
         </p>
         <p>
           {t('business_detail:GRAPH_HIGH')}{' '}
-          <span className="text-text-success">{formatNumberWithCommas(high, true)}</span>
+          <span className={stockColor}>{formatNumberWithCommas(high, true)}</span>
         </p>
         <p>
           {t('business_detail:GRAPH_LOW')}{' '}
-          <span className="text-text-error">{formatNumberWithCommas(low, true)}</span>
+          <span className={stockColor}>{formatNumberWithCommas(low, true)}</span>
         </p>
         <p>
           {t('business_detail:GRAPH_CLOSE')}{' '}
-          <span className="text-text-success">{formatNumberWithCommas(close, true)}</span>
+          <span className={stockColor}>{formatNumberWithCommas(close, true)}</span>
         </p>
-        <div className={`flex items-center gap-4px ${changeColor}`}>
-          <IoTriangle size={8} className={isPosition ? '' : 'rotate-180'} />
+        <div className={`flex items-center gap-4px ${stockColor}`}>
+          {stockSymbol}
           <p>
             {change} ({changePercent}%)
           </p>
         </div>
         <p>
           {t('business_detail:GRAPH_VOLUME')}{' '}
-          <span className="text-text-success">{formatNumberWithCommas(volume)}</span>
+          <span className={stockColor}>{formatNumberWithCommas(volume)}</span>
         </p>
       </div>
 
       {/* Info: (20251008 - Julian) candlestick chart */}
-      <CandlestickChartSection marketInfo={marketData} />
+      <CandlestickChartSection chartPoints={marketData.data} />
     </>
   ) : (
     // ToDo: (20251008 - Julian) 設計 no data 畫面
@@ -264,9 +249,9 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
         </div>
         {/* Info: (20250826 - Julian) Stock Info */}
         <div className="flex items-center justify-between gap-60px px-24px py-12px">
-          {/* Info: (20250826 - Julian) Left Part: Price, Change */}
+          {/* Info: (20250826 - Julian) Left Part: Close, Change */}
           <div className={`${stockColor} ${pulseStyle} flex flex-col gap-8px`}>
-            <p className="text-h3 font-bold">{formatNumberWithCommas(price, true)}</p>
+            <p className="text-h3 font-bold">{formatNumberWithCommas(close, true)}</p>
             <div className="flex items-center gap-4px font-medium">
               {stockSymbol}
               <p className="text-lg">
