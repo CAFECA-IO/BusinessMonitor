@@ -28,16 +28,18 @@ const IntroCard: React.FC<IIntroCardProps> = ({ imgSrc, title, description }) =>
   });
 
   return (
-    <div className="flex flex-col items-center gap-120px px-120px py-80px desktop:odd:flex-row desktop:even:flex-row-reverse">
+    <div className="flex flex-col items-center gap-32px px-40px py-20px desktop:gap-120px desktop:px-120px desktop:py-80px desktop:odd:flex-row desktop:even:flex-row-reverse">
       {/* Info: (20250801 - Julian) Image */}
       <Image src={imgSrc} width={500} height={400} alt="connecting" />
 
       {/* Info: (20250801 - Julian) Text */}
-      <div className="flex flex-col items-start gap-24px text-left">
+      <div className="flex flex-col items-start gap-8px text-left desktop:gap-24px">
         {/* Info: (20250801 - Julian) Title */}
-        <h3 className="text-h3 font-bold text-text-primary">{formattedTitle}</h3>
+        <h3 className="text-lg font-bold text-text-primary desktop:text-h3">{formattedTitle}</h3>
         {/* Info: (20250801 - Julian) Description */}
-        <p className="text-lg font-medium text-text-secondary">{t(description)}</p>
+        <p className="text-base font-medium text-text-secondary desktop:text-lg">
+          {t(description)}
+        </p>
       </div>
     </div>
   );

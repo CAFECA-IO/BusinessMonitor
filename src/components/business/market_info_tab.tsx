@@ -26,7 +26,7 @@ interface IMarketInfoTabProps {
 const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
 
-  const [currentRange, setCurrentRange] = useState<ChartRange>(ChartRange['1D']);
+  const [currentRange, setCurrentRange] = useState<ChartRange>(ChartRange['1M']);
   const switchRange = (range: ChartRange) => {
     setCurrentRange(range);
   };
@@ -57,7 +57,7 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
     isLoading: marketIsLoading,
   } = useApi<IMarketInfo>(APIName.GET_MARKET_INFO_BY_COMPANY_ID, {
     params: { id: businessId },
-    query: { timeframe: ChartRange['1D'] },
+    query: { timeframe: ChartRange['1M'] },
   });
 
   // Info: (20251008 - Julian) 切換時間區間時，重新取得資料
