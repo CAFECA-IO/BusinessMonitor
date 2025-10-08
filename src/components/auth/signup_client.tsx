@@ -79,7 +79,7 @@ export default function SignupClient() {
       setStatusMessage('✅ 註冊成功！正在為您登入...');
       localStorage.setItem('dewt', verifyData.payload.dewt);
 
-      // 提示使用者備份恢復金鑰
+      // Info: (20251008 - Tzuhan) 提示使用者備份恢復金鑰
       alert(`請務必備份您的恢復金鑰，它只會出現這一次：\n\n${verifyData.payload.backupKey}`);
 
       setTimeout(() => router.push(BM_URL.PROFILE), 2000);
