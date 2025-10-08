@@ -6,10 +6,12 @@ import Button from '@/components/common/button';
 
 const Cta: React.FC = () => {
   return (
-    <div className="mx-64px my-100px flex items-center bg-cta bg-contain bg-center bg-no-repeat px-72px">
-      <Image src="/elements/phone_2.png" width={450} height={600} alt="phone" />
-      <div className="flex flex-col gap-40px">
-        <h2 className="text-h2 font-bold text-text-invert">
+    <div className="mx-24px my-40px flex items-center gap-20px bg-cta bg-contain bg-center bg-no-repeat desktop:mx-64px desktop:my-100px desktop:px-72px">
+      <div className="relative h-200px w-100px shrink-0 desktop:h-600px desktop:w-450px">
+        <Image src="/elements/phone_2.png" fill objectFit="contain" alt="phone" />
+      </div>
+      <div className="flex flex-col gap-16px desktop:gap-40px">
+        <h2 className="text-base font-bold text-text-invert desktop:text-h2">
           Ready to be <span className="text-text-primary">you</span>, everywhere, without sharing
           everything? <br />
           <span className="text-text-primary">Let’s go.</span>
