@@ -4,8 +4,8 @@ export const BM_URL = {
   SEARCH: '/business_monitor/search',
   AUTH_LOGIN: '/auth/login',
   AUTH_SIGNUP: '/auth/signup',
-  AUTH_RESULT: '/auth/result',
   AUTH_ADD_DEVICE: '/auth/add_device',
+  PROFILE: '/profile',
   TERMS: '/terms',
   PRIVACY: '/privacy',
 };

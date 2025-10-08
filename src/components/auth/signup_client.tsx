@@ -82,7 +82,7 @@ export default function SignupClient() {
       // 提示使用者備份恢復金鑰
       alert(`請務必備份您的恢復金鑰，它只會出現這一次：\n\n${verifyData.payload.backupKey}`);
 
-      setTimeout(() => router.push(BM_URL.AUTH_RESULT), 2000);
+      setTimeout(() => router.push(BM_URL.PROFILE), 2000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
       setStatusMessage(
