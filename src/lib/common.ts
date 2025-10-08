@@ -22,7 +22,10 @@ export const timestampToString = (timestamp: number) => {
   };
 };
 
-export const formatNumberWithCommas = (num: number | string, isDecimal?: boolean) => {
+export const formatNumberWithCommas = (
+  num: number | string | null | undefined,
+  isDecimal?: boolean
+) => {
   if (num === null || num === undefined) return '-';
   if (typeof num === 'number' && isNaN(num)) return '-';
 
