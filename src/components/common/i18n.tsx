@@ -42,7 +42,7 @@ const I18n: React.FC = () => {
   });
 
   return (
-    <div ref={targetRef} className="relative">
+    <div ref={targetRef} className="relative flex flex-col items-center">
       {/* Info: (20250807 - Julian) i18n Button */}
       <Button type="button" variant="secondaryBorderless" size="icon" onClick={toggleLangMenu}>
         <AiOutlineGlobal size={24} />

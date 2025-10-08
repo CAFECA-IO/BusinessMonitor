@@ -38,7 +38,8 @@ const Kv: React.FC = () => {
 
   return (
     <div
-      className="relative w-full"
+      // ToDo: (20251008 - Julian) develop mobile version
+      className="relative hidden w-full desktop:block"
       // Info: (20250805 - Julian) 波浪狀背景
       style={{
         maskImage: 'url(/elements/kv_mask.png)',

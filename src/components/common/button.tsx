@@ -22,10 +22,10 @@ const buttonVariants = cva(
           'text-button-accent enabled:hover:text-button-accent-hover disabled:text-button-disable',
       },
       size: {
-        small: 'p-8px text-sm',
-        medium: 'px-48px py-12px text-base',
-        large: 'px-54px py-18px text-lg',
-        icon: 'p-18px',
+        small: 'text-xs p-4px desktop:p-8px desktop:text-sm',
+        medium: 'text-sm px-16px py-8px desktop:px-48px desktop:py-12px desktop:text-base',
+        large: 'text-base px-20px py-10px desktop:px-54px desktop:py-18px desktop:text-lg',
+        icon: 'p-10px desktop:p-18px',
       },
     },
     defaultVariants: {
