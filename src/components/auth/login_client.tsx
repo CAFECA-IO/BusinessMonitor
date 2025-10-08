@@ -5,53 +5,49 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
-import { BM_URL } from '@/constants/url';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
 
-const StatusDisplay = ({
-  status,
-  error,
-  isAvailable,
-}: {
-  status: string;
-  error: string | null;
-  isAvailable: boolean;
-}) => (
-  <div className="mt-8 w-full rounded-lg bg-gray-100 p-4">
-    <h2 className="text-lg font-semibold text-gray-800">處理狀態</h2>
-    <p className="mt-2 text-gray-700">
-      狀態: <span className="font-medium">{status}</span>
+const StatusDisplay = ({ status, error }: { status: string; error: string | null }) => (
+  <div className="mt-8 w-full rounded-lg border border-gray-200 bg-gray-50 p-6">
+    <h3 className="text-lg font-semibold text-gray-800">處理狀態</h3>
+    <p className="mt-2 text-gray-600">
+      狀態: <span className="font-medium text-gray-900">{status}</span>
     </p>
-    {error && <p className="mt-2 text-red-600">錯誤: {error}</p>}
-    {!isAvailable && <p className="mt-2 text-yellow-600">警告: 此環境不支援 Passkey。</p>}
+    {error && (
+      <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
+        <p className="font-bold text-red-700">發生錯誤:</p>
+        <p className="mt-1 break-words text-red-600">{error}</p>
+      </div>
+    )}
   </div>
 );
 
-const ActionButton = ({
-  onClick,
-  disabled,
-  children,
-}: {
-  onClick?: () => void;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) => (
-  <button
-    onClick={onClick}
-    disabled={disabled}
-    className="w-full rounded-md bg-purple-600 px-4 py-2 text-white shadow-sm hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+const CafecaLogo = () => (
+  <svg
+    className="size-12 text-purple-600"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
   >
-    {children}
-  </button>
+    <path
+      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+      fill="currentColor"
+    />
+    <path
+      d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"
+      fill="currentColor"
+      opacity="0.3"
+    />
+  </svg>
 );
 
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('請選擇登入方式。');
+  const [statusMessage, setStatusMessage] = useState('準備登入...');
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState(true);
   const router = useRouter();
@@ -59,13 +55,16 @@ export default function LoginClient() {
   useEffect(() => {
     if (!fido2ClientService.isAvailable()) {
       setIsFidoAvailable(false);
-      setStatusMessage('Passkey 功能不可用。');
+      setStatusMessage('此環境不支援 Passkey 功能。');
+      setError('請使用支援的瀏覽器並確保在安全的 HTTPS 環境下操作。');
     }
   }, []);
 
   const handleLogin = useCallback(async () => {
-    setError(null);
+    if (!isFidoAvailable) return;
+
     setIsLoading(true);
+    setError(null);
     setStatusMessage('正在準備 Passkey 登入...');
 
     try {
@@ -73,21 +72,22 @@ export default function LoginClient() {
       if (!optionsRes.ok) throw new Error('無法從伺服器獲取登入選項。');
       const options = await optionsRes.json();
 
-      setStatusMessage('請使用您的 Passkey 進行驗證...');
-      const assertion = await fido2ClientService.startLogin(options);
+      setStatusMessage('請依照瀏覽器提示進行驗證...');
+      const authentication = await fido2ClientService.startLogin(options);
 
-      setStatusMessage('正在驗證您的身分...');
+      setStatusMessage('正在驗證您的 Passkey...');
       const verifyRes = await fetch(`${origin}${routes.auth.webauthn.verify()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(assertion),
+        body: JSON.stringify(authentication),
       });
+
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok || !verifyData.success) {
         throw new Error(verifyData.message || '登入驗證失敗。');
       }
 
-      setStatusMessage('✅ 登入成功！即將跳轉...');
+      setStatusMessage('✅ 登入成功！正在跳轉...');
       localStorage.setItem('dewt', verifyData.payload.dewt);
       setTimeout(() => router.push('/profile'), 1500);
     } catch (err) {
@@ -99,26 +99,46 @@ export default function LoginClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, [router, isFidoAvailable]);
 
   return (
-    <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-white p-8 shadow-md">
-      <h1 className="text-2xl font-bold text-gray-800">Digital ID 登入</h1>
-      <p className="mt-2 text-gray-600">整合 Passkey 登入邏輯的正式頁面。</p>
+    <div className="w-full max-w-xl px-4 sm:px-0">
+      <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-lg sm:p-12">
+        <CafecaLogo />
+        <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+          登入您的 Digital ID
+        </h1>
+        <p className="mt-2 text-gray-500">使用已註冊的 Passkey 快速登入</p>
 
-      <div className="mt-8 flex w-full flex-col gap-4">
-        <ActionButton onClick={handleLogin} disabled={isLoading || !isFidoAvailable}>
-          {isLoading ? '處理中...' : 'Log in to my ID (使用 Passkey)'}
-        </ActionButton>
-        <Link href={BM_URL.AUTH_SIGNUP} passHref>
-          <ActionButton>I don&apos;t have my Digital ID yet</ActionButton>
-        </Link>
-        <Link href={BM_URL.AUTH_ADD_DEVICE} passHref>
-          <ActionButton>Log in on a New Device</ActionButton>
-        </Link>
+        <div className="mt-10 w-full space-y-4 sm:max-w-sm">
+          <button
+            onClick={handleLogin}
+            disabled={isLoading || !isFidoAvailable}
+            className="w-full rounded-lg bg-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
+          >
+            {isLoading ? '處理中...' : '使用 Passkey 登入'}
+          </button>
+          <Link
+            href="/auth/add-device"
+            className="block w-full rounded-lg bg-gray-700 px-5 py-3.5 text-center text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-gray-800"
+          >
+            在新裝置上登入
+          </Link>
+        </div>
+        <p className="mt-8 text-center text-sm text-gray-500">
+          還沒有 Digital ID?{' '}
+          <Link
+            href="/auth/signup"
+            className="font-semibold leading-6 text-purple-600 hover:text-purple-500 hover:underline"
+          >
+            立即建立一個
+          </Link>
+        </p>
       </div>
 
-      <StatusDisplay status={statusMessage} error={error} isAvailable={isFidoAvailable} />
+      <div className="mt-8 w-full">
+        <StatusDisplay status={statusMessage} error={error} />
+      </div>
     </div>
   );
 }
