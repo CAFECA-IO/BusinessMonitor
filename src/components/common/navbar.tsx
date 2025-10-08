@@ -100,7 +100,11 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Info: (20250807 - Julian) Login Button */}
-      <div className="hidden desktop:block">{loginBtn}</div>
+      <Link href={BM_URL.AUTH_LOGIN}>
+        <Button type="button" size="medium">
+          {t('common:LOGIN')}
+        </Button>
+      </Link>
 
       {/* Info: (20251008 - Julian) Mobile Navigation */}
       <div ref={burgerRef} className="relative block desktop:hidden">
