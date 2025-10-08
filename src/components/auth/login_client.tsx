@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
+import { BM_URL } from '@/constants/url';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -109,10 +110,10 @@ export default function LoginClient() {
         <ActionButton onClick={handleLogin} disabled={isLoading || !isFidoAvailable}>
           {isLoading ? '處理中...' : 'Log in to my ID (使用 Passkey)'}
         </ActionButton>
-        <Link href="/auth/signup" passHref>
+        <Link href={BM_URL.AUTH_SIGNUP} passHref>
           <ActionButton>I don&apos;t have my Digital ID yet</ActionButton>
         </Link>
-        <Link href="/auth/add-device" passHref>
+        <Link href={BM_URL.AUTH_ADD_DEVICE} passHref>
           <ActionButton>Log in on a New Device</ActionButton>
         </Link>
       </div>
