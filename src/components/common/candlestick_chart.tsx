@@ -3,21 +3,17 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { ApexOptions } from 'apexcharts';
-import { ICandlestickChartNode /* IBarGraphNode */ } from '@/interfaces/chart';
-// import { MONTH_LIST } from '@/constants/date';
+import { ICandlestickChartNode, IBarGraphNode } from '@/interfaces/chart';
 
 // Info: (20250908 - Julian) 動態載入，避免 SSR 錯誤
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface ICandlestickChartProps {
   candlestickData: ICandlestickChartNode[];
-  // volumeData: IBarGraphNode[];
+  volumeData: IBarGraphNode[];
 }
 
-const CandlestickChart: React.FC<ICandlestickChartProps> = ({
-  candlestickData,
-  // volumeData
-}) => {
+const CandlestickChart: React.FC<ICandlestickChartProps> = ({ candlestickData, volumeData }) => {
   const axisStyle = { colors: '#8181A0', fontFamily: 'Jost', fontSize: '12px', fontWeight: 500 };
 
   const options: ApexOptions = {
@@ -32,11 +28,6 @@ const CandlestickChart: React.FC<ICandlestickChartProps> = ({
       tickAmount: 10,
       labels: {
         style: axisStyle,
-        // formatter: function (value) {
-        //   // Info: (20250909 - Julian) x 軸只顯示月份的前三個字母
-        //   const date = new Date(value);
-        //   return `${MONTH_LIST[date.getMonth()].slice(0, 3)}`;
-        // },
         datetimeFormatter: {
           day: 'dd MMM',
           month: "MMM 'yy",
@@ -87,7 +78,7 @@ const CandlestickChart: React.FC<ICandlestickChartProps> = ({
     {
       name: 'Volume',
       type: 'column', // Info: (20250908 - Julian) 柱狀圖
-      data: [], //volumeData,
+      data: volumeData,
     },
   ];
 

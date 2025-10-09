@@ -84,10 +84,12 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
           open: 0,
           low: 0,
           high: 0,
+          close: 0,
           fiftyTwoWeekHigh: 0,
           fiftyTwoWeekLow: 0,
           avgVolume3Month: '0',
           sharesOutstanding: '0',
+          volume: '0',
           mktCap: null,
           divYield: null,
         };
@@ -96,6 +98,8 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
     open,
     low,
     high,
+    close,
+    volume,
     fiftyTwoWeekHigh,
     fiftyTwoWeekLow,
     avgVolume3Month,
@@ -103,10 +107,6 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
     mktCap,
     divYield,
   } = marketInfo;
-
-  // ToDo: (20251008 - Julian) Fetch real data
-  const close = 0;
-  const volume = 0;
 
   // Info: (20251008 - Julian) 收盤價 - 開盤價 = 漲跌幅
   const change = close - open;
@@ -147,12 +147,15 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
     const isActive = currentRange === range;
     const clickHandler = () => switchRange(range);
 
+    // Info: (20251008 - Julian) active 或 API loading 時，按鈕不可點擊
+    const disabled = marketIsLoading || isActive;
+
     return (
       <button
         type="button"
         key={range}
         onClick={clickHandler}
-        disabled={isActive}
+        disabled={disabled}
         className={`${
           isActive
             ? 'bg-surface-brand text-text-invert'
