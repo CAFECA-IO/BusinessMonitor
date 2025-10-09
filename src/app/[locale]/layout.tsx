@@ -24,18 +24,13 @@ const jost = Jost({
 export const metadata: Metadata = {
   title: 'CAFECA',
   description:
-    '提供上市、上櫃及興櫃公司之重要資訊，涵蓋財務報告、重大訊息與股東會資料，協助投資人快速掌握公司動態與市場趨勢，同時亦揭露未公開發行公司的相關資訊。',
+    'CAFECA 是一個去中心化身份驗證平台，透過區塊鏈與零知識證明技術，讓個人與企業在網路上擁 有安全、隱私、可攜的身份，實現真正的自我主權身份。',
   authors: [{ name: 'CAFECA Team' }],
   keywords: [
     'CAFECA',
-    '企業觀測站',
-    '財務報告',
-    '股東會資料',
-    '投資人服務',
-    '市場趨勢',
-    '企業透明度',
-    '投資決策',
-    '財經資訊',
+    'DID',
+    'FIDO2',
+    'blockchain',
   ],
   icons: {
     icon: '/logos/cafeca_icon.svg',
@@ -43,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'CAFECA',
     description:
-      '提供上市、上櫃及興櫃公司之重要資訊，涵蓋財務報告、重大訊息與股東會資料，協助投資人快速掌握公司動態與市場趨勢，同時亦揭露未公開發行公司的相關資訊。',
+      'CAFECA 是一個去中心化身份驗證平台，透過區塊鏈與零知識證明技術，讓個人與企業在網路上擁 有安全、隱私、可攜的身份，實現真正的自我主權身份。',
     url: 'https://cafeca.io/',
     siteName: 'CAFECA',
     locale: 'zh_TW',
