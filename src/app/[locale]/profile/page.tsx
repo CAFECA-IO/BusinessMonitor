@@ -3,139 +3,113 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { IdentityAccount } from '@prisma/client';
 import { routes } from '@/config/api-routes';
+import Layout from '@/components/common/layout';
 
-// Info: (20250925 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
-const ResultDisplay = ({ title, data }: { title: string; data: object | string | null }) => {
-  if (!data) return null;
-  const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-  return (
-    <div className="mt-4">
-      <p className="text-sm font-medium text-gray-500">{title}:</p>
-      <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-all rounded-lg bg-gray-100 p-4 text-xs text-gray-800">
-        <code>{content}</code>
-      </pre>
-    </div>
-  );
-};
+const origin = process.env.NEXT_PUBLIC_ORIGIN;
+if (!origin) {
+  throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
+}
 
-// Info: (20250925 - Tzuhan) 【新增】用於顯示格式化後的使用者資訊
-const UserInfoCard = ({ user }: { user: Partial<IdentityAccount> }) => (
-  <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
-    <h3 className="text-lg font-bold text-green-800">✅ 驗證成功</h3>
-    <p className="mt-1 text-sm text-green-700">成功獲取您的使用者資訊：</p>
-    <div className="mt-3 space-y-2 text-sm">
-      <div>
-        <span className="font-semibold text-gray-600">ID:</span>
-        <span className="ml-2 font-mono text-gray-800">{user.id}</span>
-      </div>
-      <div>
-        <span className="font-semibold text-gray-600">名稱:</span>
-        <span className="ml-2 text-gray-800">{user.name}</span>
-      </div>
-      <div>
-        <span className="font-semibold text-gray-600">以太坊地址:</span>
-        <span className="ml-2 font-mono text-gray-800">{user.ethereumAddress}</span>
-      </div>
-    </div>
-  </div>
-);
+interface IUserProfile {
+  id: string;
+  name: string | null;
+  ethAddress: string;
+}
 
-export default function DashboardPage() {
-  const [userData, setUserData] = useState<Partial<IdentityAccount> | null>(null);
-  const [apiResponse, setApiResponse] = useState<object | null>(null);
+/**
+ * Info: (20251009 - Tzuhan)
+ * 使用者登入後的主要儀表板/個人資料頁。
+ *
+ * 職責：
+ * 1. 從後端 /me API 獲取並顯示使用者資訊。
+ * 2. 提供登出和新增裝置等核心操作的入口。
+ */
+export default function ProfilePage() {
+  const [user, setUser] = useState<IUserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [dewt, setDewt] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const storedDewt = localStorage.getItem('dewt');
-    if (!storedDewt) {
-      router.replace('/demo');
-      return;
-    }
-    setDewt(storedDewt);
+    const fetchUser = async () => {
+      const dewt = localStorage.getItem('dewt');
+      if (!dewt) {
+        // 如果沒有 token，直接導向登入頁
+        router.replace('/auth/login');
+        return;
+      }
 
-    const fetchUserData = async () => {
-      setIsLoading(true);
-      setError(null);
       try {
-        const res = await fetch(routes.auth.me(), {
-          headers: { Authorization: `Bearer ${storedDewt}` },
+        const res = await fetch(`${origin}${routes.auth.me()}`, {
+          headers: {
+            Authorization: `Bearer ${dewt}`,
+          },
         });
 
-        const result = await res.json();
-        setApiResponse(result); // Info: (20250925 - Tzuhan) 無論成功失敗，都先儲存原始回應以供偵錯
-
-        if (!res.ok || !result.success) {
-          throw new Error(result.message || 'Failed to fetch user data');
+        if (res.status === 401) {
+          localStorage.removeItem('dewt');
+          router.replace('/auth/login');
+          return;
         }
 
-        // Info: (20250925 - Tzuhan) 【關鍵步驟】API 呼叫成功後，將 payload 中的使用者資料存到 state 中
-        setUserData(result.payload);
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || '無法獲取使用者資訊。');
+        }
+        setUser(data.payload);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-        localStorage.removeItem('dewt');
-      } finally {
-        setIsLoading(false);
+        setError(err instanceof Error ? err.message : '發生未知錯誤。');
       }
     };
 
-    fetchUserData();
+    fetchUser();
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('dewt');
-    router.push('/');
+    router.push('/auth/login');
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8 font-sans">
-      <div className="w-full max-w-2xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-800">
-            CAFECA Digital ID - Dashboard
-          </h1>
-          <p className="mt-2 text-lg text-gray-500">此頁面展示了如何呼叫一個受保護的 API 端點。</p>
-        </div>
+    <Layout>
+      <div className="flex w-full grow flex-col items-center justify-center p-4">
+        <div className="w-full max-w-2xl">
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">我的 Digital ID</h1>
+            {error && <p className="mt-4 text-red-600">錯誤: {error}</p>}
+            {!user && !error && (
+              <p className="mt-4 animate-pulse text-gray-500">正在載入使用者資料...</p>
+            )}
+            {user && (
+              <div className="mt-6 space-y-4 border-t border-gray-200 pt-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">姓名</p>
+                  <p className="text-lg font-semibold text-gray-900">{user.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">ID / ETH Address</p>
+                  <p className="break-all font-mono text-sm text-gray-700">{user.ethAddress}</p>
+                </div>
 
-        <div className="rounded-xl bg-white p-6 shadow-md">
-          <h2 className="mb-3 border-b pb-2 text-lg font-semibold text-gray-700">API 呼叫結果</h2>
-          {isLoading && <p className="text-gray-600">正在從 /api/v1/secure/me 載入用戶資料...</p>}
-
-          {/* Info: (20250925 - Tzuhan) 【更新】優先顯示格式化後的使用者資訊 */}
-          {userData && <UserInfoCard user={userData} />}
-
-          {error && (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-              <p className="font-bold">錯誤:</p>
-              <p className="break-words">{error}</p>
-              <p className="mt-2 text-sm">Token 已被清除，請返回重新登入。</p>
-            </div>
-          )}
-
-          {/* Info: (20250925 - Tzuhan) 為了偵錯，我們仍然可以顯示完整的 API 回應和 DeWT */}
-          <div className="mt-4 space-y-4">
-            {apiResponse && <ResultDisplay title="完整的 API 回應 (偵錯用)" data={apiResponse} />}
-            {dewt && <ResultDisplay title="目前的 DeWT (偵錯用)" data={dewt} />}
-          </div>
-
-          <div className="mt-6 flex items-center justify-between border-t pt-4">
-            <Link href="/" className="text-blue-600 hover:underline">
-              &larr; 返回首頁
-            </Link>
-            {/* Info: (20250925 - Tzuhan) 【新增】登出按鈕 */}
-            <button
-              onClick={handleLogout}
-              className="rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
-              登出
-            </button>
+                <div className="flex flex-col space-y-4 pt-6 sm:flex-row sm:space-x-4 sm:space-y-0">
+                  <Link
+                    href="/auth/add-device"
+                    className="block w-full rounded-lg bg-white px-5 py-3 text-center text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 transition-transform hover:scale-105 hover:bg-gray-50"
+                  >
+                    新增裝置
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full rounded-lg bg-red-500 px-5 py-3 text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-red-600"
+                  >
+                    登出
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </main>
+    </Layout>
   );
 }
