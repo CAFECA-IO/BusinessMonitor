@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   title: 'CAFECA',
   description:
     'CAFECA 是一個去中心化身份驗證平台，透過區塊鏈與零知識證明技術，讓個人與企業在網路上擁 有安全、隱私、可攜的身份，實現真正的自我主權身份。',
-  authors: [{ name: 'CAFECA Team' }],
+  authors: [{ name: 'CAFECA' }],
   keywords: [
     'CAFECA',
     'DID',
