@@ -8,58 +8,49 @@ import QRCode from 'qrcode';
 import Pusher from 'pusher-js';
 import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
+import { BM_URL } from '@/constants/url';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
 
-export default function AddDeviceClient() {
+export default function LoginWithDeviceClient() {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [statusMessage, setStatusMessage] = useState('正在產生新裝置的設定 QR Code...');
+  const [statusMessage, setStatusMessage] = useState('正在產生 QR Code...');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // 此頁面必須在登入狀態下才能操作
-    const dewt = localStorage.getItem('dewt');
-    if (!dewt) {
-      setError('您必須先登入才能新增裝置。');
-      setStatusMessage('錯誤：未授權');
-      setIsLoading(false);
-      // 可選：幾秒後跳轉回登入頁
-      setTimeout(() => router.push('/auth/login'), 3000);
-      return;
-    }
-
     let pusherClient: Pusher | null = null;
     const initializeQrSession = async () => {
       try {
-        const res = await fetch(`${origin}${routes.pairing.initiate()}`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${dewt}` },
-        });
+        const res = await fetch(`${origin}${routes.pairing.initiate()}`, { method: 'POST' });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message);
 
-        const { sessionId } = data.payload;
-        // QR Code 指向新裝置進行 Passkey 註冊的頁面
-        const setupUrl = new URL(`${origin}/auth/setup-new-device`);
-        setupUrl.searchParams.set('sessionId', sessionId);
+        const { sessionId, challenge } = data.payload;
+        const scanUrl = new URL(`${origin}/${BM_URL.APPROVE_DEVICE}`);
+        scanUrl.searchParams.set('sessionId', sessionId);
+        scanUrl.searchParams.set('challenge', challenge);
 
-        const dataUrl = await QRCode.toDataURL(setupUrl.toString(), { width: 256, margin: 2 });
+        const dataUrl = await QRCode.toDataURL(scanUrl.toString(), { width: 256, margin: 2 });
         setQrCodeDataUrl(dataUrl);
-        setStatusMessage('請使用您的「新裝置」掃描此 QR Code 以完成設定。');
+        setStatusMessage('請使用您已登入的手機掃描 QR Code 以登入此裝置。');
 
         pusherClient = getPusherInstance();
         const channel = pusherClient.subscribe(`private-login-session-${sessionId}`);
 
-        channel.bind('device-added-success', () => {
-          setStatusMessage('✅ 新裝置已成功加入您的帳戶！');
-          alert('新裝置已成功加入您的帳戶！');
+        channel.bind('login-success', (eventData: { dewt: string }) => {
+          setStatusMessage('✅ 授權成功！正在為您登入...');
+          localStorage.setItem('dewt', eventData.dewt);
+          setTimeout(() => router.push('/profile'), 1500);
+        });
 
-          // setTimeout(() => router.push('/profile/devices'), 2000);
+        channel.bind('login-error', (eventData: { message: string }) => {
+          setError(eventData.message || '手機端授權失敗。');
+          setStatusMessage('授權失敗，請重試或返回。');
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : '初始化 QR Code 失敗。');
@@ -76,7 +67,7 @@ export default function AddDeviceClient() {
   return (
     <div className="flex grow flex-col items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl border bg-white p-8 text-center shadow-lg">
-        <h1 className="text-2xl font-bold">新增一個裝置</h1>
+        <h1 className="text-2xl font-bold">使用其他裝置登入</h1>
         <p className="mt-4 text-gray-600">{statusMessage}</p>
         <div className="mt-6 flex size-72 items-center justify-center self-center rounded-lg border p-2">
           {isLoading && <div className="animate-pulse">Loading...</div>}
@@ -84,17 +75,16 @@ export default function AddDeviceClient() {
           {qrCodeDataUrl && (
             <Image
               src={qrCodeDataUrl}
-              alt="Add device QR Code"
+              alt="Login QR Code"
               width={256}
               height={256}
               style={{ objectFit: 'contain' }}
               unoptimized
             />
           )}
-          {qrCodeDataUrl && <Image src={qrCodeDataUrl} alt="Add device QR Code" />}
         </div>
-        <Link href="/profile/devices" className="mt-8 inline-block text-purple-600 hover:underline">
-          返回裝置管理
+        <Link href="/auth/login" className="mt-8 inline-block text-purple-600 hover:underline">
+          返回
         </Link>
       </div>
     </div>

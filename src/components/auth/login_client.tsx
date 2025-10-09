@@ -100,10 +100,10 @@ export default function LoginClient() {
               {isLoading ? '處理中...' : '以 Passkey 登入'}
             </button>
             <Link
-              href={BM_URL.ADD_DEVICE}
+              href={BM_URL.LOGIN_WITH_EXISTING_DEVICE}
               className="block w-full rounded-lg bg-gray-700 px-5 py-3.5 text-center text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-gray-800"
             >
-              想新增裝置或恢復帳戶嗎？
+              使用其他裝置登入
             </Link>
           </div>
           <p className="mt-8 text-center text-sm text-gray-500">
