@@ -72,7 +72,7 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
       crumbsItems={crumbsItems}
       isSearchBar
       pageBgColor="bg-surface-background"
-      className="gap-40px px-80px pb-120px"
+      className="gap-20px px-20px pb-120px desktop:gap-40px desktop:px-80px"
     >
       {/* Info: (20250811 - Julian) Tab Bar */}
       <TabBar currentTab={currentTab} onTabChange={onTabChange} />
@@ -80,7 +80,7 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
       <div className="flex flex-col gap-16px">
         {/* Info: (20250923 - Julian) Last Update Time */}
         {isShowLastUpdatedTime && (
-          <p className="text-right text-base font-normal text-text-primary">
+          <p className="text-right text-xs font-normal text-text-primary desktop:text-base">
             {t('business_detail:LAST_UPDATE_TIME')}: {updatedAtString.formattedDate}{' '}
             {updatedAtString.time}
           </p>

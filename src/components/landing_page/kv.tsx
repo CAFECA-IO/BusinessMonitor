@@ -38,8 +38,7 @@ const Kv: React.FC = () => {
 
   return (
     <div
-      // ToDo: (20251008 - Julian) develop mobile version
-      className="relative hidden w-full desktop:block"
+      className="relative block w-full"
       // Info: (20250805 - Julian) 波浪狀背景
       style={{
         maskImage: 'url(/elements/kv_mask.png)',
@@ -53,20 +52,28 @@ const Kv: React.FC = () => {
         <Image src="/elements/kv_bg.png" width={1920} height={1080} alt="kv_bg" />
       </div>
 
-      <div className="absolute top-0 z-10 h-800px w-full">
-        {/* Info: (20250730 - Julian) Main Title */}
-        <div className="mx-auto mt-8 flex w-2/3 flex-col text-9xl font-bold">
+      <div className="absolute top-0 z-10 h-200px w-full desktop:h-800px">
+        {/* Info: (20250730 - Julian) Desktop Main Title */}
+        <div className="mx-auto mt-8 hidden w-2/3 flex-col text-9xl font-bold desktop:flex">
           <h2 className="text-left text-grey-600">{t('landing_page:KV_1')}</h2>
           <h2 className="text-center text-brand-blud-500">{t('landing_page:KV_2')}</h2>
           <h2 className="text-right text-grey-600">{t('landing_page:KV_3')}</h2>
         </div>
 
+        {/* Info: (20250730 - Julian) Mobile Main Title */}
+        <div className="mt-8 block whitespace-nowrap text-center text-xl font-bold desktop:hidden">
+          <h2 className="text-grey-600">
+            {t('landing_page:KV_1')}{' '}
+            <span className="text-brand-blud-500">{t('landing_page:KV_2')}</span>{' '}
+            {t('landing_page:KV_3')}
+          </h2>
+        </div>
+
         {/* Info: (20250730 - Julian) Subtitle */}
-        <div className="absolute bottom-20 right-40 flex w-500px flex-col items-start gap-40px">
-          <p className="text-lg font-bold text-text-secondary">
+        <div className="absolute bottom-6 flex flex-col items-center gap-16px px-20px desktop:bottom-20 desktop:right-40 desktop:w-500px desktop:items-start desktop:gap-40px">
+          <p className="text-xs font-bold text-text-secondary desktop:text-lg">
             {t('landing_page:CTA_DESCRIPTION')}
           </p>
-          {/* ToDo: (20250731 - Julian) Style */}
           <Link href="/">
             <Button type="button" variant="primary" className="gap-8px">
               {t('landing_page:CTA_BTN')} <FaChevronRight size={20} />
@@ -75,7 +82,7 @@ const Kv: React.FC = () => {
         </div>
 
         {/* Info: (20250730 - Julian) Holding a phone Image */}
-        <div className="absolute -bottom-8 left-1/5">
+        <div className="absolute -bottom-8 left-20 hidden desktop:block">
           <Image
             src="/elements/hand_holding_phone.png"
             width={500}
@@ -85,14 +92,14 @@ const Kv: React.FC = () => {
         </div>
 
         {/* Info: (20250801 - Julian) Message Bubbles */}
-        <div className="absolute right-64px top-64px">
+        <div className="absolute right-12px top-64px hidden desktop:block">
           <MessageBubble
             avatarScr="/fake_avatar/avatar_1.png"
             text={t('landing_page:COMMENT_1')}
             isLeft
           />
         </div>
-        <div className="absolute left-64px top-64">
+        <div className="absolute left-12px top-120px hidden desktop:block">
           <MessageBubble avatarScr="/fake_avatar/avatar_2.png" text={t('landing_page:COMMENT_2')} />
         </div>
       </div>

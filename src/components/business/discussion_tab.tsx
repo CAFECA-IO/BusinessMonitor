@@ -199,11 +199,11 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
   );
 
   return (
-    <div className="flex gap-24px">
+    <div className="flex flex-col gap-24px desktop:flex-row">
       {/* Info: (20250903 - Julian) Important Announcement Block */}
       <InfoBlockLayout
         title={t('business_detail:IMPORTANT_ANNOUNCEMENT_BLOCK_TITLE')}
-        className="flex h-400px w-300px flex-col gap-40px overflow-y-auto"
+        className="flex h-400px w-full flex-col gap-40px overflow-y-auto desktop:w-300px"
       >
         {/* Info: (20251001 - Julian) Add New Announcement */}
         <Button
@@ -238,7 +238,7 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
           {/* Info: (20250903 - Julian) Filter Section */}
           <div className="flex items-center gap-16px text-base font-normal">
             {/* Info: (20250903 - Julian) Search Box */}
-            <div className="flex flex-1 gap-8px rounded-radius-s border border-border-secondary bg-surface-primary p-spacing-2xs text-text-note">
+            <div className="flex flex-1 gap-8px rounded-radius-s border border-border-secondary bg-surface-primary p-8px text-sm text-text-note desktop:p-spacing-2xs desktop:text-base">
               <FiSearch size={24} />
               <input
                 type="text"
@@ -249,7 +249,10 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
               />
             </div>
             {/* Info: (20250903 - Julian) Sorting */}
-            <div ref={sortRef} className="relative flex w-180px flex-col gap-spacing-3xs">
+            <div
+              ref={sortRef}
+              className="relative flex w-180px flex-col gap-spacing-3xs text-sm desktop:text-base"
+            >
               <button
                 type="button"
                 onClick={toggleSortDropdown}
@@ -257,7 +260,7 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
                   isSortOpen
                     ? 'border-border-brand text-text-brand'
                     : 'border-border-secondary text-text-note'
-                } flex items-center justify-between gap-8px rounded-radius-s border bg-surface-primary p-spacing-2xs hover:border-border-brand hover:text-text-brand`}
+                } flex items-center justify-between gap-8px rounded-radius-s border bg-surface-primary p-8px hover:border-border-brand hover:text-text-brand desktop:p-spacing-2xs`}
               >
                 <p>{t(`business_detail:SORT_${sortOrder.toUpperCase()}`)}</p>
                 <FaChevronDown size={24} />
@@ -266,7 +269,7 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
               <div
                 className={`${
                   isSortOpen ? 'visible opacity-100' : 'invisible opacity-0'
-                } absolute top-64px z-10 flex max-h-300px w-full flex-col overflow-y-auto rounded-radius-s bg-surface-primary p-spacing-3xs text-text-note shadow-drop-L transition-all duration-150 ease-in-out`}
+                } absolute top-48px z-10 flex max-h-300px w-full flex-col overflow-y-auto rounded-radius-s bg-surface-primary p-spacing-3xs text-text-note shadow-drop-L transition-all duration-150 ease-in-out desktop:top-64px`}
               >
                 {sortOptions}
               </div>

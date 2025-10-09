@@ -20,17 +20,22 @@ interface ISkeletonBlockProps {
 const SkeletonBlock: React.FC<ISkeletonBlockProps> = ({ className }) => {
   return (
     <div
-      className={`${className} flex h-420px flex-col gap-24px rounded-radius-l bg-white px-60px py-36px`}
+      className={`${className} flex h-420px flex-col gap-24px rounded-radius-l bg-white p-20px desktop:px-60px desktop:py-36px`}
     >
-      <p className="text-h5 font-bold text-text-brand">--</p>
+      <p className="text-base font-bold text-text-brand desktop:text-h5">--</p>
       <hr className="border-border-secondary" />
       {/* Info: (20250915 - Julian) Content */}
-      <div className="flex flex-col gap-20px">
-        <Skeleton width={400} height={30} />
+      <div className="hidden flex-col gap-20px desktop:flex">
         <Skeleton width={350} height={30} />
         <Skeleton width={300} height={30} />
         <Skeleton width={250} height={30} />
         <Skeleton width={200} height={30} />
+        <Skeleton width={150} height={30} />
+      </div>
+      <div className="flex flex-col gap-20px desktop:hidden">
+        <Skeleton width={250} height={30} />
+        <Skeleton width={200} height={30} />
+        <Skeleton width={150} height={30} />
       </div>
     </div>
   );
@@ -45,10 +50,10 @@ const BasicInfoTab: React.FC<IBasicInfoTabProps> = ({ businessId }) => {
   const isShowSkeleton = isLoading || !companyData;
 
   return (
-    <div className="grid grid-cols-2 gap-x-60px gap-y-40px">
+    <div className="grid grid-cols-1 gap-x-60px gap-y-40px desktop:grid-cols-2">
       {/* Info: (20250812 - Julian) Basic Info Block */}
       {isShowSkeleton ? (
-        <SkeletonBlock className="col-span-2" />
+        <SkeletonBlock className="desktop:col-span-2" />
       ) : (
         <BasicInfoBlock basicData={companyData.card} />
       )}

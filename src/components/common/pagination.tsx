@@ -40,7 +40,7 @@ const Pagination: React.FC<IPaginationProps> = ({ selectPage, totalPages }) => {
         <li key={page} className="flex items-center">
           <button
             onClick={() => selectPage(page)}
-            className={`flex size-40px items-center justify-center rounded-full p-4 ${
+            className={`flex size-32px items-center justify-center rounded-full desktop:size-40px ${
               activePage === page
                 ? 'bg-button-primary text-text-invert'
                 : 'text-text-primary hover:bg-button-primary-hover'
@@ -59,7 +59,9 @@ const Pagination: React.FC<IPaginationProps> = ({ selectPage, totalPages }) => {
       // Info: (20250917 - Julian) 只在當前頁面前後第三頁顯示省略號
       pageBtn = (
         <li key={page} className="flex items-center">
-          <div className="flex size-40px items-center justify-center rounded-full">...</div>
+          <div className="flex size-32px items-center justify-center rounded-full desktop:size-40px">
+            ...
+          </div>
         </li>
       );
     }
@@ -72,7 +74,7 @@ const Pagination: React.FC<IPaginationProps> = ({ selectPage, totalPages }) => {
       onClick={() => selectPage(activePage - 1)}
       // Info: (20250917 - Julian) 總頁數為 0 或 當前頁數為第一頁時，按鈕 disabled
       disabled={totalPages === 0 || activePage === 1 ? true : false}
-      className="flex items-center px-10px text-base text-text-primary hover:text-button-link-hover disabled:text-button-disable"
+      className="flex size-32px items-center text-base text-text-primary hover:text-button-link-hover disabled:text-button-disable desktop:size-40px"
     >
       <RiArrowLeftSLine size={20} />
     </button>
@@ -83,14 +85,14 @@ const Pagination: React.FC<IPaginationProps> = ({ selectPage, totalPages }) => {
       onClick={() => selectPage(activePage + 1)}
       // Info: (20250917 - Julian) 總頁數為 0 或 當前頁數為最後一頁時，按鈕 disabled
       disabled={totalPages === 0 || activePage === totalPages ? true : false}
-      className="flex items-center px-10px text-base text-text-primary hover:text-button-link-hover disabled:text-button-disable"
+      className="flex size-32px items-center text-base text-text-primary hover:text-button-link-hover disabled:text-button-disable desktop:size-40px"
     >
       <RiArrowRightSLine size={20} />
     </button>
   );
 
   return (
-    <ul className="mt-10 flex items-center justify-center gap-1 text-sm font-medium">
+    <ul className="mt-10 flex flex-wrap items-center justify-center gap-1 text-sm font-medium">
       <li>{previousBtn}</li>
       {pages}
       <li>{nextBtn}</li>

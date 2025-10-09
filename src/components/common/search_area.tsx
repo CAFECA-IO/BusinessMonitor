@@ -64,8 +64,8 @@ const SearchArea: React.FC<ISearchAreaProps> = ({ isShowTags }) => {
   return (
     <div className="flex w-full flex-col items-start gap-16px">
       {/* Info: (20250804 - Julian) Search Input */}
-      <div className="flex h-56px w-full items-center gap-8px rounded-radius-s border border-border-secondary bg-surface-primary p-spacing-2xs text-base font-normal text-text-primary">
-        <FiSearch size={24} />
+      <div className="flex h-40px w-full items-center gap-8px rounded-radius-s border border-border-secondary bg-surface-primary p-8px text-sm font-normal text-text-primary desktop:h-56px desktop:p-spacing-2xs desktop:text-base">
+        <FiSearch size={24} className="shrink-0" />
         <input
           type="text"
           value={inputValue}
@@ -77,7 +77,9 @@ const SearchArea: React.FC<ISearchAreaProps> = ({ isShowTags }) => {
       </div>
 
       {/* Info: (20250804 - Julian) Search Tags */}
-      {isShowTags && <div className="flex flex-wrap items-center gap-12px">{tags}</div>}
+      {isShowTags && (
+        <div className="flex flex-wrap items-center gap-12px text-sm desktop:text-base">{tags}</div>
+      )}
     </div>
   );
 };

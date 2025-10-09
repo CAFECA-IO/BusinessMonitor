@@ -24,7 +24,9 @@ const Breadcrumb: React.FC<IBreadcrumbProps> = ({ items }) => {
     const isLink = isLoading ? (
       <Skeleton width={120} height={24} />
     ) : isActive ? (
-      <div className="text-text-brand">{t(`breadcrumb:${item.name}`)}</div>
+      <div className="max-w-150px text-text-brand desktop:max-w-max">
+        {t(`breadcrumb:${item.name}`)}
+      </div>
     ) : (
       <Link href={item.link} className="hover:text-text-brand">
         {t(`breadcrumb:${item.name}`)}
@@ -41,7 +43,11 @@ const Breadcrumb: React.FC<IBreadcrumbProps> = ({ items }) => {
     );
   });
 
-  return <ol className="flex w-full items-center gap-8px font-normal">{crumbs}</ol>;
+  return (
+    <ol className="flex w-full items-center gap-8px text-sm font-normal desktop:text-base">
+      {crumbs}
+    </ol>
+  );
 };
 
 export default Breadcrumb;

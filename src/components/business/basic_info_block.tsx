@@ -43,19 +43,19 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
   );
 
   return (
-    <div className="col-span-2 flex w-full flex-col gap-24px rounded-radius-l bg-white px-60px py-36px">
-      <p className="text-h5 font-bold text-text-brand">
+    <div className="flex w-full flex-col gap-24px rounded-radius-l bg-white p-20px desktop:col-span-2 desktop:px-60px desktop:py-36px">
+      <p className="text-base font-bold text-text-brand desktop:text-h5">
         {t('business_detail:BASIC_INFO_TAB_TITLE')}
       </p>
       <hr className="bg-border-secondary" />
       {/* Info: (20250812 - Julian) Content */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-center justify-between gap-40px desktop:flex-row">
         <div className="flex flex-col items-center gap-40px">
           {/* Info: (20250812 - Julian) Business Logo */}
           <div className="relative size-150px overflow-hidden rounded-full">{isShowLogo}</div>
           {/* Info: (20250812 - Julian) Business Name & Tax ID */}
           <div className="flex flex-col items-center gap-12px">
-            <div className="flex w-350px items-center gap-4px overflow-x-auto overflow-y-hidden whitespace-nowrap text-h4 font-bold text-text-primary">
+            <div className="flex w-full items-center gap-4px overflow-x-auto overflow-y-hidden text-2xl font-bold text-text-primary desktop:w-350px desktop:whitespace-nowrap desktop:text-h4">
               {isVerified && (
                 <Image src="/icons/verified.svg" width={32} height={32} alt="verified_icon" />
               )}
@@ -64,15 +64,26 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
             <p className="text-base font-medium text-grey-60">{registrationNo}</p>
           </div>
           {/* Info: (20250812 - Julian) Official Web */}
-          <Link href={websiteLink} target="_blank">
-            <Button type="button" variant="primaryBorderless" className="gap-8px">
+          <Link
+            href={websiteLink}
+            target="_blank"
+            // Info: (20251009 - Julian) Disable link if no website
+            className={websiteUrl ? '' : 'pointer-events-none'}
+          >
+            <Button
+              type="button"
+              variant="primaryBorderless"
+              className="gap-8px"
+              // Info: (20251009 - Julian) Disable link if no website
+              disabled={!websiteUrl}
+            >
               <Image src="/icons/link.svg" width={18} height={18} alt="link_icon" />
               <p className="font-normal">{t('business_detail:BASIC_INFO_TAB_OFFICIAL_WEB')}</p>
             </Button>
           </Link>
         </div>
 
-        <div className="grid grid-cols-3 gap-60px">
+        <div className="grid grid-cols-2 gap-12px desktop:grid-cols-3 desktop:gap-60px">
           <div className="flex flex-col items-start gap-12px text-sm font-medium">
             <p className="text-text-note">
               {t('business_detail:BASIC_INFO_TAB_COMPANY_REPRESENTATIVE')}
@@ -115,7 +126,7 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
             <p className="text-text-primary"> {capitalRanking ? `#${capitalRanking}` : '-'}</p>
           </div>
 
-          <div className="col-span-3 flex flex-col items-start gap-12px text-sm font-medium">
+          <div className="col-span-2 flex flex-col items-start gap-12px text-sm font-medium desktop:col-span-3">
             <p className="text-text-note">{t('business_detail:BASIC_INFO_TAB_ADDRESS')}</p>
             <p className="text-text-primary">{address}</p>
           </div>

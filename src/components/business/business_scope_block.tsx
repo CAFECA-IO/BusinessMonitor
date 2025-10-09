@@ -34,7 +34,7 @@ const BusinessScopeBlock: React.FC<IBusinessScopeBlockProps> = ({ scopes }) => {
     <InfoBlockLayout
       title={t('business_detail:BUSINESS_SCOPE_BLOCK_TITLE')}
       tooltipContent={t('business_detail:TOOLTIP_BUSINESS_SCOPE')}
-      className="grid grid-cols-2 gap-y-40px overflow-y-auto text-sm"
+      className="grid grid-cols-2 gap-y-40px overflow-y-auto text-xs desktop:text-sm"
     >
       {businessScopes}
     </InfoBlockLayout>

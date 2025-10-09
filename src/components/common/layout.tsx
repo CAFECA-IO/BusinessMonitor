@@ -29,11 +29,11 @@ const Layout: React.FC<ILayoutProps> = ({
       <Navbar />
 
       <main
-        className={`flex grow flex-col gap-40px ${pageBgColor} ${isLandingPage ? '' : 'py-20px'}`}
+        className={`flex grow flex-col gap-20px desktop:gap-40px ${pageBgColor} ${isLandingPage ? '' : 'py-20px'}`}
       >
         {/* Info: (20250805 - Julian) Breadcrumbs & Search bar */}
         {isShowCrumbs && (
-          <div className="flex items-center justify-between px-80px">
+          <div className="flex flex-col items-center justify-start gap-y-20px px-20px desktop:flex-row desktop:justify-between desktop:px-80px">
             <Breadcrumb items={crumbsItems} />
             {isSearchBar && <SearchArea />}
           </div>

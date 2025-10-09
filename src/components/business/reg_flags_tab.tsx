@@ -99,12 +99,12 @@ const RedFlagsTab: React.FC<IRedFlagsTabProps> = ({ businessId }) => {
   );
 
   return (
-    <div className="grid grid-cols-2 gap-60px">
+    <div className="grid grid-cols-1 gap-x-60px gap-y-40px desktop:grid-cols-2">
       {/* Info: (20250902 - Julian) Red Flags Block */}
       <InfoBlockLayout
         title={t('business_detail:RED_FLAGS_BLOCK_TITLE')}
         tooltipContent={t('business_detail:TOOLTIP_RED_FLAGS')}
-        className="flex flex-col gap-40px"
+        className="flex flex-col gap-40px text-xs desktop:text-base"
       >
         <div className="grid grid-cols-8 gap-40px font-medium text-text-note">
           <p className="col-span-2 whitespace-nowrap">{t('business_detail:FLAGS_BLOCK_DATE')}</p>
@@ -122,7 +122,7 @@ const RedFlagsTab: React.FC<IRedFlagsTabProps> = ({ businessId }) => {
       <InfoBlockLayout
         title={t('business_detail:GREEN_FLAGS_BLOCK_TITLE')}
         tooltipContent={t('business_detail:TOOLTIP_GREEN_FLAGS')}
-        className="flex flex-col gap-40px"
+        className="flex flex-col gap-40px text-xs desktop:text-base"
       >
         <div className="grid grid-cols-8 gap-40px font-medium text-text-note">
           <p className="col-span-2 whitespace-nowrap">{t('business_detail:FLAGS_BLOCK_DATE')}</p>
