@@ -7,7 +7,7 @@ import { routes } from '@/config/api-routes';
 import Layout from '@/components/common/layout';
 import { BM_URL } from '@/constants/url';
 
-// 在模組頂層讀取環境變數
+// Info: (20251009 - Tzuhan) 在模組頂層讀取環境變數
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
@@ -36,7 +36,7 @@ export default function ProfilePage() {
     const fetchUser = async () => {
       const dewt = localStorage.getItem('dewt');
       if (!dewt) {
-        // 如果沒有 token，直接導向登入頁
+        // Info: (20251009 - Tzuhan) 如果沒有 token，直接導向登入頁
         router.replace(BM_URL.LOGIN);
         return;
       }
