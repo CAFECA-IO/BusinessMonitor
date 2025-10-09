@@ -18,19 +18,19 @@ const DiscussionPoster: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center gap-24px rounded-radius-l bg-surface-primary px-40px py-24px">
+    <div className="flex items-center gap-24px rounded-radius-l bg-surface-primary p-20px desktop:px-40px desktop:py-24px">
       {/* Info: (20250903 - Julian) Avatar */}
-      <div className="size-80px shrink-0 overflow-hidden rounded-full">
-        <Image src={userAvatar} width={80} height={80} alt="user_avatar" />
+      <div className="relative size-40px shrink-0 overflow-hidden rounded-full desktop:size-80px">
+        <Image src={userAvatar} fill objectFit="cover" alt="user_avatar" />
       </div>
       {/* Info: (20250903 - Julian) Input Box */}
-      <div className="flex flex-1 items-center rounded-radius-s border border-border-secondary p-spacing-2xs">
+      <div className="flex flex-1 items-center rounded-radius-s border border-border-secondary p-8px desktop:p-spacing-2xs">
         <input
           type="text"
           value={inputValue}
           onChange={handleInputChange}
           placeholder={t('business_detail:POSTING_INPUT_PLACEHOLDER')}
-          className="flex-1 text-base font-normal text-text-primary outline-none placeholder:text-text-note"
+          className="flex-1 text-sm font-normal text-text-primary outline-none placeholder:text-text-note desktop:text-base"
         />
         <button type="button" className="text-text-note hover:text-button-accent-hover">
           <PiPaperPlaneTiltBold size={20} />
