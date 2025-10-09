@@ -22,7 +22,7 @@ const TabBar: React.FC<ITabBarProps> = ({ currentTab, onTabChange }) => {
         type="button"
         onClick={clickHandler}
         disabled={isActive}
-        className={`rounded-full px-48px py-12px text-base font-medium enabled:hover:bg-tab-active enabled:hover:text-text-note ${isActive ? 'bg-button-primary text-text-invert' : 'bg-transparent text-text-secondary'}`}
+        className={`rounded-full p-8px text-xs font-medium enabled:hover:bg-tab-active enabled:hover:text-text-note desktop:px-48px desktop:py-12px desktop:text-base ${isActive ? 'bg-button-primary text-text-invert' : 'bg-transparent text-text-secondary'}`}
       >
         {t(`DETAIL_TAB_${item}`)}
       </button>
@@ -30,7 +30,7 @@ const TabBar: React.FC<ITabBarProps> = ({ currentTab, onTabChange }) => {
   });
 
   return (
-    <div className="grid grid-cols-6 items-center rounded-full bg-tab-bar-bg p-8px">
+    <div className="grid grid-cols-3 items-center rounded-full bg-tab-bar-bg p-8px desktop:grid-cols-6">
       {displayTabContent}
     </div>
   );

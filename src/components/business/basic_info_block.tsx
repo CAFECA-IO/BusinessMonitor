@@ -43,7 +43,7 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
   );
 
   return (
-    <div className="col-span-2 flex w-full flex-col gap-24px rounded-radius-l bg-white px-60px py-36px">
+    <div className="flex w-full flex-col gap-24px rounded-radius-l bg-white px-60px py-36px desktop:col-span-2">
       <p className="text-h5 font-bold text-text-brand">
         {t('business_detail:BASIC_INFO_TAB_TITLE')}
       </p>

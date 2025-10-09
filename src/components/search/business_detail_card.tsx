@@ -65,7 +65,7 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
   return (
     <Link
       href={`${BM_URL.BUSINESS_MONITOR}/${business.id}`}
-      className="flex w-full gap-24px rounded-radius-m border border-border-secondary bg-surface-primary px-16px desktop:flex-row flex-col py-12px hover:cursor-pointer hover:border-border-brand"
+      className="flex w-full flex-col gap-24px rounded-radius-m border border-border-secondary bg-surface-primary px-16px py-12px hover:cursor-pointer hover:border-border-brand desktop:flex-row"
     >
       <div className="flex flex-1 gap-8px">
         {/* Info: (20250804 - Julian) Business Image */}
@@ -88,7 +88,7 @@ const BusinessDetailCard: React.FC<IBusinessDetailCardProps> = ({ business }) =>
       {/* Info: (20250804 - Julian) Chart Part */}
       <div className="flex flex-col items-end gap-12px">
         {/* Info: (20250910 - Julian) Line Graph */}
-        <div className="h-full w-full desktop:w-160px">
+        <div className="size-full desktop:w-160px">
           {/* Info: (20250916 - Julian) During Developing */}
           <LineGraph lineColor={lineColor} graphData={graphData} graphHeight={60} />
         </div>

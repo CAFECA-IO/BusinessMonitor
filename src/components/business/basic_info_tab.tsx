@@ -45,10 +45,10 @@ const BasicInfoTab: React.FC<IBasicInfoTabProps> = ({ businessId }) => {
   const isShowSkeleton = isLoading || !companyData;
 
   return (
-    <div className="grid grid-cols-2 gap-x-60px gap-y-40px">
+    <div className="grid grid-cols-1 gap-x-60px gap-y-40px desktop:grid-cols-2">
       {/* Info: (20250812 - Julian) Basic Info Block */}
       {isShowSkeleton ? (
-        <SkeletonBlock className="col-span-2" />
+        <SkeletonBlock className="desktop:col-span-2" />
       ) : (
         <BasicInfoBlock basicData={companyData.card} />
       )}

@@ -28,9 +28,11 @@ const IntroCard: React.FC<IIntroCardProps> = ({ imgSrc, title, description }) =>
   });
 
   return (
-    <div className="flex flex-col items-center gap-32px px-40px py-20px desktop:gap-120px desktop:px-120px desktop:py-80px desktop:odd:flex-row desktop:even:flex-row-reverse">
+    <div className="flex flex-col items-center gap-32px p-20px desktop:gap-120px desktop:px-120px desktop:py-80px desktop:odd:flex-row desktop:even:flex-row-reverse">
       {/* Info: (20250801 - Julian) Image */}
-      <Image src={imgSrc} width={500} height={400} alt="connecting" />
+      <div className="relative h-150px w-300px desktop:h-450px desktop:w-500px">
+        <Image src={imgSrc} fill objectFit="contain" alt="connecting" />
+      </div>
 
       {/* Info: (20250801 - Julian) Text */}
       <div className="flex flex-col items-start gap-8px text-left desktop:gap-24px">

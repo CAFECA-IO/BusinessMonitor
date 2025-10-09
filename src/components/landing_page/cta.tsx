@@ -6,7 +6,7 @@ import Button from '@/components/common/button';
 
 const Cta: React.FC = () => {
   return (
-    <div className="mx-24px my-40px flex items-center gap-20px bg-cta bg-cover bg-center bg-no-repeat desktop:mx-64px desktop:my-100px desktop:bg-contain desktop:px-72px">
+    <div className="mx-24px my-40px flex items-center gap-20px rounded-radius-l bg-cta bg-cover bg-center bg-no-repeat desktop:mx-64px desktop:my-100px desktop:rounded-none desktop:bg-contain desktop:px-72px">
       <div className="relative h-200px w-100px shrink-0 desktop:h-600px desktop:w-450px">
         <Image src="/elements/phone_2.png" fill objectFit="contain" alt="phone" />
       </div>

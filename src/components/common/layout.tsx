@@ -33,7 +33,7 @@ const Layout: React.FC<ILayoutProps> = ({
       >
         {/* Info: (20250805 - Julian) Breadcrumbs & Search bar */}
         {isShowCrumbs && (
-          <div className="flex items-center justify-start px-20px desktop:justify-between desktop:px-80px">
+          <div className="flex flex-col items-center justify-start gap-y-20px px-20px desktop:flex-row desktop:justify-between desktop:px-80px">
             <Breadcrumb items={crumbsItems} />
             {isSearchBar && <SearchArea />}
           </div>

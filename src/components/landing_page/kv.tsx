@@ -82,7 +82,7 @@ const Kv: React.FC = () => {
         </div>
 
         {/* Info: (20250730 - Julian) Holding a phone Image */}
-        <div className="absolute -bottom-8 left-32 hidden desktop:block">
+        <div className="absolute -bottom-8 left-20 hidden desktop:block">
           <Image
             src="/elements/hand_holding_phone.png"
             width={500}
