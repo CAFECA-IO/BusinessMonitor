@@ -81,9 +81,11 @@ const Navbar: React.FC = () => {
   );
 
   const loginBtn = (
-    <Button type="button" size="medium">
-      {t('common:LOGIN')}
-    </Button>
+    <Link href={BM_URL.AUTH_LOGIN}>
+      <Button type="button" size="medium" className="w-full">
+        {t('common:LOGIN')}
+      </Button>
+    </Link>
   );
 
   return (
@@ -99,12 +101,14 @@ const Navbar: React.FC = () => {
         {littleTools}
       </div>
 
-      {/* Info: (20250807 - Julian) Login Button */}
-      <Link href={BM_URL.AUTH_LOGIN}>
-        <Button type="button" size="medium">
-          {t('common:LOGIN')}
-        </Button>
-      </Link>
+      {/* Info: (20251009 - Julian) Login Button */}
+      <div className="hidden desktop:block">
+        <Link href={BM_URL.AUTH_LOGIN}>
+          <Button type="button" size="medium">
+            {t('common:LOGIN')}
+          </Button>
+        </Link>
+      </div>
 
       {/* Info: (20251008 - Julian) Mobile Navigation */}
       <div ref={burgerRef} className="relative block desktop:hidden">
@@ -113,7 +117,7 @@ const Navbar: React.FC = () => {
         </Button>
 
         {isBurgerOpen && (
-          <div className="absolute right-0 top-40px flex w-150px flex-col rounded-radius-s bg-white px-12px py-8px shadow-drop-L">
+          <div className="absolute right-0 top-40px flex w-150px flex-col gap-8px rounded-radius-s bg-white px-12px py-8px shadow-drop-L">
             {navigationLinks}
             <div className="grid grid-cols-2 align-middle">{littleTools}</div>
             {loginBtn}
