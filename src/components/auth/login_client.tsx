@@ -29,7 +29,7 @@ const StatusDisplay = ({ status, error }: { status: string; error: string | null
 
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('準備登入...');
+  const [statusMessage, setStatusMessage] = useState('點擊按鈕以 Passkey 登入或註冊。');
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState(true);
   const router = useRouter();
@@ -63,7 +63,6 @@ export default function LoginClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(authentication),
       });
-
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok || !verifyData.success) {
         throw new Error(verifyData.message || '登入驗證失敗。');
@@ -98,26 +97,25 @@ export default function LoginClient() {
               disabled={isLoading || !isFidoAvailable}
               className="w-full rounded-lg bg-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
             >
-              {isLoading ? '處理中...' : '使用 Passkey 登入'}
+              {isLoading ? '處理中...' : '以 Passkey 登入'}
             </button>
             <Link
-              href={BM_URL.AUTH_ADD_DEVICE}
+              href={BM_URL.ADD_DEVICE}
               className="block w-full rounded-lg bg-gray-700 px-5 py-3.5 text-center text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-gray-800"
             >
-              在新裝置上登入
+              想新增裝置或恢復帳戶嗎？
             </Link>
           </div>
           <p className="mt-8 text-center text-sm text-gray-500">
             還沒有 Digital ID?{' '}
             <Link
-              href={BM_URL.AUTH_SIGNUP}
+              href={BM_URL.SIGN_UP}
               className="font-semibold leading-6 text-purple-600 hover:text-purple-500 hover:underline"
             >
               立即建立一個
             </Link>
           </p>
         </div>
-
         <div className="mt-8 w-full">
           <StatusDisplay status={statusMessage} error={error} />
         </div>

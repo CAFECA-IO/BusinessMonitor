@@ -100,7 +100,7 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Info: (20250807 - Julian) Login Button */}
-      <Link href={BM_URL.AUTH_LOGIN}>
+      <Link href={BM_URL.LOGIN}>
         <Button type="button" size="medium">
           {t('common:LOGIN')}
         </Button>

@@ -103,11 +103,12 @@ export default function AddDeviceClient() {
         if (!res.ok) throw new Error(data.message || '無法初始化授權連線。');
 
         const { sessionId, challenge } = data.payload;
-        const scanUrl = new URL(`${origin}/${BM_URL.AUTH_APPROVE_DEVICE}`);
+        const scanUrl = new URL(`${origin}/${BM_URL.APPROVE_DEVICE}`);
         scanUrl.searchParams.set('sessionId', sessionId);
         scanUrl.searchParams.set('challenge', challenge);
 
         const dataUrl = await QRCode.toDataURL(scanUrl.toString(), { width: 300 });
+        console.log('Generated QR Code URL:', scanUrl.toString());
         setDataUrl(scanUrl.toString());
         setQrCodeDataUrl(dataUrl);
         setStatusMessage('請使用您已登入的裝置掃描 QR Code 以進行授權。');
