@@ -37,6 +37,7 @@ export default function AddDeviceClient() {
   const [mode, setMode] = useState<'select' | 'backup' | 'qr'>('select');
   // const [backupKey, setBackupKey] = useState('');  // Info: (20251009 - Tzuhan) Deprecated
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [dataUrl, setDataUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('請選擇一種方式來新增裝置或恢復您的帳戶。');
   const [error, setError] = useState<string | null>(null);
@@ -102,11 +103,12 @@ export default function AddDeviceClient() {
         if (!res.ok) throw new Error(data.message || '無法初始化授權連線。');
 
         const { sessionId, challenge } = data.payload;
-        const scanUrl = new URL(`${origin}/${BM_URL.AUTH_APPROVE_DEVICE}`); // 注意: 這裡的路徑應指向手機端掃碼後打開的頁面
+        const scanUrl = new URL(`${origin}/${BM_URL.AUTH_APPROVE_DEVICE}`);
         scanUrl.searchParams.set('sessionId', sessionId);
         scanUrl.searchParams.set('challenge', challenge);
 
         const dataUrl = await QRCode.toDataURL(scanUrl.toString(), { width: 300 });
+        setDataUrl(dataUrl);
         setQrCodeDataUrl(dataUrl);
         setStatusMessage('請使用您已登入的裝置掃描 QR Code 以進行授權。');
 
@@ -191,8 +193,8 @@ export default function AddDeviceClient() {
                 unoptimized
               />
             )}
-            <Link href={qrCodeDataUrl} target="_blank" rel="noopener noreferrer">
-              無法看到 QR Code 圖片？點此在新分頁開啟
+            <Link href={dataUrl} target="_blank" rel="noopener noreferrer">
+              打開連結
             </Link>
             <button
               onClick={() => setMode('select')}
