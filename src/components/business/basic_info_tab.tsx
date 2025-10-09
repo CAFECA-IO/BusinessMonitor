@@ -26,11 +26,11 @@ const SkeletonBlock: React.FC<ISkeletonBlockProps> = ({ className }) => {
       <hr className="border-border-secondary" />
       {/* Info: (20250915 - Julian) Content */}
       <div className="hidden flex-col gap-20px desktop:flex">
-        <Skeleton width={400} height={30} />
         <Skeleton width={350} height={30} />
         <Skeleton width={300} height={30} />
         <Skeleton width={250} height={30} />
         <Skeleton width={200} height={30} />
+        <Skeleton width={150} height={30} />
       </div>
       <div className="flex flex-col gap-20px desktop:hidden">
         <Skeleton width={250} height={30} />

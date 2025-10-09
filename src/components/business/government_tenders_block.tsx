@@ -76,7 +76,7 @@ const GovernmentTendersBlock: React.FC<IGovernmentTendersBlockProps> = ({ busine
     <InfoBlockLayout
       title={t('business_detail:GOVERNMENT_TENDERS_BLOCK_TITLE')}
       tooltipContent={t('business_detail:TOOLTIP_GOVERNMENT_TENDERS')}
-      className="flex flex-col gap-y-40px text-sm"
+      className="flex flex-col gap-y-40px text-xs desktop:text-sm"
     >
       <div className="grid grid-cols-9 gap-40px font-medium text-text-note">
         <p className="col-span-3">{t('business_detail:GOVERNMENT_TENDERS_BLOCK_PROJECT_TITLE')}</p>

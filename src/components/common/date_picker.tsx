@@ -285,9 +285,11 @@ const DatePicker: React.FC<IDatePickerProps> = ({
         {/* Info: (20250825 - Julian) Banner */}
         <div
           onClick={toggleDatePicker}
-          className={`flex min-w-300px items-center rounded-radius-s border bg-surface-primary p-spacing-2xs transition-all duration-200 ease-in-out hover:cursor-pointer hover:border-border-brand ${isOpenDatePicker ? 'border-border-brand' : 'border-border-secondary'} `}
+          className={`flex min-w-300px items-center rounded-radius-s border bg-surface-primary p-8px transition-all duration-200 ease-in-out hover:cursor-pointer hover:border-border-brand desktop:p-spacing-2xs ${isOpenDatePicker ? 'border-border-brand' : 'border-border-secondary'} `}
         >
-          <p className="flex-1 text-base font-normal text-text-note">{showingStr}</p>
+          <p className="flex-1 text-sm font-normal text-text-note desktop:text-base">
+            {showingStr}
+          </p>
           <FiCalendar size={24} className="text-text-primary" />
         </div>
 
@@ -300,14 +302,14 @@ const DatePicker: React.FC<IDatePickerProps> = ({
             <button type="button" onClick={goToPrevMonth}>
               <FaChevronLeft size={20} className="text-text-primary" />
             </button>
-            <p className="text-base font-bold text-text-brand">{monthAndYearStr}</p>
+            <p className="text-sm font-bold text-text-brand desktop:text-base">{monthAndYearStr}</p>
             <button type="button" onClick={goToNextMonth}>
               <FaChevronRight size={20} className="text-text-primary" />
             </button>
           </div>
 
           {/* Info: (20250904 - Julian) Date Grid */}
-          <div className="grid grid-cols-7 gap-y-spacing-3xs text-center text-base">
+          <div className="grid grid-cols-7 gap-y-spacing-3xs text-center text-sm desktop:text-base">
             {/* Info: (20250825 - Julian) Weekday Header */}
             {weekHeader}
             {/* Info: (20250825 - Julian) Date */}

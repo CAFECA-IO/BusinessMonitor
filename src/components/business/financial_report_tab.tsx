@@ -50,7 +50,7 @@ const FinancialReportTab: React.FC = () => {
         type="button"
         onClick={handleClick}
         disabled={isSelected}
-        className={`${isSelected ? 'border-text-brand text-text-brand' : 'border-text-secondary text-text-secondary'} group flex h-100px flex-col items-center gap-4px rounded-radius-m border p-10px text-xs font-medium hover:border-button-primary-hover hover:text-button-primary-hover desktop:h-fit desktop:gap-16px desktop:px-40px desktop:py-24px desktop:text-sm`}
+        className={`${isSelected ? 'border-text-brand text-text-brand' : 'border-text-secondary text-text-secondary'} group flex h-100px flex-col items-center gap-4px rounded-radius-m border p-10px text-xs font-medium hover:border-button-primary-hover hover:text-button-primary-hover desktop:h-180px desktop:gap-16px desktop:px-40px desktop:py-24px desktop:text-sm`}
       >
         <div className="relative size-40px shrink-0 grow desktop:size-80px">
           <Image

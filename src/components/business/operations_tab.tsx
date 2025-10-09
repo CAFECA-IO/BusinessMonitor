@@ -11,12 +11,12 @@ interface IOperationsTabProps {
 
 const OperationsTab: React.FC<IOperationsTabProps> = ({ businessId }) => {
   return (
-    <div className="grid grid-cols-2 gap-x-60px gap-y-40px">
+    <div className="grid grid-cols-1 gap-x-60px gap-y-40px desktop:grid-cols-2">
       {/* Info: (20250915 - Julian) Trade Block */}
       <TradeBlock businessId={businessId} />
 
       {/* Info: (20250916 - Julian) Government Tenders Block */}
-      <div className="col-span-2">
+      <div className="desktop:col-span-2">
         <GovernmentTendersBlock businessId={businessId} />
       </div>
 
@@ -24,12 +24,10 @@ const OperationsTab: React.FC<IOperationsTabProps> = ({ businessId }) => {
       <TrademarksBlock businessId={businessId} />
 
       {/* Info: (20250901 - Julian) Patents Block */}
-      <div>
-        <PatentsBlock businessId={businessId} />
-      </div>
+      <PatentsBlock businessId={businessId} />
 
       {/* Info: (20250901 - Julian) Political Activities Block */}
-      <div className="col-span-2">
+      <div className="desktop:col-span-2">
         <PoliticalActivityBlock businessId={businessId} />
       </div>
     </div>

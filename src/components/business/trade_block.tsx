@@ -59,11 +59,11 @@ const TradeBlock: React.FC<ITradeBlockProps> = ({ businessId }) => {
   );
 
   return (
-    <div className="col-span-2 flex flex-col gap-16px">
+    <div className="flex flex-col gap-16px desktop:col-span-2">
       <InfoBlockLayout
         title={t('business_detail:IMPORT_AND_EXPORT_BLOCK_TITLE')}
         tooltipContent={t('business_detail:TOOLTIP_IMPORT_AND_EXPORT')}
-        className="flex flex-col gap-y-40px text-sm"
+        className="flex flex-col gap-y-40px text-xs desktop:text-sm"
       >
         {/* Info: (20250901 - Julian) Title */}
         <div className="grid grid-cols-4 font-medium text-text-note">

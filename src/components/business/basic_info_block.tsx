@@ -49,7 +49,7 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
       </p>
       <hr className="bg-border-secondary" />
       {/* Info: (20250812 - Julian) Content */}
-      <div className="flex flex-col items-center justify-between gap-y-40px desktop:flex-row">
+      <div className="flex flex-col items-center justify-between gap-40px desktop:flex-row">
         <div className="flex flex-col items-center gap-40px">
           {/* Info: (20250812 - Julian) Business Logo */}
           <div className="relative size-150px overflow-hidden rounded-full">{isShowLogo}</div>
@@ -64,8 +64,19 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
             <p className="text-base font-medium text-grey-60">{registrationNo}</p>
           </div>
           {/* Info: (20250812 - Julian) Official Web */}
-          <Link href={websiteLink} target="_blank">
-            <Button type="button" variant="primaryBorderless" className="gap-8px">
+          <Link
+            href={websiteLink}
+            target="_blank"
+            // Info: (20251009 - Julian) Disable link if no website
+            className={websiteUrl ? '' : 'pointer-events-none'}
+          >
+            <Button
+              type="button"
+              variant="primaryBorderless"
+              className="gap-8px"
+              // Info: (20251009 - Julian) Disable link if no website
+              disabled={!websiteUrl}
+            >
               <Image src="/icons/link.svg" width={18} height={18} alt="link_icon" />
               <p className="font-normal">{t('business_detail:BASIC_INFO_TAB_OFFICIAL_WEB')}</p>
             </Button>

@@ -181,7 +181,7 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
   ) : marketSuccess && marketData ? (
     <>
       {/* Info: (20251008 - Julian) chart meta data */}
-      <div className="absolute left-24px top-24px z-50 flex items-center gap-16px bg-surface-background px-4px text-sm font-medium text-text-secondary">
+      <div className="absolute top-12px z-50 flex flex-wrap items-center gap-4px gap-x-16px bg-surface-background px-4px text-xs font-medium text-text-secondary desktop:left-24px desktop:top-24px desktop:flex-nowrap desktop:text-sm">
         <p>
           {t('business_detail:GRAPH_OPEN')}{' '}
           <span className={stockColor}>{formatNumberWithCommas(open, true)}</span>
@@ -246,12 +246,12 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
       {/* Info: (20250826 - Julian) Chart Part */}
       <div className="flex flex-col gap-24px">
         {/* Info: (20250826 - Julian) Business Name */}
-        <div className="flex items-center gap-4px whitespace-nowrap text-h3 font-bold text-text-primary">
+        <div className="flex items-center gap-4px text-3xl font-bold text-text-primary desktop:whitespace-nowrap desktop:text-h3">
           <Image src="/icons/verified.svg" width={32} height={32} alt="verified_icon" />
           {displayedBusinessName}
         </div>
         {/* Info: (20250826 - Julian) Stock Info */}
-        <div className="flex flex-col items-center justify-between gap-x-60px gap-y-40px px-24px py-12px desktop:flex-row">
+        <div className="flex flex-col items-center justify-between gap-x-60px gap-y-40px desktop:flex-row desktop:px-24px desktop:py-12px">
           {/* Info: (20250826 - Julian) Left Part: Close, Change */}
           <div className={`${stockColor} ${pulseStyle} flex flex-col gap-8px`}>
             <p className="text-h3 font-bold">{formatNumberWithCommas(close, true)}</p>
@@ -264,7 +264,7 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
             </div>
           </div>
           {/* Info: (20250826 - Julian) Right Part: Other Stock Info */}
-          <div className="grid flex-1 grid-cols-2 gap-40px text-sm">
+          <div className="grid flex-1 grid-cols-2 gap-20px text-xs desktop:gap-40px desktop:text-sm">
             <div className="flex flex-col gap-4px">
               <div className="flex items-center justify-between">
                 <p className="font-normal text-text-secondary">
@@ -333,7 +333,9 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
           {displayedChartSection}
 
           {/* Info: (20251008 - Julian) chart range button */}
-          <div className="flex items-center justify-end gap-5px py-12px">{rangeButtons}</div>
+          <div className="flex items-center justify-end gap-5px desktop:py-12px">
+            {rangeButtons}
+          </div>
         </div>
 
         {/* ToDo: (20251007 - Julian) 目前沒有資料，先隱藏 */}
@@ -362,8 +364,10 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
       </div>
 
       {/* Info: (20250826 - Julian) News Part */}
-      <div className="flex flex-col gap-40px">
-        <p className="text-h5 font-bold text-text-brand">{t('business_detail:NEWS_TITLE')}</p>
+      <div className="flex flex-col gap-24px desktop:gap-40px">
+        <p className="text-base font-bold text-text-brand desktop:text-h5">
+          {t('business_detail:NEWS_TITLE')}
+        </p>
         <hr className="h-px border-border-secondary" />
         {displayedNews}
       </div>
