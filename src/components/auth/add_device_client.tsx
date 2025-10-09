@@ -8,6 +8,7 @@ import QRCode from 'qrcode';
 import Pusher from 'pusher-js';
 import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
+import { BM_URL } from '@/constants/url';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -29,7 +30,7 @@ export default function AddDeviceClient() {
       setStatusMessage('錯誤：未授權');
       setIsLoading(false);
       // 可選：幾秒後跳轉回登入頁
-      setTimeout(() => router.push('/auth/login'), 3000);
+      setTimeout(() => router.push(BM_URL.LOGIN), 3000);
       return;
     }
 
@@ -44,8 +45,7 @@ export default function AddDeviceClient() {
         if (!res.ok || !data.success) throw new Error(data.message);
 
         const { sessionId } = data.payload;
-        // QR Code 指向新裝置進行 Passkey 註冊的頁面
-        const setupUrl = new URL(`${origin}/auth/setup-new-device`);
+        const setupUrl = new URL(`${origin}/${BM_URL.SETUP_NEW_DEVICE}`);
         setupUrl.searchParams.set('sessionId', sessionId);
 
         const dataUrl = await QRCode.toDataURL(setupUrl.toString(), { width: 256, margin: 2 });
@@ -91,7 +91,6 @@ export default function AddDeviceClient() {
               unoptimized
             />
           )}
-          {qrCodeDataUrl && <Image src={qrCodeDataUrl} alt="Add device QR Code" />}
         </div>
         <Link href="/profile/devices" className="mt-8 inline-block text-purple-600 hover:underline">
           返回裝置管理

@@ -69,7 +69,7 @@ export default function LoginWithDeviceClient() {
       <div className="w-full max-w-md rounded-2xl border bg-white p-8 text-center shadow-lg">
         <h1 className="text-2xl font-bold">使用其他裝置登入</h1>
         <p className="mt-4 text-gray-600">{statusMessage}</p>
-        <div className="mt-6 flex size-72 items-center justify-center self-center rounded-lg border p-2">
+        <div className="mt-6 flex size-72 w-full items-center justify-center self-center rounded-lg border p-2">
           {isLoading && <div className="animate-pulse">Loading...</div>}
           {error && <p className="text-red-500">{error}</p>}
           {qrCodeDataUrl && (
