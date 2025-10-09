@@ -22,7 +22,7 @@ const SkeletonBlock: React.FC<ISkeletonBlockProps> = ({ className }) => {
     <div
       className={`${className} flex h-420px flex-col gap-24px rounded-radius-l bg-white px-60px py-36px`}
     >
-      <p className="text-h5 font-bold text-text-brand">--</p>
+      <p className="text-base font-bold text-text-brand desktop:text-h5">--</p>
       <hr className="border-border-secondary" />
       {/* Info: (20250915 - Julian) Content */}
       <div className="flex flex-col gap-20px">

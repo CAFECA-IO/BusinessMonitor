@@ -19,9 +19,9 @@ const InfoBlockLayout: React.FC<IInfoBlockLayoutProps> = ({
   );
 
   return (
-    <div className="flex h-420px flex-col gap-24px rounded-radius-l bg-white px-60px py-36px">
+    <div className="flex h-420px flex-col gap-24px rounded-radius-l bg-white p-20px desktop:px-60px desktop:py-36px">
       <div className="flex items-center gap-8px">
-        <p className="text-h5 font-bold text-text-brand">{title}</p>
+        <p className="text-base font-bold text-text-brand desktop:text-h5">{title}</p>
 
         {tooltip}
       </div>

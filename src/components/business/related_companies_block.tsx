@@ -39,7 +39,7 @@ const RelatedCompaniesBlock: React.FC<IRelatedCompaniesBlockProps> = ({ relatedC
     <InfoBlockLayout
       title={t('business_detail:RELATED_COMPANIES_BLOCK_TITLE')}
       tooltipContent={t('business_detail:TOOLTIP_RELATED_COMPANIES')}
-      className="flex flex-col gap-y-40px text-sm font-medium"
+      className="flex flex-col gap-y-40px text-xs font-medium desktop:text-sm"
     >
       {/* Info: (20250813 - Julian) Title */}
       <div className="grid grid-cols-2 gap-y-40px">

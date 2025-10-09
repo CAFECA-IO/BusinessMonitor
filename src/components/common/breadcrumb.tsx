@@ -24,7 +24,7 @@ const Breadcrumb: React.FC<IBreadcrumbProps> = ({ items }) => {
     const isLink = isLoading ? (
       <Skeleton width={120} height={24} />
     ) : isActive ? (
-      <div className="text-text-brand">{t(`breadcrumb:${item.name}`)}</div>
+      <div className="max-w-150px text-text-brand">{t(`breadcrumb:${item.name}`)}</div>
     ) : (
       <Link href={item.link} className="hover:text-text-brand">
         {t(`breadcrumb:${item.name}`)}
