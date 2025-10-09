@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
+import { BM_URL } from '@/constants/url';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -100,7 +101,7 @@ export default function LoginClient() {
               {isLoading ? '處理中...' : '使用 Passkey 登入'}
             </button>
             <Link
-              href="/auth/add-device"
+              href={BM_URL.AUTH_ADD_DEVICE}
               className="block w-full rounded-lg bg-gray-700 px-5 py-3.5 text-center text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-gray-800"
             >
               在新裝置上登入
@@ -109,7 +110,7 @@ export default function LoginClient() {
           <p className="mt-8 text-center text-sm text-gray-500">
             還沒有 Digital ID?{' '}
             <Link
-              href="/auth/signup"
+              href={BM_URL.AUTH_SIGNUP}
               className="font-semibold leading-6 text-purple-600 hover:text-purple-500 hover:underline"
             >
               立即建立一個

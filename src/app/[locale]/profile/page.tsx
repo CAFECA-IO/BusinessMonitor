@@ -88,7 +88,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('dewt');
-    router.push('/demo/auth');
+    router.push('/');
   };
 
   return (

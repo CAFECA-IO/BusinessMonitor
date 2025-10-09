@@ -5,6 +5,7 @@ export const BM_URL = {
   AUTH_LOGIN: '/auth/login',
   AUTH_SIGNUP: '/auth/signup',
   AUTH_ADD_DEVICE: '/auth/add_device',
+  AUTH_APPROVE_DEVICE: '/auth/approve_device',
   PROFILE: '/profile',
   TERMS: '/terms',
   PRIVACY: '/privacy',
