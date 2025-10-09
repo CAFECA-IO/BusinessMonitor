@@ -50,17 +50,17 @@ const FinancialReportTab: React.FC = () => {
         type="button"
         onClick={handleClick}
         disabled={isSelected}
-        className={`${isSelected ? 'border-text-brand text-text-brand' : 'border-text-secondary text-text-secondary'} group flex flex-col items-center gap-16px rounded-radius-m border px-72px py-24px text-sm font-medium hover:border-button-primary-hover hover:text-button-primary-hover`}
+        className={`${isSelected ? 'border-text-brand text-text-brand' : 'border-text-secondary text-text-secondary'} group flex h-100px flex-col items-center gap-4px rounded-radius-m border p-10px text-xs font-medium hover:border-button-primary-hover hover:text-button-primary-hover desktop:h-fit desktop:gap-16px desktop:px-40px desktop:py-24px desktop:text-sm`}
       >
-        <div className="relative shrink-0">
+        <div className="relative size-40px shrink-0 grow desktop:size-80px">
           <Image
             src={`/report_icon/${reportStr}_hover.svg`}
             alt="hover_icon"
-            width={80}
-            height={80}
+            fill
+            objectFit="contain"
             className={`absolute z-10 hidden group-hover:block`}
           />
-          <Image src={imgSrc} alt={`${reportStr}_icon`} width={80} height={80} />
+          <Image src={imgSrc} alt={`${reportStr}_icon`} fill objectFit="contain" />
         </div>
         <p>{t(`business_detail:${reportTransCode}`)}</p>
       </button>
@@ -83,9 +83,9 @@ const FinancialReportTab: React.FC = () => {
     ) : null;
 
   return (
-    <div className="flex flex-col gap-60px">
+    <div className="flex flex-col gap-x-60px gap-y-40px">
       {/* Info: (20250901 - Julian) Report Tabs */}
-      <div className="grid grid-cols-6 gap-8px">{reportSelections}</div>
+      <div className="grid grid-cols-3 gap-8px desktop:grid-cols-6">{reportSelections}</div>
 
       {/* Info: (20251007 - Julian) Date Picker */}
       <DatePicker

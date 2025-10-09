@@ -22,11 +22,12 @@ const jost = Jost({
 });
 
 export const metadata: Metadata = {
-  title: '企業觀測站',
+  title: 'CAFECA',
   description:
     '提供上市、上櫃及興櫃公司之重要資訊，涵蓋財務報告、重大訊息與股東會資料，協助投資人快速掌握公司動態與市場趨勢，同時亦揭露未公開發行公司的相關資訊。',
   authors: [{ name: 'CAFECA Team' }],
   keywords: [
+    'CAFECA',
     '企業觀測站',
     '財務報告',
     '股東會資料',
@@ -40,11 +41,11 @@ export const metadata: Metadata = {
     icon: '/logos/cafeca_icon.svg',
   },
   openGraph: {
-    title: '企業觀測站',
+    title: 'CAFECA',
     description:
       '提供上市、上櫃及興櫃公司之重要資訊，涵蓋財務報告、重大訊息與股東會資料，協助投資人快速掌握公司動態與市場趨勢，同時亦揭露未公開發行公司的相關資訊。',
     url: 'https://cafeca.io/',
-    siteName: '企業觀測站',
+    siteName: 'CAFECA',
     locale: 'zh_TW',
     type: 'website',
   },

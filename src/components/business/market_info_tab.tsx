@@ -251,7 +251,7 @@ const MarketInfoTab: React.FC<IMarketInfoTabProps> = ({ businessId }) => {
           {displayedBusinessName}
         </div>
         {/* Info: (20250826 - Julian) Stock Info */}
-        <div className="flex items-center justify-between gap-60px px-24px py-12px">
+        <div className="flex flex-col items-center justify-between gap-x-60px gap-y-40px px-24px py-12px desktop:flex-row">
           {/* Info: (20250826 - Julian) Left Part: Close, Change */}
           <div className={`${stockColor} ${pulseStyle} flex flex-col gap-8px`}>
             <p className="text-h3 font-bold">{formatNumberWithCommas(close, true)}</p>

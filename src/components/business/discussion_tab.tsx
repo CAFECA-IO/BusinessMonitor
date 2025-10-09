@@ -203,7 +203,7 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
       {/* Info: (20250903 - Julian) Important Announcement Block */}
       <InfoBlockLayout
         title={t('business_detail:IMPORTANT_ANNOUNCEMENT_BLOCK_TITLE')}
-        className="flex h-400px w-300px flex-col gap-40px overflow-y-auto"
+        className="flex h-400px w-full flex-col gap-40px overflow-y-auto desktop:w-300px"
       >
         {/* Info: (20251001 - Julian) Add New Announcement */}
         <Button
@@ -269,7 +269,7 @@ const DiscussionTab: React.FC<IDiscussionTabProps> = ({ businessId }) => {
               <div
                 className={`${
                   isSortOpen ? 'visible opacity-100' : 'invisible opacity-0'
-                } absolute top-48px desktop:top-64px z-10 flex max-h-300px w-full flex-col overflow-y-auto rounded-radius-s bg-surface-primary p-spacing-3xs text-text-note shadow-drop-L transition-all duration-150 ease-in-out`}
+                } absolute top-48px z-10 flex max-h-300px w-full flex-col overflow-y-auto rounded-radius-s bg-surface-primary p-spacing-3xs text-text-note shadow-drop-L transition-all duration-150 ease-in-out desktop:top-64px`}
               >
                 {sortOptions}
               </div>

@@ -30,7 +30,7 @@ const TabBar: React.FC<ITabBarProps> = ({ currentTab, onTabChange }) => {
   });
 
   return (
-    <div className="grid grid-cols-3 items-center rounded-full bg-tab-bar-bg p-8px desktop:grid-cols-6">
+    <div className="grid grid-cols-3 items-center rounded-radius-m bg-tab-bar-bg p-8px desktop:grid-cols-6 desktop:rounded-full">
       {displayTabContent}
     </div>
   );
