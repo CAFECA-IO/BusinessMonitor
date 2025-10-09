@@ -108,7 +108,7 @@ export default function AddDeviceClient() {
         scanUrl.searchParams.set('challenge', challenge);
 
         const dataUrl = await QRCode.toDataURL(scanUrl.toString(), { width: 300 });
-        setDataUrl(dataUrl);
+        setDataUrl(scanUrl.toString());
         setQrCodeDataUrl(dataUrl);
         setStatusMessage('請使用您已登入的裝置掃描 QR Code 以進行授權。');
 
