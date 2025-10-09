@@ -23,13 +23,13 @@ export default function AddDeviceClient() {
   const router = useRouter();
 
   useEffect(() => {
-    // 此頁面必須在登入狀態下才能操作
+    // Info: (20251009 - Tzuhan) 此頁面必須在登入狀態下才能操作
     const dewt = localStorage.getItem('dewt');
     if (!dewt) {
       setError('您必須先登入才能新增裝置。');
       setStatusMessage('錯誤：未授權');
       setIsLoading(false);
-      // 可選：幾秒後跳轉回登入頁
+      // Info: (20251009 - Tzuhan) 可選：幾秒後跳轉回登入頁
       setTimeout(() => router.push(BM_URL.LOGIN), 3000);
       return;
     }
