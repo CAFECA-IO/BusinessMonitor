@@ -9,6 +9,7 @@ import Image from 'next/image';
 // import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
+import { BM_URL } from '@/constants/url';
 
 // 在模組頂層讀取環境變數
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
@@ -101,7 +102,7 @@ export default function AddDeviceClient() {
         if (!res.ok) throw new Error(data.message || '無法初始化授權連線。');
 
         const { sessionId, challenge } = data.payload;
-        const scanUrl = new URL(`${origin}/demo/scan`); // 注意: 這裡的路徑應指向手機端掃碼後打開的頁面
+        const scanUrl = new URL(`${origin}/${BM_URL.AUTH_APPROVE_DEVICE}`); // 注意: 這裡的路徑應指向手機端掃碼後打開的頁面
         scanUrl.searchParams.set('sessionId', sessionId);
         scanUrl.searchParams.set('challenge', challenge);
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { routes } from '@/config/api-routes';
 import Layout from '@/components/common/layout';
+import { BM_URL } from '@/constants/url';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -34,8 +35,7 @@ export default function ProfilePage() {
     const fetchUser = async () => {
       const dewt = localStorage.getItem('dewt');
       if (!dewt) {
-        // 如果沒有 token，直接導向登入頁
-        router.replace('/auth/login');
+        router.replace(BM_URL.AUTH_LOGIN);
         return;
       }
 
@@ -67,7 +67,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     localStorage.removeItem('dewt');
-    router.push('/auth/login');
+    router.push(BM_URL.AUTH_LOGIN);
   };
 
   return (
@@ -93,7 +93,7 @@ export default function ProfilePage() {
 
                 <div className="flex flex-col space-y-4 pt-6 sm:flex-row sm:space-x-4 sm:space-y-0">
                   <Link
-                    href="/auth/add-device"
+                    href={BM_URL.AUTH_ADD_DEVICE}
                     className="block w-full rounded-lg bg-white px-5 py-3 text-center text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 transition-transform hover:scale-105 hover:bg-gray-50"
                   >
                     新增裝置
