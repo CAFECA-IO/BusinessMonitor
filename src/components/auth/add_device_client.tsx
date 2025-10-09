@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import QRCode from 'qrcode';
 import Pusher from 'pusher-js';
 import Image from 'next/image';
-import { fido2ClientService } from '@/lib/fido2-client';
+// import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 
@@ -34,13 +34,14 @@ const StatusDisplay = ({ status, error }: { status: string; error: string | null
 
 export default function AddDeviceClient() {
   const [mode, setMode] = useState<'select' | 'backup' | 'qr'>('select');
-  const [backupKey, setBackupKey] = useState('');
+  // const [backupKey, setBackupKey] = useState('');  // Info: (20251009 - Tzuhan) Deprecated
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('請選擇一種方式來新增裝置或恢復您的帳戶。');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  /** Info: (20251009 - Tzuhan) Deprecated
   // --- 備份碼恢復邏輯 ---
   const handleBackupKeySubmit = useCallback(async () => {
     setIsLoading(true);
@@ -82,6 +83,7 @@ export default function AddDeviceClient() {
       setIsLoading(false);
     }
   }, [backupKey, router]);
+ */
 
   // --- QR Code 授權邏輯 (與 login 頁面類似) ---
   useEffect(() => {
@@ -137,8 +139,9 @@ export default function AddDeviceClient() {
 
   const renderContent = () => {
     switch (mode) {
+      /** Info: (20251009 - Tzuhan) Deprecated
       case 'backup':
-        return (
+        return (    
           <>
             <h2 className="text-xl font-semibold text-gray-800">輸入備份碼</h2>
             <div className="mt-4 w-full space-y-4">
@@ -171,6 +174,7 @@ export default function AddDeviceClient() {
             </div>
           </>
         );
+      */
       case 'qr':
         return (
           <>
@@ -201,12 +205,12 @@ export default function AddDeviceClient() {
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">新增裝置</h1>
             <p className="mt-2 text-gray-500">選擇一種方式來恢復您的帳戶</p>
             <div className="mt-10 w-full space-y-4 sm:max-w-sm">
-              <button
+              {/* <button
                 onClick={() => setMode('backup')}
                 className="w-full rounded-lg bg-white px-5 py-3.5 text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
               >
                 使用備份碼恢復
-              </button>
+              </button> */}
               <button
                 onClick={() => setMode('qr')}
                 className="w-full rounded-lg bg-white px-5 py-3.5 text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"

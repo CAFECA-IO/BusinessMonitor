@@ -80,7 +80,7 @@ export default function SignupClient() {
       localStorage.setItem('dewt', verifyData.payload.dewt);
 
       // Info: (20251008 - Tzuhan) 提示使用者備份恢復金鑰
-      alert(`請務必備份您的恢復金鑰，它只會出現這一次：\n\n${verifyData.payload.backupKey}`);
+      // alert(`請務必備份您的恢復金鑰，它只會出現這一次：\n\n${verifyData.payload.backupKey}`); // Info: (20251009 - Tzuhan) Deprecated
 
       setTimeout(() => router.push(BM_URL.PROFILE), 2000);
     } catch (err) {
