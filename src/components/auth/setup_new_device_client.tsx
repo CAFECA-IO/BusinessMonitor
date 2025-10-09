@@ -31,7 +31,7 @@ function SetupNewDeviceInternal() {
     let pusherClient: Pusher | null = null;
 
     pusherClient = getPusherInstance();
-    // 注意：頻道名稱需要與 `add-device` 頁面中監聽的名稱一致
+    // Info: (20251009 - Tzuhan) 注意：頻道名稱需要與 `add-device` 頁面中監聽的名稱一致
     const channelName = `private-add-device-${sessionId}`;
     const channel = pusherClient.subscribe(channelName);
 
