@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
+import { BM_URL } from '@/constants/url';
 
 // Info: (20250925 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果
 const ResultDisplay = ({ title, data }: { title: string; data: object | string | null }) => {
@@ -52,16 +53,19 @@ export default function AuthPage() {
     localStorage.setItem('dewt', data.dewt);
     setResult(data);
 
+    /**
+     * Info: (20251009 - Tzuhan) Deprecated
     if (data.backupKey) {
-      // Info: (20251001-tzuhan) 改用更友善的提示方式，避免使用 alert
+      // Info: (20251001 - Tzuhan) 改用更友善的提示方式，避免使用 alert
       prompt(
         'Registration successful! Please save your backup key in a safe place:',
         data.backupKey
       );
     }
+     */
 
     setTimeout(() => {
-      router.push('/demo/me');
+      router.push(BM_URL.PROFILE);
     }, 1000);
   };
 

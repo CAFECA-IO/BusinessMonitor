@@ -80,7 +80,7 @@ export default function SignupClient() {
       localStorage.setItem('dewt', verifyData.payload.dewt);
 
       // Info: (20251008 - Tzuhan) 提示使用者備份恢復金鑰
-      alert(`請務必備份您的恢復金鑰，它只會出現這一次：\n\n${verifyData.payload.backupKey}`);
+      // alert(`請務必備份您的恢復金鑰，它只會出現這一次：\n\n${verifyData.payload.backupKey}`); // Info: (20251009 - Tzuhan) Deprecated
 
       setTimeout(() => router.push(BM_URL.PROFILE), 2000);
     } catch (err) {
@@ -151,7 +151,7 @@ export default function SignupClient() {
                 {isLoading ? '處理中...' : '註冊並以 Passkey 驗證'}
               </button>
               <Link
-                href={BM_URL.AUTH_LOGIN}
+                href={BM_URL.LOGIN}
                 className="w-full rounded-lg bg-white px-5 py-3.5 text-center text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 transition-transform hover:scale-105 hover:bg-gray-50"
               >
                 取消
