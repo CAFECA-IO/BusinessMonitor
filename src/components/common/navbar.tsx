@@ -81,7 +81,7 @@ const Navbar: React.FC = () => {
   );
 
   const loginBtn = (
-    <Link href={BM_URL.AUTH_LOGIN}>
+    <Link href={BM_URL.LOGIN}>
       <Button type="button" size="medium" className="w-full">
         {t('common:LOGIN')}
       </Button>
