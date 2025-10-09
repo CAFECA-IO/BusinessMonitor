@@ -27,8 +27,12 @@ const NewBusinessList: React.FC = () => {
 
   return (
     <div className="flex flex-col items-start gap-16px">
-      <p className="text-h6 font-bold text-text-secondary">{t('home_page:NEW_BUSINESSES_TITLE')}</p>
-      <div className="grid grid-cols-3 gap-12px desktop:grid-cols-5">{isShowList}</div>
+      <p className="text-base font-bold text-text-secondary desktop:text-h6">
+        {t('home_page:NEW_BUSINESSES_TITLE')}
+      </p>
+      <div className="grid grid-cols-1 gap-12px tablet:grid-cols-3 desktop:grid-cols-5">
+        {isShowList}
+      </div>
     </div>
   );
 };

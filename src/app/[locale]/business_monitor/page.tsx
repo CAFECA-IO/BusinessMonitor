@@ -27,7 +27,7 @@ export async function generateMetadata({
 export default function SearchPage() {
   return (
     <Suspense fallback={<>...</>}>
-      <Layout pageBgColor="bg-surface-background" className="items-center gap-60px">
+      <Layout pageBgColor="bg-surface-background" className="items-center gap-40px desktop:gap-60px">
         {/* Info: (20250904 - Julian) Main Search Area */}
         <MainSearch />
 
