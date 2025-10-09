@@ -41,7 +41,11 @@ const Breadcrumb: React.FC<IBreadcrumbProps> = ({ items }) => {
     );
   });
 
-  return <ol className="flex w-full items-center gap-8px font-normal">{crumbs}</ol>;
+  return (
+    <ol className="flex w-full items-center gap-8px text-sm font-normal desktop:text-base">
+      {crumbs}
+    </ol>
+  );
 };
 
 export default Breadcrumb;

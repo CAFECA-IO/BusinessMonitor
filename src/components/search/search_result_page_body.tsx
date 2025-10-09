@@ -22,15 +22,15 @@ const SearchResultPageBody: React.FC = () => {
     <Layout
       crumbsItems={crumbsItems}
       pageBgColor="bg-surface-background"
-      className="items-center gap-60px px-80px pb-60px"
+      className="items-center gap-40px px-20px pb-60px desktop:gap-60px desktop:px-80px"
     >
       {/* Info: (20250804 - Julian) Search Area */}
-      <div className="w-3/4">
+      <div className="w-full desktop:w-3/4">
         <SearchArea isShowTags />
       </div>
 
       {/* Info: (20250804 - Julian) Search Result List */}
-      <div className="w-3/4">
+      <div className="w-full desktop:w-3/4">
         <SearchResultList />
       </div>
     </Layout>
