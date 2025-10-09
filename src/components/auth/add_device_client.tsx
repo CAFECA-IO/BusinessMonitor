@@ -191,6 +191,9 @@ export default function AddDeviceClient() {
                 unoptimized
               />
             )}
+            <Link href={qrCodeDataUrl} target="_blank" rel="noopener noreferrer">
+              無法看到 QR Code 圖片？點此在新分頁開啟
+            </Link>
             <button
               onClick={() => setMode('select')}
               className="mt-4 w-full text-center text-sm text-gray-600 hover:underline"
