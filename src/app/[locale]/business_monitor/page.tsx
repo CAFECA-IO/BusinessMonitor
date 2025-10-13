@@ -27,12 +27,15 @@ export async function generateMetadata({
 export default function SearchPage() {
   return (
     <Suspense fallback={<>...</>}>
-      <Layout pageBgColor="bg-surface-background" className="items-center gap-40px desktop:gap-60px">
+      <Layout
+        pageBgColor="bg-surface-background"
+        className="items-center gap-40px desktop:gap-60px"
+      >
         {/* Info: (20250904 - Julian) Main Search Area */}
         <MainSearch />
 
         {/* Info: (20250804 - Julian) Business Lists */}
-        <div className="flex w-full flex-col items-center gap-56px">
+        <div className="flex w-full flex-col items-center gap-56px px-20px">
           {/* Info: (20250804 - Julian) New Business List */}
           <NewBusinessList />
           {/* Info: (20250804 - Julian) Most Viewed List */}
