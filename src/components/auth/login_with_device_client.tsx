@@ -31,7 +31,7 @@ export default function LoginWithDeviceClient() {
         if (!res.ok || !data.success) throw new Error(data.message);
 
         const { sessionId, challenge } = data.payload;
-        const scanUrl = new URL(`${origin}/${BM_URL.APPROVE_DEVICE}`);
+        const scanUrl = new URL(`${origin}${BM_URL.APPROVE_DEVICE}`);
         scanUrl.searchParams.set('sessionId', sessionId);
         scanUrl.searchParams.set('challenge', challenge);
 
