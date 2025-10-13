@@ -22,7 +22,7 @@ const Footer: React.FC = () => {
           <FaLocationDot size={24} />
           <p>{CAFECA_LOCATION_EN}</p>
         </Link>
-        <Link href={`tel:${CAFECA_PHONE}`} className="flex items-center gap-8px">
+        <Link href={`tel:${CAFECA_PHONE}`} className="flex items-center gap-8px whitespace-nowrap">
           <FaPhone size={16} />
           <p>{CAFECA_PHONE}</p>
         </Link>
@@ -44,7 +44,7 @@ const Footer: React.FC = () => {
       </div>
 
       {/* Info: (20250804 - Julian) Copyright */}
-      <p>{CAFECA_COPYRIGHT}</p>
+      <p className="whitespace-nowrap">{CAFECA_COPYRIGHT}</p>
     </footer>
   );
 };
