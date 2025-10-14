@@ -44,7 +44,7 @@ function SetupNewDeviceInternal() {
     });
 
     channel.bind(
-      'initiate-registration',
+      'client-initiate-registration',
       async (payload: { registrationOptions: RegisterOptions }) => {
         try {
           if (!payload.registrationOptions) {

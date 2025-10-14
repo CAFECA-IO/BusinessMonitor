@@ -55,7 +55,9 @@ export default function AddDeviceClient() {
 
       // Info: (20251014 - Tzuhan) 步驟 3: 透過 Pusher 將註冊選項發送給新裝置
       const pusherClient: Pusher = getPusherInstance();
-      pusherClient.subscribe(channelName).trigger('initiate-registration', { registrationOptions });
+      pusherClient
+        .subscribe(channelName)
+        .trigger('client-initiate-registration', { registrationOptions });
 
       setStatusMessage('授權已發送！請在新裝置上完成操作...');
       setIsDeviceConnected(false);
@@ -172,7 +174,7 @@ export default function AddDeviceClient() {
           </button>
         )}
 
-        <Link href="/profile/devices" className="mt-8 inline-block text-purple-600 hover:underline">
+        <Link href={BM_URL.PROFILE} className="mt-8 inline-block text-purple-600 hover:underline">
           返回裝置管理
         </Link>
       </div>
