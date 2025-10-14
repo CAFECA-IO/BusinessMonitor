@@ -4,12 +4,24 @@ import type { JWTPayload, KeyObject, CryptoKey, JWK } from 'jose';
 import { webAuthnRepo } from '@/repositories/webauthn.repo';
 import { logger } from '@/lib/logger';
 
-// Info: (20250925 - Tzuhan) --- 環境變數與常數定義 ---
-const DEWT_ALG = 'ES256';
-const DEWT_ISSUER = process.env.DEWT_ISS ?? 'urn:cafeca:id';
-const DEWT_AUDIENCE = process.env.DEWT_AUD ?? 'urn:cafeca:app';
-const DEWT_EXPIRATION_TIME = process.env.DEWT_EXPIRATION_TIME ?? '8h';
+const origin = process.env.NEXT_PUBLIC_ORIGIN;
 const PEM_PRIVATE_KEY = process.env.DEWT_PRIVATE_KEY_PEM;
+
+if (!origin || !PEM_PRIVATE_KEY) {
+  const errorMessage = !origin
+    ? 'FATAL: NEXT_PUBLIC_ORIGIN environment variable is not set.'
+    : 'FATAL: DEWT_PRIVATE_KEY_PEM environment variable is not set.';
+  logger.error(errorMessage);
+  if (typeof process.exit === 'function') {
+    process.exit(1);
+  }
+  throw new Error(errorMessage);
+}
+
+const DEWT_ALG = 'ES256';
+const DEWT_ISSUER = origin;
+const DEWT_AUDIENCE = origin;
+const DEWT_EXPIRATION_TIME = process.env.DEWT_EXPIRATION_TIME ?? '8h';
 
 // Info: (20250925 - Tzuhan) --- 金鑰載入與管理 ---
 interface ILoadedKeys {
