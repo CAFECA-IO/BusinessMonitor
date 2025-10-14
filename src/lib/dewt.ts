@@ -1,7 +1,8 @@
 import { SignJWT, jwtVerify, importPKCS8, exportJWK, importJWK } from 'jose';
 import type { IdentityAccount } from '@prisma/client';
 import type { JWTPayload, KeyObject, CryptoKey, JWK } from 'jose';
-import { logger } from './logger';
+import { webAuthnRepo } from '@/repositories/webauthn.repo';
+import { logger } from '@/lib/logger';
 
 // Info: (20250925 - Tzuhan) --- 環境變數與常數定義 ---
 const DEWT_ALG = 'ES256';
@@ -91,6 +92,36 @@ export const verifyDeWT = async (dewt: string): Promise<JWTPayload> => {
     audience: DEWT_AUDIENCE,
   });
   return payload;
+};
+
+/**
+ * Info: (20251013 - Tzuhan) 從 Authorization 標頭中解析 DeWT，並查找對應的使用者身份。
+ * @param authHeader - 來自 HTTP 請求的 Authorization 標頭字串 (例如 "Bearer ey...")。
+ * @returns {Promise<IdentityAccount | null>} 如果驗證成功且找到使用者，則回傳使用者物件，否則回傳 null。
+ */
+export const getIdentityFromDeWT = async (
+  authHeader: string | null | undefined
+): Promise<IdentityAccount | null> => {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  const dewt = authHeader.substring(7); // Info: (20251013 - Tzuhan) 移除 "Bearer " 前綴
+  try {
+    const payload = await verifyDeWT(dewt);
+    const userId = payload.sub;
+    if (!userId) {
+      logger.warn('DeWT payload is missing "sub" (subject) claim.');
+      return null;
+    }
+    // Info: (20251013 - Tzuhan) 使用 webAuthnRepo 來查找使用者
+    const identity = await webAuthnRepo.findIdentityAccountById(userId);
+    return identity;
+  } catch (error) {
+    logger.warn('Failed to verify DeWT or find identity', {
+      error: error instanceof Error ? error.message : 'Unknown verification error',
+    });
+    return null;
+  }
 };
 
 // Info: (20250925 - Tzuhan) 應用程式啟動時預先載入金鑰，以便及早發現設定錯誤。

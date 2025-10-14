@@ -24,6 +24,7 @@ function ApproveDeviceInternal() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
+  const challenge = searchParams.get('challenge');
 
   useEffect(() => {
     if (!sessionId) {
@@ -35,7 +36,10 @@ function ApproveDeviceInternal() {
   }, [sessionId]);
 
   const handleApprove = useCallback(async () => {
-    if (!sessionId) return;
+    if (!sessionId || !challenge) {
+      setError('無效的請求：缺少 session ID 或 challenge。');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -45,7 +49,10 @@ function ApproveDeviceInternal() {
       // Info: (20251009 - Tzuhan) 步驟 1: 獲取此「舊裝置」的登入選項
       const optionsRes = await fetch(`${origin}${routes.auth.webauthn.options()}`);
       if (!optionsRes.ok) throw new Error('無法獲取驗證選項。');
-      const options = await optionsRes.json();
+      const options = {
+        challenge: challenge,
+        userVerification: 'required' as const,
+      };
 
       // Info: (20251009 - Tzuhan) 步驟 2: 在此「舊裝置」上執行 FIDO2 登入
       const authentication = await fido2ClientService.startLogin(options);
