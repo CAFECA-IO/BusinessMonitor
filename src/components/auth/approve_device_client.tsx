@@ -77,7 +77,7 @@ function ApproveDeviceInternal() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${dewt}`,
         },
-        body: JSON.stringify({ sessionId, fido2Authentication: authentication }),
+        body: JSON.stringify({ sessionId, fido2Assertion: authentication }),
       });
 
       const result = await approveRes.json();
