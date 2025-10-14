@@ -36,7 +36,16 @@ export default function SignupClient() {
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState(true);
   const router = useRouter();
-  const { login } = useAuth();
+  const { user, isLoading: isAuthLoading, login } = useAuth();
+
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+    if (user) {
+      router.push(BM_URL.PROFILE);
+    }
+  }, [user, isAuthLoading, router]);
 
   useEffect(() => {
     if (!fido2ClientService.isAvailable()) {
@@ -97,6 +106,14 @@ export default function SignupClient() {
   }, [name, router, login]);
 
   const canSubmit = name.trim() !== '' && agreed && !isLoading && isFidoAvailable;
+
+  if (isAuthLoading || user) {
+    return (
+      <div className="flex w-full grow flex-col items-center justify-center p-4">
+        <p>正在驗證您的身份...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full grow flex-col items-center justify-center p-4">

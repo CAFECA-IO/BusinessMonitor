@@ -22,9 +22,21 @@ export default function LoginWithDeviceClient() {
   const [statusMessage, setStatusMessage] = useState('正在產生 QR Code...');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { login } = useAuth();
+  const { user, isLoading: isAuthLoading, login } = useAuth();
 
   useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+    if (user) {
+      router.push(BM_URL.PROFILE);
+    }
+  }, [user, isAuthLoading, router]);
+
+  useEffect(() => {
+    if (isAuthLoading || user) {
+      return;
+    }
     let pusherClient: Pusher | null = null;
     const initializeQrSession = async () => {
       try {
@@ -65,7 +77,15 @@ export default function LoginWithDeviceClient() {
     initializeQrSession();
 
     return () => pusherClient?.disconnect();
-  }, [router]);
+  }, [isAuthLoading, login, router, user]);
+
+  if (isAuthLoading || user) {
+    return (
+      <div className="flex w-full grow flex-col items-center justify-center p-4">
+        <p>正在驗證您的身份...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex grow flex-col items-center justify-center p-4">
