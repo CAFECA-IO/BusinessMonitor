@@ -8,6 +8,7 @@ import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 import { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
+import { useAuth } from '@/contexts/auth_context';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -20,6 +21,7 @@ function SetupNewDeviceInternal() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
+  const { login } = useAuth();
 
   useEffect(() => {
     if (!sessionId) {
@@ -31,8 +33,7 @@ function SetupNewDeviceInternal() {
     let pusherClient: Pusher | null = null;
 
     pusherClient = getPusherInstance();
-    // Info: (20251009 - Tzuhan) 注意：頻道名稱需要與 `add-device` 頁面中監聽的名稱一致
-    const channelName = `private-add-device-${sessionId}`;
+    const channelName = `private-login-session-${sessionId}`;
     const channel = pusherClient.subscribe(channelName);
 
     setStatusMessage('等待授權... 請在您已登入的裝置上批准此操作（如果需要）。');
@@ -71,8 +72,8 @@ function SetupNewDeviceInternal() {
 
           setStatusMessage('🎉 裝置新增成功！正在為您登入...');
           alert('新裝置已成功加入您的帳戶！');
-          localStorage.setItem('dewt', result.payload.dewt);
-          //   router.push('/auth/add-device-success');
+          // localStorage.setItem('dewt', result.payload.dewt);
+          await login(result.payload.dewt);
         } catch (err) {
           setStatusMessage('設定新裝置時發生錯誤。');
           setError(err instanceof Error ? err.message : '未知錯誤');
@@ -83,7 +84,7 @@ function SetupNewDeviceInternal() {
     return () => {
       pusherClient?.unsubscribe(channelName);
     };
-  }, [sessionId, router]);
+  }, [sessionId, router, login]);
 
   return (
     <div className="flex grow flex-col items-center justify-center p-4">

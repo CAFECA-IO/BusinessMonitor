@@ -13,10 +13,12 @@ import I18n from '@/components/common/i18n';
 import { BM_URL } from '@/constants/url';
 import { useTranslation } from 'react-i18next';
 import { RxHamburgerMenu } from 'react-icons/rx';
+import { useAuth } from '@/contexts/auth_context';
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation(['common']);
   const pathname = usePathname();
+  const { user, isLoading, logout } = useAuth();
 
   const {
     targetRef: burgerRef,
@@ -80,13 +82,27 @@ const Navbar: React.FC = () => {
     </>
   );
 
-  const loginBtn = (
-    <Link href={BM_URL.LOGIN}>
-      <Button type="button" size="medium" className="w-full">
-        {t('common:LOGIN')}
-      </Button>
-    </Link>
-  );
+  const loginBtn = () => {
+    if (isLoading) {
+      return <div>Loading...</div>;
+    }
+    return (
+      <>
+        {user ? (
+          <div>
+            <span>Welcome, {user.name}!</span>
+            <button onClick={logout}>Logout</button>
+          </div>
+        ) : (
+          <Link href={BM_URL.LOGIN}>
+            <Button type="button" size="medium" className="w-full">
+              {t('common:LOGIN')}
+            </Button>
+          </Link>
+        )}
+      </>
+    );
+  };
 
   return (
     <nav className="z-30 flex w-full items-center justify-between gap-16px bg-surface-background px-10px py-8px desktop:gap-40px desktop:px-spacing-2xl desktop:py-spacing-2xs">
@@ -117,7 +133,7 @@ const Navbar: React.FC = () => {
           <div className="absolute right-0 top-40px flex w-150px flex-col gap-8px rounded-radius-s bg-white px-12px py-8px shadow-drop-L">
             {navigationLinks}
             <div className="grid grid-cols-2 align-middle">{littleTools}</div>
-            {loginBtn}
+            {loginBtn()}
           </div>
         )}
       </div>

@@ -5,7 +5,7 @@ import type { IdentityAccount } from '@prisma/client';
 import { routes } from '@/config/api-routes';
 import { logger } from '@/lib/logger';
 
-// 步驟 1: 定義 Context 將提供的資料結構
+// Info: (20251014 - Tzuhan) 步驟 1: 定義 Context 將提供的資料結構
 interface IAuthContext {
   user: IdentityAccount | null;
   isLoading: boolean;
@@ -13,10 +13,10 @@ interface IAuthContext {
   logout: () => void;
 }
 
-// 建立 Context，並提供一個預設值
+// Info: (20251014 - Tzuhan) 建立 Context，並提供一個預設值
 const AuthContext = createContext<IAuthContext | undefined>(undefined);
 
-// 步驟 2: 建立 AuthProvider 組件
+// Info: (20251014 - Tzuhan) 步驟 2: 建立 AuthProvider 組件
 interface IAuthProviderProps {
   children: ReactNode;
 }
@@ -28,15 +28,15 @@ if (!origin) {
 
 export function AuthProvider({ children }: IAuthProviderProps) {
   const [user, setUser] = useState<IdentityAccount | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // 初始時為 true，因為需要檢查登入狀態
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Info: (20251014 - Tzuhan) 初始時為 true，因為需要檢查登入狀態
 
-  // 定義登出邏輯，使用 useCallback 避免不必要的重新渲染
+  // Info: (20251014 - Tzuhan) 定義登出邏輯，使用 useCallback 避免不必要的重新渲染
   const logout = useCallback(() => {
     localStorage.removeItem('dewt');
     setUser(null);
   }, []);
 
-  // 在組件首次掛載時檢查 localStorage 中是否存在 DeWT
+  // Info: (20251014 - Tzuhan) 在組件首次掛載時檢查 localStorage 中是否存在 DeWT
   useEffect(() => {
     const checkAuthStatus = async () => {
       const dewt = localStorage.getItem('dewt');
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: IAuthProviderProps) {
       }
 
       try {
-        // 呼叫 /api/v1/secure/me API 來驗證 token
+        // Info: (20251014 - Tzuhan) 呼叫 /api/v1/secure/me API 來驗證 token
         const res = await fetch(`${origin}${routes.auth.me()}`, {
           headers: {
             Authorization: `Bearer ${dewt}`,
@@ -58,10 +58,10 @@ export function AuthProvider({ children }: IAuthProviderProps) {
         }
 
         const userData: IdentityAccount = await res.json();
-        setUser(userData); // 獲取成功後，更新 user 狀態
+        setUser(userData); // Info: (20251014 - Tzuhan) 獲取成功後，更新 user 狀態
       } catch (error) {
         logger.warn('Auth check failed, logging out.', { error: String(error) });
-        logout(); // 獲取失敗後（例如 token 過期），自動登出
+        logout(); // Info: (20251014 - Tzuhan) 獲取失敗後（例如 token 過期），自動登出
       } finally {
         setIsLoading(false);
       }
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: IAuthProviderProps) {
     checkAuthStatus();
   }, [logout]);
 
-  // 定義登入邏輯
+  // Info: (20251014 - Tzuhan) 定義登入邏輯
   const login = async (dewt: string) => {
     setIsLoading(true);
     try {
@@ -89,19 +89,19 @@ export function AuthProvider({ children }: IAuthProviderProps) {
       setUser(userData);
     } catch (error) {
       logger.error('Login process failed.', { error: String(error) });
-      logout(); // 如果登入後獲取使用者資訊失敗，也執行登出
+      logout(); // Info: (20251014 - Tzuhan) 如果登入後獲取使用者資訊失敗，也執行登出
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 將 user, isLoading, login, logout 透過 Context Provider 傳遞
+  // Info: (20251014 - Tzuhan) 將 user, isLoading, login, logout 透過 Context Provider 傳遞
   const value = { user, isLoading, login, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// 步驟 3: 建立名為 useAuth 的自訂 Hook
+// Info: (20251014 - Tzuhan) 步驟 3: 建立名為 useAuth 的自訂 Hook
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

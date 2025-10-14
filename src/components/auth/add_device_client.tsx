@@ -9,6 +9,7 @@ import Pusher from 'pusher-js';
 import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 import { BM_URL } from '@/constants/url';
+import { useAuth } from '@/contexts/auth_context';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -21,15 +22,17 @@ export default function AddDeviceClient() {
   const [statusMessage, setStatusMessage] = useState('正在產生新裝置的設定 QR Code...');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
-    // Info: (20251009 - Tzuhan) 此頁面必須在登入狀態下才能操作
-    const dewt = localStorage.getItem('dewt');
-    if (!dewt) {
+    if (isAuthLoading) {
+      return;
+    }
+    if (!user) {
+      // Info: (20251009 - Tzuhan) 此頁面必須在登入狀態下才能操作
       setError('您必須先登入才能新增裝置。');
       setStatusMessage('錯誤：未授權');
       setIsLoading(false);
-      // Info: (20251009 - Tzuhan) 可選：幾秒後跳轉回登入頁
       setTimeout(() => router.push(BM_URL.LOGIN), 3000);
       return;
     }
@@ -37,6 +40,7 @@ export default function AddDeviceClient() {
     let pusherClient: Pusher | null = null;
     const initializeQrSession = async () => {
       try {
+        const dewt = localStorage.getItem('dewt');
         const res = await fetch(`${origin}${routes.pairing.initiate()}`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${dewt}` },
@@ -71,7 +75,7 @@ export default function AddDeviceClient() {
     initializeQrSession();
 
     return () => pusherClient?.disconnect();
-  }, [router]);
+  }, [router, isAuthLoading, user]);
 
   return (
     <div className="flex grow flex-col items-center justify-center p-4">

@@ -9,6 +9,7 @@ import Pusher from 'pusher-js';
 import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 import { BM_URL } from '@/constants/url';
+import { useAuth } from '@/contexts/auth_context';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -21,6 +22,7 @@ export default function LoginWithDeviceClient() {
   const [statusMessage, setStatusMessage] = useState('正在產生 QR Code...');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { login } = useAuth();
 
   useEffect(() => {
     let pusherClient: Pusher | null = null;
@@ -42,9 +44,10 @@ export default function LoginWithDeviceClient() {
         pusherClient = getPusherInstance();
         const channel = pusherClient.subscribe(`private-login-session-${sessionId}`);
 
-        channel.bind('login-success', (eventData: { dewt: string }) => {
+        channel.bind('login-success', async (eventData: { dewt: string }) => {
           setStatusMessage('✅ 授權成功！正在為您登入...');
-          localStorage.setItem('dewt', eventData.dewt);
+          // localStorage.setItem('dewt', eventData.dewt);
+          await login(eventData.dewt);
           setTimeout(() => router.push('/profile'), 1500);
         });
 
