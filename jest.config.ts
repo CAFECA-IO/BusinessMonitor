@@ -16,6 +16,8 @@ const common: Config = {
   coveragePathIgnorePatterns: ['/node_modules/', '/src/types/', '/src/config/'],
 };
 
+process.env.IS_JEST_TEST = 'true';
+
 const config: Config = {
   projects: [
     {
@@ -39,6 +41,7 @@ const config: Config = {
       },
     },
   ],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 };
 
 export default config;

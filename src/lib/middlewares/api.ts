@@ -31,6 +31,8 @@ export async function apiMiddleware(req: NextRequest) {
     pathname.startsWith('/api/v1/public') ||
     pathname.startsWith('/api/v1/companies') ||
     pathname === '/api/v1/pairing/initiate' || // Info: (20251001-tzuhan) QR Code 登入流程
+    pathname === '/api/v1/pairing/authorize' || // Info: (20251014-tzuhan) 雖然此路由有 token，但為了路徑一致性，也設為公開
+    pathname === '/api/v1/pairing/complete' ||
     pathname === '/api/v1/pusher/auth' // Info: (20251001-tzuhan) Pusher 頻道授權
   ) {
     const res = NextResponse.next();

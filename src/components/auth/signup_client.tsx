@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import { BM_URL } from '@/constants/url';
+import { useAuth } from '@/contexts/auth_context';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -35,6 +36,16 @@ export default function SignupClient() {
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState(true);
   const router = useRouter();
+  const { user, isLoading: isAuthLoading, login } = useAuth();
+
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+    if (user) {
+      router.push(BM_URL.PROFILE);
+    }
+  }, [user, isAuthLoading, router]);
 
   useEffect(() => {
     if (!fido2ClientService.isAvailable()) {
@@ -77,8 +88,8 @@ export default function SignupClient() {
 
       // Info: (20251008 - Tzuhan) 步驟 4: 註冊成功
       setStatusMessage('✅ 註冊成功！正在為您登入...');
-      localStorage.setItem('dewt', verifyData.payload.dewt);
-
+      // localStorage.setItem('dewt', verifyData.payload.dewt);
+      await login(verifyData.payload.dewt);
       // Info: (20251008 - Tzuhan) 提示使用者備份恢復金鑰
       // alert(`請務必備份您的恢復金鑰，它只會出現這一次：\n\n${verifyData.payload.backupKey}`); // Info: (20251009 - Tzuhan) Deprecated
 
@@ -92,9 +103,17 @@ export default function SignupClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [name, router]);
+  }, [name, router, login]);
 
   const canSubmit = name.trim() !== '' && agreed && !isLoading && isFidoAvailable;
+
+  if (isAuthLoading || user) {
+    return (
+      <div className="flex w-full grow flex-col items-center justify-center p-4">
+        <p>正在驗證您的身份...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full grow flex-col items-center justify-center p-4">

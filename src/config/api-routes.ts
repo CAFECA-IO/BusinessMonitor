@@ -217,6 +217,8 @@ export const routes = {
   pairing: {
     // POST /api/v1/pairing/initiate
     initiate: () => `${API_PREFIX}/pairing/initiate`,
+    // POST /api/v1/pairing/authorize
+    authorize: () => `${API_PREFIX}/pairing/authorize`,
     // POST /api/v1/pairing/complete
     complete: () => `${API_PREFIX}/pairing/complete`,
   },

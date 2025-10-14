@@ -9,6 +9,7 @@ import Pusher from 'pusher-js';
 import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 import { BM_URL } from '@/constants/url';
+import { useAuth } from '@/contexts/auth_context';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -21,8 +22,21 @@ export default function LoginWithDeviceClient() {
   const [statusMessage, setStatusMessage] = useState('正在產生 QR Code...');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { user, isLoading: isAuthLoading, login } = useAuth();
 
   useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+    if (user) {
+      router.push(BM_URL.PROFILE);
+    }
+  }, [user, isAuthLoading, router]);
+
+  useEffect(() => {
+    if (isAuthLoading || user) {
+      return;
+    }
     let pusherClient: Pusher | null = null;
     const initializeQrSession = async () => {
       try {
@@ -31,7 +45,7 @@ export default function LoginWithDeviceClient() {
         if (!res.ok || !data.success) throw new Error(data.message);
 
         const { sessionId, challenge } = data.payload;
-        const scanUrl = new URL(`${origin}/${BM_URL.APPROVE_DEVICE}`);
+        const scanUrl = new URL(`${origin}${BM_URL.APPROVE_DEVICE}`);
         scanUrl.searchParams.set('sessionId', sessionId);
         scanUrl.searchParams.set('challenge', challenge);
 
@@ -42,9 +56,10 @@ export default function LoginWithDeviceClient() {
         pusherClient = getPusherInstance();
         const channel = pusherClient.subscribe(`private-login-session-${sessionId}`);
 
-        channel.bind('login-success', (eventData: { dewt: string }) => {
+        channel.bind('login-success', async (eventData: { dewt: string }) => {
           setStatusMessage('✅ 授權成功！正在為您登入...');
-          localStorage.setItem('dewt', eventData.dewt);
+          // localStorage.setItem('dewt', eventData.dewt);
+          await login(eventData.dewt);
           setTimeout(() => router.push('/profile'), 1500);
         });
 
@@ -62,7 +77,15 @@ export default function LoginWithDeviceClient() {
     initializeQrSession();
 
     return () => pusherClient?.disconnect();
-  }, [router]);
+  }, [isAuthLoading, login, router, user]);
+
+  if (isAuthLoading || user) {
+    return (
+      <div className="flex w-full grow flex-col items-center justify-center p-4">
+        <p>正在驗證您的身份...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex grow flex-col items-center justify-center p-4">

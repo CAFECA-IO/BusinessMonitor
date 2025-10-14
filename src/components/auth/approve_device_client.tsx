@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
+import { useAuth } from '@/contexts/auth_context';
+import { BM_URL } from '@/constants/url';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -24,19 +26,30 @@ function ApproveDeviceInternal() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
+  const challenge = searchParams.get('challenge');
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
-    if (!sessionId) {
-      setError('無效的請求：缺少 session ID。');
+    if (isAuthLoading) {
+      return;
+    }
+    if (!user) {
+      // Info: (20251009 - Tzuhan) 此頁面必須在登入狀態下才能操作
+      setError('您必須先登入才能新增裝置。');
+      setStatusMessage('錯誤：未授權');
+      setIsLoading(false);
+      setTimeout(() => router.push(BM_URL.LOGIN), 3000);
+      return;
+    }
+    if (!sessionId || !challenge) {
+      setError('無效的請求：缺少 session ID 或 challenge。');
       setStatusMessage('請返回新裝置頁面，重新掃描 QR Code。');
     } else {
       setStatusMessage('一個新裝置正在請求連結至您的帳戶。');
     }
-  }, [sessionId]);
+  }, [challenge, isAuthLoading, router, sessionId, user]);
 
   const handleApprove = useCallback(async () => {
-    if (!sessionId) return;
-
     setIsLoading(true);
     setError(null);
     setStatusMessage('請使用此裝置的 Passkey 進行身分驗證...');
@@ -45,7 +58,10 @@ function ApproveDeviceInternal() {
       // Info: (20251009 - Tzuhan) 步驟 1: 獲取此「舊裝置」的登入選項
       const optionsRes = await fetch(`${origin}${routes.auth.webauthn.options()}`);
       if (!optionsRes.ok) throw new Error('無法獲取驗證選項。');
-      const options = await optionsRes.json();
+      const options = {
+        challenge: challenge!,
+        userVerification: 'required' as const,
+      };
 
       // Info: (20251009 - Tzuhan) 步驟 2: 在此「舊裝置」上執行 FIDO2 登入
       const authentication = await fido2ClientService.startLogin(options);
@@ -61,7 +77,7 @@ function ApproveDeviceInternal() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${dewt}`,
         },
-        body: JSON.stringify({ sessionId, fido2Authentication: authentication }),
+        body: JSON.stringify({ sessionId, fido2Assertion: authentication }),
       });
 
       const result = await approveRes.json();

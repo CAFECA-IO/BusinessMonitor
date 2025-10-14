@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import { BM_URL } from '@/constants/url';
+import { useAuth } from '@/contexts/auth_context';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -33,6 +34,16 @@ export default function LoginClient() {
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState(true);
   const router = useRouter();
+  const { user, isLoading: isAuthLoading, login } = useAuth();
+
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+    if (user) {
+      router.push(BM_URL.PROFILE);
+    }
+  }, [user, isAuthLoading, router]);
 
   useEffect(() => {
     if (!fido2ClientService.isAvailable()) {
@@ -69,7 +80,8 @@ export default function LoginClient() {
       }
 
       setStatusMessage('✅ 登入成功！正在跳轉...');
-      localStorage.setItem('dewt', verifyData.payload.dewt);
+      // localStorage.setItem('dewt', verifyData.payload.dewt);
+      await login(verifyData.payload.dewt);
       setTimeout(() => router.push('/profile'), 1500);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
@@ -80,7 +92,15 @@ export default function LoginClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [router, isFidoAvailable]);
+  }, [router, isFidoAvailable, login]);
+
+  if (isAuthLoading || user) {
+    return (
+      <div className="flex w-full grow flex-col items-center justify-center p-4">
+        <p>正在驗證您的身份...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full grow flex-col items-center justify-center p-4">

@@ -15,6 +15,4 @@ export const BM_URL = {
 
   // Info: (20251009 - Tzuhan) --- 登入後的設定/個人資料區 (User Profile / Settings) ---
   PROFILE: '/profile', // Info: (20251009 - Tzuhan) (建議新增) 登入後的個人資料主頁
-  DEVICES_SETTING: '/profile/devices', // Info: (20251009 - Tzuhan) 裝置管理頁 (放在 profile 下更合理)
-  SECURITY_SETTING: '/profile/security', // Info: (20251009 - Tzuhan) (建議新增) 安全設定頁，可包含恢復金鑰等
 };
