@@ -23,7 +23,7 @@ export default function AddDeviceClient() {
   const [statusMessage, setStatusMessage] = useState('正在產生 QR Code...');
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [isDeviceConnected, setIsDeviceConnected] = useState(false); // Info: (20251014 - Tzuhan) 追蹤新裝置是否已連線
+  const [isDeviceConnected, setIsDeviceConnected] = useState(false); // 新增 state
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuth();
 
@@ -43,13 +43,8 @@ export default function AddDeviceClient() {
       const res = await fetch(`${origin}${routes.auth.webauthn.options('register')}`, {
         headers: { Authorization: `Bearer ${dewt}` },
       });
-
       const registrationOptions: RegisterOptions = await res.json();
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error('無法獲取註冊選項');
-      // Info: (20251014 - Tzuhan) 從 API 回應中取得 sessionId 並存入 state
-      const newSessionId = data.payload.sessionId;
-      setSessionId(newSessionId);
+      if (!res.ok) throw new Error('無法獲取註冊選項');
 
       // Info: (20251014 - Tzuhan) 步驟 2: 呼叫後端 API 將 session 狀態設為 AUTHORIZED
       await fetch(`${origin}${routes.pairing.authorize()}`, {
@@ -59,11 +54,11 @@ export default function AddDeviceClient() {
       });
 
       // Info: (20251014 - Tzuhan) 步驟 3: 透過 Pusher 將註冊選項發送給新裝置
-      const pusherClient = getPusherInstance();
+      const pusherClient: Pusher = getPusherInstance();
       pusherClient.subscribe(channelName).trigger('initiate-registration', { registrationOptions });
 
       setStatusMessage('授權已發送！請在新裝置上完成操作...');
-      setIsDeviceConnected(false); // Info: (20251014 - Tzuhan) 隱藏按鈕，等待最終結果
+      setIsDeviceConnected(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : '批准失敗。');
     } finally {
@@ -72,9 +67,7 @@ export default function AddDeviceClient() {
   }, [sessionId, channelName]);
 
   useEffect(() => {
-    if (isAuthLoading) {
-      return;
-    }
+    if (isAuthLoading) return;
     if (!user) {
       // Info: (20251014 - Tzuhan) Info: (20251009 - Tzuhan) 此頁面必須在登入狀態下才能操作
       setError('您必須先登入才能新增裝置。');
@@ -84,7 +77,6 @@ export default function AddDeviceClient() {
       return;
     }
 
-    let pusherClient: Pusher | null = null;
     const initializeQrSession = async () => {
       try {
         const dewt = localStorage.getItem('dewt');
@@ -95,33 +87,23 @@ export default function AddDeviceClient() {
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message);
 
-        const { sessionId } = data.payload;
+        const newSessionId = data.payload.sessionId;
+        setSessionId(newSessionId);
+
         const setupUrl = new URL(`${origin}${BM_URL.SETUP_NEW_DEVICE}`);
-        setupUrl.searchParams.set('sessionId', sessionId);
+        setupUrl.searchParams.set('sessionId', newSessionId);
 
         const dataUrl = await QRCode.toDataURL(setupUrl.toString(), { width: 256, margin: 2 });
         setQrCodeDataUrl(dataUrl);
-        setStatusMessage('請使用您的「新裝置」掃描此 QR Code 以完成設定。');
-
-        pusherClient = getPusherInstance();
-        const channel = pusherClient.subscribe(`private-login-session-${sessionId}`);
-
-        channel.bind('device-added-success', () => {
-          setStatusMessage('✅ 新裝置已成功加入您的帳戶！');
-          alert('新裝置已成功加入您的帳戶！');
-
-          // Info: (20251014 - Tzuhan) setTimeout(() => router.push('/profile/devices'), 2000);
-        });
+        setStatusMessage('請使用您的新裝置掃描此 QR Code。');
       } catch (err) {
-        setError(err instanceof Error ? err.message : '初始化 QR Code 失敗。');
+        setError(err instanceof Error ? err.message : '初始化失敗。');
       } finally {
         setIsLoading(false);
       }
     };
 
     initializeQrSession();
-
-    return () => pusherClient?.disconnect();
   }, [router, isAuthLoading, user]);
 
   // Info: (20251014 - Tzuhan) 專門用來處理 Pusher 事件的 useEffect

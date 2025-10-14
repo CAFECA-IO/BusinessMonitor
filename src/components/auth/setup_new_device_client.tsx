@@ -30,13 +30,14 @@ function SetupNewDeviceInternal() {
       return;
     }
 
-    let pusherClient: Pusher | null = null;
-
-    pusherClient = getPusherInstance();
+    const pusherClient: Pusher = getPusherInstance();
     const channelName = `private-login-session-${sessionId}`;
     const channel = pusherClient.subscribe(channelName);
 
-    setStatusMessage('等待授權... 請在您已登入的裝置上批准此操作（如果需要）。');
+    channel.bind('pusher:subscription_succeeded', () => {
+      setStatusMessage('連線成功！正在等待您的舊裝置批准...');
+      channel.trigger('client-new-device-ready', {});
+    });
 
     channel.bind('pusher:subscription_error', () => {
       setError('無法建立安全連線，請重試。');
@@ -82,7 +83,7 @@ function SetupNewDeviceInternal() {
     );
 
     return () => {
-      pusherClient?.unsubscribe(channelName);
+      pusherClient.unsubscribe(channelName);
     };
   }, [sessionId, router, login]);
 
