@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Pusher from 'pusher-js';
@@ -16,12 +16,55 @@ if (!origin) {
 }
 
 function SetupNewDeviceInternal() {
-  const [statusMessage, setStatusMessage] = useState('正在連接安全頻道，請稍候...');
+  const [statusMessage, setStatusMessage] = useState('正在連接安全頻道...');
   const [error, setError] = useState<string | null>(null);
+  const [registrationOptions, setRegistrationOptions] = useState<RegisterOptions | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
   const { login } = useAuth();
+
+  const handleStartRegistration = useCallback(async () => {
+    if (!registrationOptions || !sessionId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      setStatusMessage('請在此裝置上建立 Passkey...');
+      const registration = await fido2ClientService.startRegistration(registrationOptions);
+
+      setStatusMessage('正在完成裝置綁定...');
+      const res = await fetch(`${origin}${routes.pairing.complete()}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          fido2Registration: registration,
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.message || '綁定新裝置失敗。');
+      }
+
+      setStatusMessage('🎉 裝置新增成功！正在為您登入...');
+      await login(result.payload.dewt);
+      router.push('/profile');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '未知錯誤';
+      setStatusMessage(
+        (err as Error).name === 'NotAllowedError'
+          ? '您取消了操作，或頁面沒有焦點。'
+          : '設定新裝置時發生錯誤。'
+      );
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [registrationOptions, sessionId, login, router]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -45,47 +88,21 @@ function SetupNewDeviceInternal() {
 
     channel.bind(
       'client-initiate-registration',
-      async (payload: { registrationOptions: RegisterOptions }) => {
-        try {
-          if (!payload.registrationOptions) {
-            throw new Error('從伺服器收到的授權資訊無效。');
-          }
-
-          setStatusMessage('✅ 授權成功！請在此裝置上建立 Passkey...');
-          const registration = await fido2ClientService.startRegistration(
-            payload.registrationOptions
-          );
-
-          setStatusMessage('正在完成裝置綁定...');
-          const res = await fetch(`${origin}${routes.pairing.complete()}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sessionId,
-              fido2Registration: registration,
-            }),
-          });
-
-          const result = await res.json();
-          if (!res.ok || !result.success) {
-            throw new Error(result.message || '綁定新裝置失敗。');
-          }
-
-          setStatusMessage('🎉 裝置新增成功！正在為您登入...');
-          alert('新裝置已成功加入您的帳戶！');
-          // localStorage.setItem('dewt', result.payload.dewt);
-          await login(result.payload.dewt);
-        } catch (err) {
-          setStatusMessage('設定新裝置時發生錯誤。');
-          setError(err instanceof Error ? err.message : '未知錯誤');
+      (payload: { registrationOptions: RegisterOptions }) => {
+        if (!payload.registrationOptions) {
+          setError('從伺服器收到的授權資訊無效。');
+          return;
         }
+        // Info: (20251014 - Tzuhan) 收到事件後，只更新 state 和 UI，不直接呼叫 API
+        setStatusMessage('✅ 授權成功！請點擊下方按鈕開始建立 Passkey。');
+        setRegistrationOptions(payload.registrationOptions);
       }
     );
 
     return () => {
       pusherClient.unsubscribe(channelName);
     };
-  }, [sessionId, router, login]);
+  }, [sessionId]);
 
   return (
     <div className="flex grow flex-col items-center justify-center p-4">
@@ -95,6 +112,19 @@ function SetupNewDeviceInternal() {
           <p className="text-gray-600">{statusMessage}</p>
           {error && <p className="mt-2 text-red-500">{error}</p>}
         </div>
+
+        {registrationOptions && (
+          <div className="mt-8 w-full">
+            <button
+              onClick={handleStartRegistration}
+              disabled={isLoading}
+              className="w-full rounded-lg bg-purple-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-purple-700 disabled:bg-gray-400"
+            >
+              {isLoading ? '處理中...' : '建立 Passkey'}
+            </button>
+          </div>
+        )}
+
         <Link href="/auth/login" className="mt-8 inline-block text-purple-600 hover:underline">
           取消
         </Link>
