@@ -23,7 +23,7 @@ export default function AddDeviceClient() {
   const [statusMessage, setStatusMessage] = useState('正在產生 QR Code...');
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [isDeviceConnected, setIsDeviceConnected] = useState(false); // 新增 state
+  const [isDeviceConnected, setIsDeviceConnected] = useState(false); // Info: (20251014 - Tzuhan) 新增 state
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuth();
 
