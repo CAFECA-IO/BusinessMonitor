@@ -84,14 +84,22 @@ const Navbar: React.FC = () => {
 
   const loginBtn = () => {
     if (isLoading) {
-      return <div>Loading...</div>;
+      return <div className="h-10 w-24 animate-pulse rounded-md bg-gray-200" />;
     }
     return (
       <>
         {user ? (
-          <div>
-            <span>Welcome, {user.name}!</span>
-            <button onClick={logout}>Logout</button>
+          <div className="flex items-center gap-4">
+            <span className="hidden text-sm text-gray-700 sm:block">歡迎, {user.name}!</span>
+            <Button
+              type="button"
+              size="medium"
+              variant="secondary"
+              onClick={logout}
+              className="w-full"
+            >
+              登出
+            </Button>
           </div>
         ) : (
           <Link href={BM_URL.LOGIN}>
@@ -115,13 +123,8 @@ const Navbar: React.FC = () => {
       <div className="hidden flex-1 items-center justify-end desktop:flex">
         {navigationLinks}
         {littleTools}
+        <div className="ml-4">{loginBtn()}</div>
       </div>
-
-      <Link href={BM_URL.LOGIN}>
-        <Button type="button" size="medium">
-          {t('common:LOGIN')}
-        </Button>
-      </Link>
 
       {/* Info: (20251008 - Julian) Mobile Navigation */}
       <div ref={burgerRef} className="relative block desktop:hidden">
@@ -133,6 +136,7 @@ const Navbar: React.FC = () => {
           <div className="absolute right-0 top-40px flex w-150px flex-col gap-8px rounded-radius-s bg-white px-12px py-8px shadow-drop-L">
             {navigationLinks}
             <div className="grid grid-cols-2 align-middle">{littleTools}</div>
+
             {loginBtn()}
           </div>
         )}

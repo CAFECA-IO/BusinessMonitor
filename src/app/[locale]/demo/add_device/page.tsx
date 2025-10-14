@@ -8,10 +8,7 @@ import Pusher from 'pusher-js';
 import { routes } from '@/config/api-routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 
-// Info: (20251001-tzuhan) 【偵錯步驟 1】讀取環境變數
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
-// Info: (20251001-tzuhan) 在這裡印出，檢查是否正確讀取
-console.log('[DEBUG] 讀取到的 NEXT_PUBLIC_ORIGIN:', origin);
 
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
