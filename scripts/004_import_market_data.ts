@@ -15,7 +15,7 @@ const prisma = new PrismaClient();
  * =================================================================
  */
 
-// Info: (20251007 - Tzuhan) --- Zod Schema，允許價格欄位為 null ---
+// Info: (20251015 - Tzuhan) Info: (20251007 - Tzuhan) --- Zod Schema，允許價格欄位為 null ---
 const DailyPriceRowSchema = z.object({
   market: z.literal('TWSE'),
   date: z.date(),

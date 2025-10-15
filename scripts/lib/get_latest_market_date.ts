@@ -15,12 +15,12 @@ async function getLatestDate() {
     });
 
     if (latestEntry) {
-      // 將日期以 YYYYMMDD 格式輸出到終端機
+      // Info: (20251015 - Tzuhan) 將日期以 YYYYMMDD 格式輸出到終端機
       process.stdout.write(format(latestEntry.date, 'yyyyMMdd'));
     }
-    // 如果資料庫是空的，則不輸出任何東西
+    // Info: (20251015 - Tzuhan) 如果資料庫是空的，則不輸出任何東西
   } catch (error) {
-    // 將錯誤訊息輸出到 stderr，這樣就不會被主腳本誤認為是日期
+    // Info: (20251015 - Tzuhan) 將錯誤訊息輸出到 stderr，這樣就不會被主腳本誤認為是日期
     console.error('❌ 查詢資料庫最新日期時發生錯誤:', error);
     process.exit(1);
   } finally {
