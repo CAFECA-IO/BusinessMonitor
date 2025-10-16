@@ -410,7 +410,6 @@ async function importDailyFiles(
   for (const f of files) {
     const fileDateStr = path.basename(f).slice(0, 8);
     if (existingDates.has(fileDateStr)) {
-      console.log(`[SKIP] 日期 ${fileDateStr} 的資料已存在，略過檔案 ${path.basename(f)}`);
       continue;
     }
     try {
@@ -457,27 +456,57 @@ async function main() {
     if (arg.startsWith('--')) {
       const [key, value] = arg.split('=');
       const cleanKey = key.substring(2);
-      parsedArgs[cleanKey] = value === undefined ? true : value;
+      if (value !== undefined) {
+        parsedArgs[cleanKey] = value;
+      } else if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+        parsedArgs[cleanKey] = args[i + 1];
+        i++;
+      } else {
+        parsedArgs[cleanKey] = true;
+      }
     } else if (!targetPath) {
       targetPath = arg;
     }
   }
 
   let fromDate: Date;
+  const fromDateRaw = parsedArgs['from-date'] as string;
+  const fromMonthRaw = parsedArgs['from-month'] as string;
   const fromYearRaw = parsedArgs['from-year'] as string;
   let targetYear: string | undefined;
 
   try {
-    if (fromYearRaw) {
+    if (fromDateRaw) {
+      let dateStr = fromDateRaw;
+      if (/^\d{8}$/.test(dateStr)) {
+        dateStr = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || isNaN(new Date(dateStr).getTime())) {
+        throw new Error('❌ 錯誤: --from-date 格式需為 YYYY-MM-DD 或 YYYYMMDD');
+      }
+      fromDate = startOfDay(new Date(dateStr));
+    } else if (fromMonthRaw) {
+      let year: number | undefined;
+      let month: number | undefined;
+      if (/^\d{6}$/.test(fromMonthRaw)) {
+        year = parseInt(fromMonthRaw.slice(0, 4), 10);
+        month = parseInt(fromMonthRaw.slice(4, 6), 10);
+      } else if (/^\d{4}-\d{2}$/.test(fromMonthRaw)) {
+        [year, month] = fromMonthRaw.split('-').map(Number);
+      }
+      if (!year || !month || month < 1 || month > 12) {
+        throw new Error('❌ 錯誤: --from-month 格式需為 YYYY-MM 或 YYYYMM');
+      }
+      fromDate = new Date(year, month - 1, 1);
+    } else if (fromYearRaw) {
       const year = parseInt(fromYearRaw, 10);
-      if (isNaN(year) || year < 1990 || year > 2100) {
-        throw new Error('❌ 錯誤: --from-year 必須是有效的年份 (例如: 2025)。');
+      if (isNaN(year)) {
+        throw new Error('❌ 錯誤: --from-year 需為有效的年份');
       }
       targetYear = fromYearRaw;
       fromDate = new Date(Date.UTC(year, 0, 1)); // Info: (20251015 - Tzuhan) 從該年的 1 月 1 日開始
     } else {
-      // Info: (20251015 - Tzuhan) 若未指定年份，預設處理最近 90 天的資料
-      fromDate = startOfDay(subDays(new Date(), 90));
+      fromDate = startOfDay(subDays(new Date(), 1));
     }
   } catch (e) {
     console.error((e as Error).message);
@@ -485,8 +514,10 @@ async function main() {
   }
 
   if (!targetPath) {
-    console.error('❌ 錯誤: 請提供市場行情資料的來源路徑。');
-    console.error('用法: tsx scripts/004_import_market_data.ts <dataPath> [--from-year=YYYY]');
+    console.error('❌ 錯誤: 請提供每日市場行情資料的來源路徑。');
+    console.error(
+      '用法: npx tsx scripts/004_import_market_data.ts <dataPath> [--from-date=YYYY-MM-DD | --from-month=YYYY-MM | --from-year=YYYY]'
+    );
     process.exit(1);
   }
 
@@ -507,7 +538,6 @@ async function main() {
       loadExistingDates(targetYear),
       loadExistingSymbols(),
     ]);
-
     const newSymbolsFound = await importDailyFiles(
       targetPath,
       fromDate,
@@ -528,7 +558,7 @@ async function main() {
       console.log(`\n🟢 資料驗證完成，沒有發現新的股票代號。`);
     }
 
-    console.log('\n✅✅✅ 市場資料匯入任務已成功完成！ ✅✅✅');
+    console.log('\n✅✅✅ 市場資料匯入與驗證任務已成功完成！ ✅✅✅');
   } catch (error) {
     console.error('\n❌❌❌ 任務過程中發生嚴重錯誤，已中斷。 ❌❌❌', error);
     process.exit(1);
