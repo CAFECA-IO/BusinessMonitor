@@ -15,7 +15,7 @@ const prisma = new PrismaClient();
  * =================================================================
  */
 
-// Info: (20251007 - Tzuhan) --- Zod Schema，允許價格欄位為 null ---
+// Info: (20251015 - Tzuhan) Info: (20251007 - Tzuhan) --- Zod Schema，允許價格欄位為 null ---
 const DailyPriceRowSchema = z.object({
   market: z.literal('TWSE'),
   date: z.date(),
@@ -310,9 +310,19 @@ async function importOneFile(
  * =================================================================
  */
 
-async function loadExistingDates(): Promise<Set<string>> {
-  console.log('🔍 正在從資料庫載入所有已存在的市場行情日期...');
+async function loadExistingDates(targetYear?: string): Promise<Set<string>> {
+  console.log(`🔍 正在從資料庫載入已存在的市場行情日期...`);
+  let whereClause = {};
+  if (targetYear) {
+    const year = parseInt(targetYear, 10);
+    const startDate = new Date(Date.UTC(year, 0, 1)); // Info: (20251015 - Tzuhan) 該年 1 月 1 日
+    const endDate = new Date(Date.UTC(year + 1, 0, 0, 23, 59, 59)); // Info: (20251015 - Tzuhan) 該年 12 月 31 日
+    whereClause = { date: { gte: startDate, lte: endDate } };
+    console.log(`   (僅篩選年份: ${targetYear})`);
+  }
+
   const dates = await prisma.marketDailyPrice.findMany({
+    where: whereClause,
     select: { date: true },
     distinct: ['date'],
   });
@@ -329,23 +339,34 @@ async function loadExistingSymbols(): Promise<Set<string>> {
   return symbolSet;
 }
 
-function findCsvFiles(baseDir: string, fromDate: Date): string[] {
+function findCsvFiles(baseDir: string, fromDate: Date, targetYear?: string): string[] {
   const allFiles: string[] = [];
+  let searchDir = baseDir;
+
+  // Info: (20251015 - Tzuhan) 如果指定了年份，直接鎖定到該年份的資料夾
+  if (targetYear) {
+    searchDir = path.join(baseDir, targetYear);
+    console.log(`🎯 已鎖定目標資料夾: ${searchDir}`);
+  }
   const fromDateStr = format(fromDate, 'yyyyMMdd');
 
   function walk(currentDir: string) {
-    if (!fs.existsSync(currentDir)) return;
+    if (!fs.existsSync(currentDir)) {
+      if (targetYear) console.warn(`[WARN] 找不到年份資料夾: ${currentDir}，略過...`);
+      return;
+    }
     try {
       const entries = fs.readdirSync(currentDir);
       for (const entry of entries) {
         const fullPath = path.join(currentDir, entry);
         try {
           const stat = fs.statSync(fullPath);
-          if (stat.isDirectory()) {
+          if (stat.isDirectory() && !targetYear) {
             walk(fullPath);
-          } else {
+          } else if (/^\d{8}\.csv$/i.test(entry)) {
             const fileDateStr = path.basename(entry).slice(0, 8);
-            if (/^\d{8}\.csv$/i.test(entry) && fileDateStr >= fromDateStr) {
+            // Info: (20251015 - Tzuhan) 確保檔案日期在指定的處理範圍內
+            if (fileDateStr >= fromDateStr) {
               allFiles.push(fullPath);
             }
           }
@@ -366,12 +387,16 @@ async function importDailyFiles(
   dataPath: string,
   fromDate: Date,
   existingDates: Set<string>,
-  existingSymbols: Set<string>
+  existingSymbols: Set<string>,
+  targetYear?: string
 ) {
   console.log(`\n🔵 開始從 ${dataPath} 匯入市場行情檔案...`);
-  console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 及之後的檔案。`);
+  if (!targetYear) {
+    console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 之後的所有檔案。`);
+  }
 
-  const files = findCsvFiles(dataPath, fromDate);
+  const files = findCsvFiles(dataPath, fromDate, targetYear);
+
   if (files.length === 0) {
     console.log('   在指定路徑下找不到任何需要處理的新 .csv 檔案。');
     return new Set<string>();
@@ -388,7 +413,6 @@ async function importDailyFiles(
       continue;
     }
     try {
-      // Info: (20251007 - Tzuhan) 核心修正：移除日期檢查，總是處理檔案
       await importOneFile(f, existingSymbols, newSymbolLog);
       ok++;
     } catch (e) {
@@ -421,7 +445,7 @@ function writeNewSymbolsLog(newSymbols: Set<string>) {
  * =================================================================
  */
 async function main() {
-  console.log('🚀 啟動常態化市場資料匯入與驗證任務...');
+  console.log('🚀 啟動市場資料匯入任務...');
 
   const args = process.argv.slice(2);
   const parsedArgs: { [key: string]: string | boolean } = {};
@@ -449,6 +473,7 @@ async function main() {
   const fromDateRaw = parsedArgs['from-date'] as string;
   const fromMonthRaw = parsedArgs['from-month'] as string;
   const fromYearRaw = parsedArgs['from-year'] as string;
+  let targetYear: string | undefined;
 
   try {
     if (fromDateRaw) {
@@ -478,7 +503,8 @@ async function main() {
       if (isNaN(year)) {
         throw new Error('❌ 錯誤: --from-year 需為有效的年份');
       }
-      fromDate = new Date(year, 0, 1);
+      targetYear = fromYearRaw;
+      fromDate = new Date(Date.UTC(year, 0, 1)); // Info: (20251015 - Tzuhan) 從該年的 1 月 1 日開始
     } else {
       fromDate = startOfDay(subDays(new Date(), 1));
     }
@@ -495,20 +521,29 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`   資料來源路徑: ${targetPath}`);
-  console.log(`   將處理 ${format(fromDate, 'yyyy-MM-dd')} 之後的資料...`);
+  // Info: (20251015 - Tzuhan) 處理波浪號 `~` 代表的家目錄
+  if (targetPath.startsWith('~/')) {
+    targetPath = path.join(process.env.HOME || '', targetPath.substring(2));
+  }
+
+  console.log(`   資料來源路徑: ${path.resolve(targetPath)}`);
+  if (targetYear) {
+    console.log(`   🎯 目標處理年份: ${targetYear}`);
+  } else {
+    console.log(`   處理範圍: ${format(fromDate, 'yyyy-MM-dd')} 之後的所有資料...`);
+  }
 
   try {
-    // Info: (20251007 - Tzuhan) 核心修正：不再需要 loadExistingDates
     const [existingDates, existingSymbols] = await Promise.all([
-      loadExistingDates(),
+      loadExistingDates(targetYear),
       loadExistingSymbols(),
     ]);
     const newSymbolsFound = await importDailyFiles(
       targetPath,
       fromDate,
       existingDates,
-      existingSymbols
+      existingSymbols,
+      targetYear
     );
 
     if (newSymbolsFound.size > 0) {
