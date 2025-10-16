@@ -61,7 +61,7 @@ sequenceDiagram
     participant F as FIDO2 Authenticator
     participant S as Server
 
-     critical Phase 1: Key Generation & Encryption (Once)
+    critical Phase 1: Key Generation & Encryption (Once)
         C->>C: 1. `ethers.Wallet.createRandom()` -> privateKey
         C->>C: 2. Generate random `nonce`
         C->>F: 3. Sign Challenge ("cafeca-key_encryption-[userId]-[nonce]")
@@ -69,8 +69,9 @@ sequenceDiagram
         C->>C: 5. Derive `symmetricKey` from `signature` (KDF)
         C->>C: 6. Encrypt `privateKey` with `symmetricKey` -> `encryptedKey`
         C->>S: 7. Store `{encryptedKey, nonce}`
+    end
     
-     critical Phase 1: Key Decryption & Usage (Each Time)
+    critical Phase 2: Key Decryption & Usage (Each Time)
         C->>S: 1. Request `{encryptedKey, nonce}`
         S-->>C: 2. Return `{encryptedKey, nonce}`
         C->>F: 3. Sign same Challenge (reconstructed with same `nonce`)
@@ -79,6 +80,7 @@ sequenceDiagram
         C->>C: 6. Decrypt `encryptedKey` -> `privateKey` (in-memory)
         C->>C: 7. Use `privateKey` to sign transaction
         Note right of C: `privateKey` is immediately discarded after use.
+    end
 ```
 
 ## 3\. Phase 2 演進目標：鏈上主權身份
@@ -144,20 +146,20 @@ Phase 2 的核心目標，是將這個單點控制的 EOA，升級為一個**由
 ```mermaid
 graph TD
     subgraph "Phase 2: 鏈上智慧合約錢包"
-        SCW[智慧合約錢包<br/>(用戶的鏈上身份)]
+        SCW["智慧合約錢包<br>(用戶的鏈上身份)"]
 
         subgraph "簽名者 (Signers)"
-            F2[FIDO2 裝置 B (iPhone)]
-            F3[FIDO2 裝置 C (YubiKey)]
+            F2["FIDO2 裝置 B (iPhone)"]
+            F3["FIDO2 裝置 C (YubiKey)"]
         end
 
         subgraph "擁有者 (Owner)"
-            PK1[EOA 私鑰 (主鑰匙)<br/>(由 FIDO2 裝置 A 解鎖)]
+            PK1["EOA 私鑰 (主鑰匙)<br>(由 FIDO2 裝置 A 解鎖)"]
         end
 
-        PK1 -- "管理操作<br/>(例如: addSigner)" --> SCW
-        F2 -- "日常操作<br/>(例如: 簽署交易)" --> SCW
-        F3 -- "日常操作<br/>(例如: 簽署交易)" --> SCW
+        PK1 -- "管理操作<br>(例如: addSigner)" --> SCW
+        F2 -- "日常操作<br>(例如: 簽署交易)" --> SCW
+        F3 -- "日常操作<br>(例如: 簽署交易)" --> SCW
     end
 ```
 
