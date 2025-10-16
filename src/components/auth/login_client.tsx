@@ -18,6 +18,12 @@ if (!origin) {
 
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
+  // Info: (20251016 - Julian) During development
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [statusMessage, setStatusMessage] = useState('點擊按鈕以 Passkey 登入或註冊。');
+  // Info: (20251016 - Julian) During development
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState(true);
   const router = useRouter();
   const { user, isLoading: isAuthLoading, login } = useAuth();
@@ -34,6 +40,8 @@ export default function LoginClient() {
   useEffect(() => {
     if (!fido2ClientService.isAvailable()) {
       setIsFidoAvailable(false);
+      setStatusMessage('此環境不支援 Passkey 功能。');
+      setError('請使用支援的瀏覽器並確保在安全的 HTTPS 環境下操作。');
     }
   }, []);
 
@@ -41,14 +49,18 @@ export default function LoginClient() {
     if (!isFidoAvailable) return;
 
     setIsLoading(true);
+    setError(null);
+    setStatusMessage('正在準備 Passkey 登入...');
 
     try {
       const optionsRes = await fetch(`${origin}${routes.auth.webauthn.options()}`);
       if (!optionsRes.ok) throw new Error('無法從伺服器獲取登入選項。');
       const options = await optionsRes.json();
 
+      setStatusMessage('請依照瀏覽器提示進行驗證...');
       const authentication = await fido2ClientService.startLogin(options);
 
+      setStatusMessage('正在驗證您的 Passkey...');
       const verifyRes = await fetch(`${origin}${routes.auth.webauthn.verify()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,12 +71,16 @@ export default function LoginClient() {
         throw new Error(verifyData.message || '登入驗證失敗。');
       }
 
+      setStatusMessage('✅ 登入成功！正在跳轉...');
       // localStorage.setItem('dewt', verifyData.payload.dewt);
       await login(verifyData.payload.dewt);
       setTimeout(() => router.push('/profile'), 1500);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
-      alert(errorMessage);
+      setStatusMessage(
+        (err as Error).name === 'NotAllowedError' ? '您取消了登入操作。' : '登入失敗，請重試。'
+      );
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

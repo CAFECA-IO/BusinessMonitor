@@ -18,33 +18,25 @@ if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
 
-const StatusDisplay = ({ status, error }: { status: string; error: string | null }) => (
-  <div className="mt-8 w-full rounded-lg border border-gray-200 bg-gray-50 p-6">
-    <h3 className="text-lg font-semibold text-gray-800">處理狀態</h3>
-    <p className="mt-2 text-gray-600">
-      狀態: <span className="font-medium text-gray-900">{status}</span>
-    </p>
-    {error && (
-      <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
-        <p className="font-bold text-red-700">發生錯誤:</p>
-        <p className="mt-1 break-words text-red-600">{error}</p>
-      </div>
-    )}
-  </div>
-);
-
 export default function SignupClient() {
+  // ToDo: (20251016 - Julian) Default avatar image path
+  const defaultAvatar = '/fake_avatar/business_img_1.jpg';
+
   const [name, setName] = useState<string>('');
   const [isNameValid, setIsNameValid] = useState<boolean>(true);
-  const [avatarUrl, setAvatarUrl] = useState<string>('/fake_avatar/business_img_1.jpg');
+  const [avatarUrl, setAvatarUrl] = useState<string>(defaultAvatar);
   const [agreed, setAgreed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [statusMessage, setStatusMessage] = useState<string>('請輸入您的資訊以建立 Digital ID。');
+  // Info: (20251016 - Julian) During development
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [statusMessage, setStatusMessage] = useState('請輸入您的資訊以建立 Digital ID。');
+  // Info: (20251016 - Julian) During development
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState<boolean>(true);
 
-  // Info: (20251016 - Julian) 名稱不得包含數字或特殊字元，如 123, @, #, !
-  const namePattern = /^[\p{L} \-'.]+$/u;
+  // Info: (20251016 - Julian) 只允許英文字母 + 中文
+  // const namePattern = /^[A-Za-z\u4e00-\u9fa5_]+$/u;
 
   const router = useRouter();
   const { user, isLoading: isAuthLoading, login } = useAuth();
@@ -70,7 +62,8 @@ export default function SignupClient() {
     const inputName = e.target.value;
     setName(inputName);
 
-    const isValid = namePattern.test(inputName.trim());
+    // const isValid = inputName.length > 0 ? namePattern.test(inputName.trim()) : true;
+    const isValid = true; // Info: (20251016 - Julian) 先取消命名規則
     setIsNameValid(isValid);
   };
 
@@ -127,7 +120,7 @@ export default function SignupClient() {
   const canSubmit = name.trim() !== '' && agreed && !isLoading && isFidoAvailable;
   const isSubmitDisabled = !(canSubmit && isNameValid);
 
-  // ToDo: (20251016 - Julian) Random avatar function
+  // ToDo: (20251016 - Julian) Random avatar function, need to replace with real avatar images
   const getRandomAvatar = () => {
     const avatars = [
       '/fake_avatar/business_img_1.jpg',
@@ -151,77 +144,6 @@ export default function SignupClient() {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const original = (
-    <div className="flex w-full grow flex-col items-center justify-center p-4">
-      <div className="w-full max-w-xl">
-        <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-lg sm:p-12">
-          <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-            建立您的 Digital ID
-          </h1>
-          <p className="mt-2 text-gray-500">只需一步，即可擁有安全的去中心化身份</p>
-
-          <div className="mt-10 w-full space-y-6 sm:max-w-sm">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
-                您的全名
-              </label>
-              <div className="mt-2">
-                <input
-                  type="text"
-                  id="name"
-                  aria-labelledby="name-label"
-                  value={name}
-                  onChange={changeNameInput}
-                  className="block w-full rounded-md border-0 px-3 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600"
-                  placeholder="例如：王小明"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-x-3">
-              <input
-                id="terms"
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-                className="size-4 rounded border-gray-300 text-purple-600 focus:ring-purple-600"
-                disabled={isLoading}
-                aria-labelledby="terms-label"
-              />
-              <label htmlFor="terms" className="block text-sm leading-6 text-gray-900">
-                我已閱讀並同意
-                <Link href="/terms" className="ml-1 font-semibold text-purple-600 hover:underline">
-                  服務條款
-                </Link>
-              </label>
-            </div>
-
-            <div className="flex flex-col gap-4 pt-4">
-              <button
-                onClick={handleRegister}
-                disabled={!canSubmit}
-                className="w-full rounded-lg bg-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition-transform hover:scale-105 hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
-              >
-                {isLoading ? '處理中...' : '註冊並以 Passkey 驗證'}
-              </button>
-              <Link
-                href={BM_URL.LOGIN}
-                className="w-full rounded-lg bg-white px-5 py-3.5 text-center text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 transition-transform hover:scale-105 hover:bg-gray-50"
-              >
-                取消
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="mt-8 w-full">
-          <StatusDisplay status={statusMessage} error={error} />
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <>
       {/* Info: (20251016 - Julian) Wave shape background */}
@@ -241,7 +163,7 @@ export default function SignupClient() {
         <h1 className="text-h5 font-bold text-text-invert">Create Your Digital ID</h1>
 
         {/* Info: (20251016 - Julian) Avatar part */}
-        <div className="mt-60px flex flex-col items-center gap-20px">
+        <div className="mt-54px flex flex-col items-center gap-20px">
           <div className="relative">
             <div className="relative size-150px overflow-hidden rounded-full">
               <Image src={avatarUrl} fill objectFit="contain" alt="new_avatar" />
@@ -269,32 +191,42 @@ export default function SignupClient() {
         </div>
 
         {/* Info: (20251016 - Julian) Name input part */}
-        <div className="mt-54px flex min-w-300px items-center gap-8px rounded-md border border-border-secondary bg-surface-primary p-spacing-2xs text-base font-normal">
-          <FaUserLarge size={18} className={isNameValid ? 'text-text-note' : ''} />
-          <input
-            type="text"
-            id="name"
-            aria-labelledby="name-label"
-            value={name}
-            onChange={changeNameInput}
-            className="flex-1 bg-transparent text-text-primary placeholder:text-text-note focus:outline-none"
-            placeholder="Enter your full legal name"
-            disabled={isLoading}
-          />
+        <div className="mt-54px flex flex-col gap-4px font-normal">
+          <div
+            className={`${
+              isNameValid ? 'border-border-secondary' : 'border-border-error'
+            } flex min-w-300px items-center gap-8px rounded-radius-s border bg-surface-primary p-spacing-2xs text-base`}
+          >
+            <FaUserLarge size={18} className={isNameValid ? 'text-text-note' : 'text-text-error'} />
+            <input
+              type="text"
+              id="name"
+              aria-labelledby="name-label"
+              value={name}
+              onChange={changeNameInput}
+              className="flex-1 bg-transparent text-text-primary placeholder:text-text-note focus:outline-none"
+              placeholder="Enter your full legal name"
+              disabled={isLoading}
+            />
+          </div>
+          {/* Info: (20251016 - Julian) Naming rule */}
+          {!isNameValid && (
+            <p className="text-sm text-text-error">No numbers or symbols, e.g. 123, @, #, !</p>
+          )}
         </div>
 
         {/* Info: (20251016 - Julian) Terms checkbox part */}
-        <div className="mt-auto flex items-center gap-8px font-normal">
+        <div className="mt-auto flex items-start gap-8px font-normal">
           <input
             id="terms"
             type="checkbox"
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
-            className="size-4 rounded border-gray-300 text-purple-600 focus:ring-purple-600"
-            disabled={isLoading}
+            className="size-24px shrink-0 appearance-none rounded-radius-xs border border-border-brand bg-surface-primary after:mx-auto after:hidden after:content-[url(/icons/checkmark.svg)] checked:after:block disabled:border-border-error"
+            disabled={isLoading || !isNameValid}
             aria-labelledby="terms-label"
           />
-          <label htmlFor="terms">
+          <label htmlFor="terms" className="text-base">
             I have read and agree to the{' '}
             <Link
               href="/terms"
@@ -304,7 +236,7 @@ export default function SignupClient() {
             </Link>
             and{' '}
             <Link
-              href="/terms"
+              href="/privacy"
               className="text-button-link hover:cursor-pointer hover:text-button-primary-hover"
             >
               Privacy Policy
@@ -313,7 +245,7 @@ export default function SignupClient() {
         </div>
 
         {/* Info: (20251016 - Julian) Button part */}
-        <div className="mt-40px flex flex-col items-center gap-8px">
+        <div className="mt-20px flex flex-col items-center gap-8px">
           <Button
             type="button"
             onClick={handleRegister}
