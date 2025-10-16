@@ -32,6 +32,7 @@
     "prepare": "husky",
     "i18n:pull": "i18nexus pull && tsx scripts/move_locales.ts",
     "swarm": "next start -p 10002",
+    "start:crawl": "bash shell/run_crawler.sh",
     "import:market-data": "tsx scripts/004_import_market_data.ts"
   },
   "dependencies": {
