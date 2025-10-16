@@ -3,37 +3,36 @@ import React from 'react';
 import { forwardRef } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-const buttonVariants = cva(
-  'group rounded-full font-bold text-center justify-center flex items-center',
-  {
-    variants: {
-      variant: {
-        primary:
-          'text-text-invert bg-button-primary enabled:hover:bg-button-primary-hover disabled:bg-button-disable',
-        primaryBorderless:
-          'text-text-brand enabled:hover:text-button-primary-hover disabled:text-text-note',
-        secondary:
-          'text-text-invert bg-button-secondary enabled:hover:bg-button-secondary-hover disabled:bg-button-disable',
-        secondaryBorderless:
-          'text-text-primary enabled:hover:text-button-primary disabled:text-button-disable',
-        accent:
-          'text-text-invert bg-button-accent enabled:hover:bg-button-accent-hover disabled:bg-button-disable',
-        accentBorderless:
-          'text-button-accent enabled:hover:text-button-accent-hover disabled:text-button-disable',
-      },
-      size: {
-        small: 'text-xs p-4px desktop:p-8px desktop:text-sm',
-        medium: 'text-sm px-16px py-8px desktop:px-48px desktop:py-12px desktop:text-base',
-        large: 'text-base px-20px py-10px desktop:px-54px desktop:py-18px desktop:text-lg',
-        icon: 'p-10px desktop:p-18px',
-      },
+const buttonVariants = cva('group rounded-full text-center justify-center flex items-center', {
+  variants: {
+    variant: {
+      primary:
+        'text-text-invert bg-button-primary enabled:hover:bg-button-primary-hover disabled:cursor-not-allowed disabled:bg-button-disable',
+      primaryBorderless:
+        'text-text-brand enabled:hover:text-button-primary-hover disabled:text-text-note',
+      secondary:
+        'text-text-invert bg-button-secondary enabled:hover:bg-button-secondary-hover disabled:bg-button-disable',
+      secondaryBorderless:
+        'text-text-primary enabled:hover:text-button-primary disabled:text-button-disable',
+      accent:
+        'text-text-invert bg-button-accent enabled:hover:bg-button-accent-hover disabled:bg-button-disable',
+      accentBorderless:
+        'text-button-accent enabled:hover:text-button-accent-hover disabled:text-button-disable',
     },
-    defaultVariants: {
-      variant: 'primary',
-      size: 'medium',
+    size: {
+      small: 'text-xs p-4px desktop:p-8px desktop:text-sm font-bold',
+      medium: 'text-sm px-16px py-8px desktop:px-48px desktop:py-12px desktop:text-base font-bold',
+      large: 'text-base px-20px py-10px desktop:px-54px desktop:py-18px desktop:text-lg font-bold',
+      extraLarge: 'px-48px py-12px text-sm font-bold',
+      extraSmall: 'text-sm px-16px py-8px font-normal',
+      icon: 'p-10px desktop:p-18px',
     },
-  }
-);
+  },
+  defaultVariants: {
+    variant: 'primary',
+    size: 'medium',
+  },
+});
 
 interface IButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
