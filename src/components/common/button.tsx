@@ -7,7 +7,7 @@ const buttonVariants = cva('group rounded-full text-center justify-center flex i
   variants: {
     variant: {
       primary:
-        'text-text-invert bg-button-primary enabled:hover:bg-button-primary-hover disabled:bg-button-disable',
+        'text-text-invert bg-button-primary enabled:hover:bg-button-primary-hover disabled:cursor-not-allowed disabled:bg-button-disable',
       primaryBorderless:
         'text-text-brand enabled:hover:text-button-primary-hover disabled:text-text-note',
       secondary:

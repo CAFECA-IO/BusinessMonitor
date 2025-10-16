@@ -79,35 +79,41 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center p-24px">
-      <Image
-        src="/elements/graphic.png"
-        width={344}
-        height={257}
-        alt="graphic"
-        className="shrink-0"
-      />
+    <div className="flex flex-1 flex-col items-center justify-center p-24px">
+      <Link href={BM_URL.HOME} className="shrink-0">
+        <Image src="/logos/cafeca_logo.svg" alt="cafeca_logo" width={120} height={36} />
+      </Link>
 
-      <div className="mt-72px flex flex-col gap-16px">
-        <Button
-          type="button"
-          onClick={handleLogin}
-          disabled={isLoading || !isFidoAvailable}
-          size="extraLarge"
-          className="gap-8px"
-        >
-          <TbFaceId size={18} />
-          <p>{isLoading ? '處理中...' : 'Log in to my ID'}</p>
-        </Button>
-        <Button type="button" variant="secondary" size="extraLarge">
-          <Link href={BM_URL.LOGIN_WITH_EXISTING_DEVICE}>Log in on a New Device</Link>
-        </Button>
-      </div>
+      <div className="flex flex-1 flex-col items-center justify-end">
+        <Image
+          src="/elements/graphic.png"
+          width={344}
+          height={257}
+          alt="graphic"
+          className="shrink-0"
+        />
 
-      <div className="mt-72px">
-        <Button type="button" variant="primaryBorderless" size="extraSmall">
-          <Link href={BM_URL.SIGN_UP}>I don’t have my Digital ID yet.</Link>
-        </Button>
+        <div className="mt-72px flex flex-col gap-16px">
+          <Button
+            type="button"
+            onClick={handleLogin}
+            disabled={isLoading || !isFidoAvailable}
+            size="extraLarge"
+            className="gap-8px"
+          >
+            <TbFaceId size={18} />
+            <p>{isLoading ? '處理中...' : 'Log in to my ID'}</p>
+          </Button>
+          <Button type="button" variant="secondary" size="extraLarge">
+            <Link href={BM_URL.LOGIN_WITH_EXISTING_DEVICE}>Log in on a New Device</Link>
+          </Button>
+        </div>
+
+        <div className="mt-72px">
+          <Button type="button" variant="primaryBorderless" size="extraSmall">
+            <Link href={BM_URL.SIGN_UP}>I don’t have my Digital ID yet.</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

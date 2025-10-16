@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 
 export default function LoginPage() {
   return (
-    <Layout pageBgColor="bg-surface-background">
+    <Layout isLoginPage pageBgColor="bg-surface-background">
       <Suspense fallback={<div className="w-full text-center">Loading...</div>}>
         <LoginClient />
       </Suspense>

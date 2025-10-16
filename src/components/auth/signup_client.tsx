@@ -1,12 +1,17 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { FaUserLarge } from 'react-icons/fa6';
+import { FiUpload } from 'react-icons/fi';
+import { GiPerspectiveDiceSixFacesOne } from 'react-icons/gi';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
+import Button from '@/components/common/button';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -29,12 +34,18 @@ const StatusDisplay = ({ status, error }: { status: string; error: string | null
 );
 
 export default function SignupClient() {
-  const [name, setName] = useState('');
-  const [agreed, setAgreed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('請輸入您的資訊以建立 Digital ID。');
+  const [name, setName] = useState<string>('');
+  const [isNameValid, setIsNameValid] = useState<boolean>(true);
+  const [avatarUrl, setAvatarUrl] = useState<string>('/fake_avatar/business_img_1.jpg');
+  const [agreed, setAgreed] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<string>('請輸入您的資訊以建立 Digital ID。');
   const [error, setError] = useState<string | null>(null);
-  const [isFidoAvailable, setIsFidoAvailable] = useState(true);
+  const [isFidoAvailable, setIsFidoAvailable] = useState<boolean>(true);
+
+  // Info: (20251016 - Julian) 名稱不得包含數字或特殊字元，如 123, @, #, !
+  const namePattern = /^[\p{L} \-'.]+$/u;
+
   const router = useRouter();
   const { user, isLoading: isAuthLoading, login } = useAuth();
 
@@ -54,6 +65,14 @@ export default function SignupClient() {
       setError('請使用支援的瀏覽器並確保在安全的 HTTPS 環境下操作。');
     }
   }, []);
+
+  const changeNameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputName = e.target.value;
+    setName(inputName);
+
+    const isValid = namePattern.test(inputName.trim());
+    setIsNameValid(isValid);
+  };
 
   const handleRegister = useCallback(async () => {
     setError(null);
@@ -106,6 +125,23 @@ export default function SignupClient() {
   }, [name, router, login]);
 
   const canSubmit = name.trim() !== '' && agreed && !isLoading && isFidoAvailable;
+  const isSubmitDisabled = !(canSubmit && isNameValid);
+
+  // ToDo: (20251016 - Julian) Random avatar function
+  const getRandomAvatar = () => {
+    const avatars = [
+      '/fake_avatar/business_img_1.jpg',
+      '/fake_avatar/business_img_2.png',
+      '/fake_avatar/business_img_3.jpg',
+    ];
+    const randomIndex = Math.floor(Math.random() * avatars.length);
+    setAvatarUrl(avatars[randomIndex]);
+  };
+
+  // ToDo: (20251016 - Julian) Upload photo function
+  const uploadPhoto = () => {
+    console.log('upload photo');
+  };
 
   if (isAuthLoading || user) {
     return (
@@ -115,7 +151,8 @@ export default function SignupClient() {
     );
   }
 
-  return (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const original = (
     <div className="flex w-full grow flex-col items-center justify-center p-4">
       <div className="w-full max-w-xl">
         <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-lg sm:p-12">
@@ -135,7 +172,7 @@ export default function SignupClient() {
                   id="name"
                   aria-labelledby="name-label"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={changeNameInput}
                   className="block w-full rounded-md border-0 px-3 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600"
                   placeholder="例如：王小明"
                   disabled={isLoading}
@@ -183,5 +220,115 @@ export default function SignupClient() {
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Info: (20251016 - Julian) Wave shape background */}
+      <div className="absolute top-0 z-0 h-300px w-full">
+        <Image
+          src="/elements/signup_bg.svg"
+          alt="signup_bg"
+          fill
+          objectFit="cover"
+          objectPosition="bottom"
+        />
+      </div>
+
+      {/* Info: (20251016 - Julian) Main content */}
+      <div className="z-10 flex flex-1 flex-col items-center justify-center px-24px py-32px">
+        {/* Info: (20251016 - Julian) Title */}
+        <h1 className="text-h5 font-bold text-text-invert">Create Your Digital ID</h1>
+
+        {/* Info: (20251016 - Julian) Avatar part */}
+        <div className="mt-60px flex flex-col items-center gap-20px">
+          <div className="relative">
+            <div className="relative size-150px overflow-hidden rounded-full">
+              <Image src={avatarUrl} fill objectFit="contain" alt="new_avatar" />
+            </div>
+            <div className="absolute bottom-0 right-0">
+              <Button
+                type="button"
+                size="icon"
+                className="rounded-full bg-button-secondary p-10px"
+                onClick={getRandomAvatar}
+              >
+                <GiPerspectiveDiceSixFacesOne size={24} />
+              </Button>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="primaryBorderless"
+            className="mt-20px gap-8px"
+            onClick={uploadPhoto}
+          >
+            <FiUpload size={16} />
+            <p>Upload My Photo</p>
+          </Button>
+        </div>
+
+        {/* Info: (20251016 - Julian) Name input part */}
+        <div className="mt-54px flex min-w-300px items-center gap-8px rounded-md border border-border-secondary bg-surface-primary p-spacing-2xs text-base font-normal">
+          <FaUserLarge size={18} className={isNameValid ? 'text-text-note' : ''} />
+          <input
+            type="text"
+            id="name"
+            aria-labelledby="name-label"
+            value={name}
+            onChange={changeNameInput}
+            className="flex-1 bg-transparent text-text-primary placeholder:text-text-note focus:outline-none"
+            placeholder="Enter your full legal name"
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* Info: (20251016 - Julian) Terms checkbox part */}
+        <div className="mt-auto flex items-center gap-8px font-normal">
+          <input
+            id="terms"
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="size-4 rounded border-gray-300 text-purple-600 focus:ring-purple-600"
+            disabled={isLoading}
+            aria-labelledby="terms-label"
+          />
+          <label htmlFor="terms">
+            I have read and agree to the{' '}
+            <Link
+              href="/terms"
+              className="text-button-link hover:cursor-pointer hover:text-button-primary-hover"
+            >
+              Terms of Service{' '}
+            </Link>
+            and{' '}
+            <Link
+              href="/terms"
+              className="text-button-link hover:cursor-pointer hover:text-button-primary-hover"
+            >
+              Privacy Policy
+            </Link>
+          </label>
+        </div>
+
+        {/* Info: (20251016 - Julian) Button part */}
+        <div className="mt-40px flex flex-col items-center gap-8px">
+          <Button
+            type="button"
+            onClick={handleRegister}
+            disabled={isSubmitDisabled}
+            size="extraLarge"
+          >
+            {isLoading ? '處理中...' : 'Register & Verify'}
+          </Button>
+          <Link href={BM_URL.LOGIN}>
+            <Button type="button" variant="secondaryBorderless" size="extraLarge">
+              Cancel
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </>
   );
 }

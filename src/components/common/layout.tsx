@@ -13,6 +13,7 @@ interface ILayoutProps {
   className?: string;
   pageBgColor?: string;
   isLandingPage?: boolean;
+  isLoginPage?: boolean;
 }
 
 const Layout: React.FC<ILayoutProps> = ({
@@ -22,16 +23,24 @@ const Layout: React.FC<ILayoutProps> = ({
   className = '',
   pageBgColor = '',
   isLandingPage = false,
+  isLoginPage = false,
 }) => {
   const isShowCrumbs = crumbsItems && crumbsItems.length > 0;
+
+  // Info: (20251016 - Julian) Landing page and Login page don't have padding
+  const paddingClass = isLandingPage || isLoginPage ? '' : 'py-20px';
+
+  // Info: (20251016 - Julian) Don't show Navbar and Footer on Login page
+  const displayedNavbar = isLoginPage ? null : <Navbar />;
+  const displayedFooter = isLoginPage ? null : <Footer />;
 
   return (
     <AuthProvider>
       <div className="flex min-h-screen flex-col">
-        <Navbar />
+        {displayedNavbar}
 
         <main
-          className={`flex grow flex-col gap-20px desktop:gap-40px ${pageBgColor} ${isLandingPage ? '' : 'py-20px'}`}
+          className={`flex grow flex-col gap-20px desktop:gap-40px ${pageBgColor} ${paddingClass}`}
         >
           {/* Info: (20250805 - Julian) Breadcrumbs & Search bar */}
           {isShowCrumbs && (
@@ -44,7 +53,7 @@ const Layout: React.FC<ILayoutProps> = ({
           {/* Info: (20250805 - Julian) Page Content */}
           <div className={`flex min-h-screen w-full flex-col ${className}`}>{children}</div>
         </main>
-        <Footer />
+        {displayedFooter}
       </div>
     </AuthProvider>
   );
