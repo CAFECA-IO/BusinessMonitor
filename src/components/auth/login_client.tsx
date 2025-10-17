@@ -10,6 +10,7 @@ import { routes } from '@/config/api-routes';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import Button from '@/components/common/button';
+import MessageModal from '@/components/auth/message_modal';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -19,12 +20,16 @@ if (!origin) {
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
   // Info: (20251016 - Julian) During development
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const [statusMessage, setStatusMessage] = useState('點擊按鈕以 Passkey 登入或註冊。');
   // Info: (20251016 - Julian) During development
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState(true);
+  const [isMessageModalVisible, setIsMessageModalVisible] = useState(false);
+
+  const toggleMessageModal = () => setIsMessageModalVisible((prev) => !prev);
+
   const router = useRouter();
   const { user, isLoading: isAuthLoading, login } = useAuth();
 
@@ -42,6 +47,7 @@ export default function LoginClient() {
       setIsFidoAvailable(false);
       setStatusMessage('此環境不支援 Passkey 功能。');
       setError('請使用支援的瀏覽器並確保在安全的 HTTPS 環境下操作。');
+      setIsMessageModalVisible(true);
     }
   }, []);
 
@@ -81,6 +87,7 @@ export default function LoginClient() {
         (err as Error).name === 'NotAllowedError' ? '您取消了登入操作。' : '登入失敗，請重試。'
       );
       setError(errorMessage);
+      setIsMessageModalVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +140,15 @@ export default function LoginClient() {
           </Link>
         </div>
       </div>
+
+      {isMessageModalVisible && (
+        <MessageModal
+          content={statusMessage ?? '--'}
+          visibleHandler={toggleMessageModal}
+          submitString="Try Again"
+          submitHandler={handleLogin}
+        />
+      )}
     </div>
   );
 }
