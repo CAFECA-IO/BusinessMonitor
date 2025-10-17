@@ -100,7 +100,7 @@ export default function LoginClient() {
         <Image src="/logos/cafeca_logo.svg" alt="cafeca_logo" width={120} height={36} />
       </Link>
 
-      <div className="flex flex-1 flex-col items-center justify-end">
+      <div className="mt-60px flex flex-1 flex-col items-center justify-end">
         <Image
           src="/elements/graphic.png"
           width={344}
@@ -109,7 +109,7 @@ export default function LoginClient() {
           className="shrink-0"
         />
 
-        <div className="mt-72px flex flex-col gap-16px">
+        <div className="mt-40px flex flex-col gap-16px">
           <Button
             type="button"
             onClick={handleLogin}
@@ -125,7 +125,7 @@ export default function LoginClient() {
           </Button>
         </div>
 
-        <div className="mt-72px">
+        <div className="mt-40px">
           <Link href={BM_URL.SIGN_UP}>
             <Button type="button" variant="primaryBorderless" size="extraSmall">
               I don’t have my Digital ID yet.{' '}

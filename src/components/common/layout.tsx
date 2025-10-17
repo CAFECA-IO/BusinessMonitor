@@ -40,7 +40,7 @@ const Layout: React.FC<ILayoutProps> = ({
         {displayedNavbar}
 
         <main
-          className={`flex grow flex-col gap-20px desktop:gap-40px ${pageBgColor} ${paddingClass} ${isLoginPage && 'max-h-screen'}`}
+          className={`flex grow flex-col gap-20px desktop:gap-40px ${pageBgColor} ${paddingClass}`}
         >
           {/* Info: (20250805 - Julian) Breadcrumbs & Search bar */}
           {isShowCrumbs && (

@@ -49,7 +49,7 @@ const I18n: React.FC = () => {
       </Button>
 
       <div
-        className={`absolute right-0 z-10 flex w-220px flex-col whitespace-nowrap rounded-radius-s bg-white p-8px shadow-drop-L ${componentVisible ? 'visible opacity-100' : 'invisible opacity-0'} transition-all duration-300 ease-in-out`}
+        className={`absolute right-0 top-40px z-10 flex w-220px flex-col whitespace-nowrap rounded-radius-s bg-white p-8px shadow-drop-L desktop:top-60px ${componentVisible ? 'visible opacity-100' : 'invisible opacity-0'} transition-all duration-300 ease-in-out`}
       >
         {langs}
       </div>
