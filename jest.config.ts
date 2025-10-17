@@ -1,6 +1,6 @@
 import type { Config } from 'jest';
 
-const transformConfig: [string, unknown] = ['ts-jest', { useESM: true }];
+const transformConfig: [string, unknown] = ['ts-jest', { tsconfig: 'tsconfig.jest.json' }];
 
 const common: Config = {
   transform: { '^.+\\.(ts|tsx)$': transformConfig },
@@ -10,10 +10,11 @@ const common: Config = {
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/.next/'],
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  // extensionsToTreatAsEsm: ['.ts', '.tsx'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   coveragePathIgnorePatterns: ['/node_modules/', '/src/types/', '/src/config/'],
+  transformIgnorePatterns: ['/node_modules/(?!jose)/'],
 };
 
 process.env.IS_JEST_TEST = 'true';

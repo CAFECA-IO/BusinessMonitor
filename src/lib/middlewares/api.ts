@@ -18,49 +18,46 @@ export async function apiMiddleware(req: NextRequest) {
    */
   if (req.method === 'OPTIONS') {
     const res = NextResponse.json({}, { status: 204 });
-    // Info: (20250925 - Tzuhan) 仍然可以附加 request-id
     res.headers.set('x-request-id', requestId);
     return res;
   }
 
-  /**
-   * Info: (20251001-tzuhan) 【更新】2. 處理公開路由
-   * 將 QR Code 登入和 Pusher 授權所需的路徑加入白名單
-   */
-  if (
-    pathname.startsWith('/api/v1/public') ||
-    pathname.startsWith('/api/v1/companies') ||
-    pathname === '/api/v1/pairing/initiate' || // Info: (20251001-tzuhan) QR Code 登入流程
-    pathname === '/api/v1/pairing/authorize' || // Info: (20251014-tzuhan) 雖然此路由有 token，但為了路徑一致性，也設為公開
-    pathname === '/api/v1/pairing/complete' ||
-    pathname === '/api/v1/pusher/auth' // Info: (20251001-tzuhan) Pusher 頻道授權
-  ) {
+  // Info: (20251017 - Tzuhan) 2. 處理「絕對公開」的路由
+  const publicRoutes = [
+    '/api/v1/public',
+    '/api/v1/companies',
+    '/api/v1/pairing/initiate',
+    '/api/v1/pairing/authorize',
+    '/api/v1/pairing/complete',
+    '/api/v1/pusher/auth',
+  ];
+
+  if (publicRoutes.some((path) => pathname.startsWith(path))) {
     const res = NextResponse.next();
     res.headers.set('x-request-id', requestId);
     return res;
   }
 
-  // Info: (20250925 - Tzuhan) 3. 處理 FIDO2 相關的 /secure 路由
+  // Info: (20251017 - Tzuhan): 3. 處理 FIDO2 相關的 /secure 路由，區分公開與私有
   if (pathname.startsWith('/api/v1/secure')) {
-    // Info: (20250925 - Tzuhan) 【關鍵邏輯】處理 /me 的特殊情況
-    if (pathname.endsWith('/me')) {
-      const authHeader = req.headers.get('authorization');
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-      if (!token) {
-        // Info: (20251001-tzuhan) 如果沒有 token，重寫到訪客 API
-        const rewriteUrl = req.nextUrl.clone();
-        rewriteUrl.pathname = '/api/v1/public/guest-info';
-        const res = NextResponse.rewrite(rewriteUrl);
-        res.headers.set('x-request-id', requestId);
-        return res;
-      }
-      // Info: (20251001-tzuhan) 如果有 token，則繼續往下走，進入下面的 DeWT 驗證邏輯
-    } else {
-      // Info: (20251001-tzuhan) /secure 下的其他路由（如 webauthn_options）直接放行
+    // Info: (20251017 - Tzuhan) 這些是 /secure 下「無需 token」即可訪問的公開路由
+    const securePublicRoutes = [
+      '/api/v1/secure/webauthn-options',
+      '/api/v1/secure/webauthn',
+      '/api/v1/secure/recover/initiate',
+      '/api/v1/secure/recover/complete',
+      '/api/v1/secure/verify-login',
+    ];
+
+    if (securePublicRoutes.some((path) => pathname.startsWith(path))) {
+      // Info: (20251017 - Tzuhan) 如果是公開的 /secure 路由，直接放行
       const res = NextResponse.next();
       res.headers.set('x-request-id', requestId);
       return res;
     }
+
+    // Info: (20251017 - Tzuhan) 所有未在 securePublicRoutes 中列出的 /secure 路由 (例如 /me 和 /key-management/store)
+    // Info: (20251017 - Tzuhan) 將會自動落到下面的 Token 驗證邏輯。
   }
 
   // Info: (20251001-tzuhan) 4. 處理所有需要 DeWT 的路由 (/auth, /service, /admin, 以及帶有 token 的 /me)

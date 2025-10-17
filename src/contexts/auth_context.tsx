@@ -11,6 +11,7 @@ interface IAuthContext {
   isLoading: boolean;
   login: (dewt: string) => Promise<void>;
   logout: () => void;
+  refetchUser: () => Promise<void>;
 }
 
 // Info: (20251014 - Tzuhan) 建立 Context，並提供一個預設值
@@ -36,39 +37,37 @@ export function AuthProvider({ children }: IAuthProviderProps) {
     setUser(null);
   }, []);
 
+  const checkAuthStatus = useCallback(async () => {
+    const dewt = localStorage.getItem('dewt');
+    if (!dewt) {
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${origin}${routes.auth.me()}`, {
+        headers: { Authorization: `Bearer ${dewt}` },
+      });
+      if (!res.ok) throw new Error('Token verification failed.');
+      const userData: IdentityAccount = await res.json();
+      setUser(userData);
+    } catch (error) {
+      logger.warn('Auth check failed, logging out.', { error: String(error) });
+      logout();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [logout]);
+
   // Info: (20251014 - Tzuhan) 在組件首次掛載時檢查 localStorage 中是否存在 DeWT
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const dewt = localStorage.getItem('dewt');
-      if (!dewt) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        // Info: (20251014 - Tzuhan) 呼叫 /api/v1/secure/me API 來驗證 token
-        const res = await fetch(`${origin}${routes.auth.me()}`, {
-          headers: {
-            Authorization: `Bearer ${dewt}`,
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error('Token verification failed.');
-        }
-
-        const userData: IdentityAccount = await res.json();
-        setUser(userData); // Info: (20251014 - Tzuhan) 獲取成功後，更新 user 狀態
-      } catch (error) {
-        logger.warn('Auth check failed, logging out.', { error: String(error) });
-        logout(); // Info: (20251014 - Tzuhan) 獲取失敗後（例如 token 過期），自動登出
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
+    setIsLoading(true);
     checkAuthStatus();
-  }, [logout]);
+  }, [checkAuthStatus]);
+
+  const refetchUser = useCallback(async () => {
+    setIsLoading(true); // Info: (20251017 - Tzuhan) 開始刷新時，顯示載入狀態
+    await checkAuthStatus();
+  }, [checkAuthStatus]);
 
   // Info: (20251014 - Tzuhan) 定義登入邏輯
   const login = async (dewt: string) => {
@@ -96,7 +95,7 @@ export function AuthProvider({ children }: IAuthProviderProps) {
   };
 
   // Info: (20251014 - Tzuhan) 將 user, isLoading, login, logout 透過 Context Provider 傳遞
-  const value = { user, isLoading, login, logout };
+  const value = { user, isLoading, login, logout, refetchUser };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
