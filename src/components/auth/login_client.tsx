@@ -10,6 +10,7 @@ import { routes } from '@/config/api-routes';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import Button from '@/components/common/button';
+import MessageModal from '@/components/auth/message_modal';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -19,12 +20,16 @@ if (!origin) {
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
   // Info: (20251016 - Julian) During development
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const [statusMessage, setStatusMessage] = useState('點擊按鈕以 Passkey 登入或註冊。');
   // Info: (20251016 - Julian) During development
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState(true);
+  const [isMessageModalVisible, setIsMessageModalVisible] = useState(false);
+
+  const toggleMessageModal = () => setIsMessageModalVisible((prev) => !prev);
+
   const router = useRouter();
   const { user, isLoading: isAuthLoading, login } = useAuth();
 
@@ -42,6 +47,7 @@ export default function LoginClient() {
       setIsFidoAvailable(false);
       setStatusMessage('此環境不支援 Passkey 功能。');
       setError('請使用支援的瀏覽器並確保在安全的 HTTPS 環境下操作。');
+      setIsMessageModalVisible(true);
     }
   }, []);
 
@@ -81,6 +87,7 @@ export default function LoginClient() {
         (err as Error).name === 'NotAllowedError' ? '您取消了登入操作。' : '登入失敗，請重試。'
       );
       setError(errorMessage);
+      setIsMessageModalVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +107,7 @@ export default function LoginClient() {
         <Image src="/logos/cafeca_logo.svg" alt="cafeca_logo" width={120} height={36} />
       </Link>
 
-      <div className="flex flex-1 flex-col items-center justify-end">
+      <div className="mt-60px flex flex-1 flex-col items-center justify-end">
         <Image
           src="/elements/graphic.png"
           width={344}
@@ -109,7 +116,7 @@ export default function LoginClient() {
           className="shrink-0"
         />
 
-        <div className="mt-72px flex flex-col gap-16px">
+        <div className="mt-40px flex flex-col gap-16px">
           <Button
             type="button"
             onClick={handleLogin}
@@ -125,12 +132,23 @@ export default function LoginClient() {
           </Button>
         </div>
 
-        <div className="mt-72px">
-          <Button type="button" variant="primaryBorderless" size="extraSmall">
-            <Link href={BM_URL.SIGN_UP}>I don’t have my Digital ID yet.</Link>
-          </Button>
+        <div className="mt-40px">
+          <Link href={BM_URL.SIGN_UP}>
+            <Button type="button" variant="primaryBorderless" size="extraSmall">
+              I don’t have my Digital ID yet.{' '}
+            </Button>
+          </Link>
         </div>
       </div>
+
+      {isMessageModalVisible && (
+        <MessageModal
+          content={statusMessage ?? '--'}
+          visibleHandler={toggleMessageModal}
+          submitString="Try Again"
+          submitHandler={handleLogin}
+        />
+      )}
     </div>
   );
 }

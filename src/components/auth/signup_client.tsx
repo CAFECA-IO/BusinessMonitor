@@ -163,7 +163,7 @@ export default function SignupClient() {
         <h1 className="text-h5 font-bold text-text-invert">Create Your Digital ID</h1>
 
         {/* Info: (20251016 - Julian) Avatar part */}
-        <div className="mt-54px flex flex-col items-center gap-20px">
+        <div className="mt-40px flex flex-col items-center gap-20px">
           <div className="relative">
             <div className="relative size-150px overflow-hidden rounded-full">
               <Image src={avatarUrl} fill objectFit="contain" alt="new_avatar" />
@@ -182,7 +182,7 @@ export default function SignupClient() {
           <Button
             type="button"
             variant="primaryBorderless"
-            className="mt-20px gap-8px"
+            className="mt-10px gap-8px"
             onClick={uploadPhoto}
           >
             <FiUpload size={16} />
@@ -191,7 +191,7 @@ export default function SignupClient() {
         </div>
 
         {/* Info: (20251016 - Julian) Name input part */}
-        <div className="mt-54px flex flex-col gap-4px font-normal">
+        <div className="mt-40px flex flex-col gap-4px font-normal">
           <div
             className={`${
               isNameValid ? 'border-border-secondary' : 'border-border-error'
@@ -216,36 +216,36 @@ export default function SignupClient() {
         </div>
 
         {/* Info: (20251016 - Julian) Terms checkbox part */}
-        <div className="mt-auto flex items-start gap-8px font-normal">
-          <input
-            id="terms"
-            type="checkbox"
-            checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-            className="size-24px shrink-0 appearance-none rounded-radius-xs border border-border-brand bg-surface-primary after:mx-auto after:hidden after:content-[url(/icons/checkmark.svg)] checked:after:block disabled:border-border-error"
-            disabled={isLoading || !isNameValid}
-            aria-labelledby="terms-label"
-          />
-          <label htmlFor="terms" className="text-base">
-            I have read and agree to the{' '}
-            <Link
-              href="/terms"
-              className="text-button-link hover:cursor-pointer hover:text-button-primary-hover"
-            >
-              Terms of Service{' '}
-            </Link>
-            and{' '}
-            <Link
-              href="/privacy"
-              className="text-button-link hover:cursor-pointer hover:text-button-primary-hover"
-            >
-              Privacy Policy
-            </Link>
-          </label>
+        <div className="mt-32px flex flex-1 items-end">
+          <div className="flex items-start gap-8px font-normal">
+            <input
+              id="terms"
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="size-24px shrink-0 appearance-none rounded-radius-xs border border-border-brand bg-surface-primary after:mx-auto after:hidden after:content-[url(/icons/checkmark.svg)] checked:after:block disabled:border-border-error"
+              disabled={isLoading || !isNameValid}
+              aria-labelledby="terms-label"
+            />
+            <label htmlFor="terms" className="flex flex-wrap items-center text-base">
+              <p>I have read and agree to the</p>
+              <Link href="/terms">
+                <Button type="button" variant="primaryBorderless" size="link">
+                  Terms of Service
+                </Button>
+              </Link>
+              <p>and</p>
+              <Link href="/privacy">
+                <Button type="button" variant="primaryBorderless" size="link">
+                  Privacy Policy
+                </Button>
+              </Link>
+            </label>
+          </div>
         </div>
 
         {/* Info: (20251016 - Julian) Button part */}
-        <div className="mt-20px flex flex-col items-center gap-8px">
+        <div className="mt-10px flex flex-col items-center gap-8px">
           <Button
             type="button"
             onClick={handleRegister}
