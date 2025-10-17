@@ -226,20 +226,18 @@ export default function SignupClient() {
             disabled={isLoading || !isNameValid}
             aria-labelledby="terms-label"
           />
-          <label htmlFor="terms" className="text-base">
-            I have read and agree to the{' '}
-            <Link
-              href="/terms"
-              className="text-button-link hover:cursor-pointer hover:text-button-primary-hover"
-            >
-              Terms of Service{' '}
+          <label htmlFor="terms" className="flex flex-wrap items-center text-base">
+            <p>I have read and agree to the</p>
+            <Link href="/terms">
+              <Button type="button" variant="primaryBorderless" size="link">
+                Terms of Service
+              </Button>
             </Link>
-            and{' '}
-            <Link
-              href="/privacy"
-              className="text-button-link hover:cursor-pointer hover:text-button-primary-hover"
-            >
-              Privacy Policy
+            <p>and</p>
+            <Link href="/privacy">
+              <Button type="button" variant="primaryBorderless" size="link">
+                Privacy Policy
+              </Button>
             </Link>
           </label>
         </div>

@@ -126,9 +126,11 @@ export default function LoginClient() {
         </div>
 
         <div className="mt-72px">
-          <Button type="button" variant="primaryBorderless" size="extraSmall">
-            <Link href={BM_URL.SIGN_UP}>I don’t have my Digital ID yet.</Link>
-          </Button>
+          <Link href={BM_URL.SIGN_UP}>
+            <Button type="button" variant="primaryBorderless" size="extraSmall">
+              I don’t have my Digital ID yet.{' '}
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

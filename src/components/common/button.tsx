@@ -25,6 +25,7 @@ const buttonVariants = cva('group rounded-full text-center justify-center flex i
       large: 'text-base px-20px py-10px desktop:px-54px desktop:py-18px desktop:text-lg font-bold',
       extraLarge: 'px-48px py-12px text-sm font-bold',
       extraSmall: 'text-sm px-16px py-8px font-normal',
+      link: 'text-sm px-4px font-bold',
       icon: 'p-10px desktop:p-18px',
     },
   },
