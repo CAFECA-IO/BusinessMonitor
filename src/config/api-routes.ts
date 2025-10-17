@@ -223,6 +223,11 @@ export const routes = {
     complete: () => `${API_PREFIX}/pairing/complete`,
   },
 
+  keyManagement: {
+    // POST /api/v1/secure/key-management/store
+    store: () => `${API_PREFIX}/secure/key-management/store`,
+  },
+
   pusher: {
     auth: () => `${API_PREFIX}/pusher/auth`,
   },

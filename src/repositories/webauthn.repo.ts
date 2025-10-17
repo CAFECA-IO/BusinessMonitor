@@ -72,6 +72,10 @@ class WebAuthnRepository implements IWebAuthnRepository {
         photo: true,
         encryptedPrivateKey: true,
         backupKeyHash: true,
+        encryptedBlockchainKey: true,
+        blockchainPublicKey: true,
+        blockchainAddress: true,
+        derivationNonce: true,
       },
     });
   }
@@ -100,6 +104,10 @@ class WebAuthnRepository implements IWebAuthnRepository {
         photo: true,
         encryptedPrivateKey: true,
         backupKeyHash: true,
+        encryptedBlockchainKey: true,
+        blockchainPublicKey: true,
+        blockchainAddress: true,
+        derivationNonce: true,
       },
     });
   }
@@ -115,6 +123,10 @@ class WebAuthnRepository implements IWebAuthnRepository {
         photo: true,
         encryptedPrivateKey: true,
         backupKeyHash: true,
+        encryptedBlockchainKey: true,
+        blockchainPublicKey: true,
+        blockchainAddress: true,
+        derivationNonce: true,
       },
     });
   }
