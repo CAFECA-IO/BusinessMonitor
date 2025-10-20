@@ -5,7 +5,7 @@
   "type": "module",
   "engines": {
     "node": "22.x"
-  }
+  },
   "scripts": {
     "gen:env": "tsx scripts/initial_env.ts",
     "gen:prisma": "DISABLE_ERD=true prisma generate",
