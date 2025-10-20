@@ -129,7 +129,7 @@ export default function ProfilePage() {
     <Layout>
       <div className="flex w-full grow flex-col items-center p-4">
         <div className="w-full max-w-2xl space-y-8">
-          {/* User Info Section */}
+          {/* Info: (20251021 - Tzuhan) User Info Section */}
           <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">我的 Digital ID</h1>
             <div className="mt-6 space-y-4 border-t border-gray-200 pt-6">
@@ -146,7 +146,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Blockchain Key Section */}
+          {/* Info: (20251021 - Tzuhan) Blockchain Key Section */}
           <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
             <h2 className="text-2xl font-bold tracking-tight text-gray-900">區塊鏈錢包</h2>
             <div className="mt-6 border-t border-gray-200 pt-6">
@@ -189,7 +189,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Actions Section */}
+          {/* Info: (20251021 - Tzuhan) Actions Section */}
           <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
             <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
               <Link
