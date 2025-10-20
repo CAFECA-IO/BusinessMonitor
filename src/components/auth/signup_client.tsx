@@ -230,13 +230,13 @@ export default function SignupClient() {
             <label htmlFor="terms" className="flex flex-wrap items-center text-base">
               <p>I have read and agree to the</p>
               <Link href="/terms">
-                <Button type="button" variant="primaryBorderless" size="link">
+                <Button type="button" variant="primaryBorderless" size="small">
                   Terms of Service
                 </Button>
               </Link>
               <p>and</p>
               <Link href="/privacy">
-                <Button type="button" variant="primaryBorderless" size="link">
+                <Button type="button" variant="primaryBorderless" size="small">
                   Privacy Policy
                 </Button>
               </Link>
