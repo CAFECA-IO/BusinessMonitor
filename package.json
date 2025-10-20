@@ -1,8 +1,11 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+205",
+  "version": "0.1.0+206",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "gen:env": "tsx scripts/initial_env.ts",
     "gen:prisma": "DISABLE_ERD=true prisma generate",
