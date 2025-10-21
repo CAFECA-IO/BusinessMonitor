@@ -1,7 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import Button from '@/components/common/button';
+import { useLottie } from 'lottie-react';
+import successAnimation from '@/lottie/scanning.json';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -9,12 +10,19 @@ if (!origin) {
 }
 
 export default function LoginSuccessClient() {
+  const options = {
+    animationData: successAnimation,
+    loop: true,
+  };
+
+  const { View } = useLottie(options);
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-24px">
       <h1 className="text-h3 font-bold text-text-secondary">Congratulation</h1>
       <div className="mt-24px flex flex-col items-center gap-20px">
         {/* Info: (20241017 - Julian) Replace with Lottie */}
-        <Image src="/login_success.gif" width={220} height={220} alt="success_animation" />
+        <div className="relative size-220px">{View}</div>
         <p className="text-base font-medium text-text-secondary">
           You have your own Digital ID now.
         </p>
