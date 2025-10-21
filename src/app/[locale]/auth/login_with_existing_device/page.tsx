@@ -12,7 +12,7 @@ import { Suspense } from 'react';
  */
 export default function LoginWithExistingDevicePage() {
   return (
-    <Layout>
+    <Layout isLoginPage pageBgColor="bg-surface-background">
       <Suspense fallback={<div className="flex grow items-center justify-center">Loading...</div>}>
         <LoginWithDeviceClient />
       </Suspense>
