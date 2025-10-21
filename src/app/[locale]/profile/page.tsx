@@ -9,7 +9,7 @@ import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import {
   createAndEncryptBlockchainKey,
-  decryptKeyWithPassword,
+  decryptAndUseBlockchainKey,
 } from '@/lib/blockchain-key-manager';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
@@ -72,7 +72,11 @@ export default function ProfilePage() {
     setKeyStatus('請依照瀏覽器提示進行驗證以解鎖金鑰...');
     setError(null);
     try {
-      const wallet = await decryptKeyWithPassword(user.id, user.encryptedBlockchainKey);
+      const wallet = await decryptAndUseBlockchainKey(
+        user.id,
+        user.encryptedBlockchainKey,
+        user.derivationNonce
+      );
 
       setKeyStatus('金鑰解鎖成功！正在簽署一筆測試訊息...');
       const message = '這是一筆來自 cafeca 平台的測試簽章';
