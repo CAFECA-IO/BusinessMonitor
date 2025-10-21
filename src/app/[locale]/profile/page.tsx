@@ -9,19 +9,12 @@ import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import {
   createAndEncryptBlockchainKey,
-  decryptAndUseBlockchainKey,
+  decryptKeyWithPassword,
 } from '@/lib/blockchain-key-manager';
-import type { IdentityAccount } from '@prisma/client';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
-}
-
-// Info: (20251021 - Tzuhan) 擴充 IdentityAccount 型別以包含從 /me API 回傳的額外欄位
-interface IUserProfile extends IdentityAccount {
-  ethAddress: string;
-  isAuthenticated: boolean;
 }
 
 export default function ProfilePage() {
@@ -30,12 +23,10 @@ export default function ProfilePage() {
   const [isKeyLoading, setIsKeyLoading] = useState<boolean>(false);
   const router = useRouter();
 
-  // Info: (20251021 - Tzuhan) 使用 useAuth 作為唯一的身份狀態來源
   const { user, isLoading: isAuthLoading, logout, refetchUser } = useAuth();
 
-  // Info: (20251021 - Tzuhan) 更新登出處理函式
   const handleLogout = () => {
-    logout(); // Info: (20251021 - Tzuhan) 使用 context 提供的 logout 函式
+    logout();
     router.push(BM_URL.LOGIN);
   };
 
@@ -81,11 +72,7 @@ export default function ProfilePage() {
     setKeyStatus('請依照瀏覽器提示進行驗證以解鎖金鑰...');
     setError(null);
     try {
-      const wallet = await decryptAndUseBlockchainKey(
-        user.id,
-        user.encryptedBlockchainKey,
-        user.derivationNonce
-      );
+      const wallet = await decryptKeyWithPassword(user.id, user.encryptedBlockchainKey);
 
       setKeyStatus('金鑰解鎖成功！正在簽署一筆測試訊息...');
       const message = '這是一筆來自 cafeca 平台的測試簽章';
@@ -101,7 +88,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Info: (20251021 - Tzuhan) 主要的載入和權限檢查邏輯
   useEffect(() => {
     // Info: (20251021 - Tzuhan 如果 AuthContext 還在載入中，則不執行任何操作
     if (isAuthLoading) {
@@ -114,17 +100,21 @@ export default function ProfilePage() {
   }, [user, isAuthLoading, router]);
 
   // Info: (20251021 - Tzuhan) 處理載入狀態的 UI
-  if (isAuthLoading || !user) {
+  if (isAuthLoading) {
     return (
       <Layout>
         <div className="flex w-full grow flex-col items-center justify-center p-4">
-          <p className="animate-pulse text-gray-500">正在載入使用者資料...</p>
+          <p className="animate-pulse text-gray-500">正在驗證您的身份...</p>
         </div>
       </Layout>
     );
   }
 
-  // Info: (20251021 - Tzuhan) 主要 JSX 內容，直接使用從 useAuth 來的 user 物件
+  // Info: (20251021 - Tzuhan) 如果載入完成但沒有 user，useEffect 會處理跳轉，此處回傳 null 以避免閃屏
+  if (!user) {
+    return null;
+  }
+
   return (
     <Layout>
       <div className="flex w-full grow flex-col items-center p-4">
@@ -139,14 +129,12 @@ export default function ProfilePage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">ID / ETH Address (舊)</p>
-                <p className="break-all font-mono text-sm text-gray-700">
-                  {(user as IUserProfile).ethAddress || user.ethereumAddress}
-                </p>
+                <p className="break-all font-mono text-sm text-gray-700">{user.ethereumAddress}</p>
               </div>
             </div>
           </div>
 
-          {/* Info: (20251021 - Tzuhan) Blockchain Key Section */}
+          {/* Blockchain Key Section */}
           <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
             <h2 className="text-2xl font-bold tracking-tight text-gray-900">區塊鏈錢包</h2>
             <div className="mt-6 border-t border-gray-200 pt-6">

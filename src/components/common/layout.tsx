@@ -4,7 +4,6 @@ import Footer from '@/components/common/footer';
 import Breadcrumb from '@/components/common/breadcrumb';
 import SearchArea from '@/components/common/search_area';
 import { IBreadcrumbItem } from '@/interfaces/breadcrumb';
-import { AuthProvider } from '@/contexts/auth_context';
 
 interface ILayoutProps {
   children: React.ReactNode;
@@ -35,32 +34,30 @@ const Layout: React.FC<ILayoutProps> = ({
   const displayedFooter = isLoginPage ? null : <Footer />;
 
   return (
-    <AuthProvider>
-      <div className="flex min-h-screen flex-col">
-        {displayedNavbar}
+    <div className="flex min-h-screen flex-col">
+      {displayedNavbar}
 
-        <main
-          className={`flex grow flex-col gap-20px desktop:gap-40px ${pageBgColor} ${paddingClass}`}
-        >
-          {/* Info: (20250805 - Julian) Breadcrumbs & Search bar */}
-          {isShowCrumbs && (
-            <div className="flex flex-col items-center justify-start gap-y-20px px-20px desktop:flex-row desktop:justify-between desktop:px-80px">
-              <Breadcrumb items={crumbsItems} />
-              {isSearchBar && <SearchArea />}
-            </div>
-          )}
-
-          {/* Info: (20250805 - Julian) Page Content */}
-          {/* <div className={`flex min-h-screen w-full flex-col ${className}`}>{children}</div> */}
-          <div
-            className={`flex w-full flex-col ${isLoginPage ? 'h-dvh' : 'min-h-screen'} ${className}`}
-          >
-            {children}
+      <main
+        className={`flex grow flex-col gap-20px desktop:gap-40px ${pageBgColor} ${paddingClass}`}
+      >
+        {/* Info: (20250805 - Julian) Breadcrumbs & Search bar */}
+        {isShowCrumbs && (
+          <div className="flex flex-col items-center justify-start gap-y-20px px-20px desktop:flex-row desktop:justify-between desktop:px-80px">
+            <Breadcrumb items={crumbsItems} />
+            {isSearchBar && <SearchArea />}
           </div>
-        </main>
-        {displayedFooter}
-      </div>
-    </AuthProvider>
+        )}
+
+        {/* Info: (20250805 - Julian) Page Content */}
+        {/* <div className={`flex min-h-screen w-full flex-col ${className}`}>{children}</div> */}
+        <div
+          className={`flex w-full flex-col ${isLoginPage ? 'h-dvh' : 'min-h-screen'} ${className}`}
+        >
+          {children}
+        </div>
+      </main>
+      {displayedFooter}
+    </div>
   );
 };
 
