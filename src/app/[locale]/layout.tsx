@@ -5,6 +5,7 @@ import TranslationsProvider from '@/components/translation/translations_provider
 import initTranslations from '@/lib/i18n';
 import fs from 'fs';
 import path from 'path';
+import { AuthProvider } from '@/contexts/auth_context';
 
 // Info: (20250904 - Julian) 讀取 src/locales/en 底下的所有 namespace
 const localesDir = path.join(process.cwd(), 'src', 'locales', 'en');
@@ -26,12 +27,7 @@ export const metadata: Metadata = {
   description:
     'CAFECA 是一個去中心化身份驗證平台，透過區塊鏈與零知識證明技術，讓個人與企業在網路上擁 有安全、隱私、可攜的身份，實現真正的自我主權身份。',
   authors: [{ name: 'CAFECA' }],
-  keywords: [
-    'CAFECA',
-    'DID',
-    'FIDO2',
-    'blockchain',
-  ],
+  keywords: ['CAFECA', 'DID', 'FIDO2', 'blockchain'],
   icons: {
     icon: '/logos/cafeca_icon.svg',
   },
@@ -59,11 +55,13 @@ export default async function RootLayout({ children, params }: Readonly<IRootLay
 
   return (
     <html lang="tw">
-      <body className={`${notoSansTC.className} ${jost.className} antialiased`}>
-        <TranslationsProvider locale={locale} resources={resources} namespaces={I18N_NAMESPACES}>
-          {children}
-        </TranslationsProvider>
-      </body>
+      <AuthProvider>
+        <body className={`${notoSansTC.className} ${jost.className} antialiased`}>
+          <TranslationsProvider locale={locale} resources={resources} namespaces={I18N_NAMESPACES}>
+            {children}
+          </TranslationsProvider>
+        </body>
+      </AuthProvider>
     </html>
   );
 }
