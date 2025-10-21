@@ -28,7 +28,7 @@ const MessageModal: React.FC<IMessageModalProps> = ({
   );
 
   const displayedSubmit = isShowSubmit ? (
-    <Button type="button" size="medium" onClick={submitHandler}>
+    <Button type="button" size="medium" onClick={submitHandler} className="whitespace-nowrap">
       {submitString}
     </Button>
   ) : null;
@@ -42,7 +42,13 @@ const MessageModal: React.FC<IMessageModalProps> = ({
         <p className="text-base font-medium text-text-secondary">{content}</p>
         {/* Info: (20241017 - Julian) Buttons */}
         <div className={`${isShowSubmit ? 'grid-cols-2' : 'grid-cols-1'} grid gap-8px`}>
-          <Button type="button" onClick={visibleHandler} variant="secondary" size="medium">
+          <Button
+            type="button"
+            onClick={visibleHandler}
+            variant="secondary"
+            size="medium"
+            className="whitespace-nowrap"
+          >
             Cancel
           </Button>
           {displayedSubmit}

@@ -20,11 +20,12 @@ if (!origin) {
 
 export default function SignupClient() {
   // ToDo: (20251016 - Julian) Default avatar image path
-  const defaultAvatar = '/fake_avatar/business_img_1.jpg';
+  const defaultAvatar = 'https://avatar.cafeca.io/api/v1/avatar/$avatar_id';
 
   const [name, setName] = useState<string>('');
   const [isNameValid, setIsNameValid] = useState<boolean>(true);
   const [avatarUrl, setAvatarUrl] = useState<string>(defaultAvatar);
+  const [randomBtnLoading, setRandomBtnLoading] = useState<boolean>(false);
   const [agreed, setAgreed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   // Info: (20251016 - Julian) During development
@@ -122,13 +123,12 @@ export default function SignupClient() {
 
   // ToDo: (20251016 - Julian) Random avatar function, need to replace with real avatar images
   const getRandomAvatar = () => {
-    const avatars = [
-      '/fake_avatar/business_img_1.jpg',
-      '/fake_avatar/business_img_2.png',
-      '/fake_avatar/business_img_3.jpg',
-    ];
-    const randomIndex = Math.floor(Math.random() * avatars.length);
-    setAvatarUrl(avatars[randomIndex]);
+    setRandomBtnLoading(true);
+    const randomIndex = Math.floor(Math.random() * 10);
+    setAvatarUrl(defaultAvatar.replace('$avatar_id', randomIndex.toString()));
+    setTimeout(() => {
+      setRandomBtnLoading(false);
+    }, 3000); // Info: (20251021 - Julian) 等待 3 秒再重啟按鈕
   };
 
   // ToDo: (20251016 - Julian) Upload photo function
@@ -174,6 +174,7 @@ export default function SignupClient() {
                 size="icon"
                 className="rounded-full bg-button-secondary p-10px"
                 onClick={getRandomAvatar}
+                disabled={randomBtnLoading}
               >
                 <GiPerspectiveDiceSixFacesOne size={24} />
               </Button>
