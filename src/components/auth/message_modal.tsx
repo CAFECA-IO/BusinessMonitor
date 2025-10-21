@@ -4,7 +4,8 @@ import Button from '@/components/common/button';
 
 interface IMessageModalProps {
   title?: string;
-  content: string;
+  content: string | React.ReactNode;
+  cancelString?: string;
   submitString?: string;
   submitHandler?: () => void;
   visibleHandler: () => void;
@@ -13,6 +14,7 @@ interface IMessageModalProps {
 const MessageModal: React.FC<IMessageModalProps> = ({
   title,
   content,
+  cancelString,
   submitString,
   submitHandler,
   visibleHandler,
@@ -26,6 +28,8 @@ const MessageModal: React.FC<IMessageModalProps> = ({
       <TbFaceIdError size={100} />
     </div>
   );
+
+  const cancelText = cancelString ?? 'Cancel';
 
   const displayedSubmit = isShowSubmit ? (
     <Button type="button" size="medium" onClick={submitHandler} className="whitespace-nowrap">
@@ -49,7 +53,7 @@ const MessageModal: React.FC<IMessageModalProps> = ({
             size="medium"
             className="whitespace-nowrap"
           >
-            Cancel
+            {cancelText}
           </Button>
           {displayedSubmit}
         </div>
