@@ -27,7 +27,7 @@ export async function createAndEncryptBlockchainKey(userId: string) {
     const derivationChallenge = `cafeca-key_encryption-${userId}-${nonce}`;
     logger.debug('[DEBUG] 2. 加密 Challenge:', derivationChallenge);
 
-    // --- (A) 驗證簽章是否穩定 ---
+    // Info: (20251022 - Tzuhan) --- (A) 驗證簽章是否穩定 ---
     logger.debug('[DEBUG] 3a. 正在請求第一次簽章 (用於確定性檢查)');
     const authentication1 = await fido2ClientService.startLogin({
       challenge: derivationChallenge,
@@ -48,12 +48,12 @@ export async function createAndEncryptBlockchainKey(userId: string) {
       logger.debug('[DEBUG] ✅ 簽章是確定的！');
     } else {
       console.error('[DEBUG] ❌ 簽章不確定！這很可能是導致解密失敗的原因。');
-      // 可以考慮在此拋出錯誤，因為後續流程基於錯誤假設
+      // Info: (20251022 - Tzuhan) 可以考慮在此拋出錯誤，因為後續流程基於錯誤假設
       throw new Error(
         'FIDO2 signature is non-deterministic, cannot derive stable key based on this design.'
       );
     }
-    // --- 使用第一次簽章繼續流程 ---
+    // Info: (20251022 - Tzuhan) --- 使用第一次簽章繼續流程 ---
     const signature = signature1;
 
     // Info: (20251020 - Tzuhan) 4. 使用 Keccak256 將簽章轉換為一個 32 位元組的對稱加密金鑰
@@ -76,7 +76,7 @@ export async function createAndEncryptBlockchainKey(userId: string) {
     const encrypted = await window.crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
       key,
-      new Uint8Array(ethers.getBytes(wallet.privateKey)) // 將私鑰轉為 Uint8Array 加密
+      new Uint8Array(ethers.getBytes(wallet.privateKey)) // Info: (20251022 - Tzuhan) 將私鑰轉為 Uint8Array 加密
     );
     logger.debug('[DEBUG] 5. 加密 Encrypted Data (Hex):', ab2hex(encrypted));
 
@@ -105,6 +105,7 @@ export async function createAndEncryptBlockchainKey(userId: string) {
 }
 
 /**
+ * Info: (20251022 - Tzuhan)
  * 使用 FIDO2 驗證來解密已儲存的區塊鏈私鑰。
  * @param userId - 當前登入的使用者 ID
  * @param encryptedPrivateKeyPayload - 從後端獲取的加密 payload (包含 iv 和 encryptedData)
@@ -151,7 +152,7 @@ export async function decryptAndUseBlockchainKey(
       ['decrypt']
     );
 
-    // 將 Hex IV 和 Hex EncryptedData 轉回 Uint8Array
+    // Info: (20251022 - Tzuhan) 將 Hex IV 和 Hex EncryptedData 轉回 Uint8Array
     const ivBytes = new Uint8Array(ethers.getBytes('0x' + iv));
     const encryptedBytes = new Uint8Array(ethers.getBytes('0x' + encryptedData));
 
@@ -163,7 +164,7 @@ export async function decryptAndUseBlockchainKey(
     logger.debug('[DEBUG] 4c. 解密後的 ArrayBuffer:', decrypted);
 
     // Info: (20251020 - Tzuhan) 5. 用解密出的私鑰創建 Wallet 物件並回傳
-    const privateKey = ethers.hexlify(new Uint8Array(decrypted)); // 將 ArrayBuffer 轉為 Uint8Array 再轉為 Hex
+    const privateKey = ethers.hexlify(new Uint8Array(decrypted)); // Info: (20251022 - Tzuhan) 將 ArrayBuffer 轉為 Uint8Array 再轉為 Hex
     logger.debug('[DEBUG] 5. 解密後 Private Key:', privateKey);
 
     const wallet = new ethers.Wallet(privateKey);
@@ -174,7 +175,7 @@ export async function decryptAndUseBlockchainKey(
     if (error instanceof Error && error.name === 'NotAllowedError') {
       throw new Error('使用者取消了 FIDO2 驗證操作。');
     }
-    // 可以加入更詳細的錯誤判斷，例如解密失敗時的 Tag mismatch 錯誤
+    // Info: (20251022 - Tzuhan) 可以加入更詳細的錯誤判斷，例如解密失敗時的 Tag mismatch 錯誤
     if (error instanceof DOMException && error.name === 'OperationError') {
       logger.error(
         '[DEBUG] AES-GCM 解密失敗，很可能是因為金鑰不匹配 (簽章不一致?) 或密文/IV/Tag 被竄改。'
