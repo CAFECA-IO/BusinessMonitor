@@ -165,6 +165,7 @@ export default function ProfileClient() {
     );
   }
 
+  // ToDo: (20251022 - Luphia) remove eslint-disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const old = (
     <div className="w-full max-w-2xl space-y-8">
