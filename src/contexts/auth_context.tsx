@@ -48,7 +48,7 @@ export function AuthProvider({ children }: IAuthProviderProps) {
         }
 
         const userData = await res.json();
-        console.log('Fetched user data:', userData);
+        logger.debug('Fetched user data:', userData);
         setUser(userData.payload as IdentityAccount);
       } catch (error) {
         logger.warn('Auth check/fetch failed, logging out.', { error: String(error) });
