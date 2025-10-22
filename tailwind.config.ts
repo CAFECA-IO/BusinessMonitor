@@ -23,6 +23,7 @@ module.exports = {
       },
       backgroundImage: {
         cta: 'url("/elements/cta_bg.png")',
+        profile: 'url("/elements/profile_bg.svg")',
       },
       spacing: {
         'spacing-none': '0px',
@@ -47,6 +48,7 @@ module.exports = {
         '10px': '10px',
         '12px': '12px',
         '14px': '14px',
+        '15px': '15px',
         '16px': '16px',
         '18px': '18px',
         '20px': '20px',
@@ -60,6 +62,7 @@ module.exports = {
         '56px': '56px',
         '60px': '60px',
         '64px': '64px',
+        '66px': '66px',
         '72px': '72px',
         '80px': '80px',
         '96px': '96px',
