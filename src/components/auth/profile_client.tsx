@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FiMonitor } from 'react-icons/fi';
+import { FaChevronRight } from 'react-icons/fa6';
+import { FiMonitor, FiTrash2 } from 'react-icons/fi';
 import { LuIdCard, LuScanLine, LuSettings } from 'react-icons/lu';
 import { IoChatbubbleEllipsesOutline } from 'react-icons/io5';
 import { PiSignOut } from 'react-icons/pi';
@@ -45,6 +46,9 @@ export default function ProfileClient() {
 
   // Info: (20251021 - Tzuhan) 使用 useAuth 作為唯一的身份狀態來源
   const { user, isLoading: isAuthLoading, logout, refetchUser } = useAuth();
+
+  // ToDo: (20251022 - Julian) mock user title
+  const userTitle = 'Digital Citizen';
 
   // Info: (20251022 - Julian) Tab 文字顏色
   const myIdTextColor = currentTab === ProfileTab.MY_ID ? 'text-text-brand' : 'text-text-secondary';
@@ -245,7 +249,7 @@ export default function ProfileClient() {
   );
 
   const displayedNavbar = (
-    <div className="relative grid w-full grid-cols-5 gap-40px rounded-t-radius-s bg-white px-16px pb-60px pt-8px">
+    <div className="grid w-full grid-cols-5 gap-8px rounded-t-radius-s bg-white px-16px pb-40px pt-8px">
       <button
         type="button"
         onClick={myIdClickHandler}
@@ -288,10 +292,10 @@ export default function ProfileClient() {
     </div>
   );
 
-  return (
-    <div className="relative min-h-[dvh] w-full grow bg-profile bg-cover bg-no-repeat">
+  const displayedProfileTab = (
+    <div className="relative w-full flex-1 bg-profile bg-cover bg-no-repeat">
       {/* Info: (20251022 - Julian) Wave Shape Cover */}
-      <div className="absolute z-0 h-400px w-full">
+      <div className="absolute z-0 h-1/2 w-full">
         <Image
           src="/elements/profile_cover.svg"
           fill
@@ -301,7 +305,7 @@ export default function ProfileClient() {
         />
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex h-full flex-col">
         {/* Info: (20251022 - Julian) Header */}
         <div className="z-10 flex w-full justify-end px-16px py-20px">
           <button type="button" onClick={handleLogout} className="p-10px text-text-primary">
@@ -310,15 +314,106 @@ export default function ProfileClient() {
         </div>
 
         {/* Info: (20251022 - Julian) Main Content */}
-        <div className="flex flex-1 flex-col items-center">
-          <div className="h-full"></div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-24px">
+          {/* Info: (20251022 - Julian) User Avatar */}
+          <div className="relative flex flex-col items-center">
+            <div className="size-180px overflow-hidden rounded-full">
+              {/* {user.photo && <Image src={user.photo} width={183} height={183} alt="user_avatar" />} */}
+              <Image
+                src={'/fake_avatar/business_img_1.jpg'}
+                width={183}
+                height={183}
+                alt="user_avatar"
+              />
+            </div>
+            <div className="-translate-y-10px rounded-radius-s bg-surface-brand px-12px py-6px text-sm font-medium text-text-invert">
+              {userTitle}
+            </div>
+          </div>
+          {/* Info: (20251022 - Julian) User Name */}
+          <h2 className="text-h5 font-bold">{user.name ?? '-'}</h2>
         </div>
-
-        {/* Info: (20251022 - Julian) Bottom Navbar */}
-        {displayedNavbar}
       </div>
+    </div>
+  );
 
-      {/* {old} */}
+  const displayedSettingTab = (
+    <div className="flex w-full flex-1 flex-col gap-16px bg-surface-background p-16px">
+      <div className="flex flex-col gap-24px">
+        <h2 className="text-lg font-bold text-text-primary">Setting</h2>
+        <div className="flex h-420px flex-col gap-16px overflow-y-auto">
+          {/* Info: (20251022 - Julian) Profile */}
+          <div className="flex items-center gap-16px py-12px">
+            <div className="size-66px overflow-hidden rounded-full">
+              {/* {user.photo && <Image src={user.photo} width={183} height={183} alt="user_avatar" />} */}
+              <Image
+                src={'/fake_avatar/business_img_1.jpg'}
+                width={66}
+                height={66}
+                alt="user_avatar"
+              />
+            </div>
+            <p className="text-base font-bold text-text-primary">{user.name ?? '-'}</p>
+            <div className="rounded-radius-s bg-surface-brand px-12px py-6px text-xs font-medium text-text-invert">
+              {userTitle}
+            </div>
+          </div>
+          {/* Info: (20251022 - Julian) Divider */}
+          <hr className="border-t border-border-secondary" />
+
+          <div className="flex items-center gap-8px p-16px text-base font-medium text-text-primary">
+            <p className="flex-1">General</p>
+            <FaChevronRight size={20} />
+          </div>
+
+          <div className="flex items-center gap-8px p-16px text-base font-medium text-text-primary">
+            <p className="flex-1">Login & Device Management</p>
+            <FaChevronRight size={20} />
+          </div>
+
+          <div className="flex items-center gap-8px p-16px text-base font-medium text-text-primary">
+            <p className="flex-1">Security & Verification</p>
+            <FaChevronRight size={20} />
+          </div>
+
+          <div className="flex items-center gap-8px p-16px text-base font-medium text-text-primary">
+            <p className="flex-1">Help Center</p>
+            <FaChevronRight size={20} />
+          </div>
+
+          <button
+            type="button"
+            className="flex items-center gap-8px p-16px text-base font-medium text-text-error"
+          >
+            <FiTrash2 size={20} />
+            <p className="flex-1 text-left">Delete Account</p>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const displayedTab =
+    currentTab === ProfileTab.MY_ID ? (
+      displayedProfileTab
+    ) : currentTab === ProfileTab.MESSAGE ? (
+      // ToDo: (20251022 - Julian) During development
+      <div></div>
+    ) : currentTab === ProfileTab.SCAN ? (
+      // ToDo: (20251022 - Julian) During development
+      <div></div>
+    ) : currentTab === ProfileTab.ACCESS ? (
+      // ToDo: (20251022 - Julian) During development
+      <div></div>
+    ) : (
+      displayedSettingTab
+    );
+  return (
+    <div className="relative flex min-h-[dvh] w-full grow flex-col items-center">
+      {displayedTab}
+
+      {/* Info: (20251022 - Julian) Bottom Navbar */}
+      {displayedNavbar}
     </div>
   );
 }
