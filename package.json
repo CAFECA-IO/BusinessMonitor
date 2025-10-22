@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+210",
+  "version": "0.1.0+211",
   "private": true,
   "type": "module",
   "engines": {
@@ -54,6 +54,7 @@
     "iconv-lite": "^0.7.0",
     "jose": "^6.1.0",
     "json2csv": "^6.0.0-alpha.2",
+    "lottie-react": "^2.4.1",
     "next": "15.4.4",
     "next-i18n-router": "^5.5.3",
     "postcss": "^8.5.6",

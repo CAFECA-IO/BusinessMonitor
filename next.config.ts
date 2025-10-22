@@ -19,6 +19,17 @@ const nextConfig = {
       },
     ];
   },
+  images: {
+    // Info: (20251021 - Julian) 允許來自 avatar.cafeca.io 的遠端圖片
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'avatar.cafeca.io',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 module.exports = nextConfig;
