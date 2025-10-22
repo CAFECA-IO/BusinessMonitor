@@ -1,5 +1,6 @@
-import { fido2ClientService } from '@/lib/fido2-client';
 import { ethers } from 'ethers';
+import { fido2ClientService } from '@/lib/fido2-client';
+import { logger } from '@/lib/logger';
 
 // Info: (20251020 - Tzuhan) 輔助函式：將 ArrayBuffer 轉換為 Hex 字串
 function ab2hex(ab: ArrayBuffer): string {
