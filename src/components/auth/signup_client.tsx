@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaUserLarge } from 'react-icons/fa6';
-import { FiUpload } from 'react-icons/fi';
+// import { FiUpload } from 'react-icons/fi';
 import { GiPerspectiveDiceSixFacesOne } from 'react-icons/gi';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
@@ -132,9 +132,9 @@ export default function SignupClient() {
   };
 
   // ToDo: (20251016 - Julian) Upload photo function
-  const uploadPhoto = () => {
-    console.log('upload photo');
-  };
+  // const uploadPhoto = () => {
+  //   console.log('upload photo');
+  // };
 
   if (isAuthLoading || user) {
     return (
@@ -180,7 +180,8 @@ export default function SignupClient() {
               </Button>
             </div>
           </div>
-          <Button
+          {/* ToDo: (20251023 - Julian) Upload photo function */}
+          {/* <Button
             type="button"
             variant="primaryBorderless"
             className="mt-10px gap-8px"
@@ -188,7 +189,7 @@ export default function SignupClient() {
           >
             <FiUpload size={16} />
             <p>Upload My Photo</p>
-          </Button>
+          </Button> */}
         </div>
 
         {/* Info: (20251016 - Julian) Name input part */}

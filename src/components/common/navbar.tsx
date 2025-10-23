@@ -97,7 +97,7 @@ const Navbar: React.FC = () => {
     return (
       <>
         {user ? (
-          <div className="relative">
+          <div className="relative mx-auto">
             <button
               type="button"
               onClick={toggleUserMenu}

@@ -12,6 +12,7 @@ import { PiSignOut } from 'react-icons/pi';
 import { routes } from '@/config/api-routes';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
+import QRCodeScanner from '@/components/auth/qr_code_scanner';
 import {
   createAndEncryptBlockchainKey,
   decryptAndUseBlockchainKey,
@@ -41,6 +42,7 @@ enum ProfileTab {
 export default function ProfileClient() {
   const [currentTab, setCurrentTab] = useState<ProfileTab>(ProfileTab.MY_ID);
   const [keyStatus, setKeyStatus] = useState<string>('');
+  const [isShowScanner, setIsShowScanner] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isKeyLoading, setIsKeyLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -65,15 +67,14 @@ export default function ProfileClient() {
   const settingTextColor =
     currentTab === ProfileTab.SETTING ? 'text-text-brand' : 'text-text-secondary';
 
+  const toggleScanner = () => setIsShowScanner((prev) => !prev);
+
   // Info: (20251022 - Julian) Tab 切換處理函式
   const myIdClickHandler = () => {
     setCurrentTab(ProfileTab.MY_ID);
   };
   const messageClickHandler = () => {
     setCurrentTab(ProfileTab.MESSAGE);
-  };
-  const scanClickHandler = () => {
-    setCurrentTab(ProfileTab.SCAN);
   };
   const accessClickHandler = () => {
     setCurrentTab(ProfileTab.ACCESS);
@@ -256,7 +257,7 @@ export default function ProfileClient() {
   );
 
   const displayedNavbar = (
-    <div className="grid w-full grid-cols-5 gap-8px rounded-t-radius-s bg-white px-16px pb-40px pt-8px">
+    <div className="grid w-full grid-cols-5 gap-8px rounded-t-radius-s bg-white px-16px pb-16px pt-8px">
       <button
         type="button"
         onClick={myIdClickHandler}
@@ -273,7 +274,7 @@ export default function ProfileClient() {
         <IoChatbubbleEllipsesOutline size={24} className="text-text-primary" />
         <p className={`text-xs font-medium ${messageTextColor}`}>Message</p>
       </button>
-      <button type="button" onClick={scanClickHandler} className={scanBtnStyle}>
+      <button type="button" onClick={toggleScanner} className={scanBtnStyle}>
         <LuScanLine size={36} className="text-text-invert" />
       </button>
       <button
@@ -341,7 +342,7 @@ export default function ProfileClient() {
   );
 
   const displayedSettingTab = (
-    <div className="flex w-full flex-1 flex-col gap-16px bg-surface-background p-16px">
+    <div className="flex w-full flex-1 flex-col gap-16px p-16px">
       <div className="flex flex-col gap-24px">
         <h2 className="text-lg font-bold text-text-primary">Setting</h2>
         <div className="flex h-420px flex-col gap-16px overflow-y-auto">
@@ -401,9 +402,6 @@ export default function ProfileClient() {
     ) : currentTab === ProfileTab.MESSAGE ? (
       // ToDo: (20251022 - Julian) During development
       <div></div>
-    ) : currentTab === ProfileTab.SCAN ? (
-      // ToDo: (20251022 - Julian) During development
-      <div></div>
     ) : currentTab === ProfileTab.ACCESS ? (
       // ToDo: (20251022 - Julian) D uring development
       <div></div>
@@ -416,6 +414,9 @@ export default function ProfileClient() {
 
       {/* Info: (20251022 - Julian) Bottom Navbar */}
       {displayedNavbar}
+
+      {/* Info: (20251023 - Julian) QR code scanner */}
+      {isShowScanner && <QRCodeScanner onClose={toggleScanner} />}
     </div>
   );
 }
