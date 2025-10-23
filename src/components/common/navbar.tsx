@@ -4,16 +4,17 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { FiHeadphones } from 'react-icons/fi';
 import { GrHomeRounded } from 'react-icons/gr';
 import { RiComputerLine } from 'react-icons/ri';
+import { RxHamburgerMenu } from 'react-icons/rx';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import Button from '@/components/common/button';
 import I18n from '@/components/common/i18n';
 import { BM_URL } from '@/constants/url';
-import { useTranslation } from 'react-i18next';
-import { RxHamburgerMenu } from 'react-icons/rx';
 import { useAuth } from '@/contexts/auth_context';
+import { DEFAULT_USER_AVATAR } from '@/constants/display';
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation(['common']);
@@ -26,11 +27,18 @@ const Navbar: React.FC = () => {
     setComponentVisible: setIsBurgerOpen,
   } = useOuterClick<HTMLDivElement>(false);
 
+  const {
+    targetRef: userRef,
+    componentVisible: isUserOpen,
+    setComponentVisible: setIsUserOpen,
+  } = useOuterClick<HTMLDivElement>(false);
+
   const isActiveHome = pathname === BM_URL.HOME;
   // Info: (20250807 - Julian) 路徑中須包含 /business_monitor
   const isActiveBusinessMonitor = pathname.includes(BM_URL.BUSINESS_MONITOR);
 
   const toggleBurgerMenu = () => setIsBurgerOpen((prev) => !prev);
+  const toggleUserMenu = () => setIsUserOpen((prev) => !prev);
 
   const navigationLinks = (
     <>
@@ -89,17 +97,34 @@ const Navbar: React.FC = () => {
     return (
       <>
         {user ? (
-          <div className="flex items-center gap-4">
-            <span className="hidden text-sm text-gray-700 sm:block">歡迎, {user.name}!</span>
-            <Button
+          <div className="relative mx-auto">
+            <button
               type="button"
-              size="medium"
-              variant="secondary"
-              onClick={logout}
-              className="w-full"
+              onClick={toggleUserMenu}
+              className="relative size-40px overflow-hidden rounded-full"
             >
-              登出
-            </Button>
+              <Image
+                src={user.photo ?? DEFAULT_USER_AVATAR}
+                width={40}
+                height={40}
+                alt="user_avatar"
+              />
+            </button>
+            {isUserOpen && (
+              <div
+                ref={userRef}
+                className="absolute right-0 flex w-100px flex-col gap-8px rounded-radius-s bg-white px-12px py-8px shadow-drop-L"
+              >
+                <Link href={BM_URL.PROFILE} className="w-full">
+                  <Button type="button" size="small" className="w-full">
+                    Profile
+                  </Button>
+                </Link>
+                <Button type="button" size="small" variant="secondary" onClick={logout}>
+                  登出
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <Link href={BM_URL.LOGIN}>

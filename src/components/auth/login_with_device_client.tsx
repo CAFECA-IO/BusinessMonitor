@@ -118,7 +118,7 @@ export default function LoginWithDeviceClient() {
         </div>
       </div>
 
-      <Link href="/auth/login">
+      <Link href="/auth/login" className="w-full">
         <Button type="button" size="extraLarge" className="mt-40px w-full">
           Go Back
         </Button>

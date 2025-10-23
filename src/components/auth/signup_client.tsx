@@ -259,6 +259,7 @@ export default function SignupClient() {
               </Button>
             </div>
           </div>
+          {/* ToDo: (20251023 - Julian) Upload photo function */}
           <Button
             type="button"
             variant="primaryBorderless"
