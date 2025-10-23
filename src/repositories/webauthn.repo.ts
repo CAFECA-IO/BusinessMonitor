@@ -20,6 +20,12 @@ export interface ICreateIdentityData {
   };
 }
 
+export interface IUpdateIdentityData {
+  name?: string;
+  photo?: string | null;
+  email?: string | null;
+}
+
 export interface IAddAuthenticatorData {
   credentialID: string;
   credentialPublicKey: string;
@@ -164,6 +170,34 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.devicePairingSession.update({
       where: { id },
       data: { status, identityId },
+    });
+  }
+
+  public async updateIdentityAccount(
+    id: string,
+    data: IUpdateIdentityData
+  ): Promise<IdentityAccount> {
+    return prisma.identityAccount.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.email !== undefined && { email: data.email }),
+        ...(data.photo !== undefined && { photo: data.photo }),
+      },
+
+      select: {
+        id: true,
+        ethereumAddress: true,
+        name: true,
+        email: true,
+        photo: true,
+        encryptedPrivateKey: true,
+        backupKeyHash: true,
+        encryptedBlockchainKey: true,
+        blockchainPublicKey: true,
+        blockchainAddress: true,
+        derivationNonce: true,
+      },
     });
   }
 }
