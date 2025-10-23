@@ -4,6 +4,51 @@ import { ApiCode } from '@/lib/status';
 import { loggerFromRequest } from '@/lib/logger';
 import { webAuthnRepo } from '@/repositories/webauthn.repo';
 import { AppError } from '@/lib/error';
+import { updateProfileSchema } from '@/validators';
+
+export async function PATCH(req: NextRequest) {
+  const log = loggerFromRequest(req);
+  try {
+    const identityId = req.headers.get('x-identity-id');
+    if (!identityId) {
+      throw new AppError(ApiCode.UNAUTHORIZED, 'Cannot identify user.');
+    }
+
+    const body = await req.json();
+    const parseResult = updateProfileSchema.safeParse(body);
+    if (!parseResult.success) {
+      throw new AppError(ApiCode.VALIDATION_ERROR, parseResult.error.message);
+    }
+    const dataToUpdate = parseResult.data;
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      throw new AppError(ApiCode.VALIDATION_ERROR, 'No fields provided for update.');
+    }
+
+    log.info('Updating user profile', { identityId, data: dataToUpdate });
+
+    const updatedUser = await webAuthnRepo.updateIdentityAccount(identityId, dataToUpdate);
+
+    log.info('User profile updated successfully', { identityId });
+
+    // Info: (20251023 - Tzuhan) 回傳更新後的使用者資料 (移除敏感資訊)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { encryptedPrivateKey, backupKeyHash, ...safeUserData } = updatedUser;
+    return jsonOk(safeUserData);
+  } catch (err) {
+    log.error('Update profile failed', {
+      errorMessage: err instanceof Error ? err.message : 'Unknown error',
+      code: err instanceof AppError ? err.code : ApiCode.SERVER_ERROR,
+    });
+    if (err instanceof AppError) {
+      return jsonFail(err.code, err.message);
+    }
+    return jsonFail(
+      ApiCode.SERVER_ERROR,
+      err instanceof Error ? err.message : 'Unexpected server error'
+    );
+  }
+}
 
 /**
  * Info: (20250925 - Tzuhan)

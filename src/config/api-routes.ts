@@ -238,4 +238,9 @@ export const routes = {
     // Info: (20250818 - Tzuhan) POST /api/v1/comments/:id/share
     share: buildPath(`${API_PREFIX}/comments/:id/share`),
   },
+
+  upload: {
+    // Info: (20251023 - Tzuhan) POST /api/v1/upload
+    file: () => `${API_PREFIX}/upload`,
+  },
 } as const;
