@@ -1,0 +1,11 @@
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="circular-border">
+      <circle cx="30" cy="30" r="25" />
+    </clipPath>
+  </defs>
+
+  <circle cx="30" cy="30" r="28" fill="#5d5d7b" />
+  <circle cx="30" cy="23" r="10" fill="#fff" />
+  <circle cx="30" cy="55" r="19" fill="#fff" clip-path="url(#circular-border)" />
+</svg>

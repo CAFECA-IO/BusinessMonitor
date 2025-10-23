@@ -17,6 +17,7 @@ import {
   decryptAndUseBlockchainKey,
 } from '@/lib/blockchain-key-manager';
 import type { IdentityAccount } from '@prisma/client';
+import { DEFAULT_USER_AVATAR } from '@/constants/display';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -49,6 +50,11 @@ export default function ProfileClient() {
 
   // ToDo: (20251022 - Julian) mock user title
   const userTitle = 'Digital Citizen';
+
+  const bgColor =
+    currentTab === ProfileTab.MY_ID ? 'bg-profile bg-cover bg-no-repeat' : 'bg-surface-background';
+  const scanBtnStyle =
+    'size-66px p-15px mx-auto flex -translate-y-32px flex-col items-center justify-center rounded-full bg-button-primary shadow-drop-L';
 
   // Info: (20251022 - Julian) Tab 文字顏色
   const myIdTextColor = currentTab === ProfileTab.MY_ID ? 'text-text-brand' : 'text-text-secondary';
@@ -267,11 +273,7 @@ export default function ProfileClient() {
         <IoChatbubbleEllipsesOutline size={24} className="text-text-primary" />
         <p className={`text-xs font-medium ${messageTextColor}`}>Message</p>
       </button>
-      <button
-        type="button"
-        onClick={scanClickHandler}
-        className="mx-auto flex size-66px -translate-y-32px flex-col items-center justify-center rounded-full bg-button-primary p-15px shadow-drop-L"
-      >
+      <button type="button" onClick={scanClickHandler} className={scanBtnStyle}>
         <LuScanLine size={36} className="text-text-invert" />
       </button>
       <button
@@ -294,8 +296,9 @@ export default function ProfileClient() {
   );
 
   const displayedProfileTab = (
-    <div className="relative w-full flex-1 bg-profile bg-cover bg-no-repeat">
+    <div className="relative w-full flex-1">
       {/* Info: (20251022 - Julian) Wave Shape Cover */}
+      {/* ToDo: (20251023 - Julian) Animation */}
       <div className="absolute z-0 h-1/2 w-full">
         <Image
           src="/elements/profile_cover.svg"
@@ -319,9 +322,8 @@ export default function ProfileClient() {
           {/* Info: (20251022 - Julian) User Avatar */}
           <div className="relative flex flex-col items-center">
             <div className="size-180px overflow-hidden rounded-full">
-              {/* {user.photo && <Image src={user.photo} width={183} height={183} alt="user_avatar" />} */}
               <Image
-                src={'/fake_avatar/business_img_1.jpg'}
+                src={user.photo ?? DEFAULT_USER_AVATAR}
                 width={183}
                 height={183}
                 alt="user_avatar"
@@ -346,9 +348,8 @@ export default function ProfileClient() {
           {/* Info: (20251022 - Julian) Profile */}
           <div className="flex items-center gap-16px py-12px">
             <div className="size-66px overflow-hidden rounded-full">
-              {/* {user.photo && <Image src={user.photo} width={183} height={183} alt="user_avatar" />} */}
               <Image
-                src={'/fake_avatar/business_img_1.jpg'}
+                src={user.photo ?? DEFAULT_USER_AVATAR}
                 width={66}
                 height={66}
                 alt="user_avatar"
@@ -404,13 +405,13 @@ export default function ProfileClient() {
       // ToDo: (20251022 - Julian) During development
       <div></div>
     ) : currentTab === ProfileTab.ACCESS ? (
-      // ToDo: (20251022 - Julian) During development
+      // ToDo: (20251022 - Julian) D uring development
       <div></div>
     ) : (
       displayedSettingTab
     );
   return (
-    <div className="relative flex min-h-[dvh] w-full grow flex-col items-center">
+    <div className={`${bgColor} relative flex min-h-[dvh] w-full grow flex-col items-center`}>
       {displayedTab}
 
       {/* Info: (20251022 - Julian) Bottom Navbar */}
