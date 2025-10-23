@@ -3,7 +3,6 @@ import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { AppError } from '@/lib/error';
 import { loggerFromRequest } from '@/lib/logger';
-import { getIdentityFromDeWT } from '@/lib/dewt';
 
 const STORAGE_DOMAIN = process.env.STORAGE_DOMAIN;
 if (!STORAGE_DOMAIN) {
@@ -17,12 +16,6 @@ const STORAGE_API_GET_BASE_URL = `${STORAGE_DOMAIN}/api/v1/file`;
 export async function POST(req: NextRequest) {
   const log = loggerFromRequest(req);
   try {
-    const identity = await getIdentityFromDeWT(req.headers.get('Authorization'));
-    if (!identity) {
-      throw new AppError(ApiCode.UNAUTHORIZED, 'Authentication required');
-    }
-    log.info('User authenticated', { identityId: identity.id });
-
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 

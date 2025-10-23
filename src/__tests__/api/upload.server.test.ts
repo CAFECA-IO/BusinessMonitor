@@ -7,7 +7,7 @@ import { ApiCode } from '@/lib/status';
 const agent = getAgent();
 const uploadUrl = routes.upload.file();
 
-describe.skip('POST /api/v1/upload (integration)', () => {
+describe('POST /api/v1/upload (integration)', () => {
   const testFileName = 'test-image.png';
   const testFilePath = path.join(__dirname, '..', 'fixtures', testFileName);
 
@@ -24,7 +24,7 @@ describe.skip('POST /api/v1/upload (integration)', () => {
     }
   });
 
-  it('400 Bad Request: 沒有附加檔案', async () => {
+  it.skip('400 Bad Request: 沒有附加檔案', async () => {
     const res = await agent.post(uploadUrl).expect(400);
 
     expect(res.body.success).toBe(false);
