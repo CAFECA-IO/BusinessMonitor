@@ -32,6 +32,7 @@ export async function PATCH(req: NextRequest) {
     log.info('User profile updated successfully', { identityId });
 
     // Info: (20251023 - Tzuhan) 回傳更新後的使用者資料 (移除敏感資訊)
+    // ToDo: (20251023 - Luphia) remove eslint-disable
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { encryptedPrivateKey, backupKeyHash, ...safeUserData } = updatedUser;
     return jsonOk(safeUserData);
