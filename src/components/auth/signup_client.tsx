@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -25,6 +25,7 @@ export default function SignupClient() {
   const [name, setName] = useState<string>('');
   const [isNameValid, setIsNameValid] = useState<boolean>(true);
   const [avatarUrl, setAvatarUrl] = useState<string>(defaultAvatar);
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   const [randomBtnLoading, setRandomBtnLoading] = useState<boolean>(false);
   const [agreed, setAgreed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -35,12 +36,14 @@ export default function SignupClient() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState<boolean>(true);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Info: (20251016 - Julian) 只允許英文字母 + 中文
   // const namePattern = /^[A-Za-z\u4e00-\u9fa5_]+$/u;
 
   const router = useRouter();
-  const { user, isLoading: isAuthLoading, login } = useAuth();
+  const { user, isLoading: isAuthLoading, login, refetchUser } = useAuth();
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -106,6 +109,27 @@ export default function SignupClient() {
       // Info: (20251008 - Tzuhan) 提示使用者備份恢復金鑰
       // alert(`請務必備份您的恢復金鑰，它只會出現這一次：\n\n${verifyData.payload.backupKey}`); // Info: (20251009 - Tzuhan) Deprecated
 
+      if (uploadedAvatarUrl) {
+        setStatusMessage('正在更新頭像...');
+        try {
+          const updateRes = await fetch(`${origin}${routes.auth.me()}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${verifyData.payload.dewt}`,
+            },
+            body: JSON.stringify({ photo: uploadedAvatarUrl }),
+          });
+          if (!updateRes.ok) {
+            console.warn('Avatar update failed post-registration.');
+          } else {
+            await refetchUser();
+          }
+        } catch (updateErr) {
+          console.warn('Error updating avatar post-registration:', updateErr);
+        }
+      }
+
       setTimeout(() => router.push(BM_URL.PROFILE), 2000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
@@ -116,7 +140,7 @@ export default function SignupClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [name, router, login]);
+  }, [name, login, uploadedAvatarUrl, refetchUser, router]);
 
   const canSubmit = name.trim() !== '' && agreed && !isLoading && isFidoAvailable;
   const isSubmitDisabled = !(canSubmit && isNameValid);
@@ -132,9 +156,55 @@ export default function SignupClient() {
   };
 
   // ToDo: (20251016 - Julian) Upload photo function
-  // const uploadPhoto = () => {
-  //   console.log('upload photo');
-  // };
+  const uploadPhoto = () => {
+    console.log('upload photo');
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError(null);
+    setStatusMessage('正在上傳照片...');
+    setUploadedAvatarUrl(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const uploadApiUrl = `${origin}${routes.upload.file()}`;
+
+      const response = await fetch(uploadApiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || '照片上傳失敗。');
+      }
+
+      const newAvatarUrl = data.payload.url;
+      if (!newAvatarUrl) {
+        throw new Error('Upload successful but response missing url.');
+      }
+
+      setAvatarUrl(newAvatarUrl);
+      setUploadedAvatarUrl(newAvatarUrl);
+      setStatusMessage('照片上傳成功！');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
+      setError(errorMessage);
+      setStatusMessage('照片上傳失敗，請重試。');
+      setAvatarUrl(defaultAvatar);
+    } finally {
+      setIsUploading(false);
+      if (e.target) e.target.value = '';
+    }
+  };
 
   if (isAuthLoading || user) {
     return (
@@ -146,6 +216,15 @@ export default function SignupClient() {
 
   return (
     <>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+        accept="image/png, image/jpeg, image/gif" // Info: (20251023 - Tzuhan) 限制只能選圖片
+        disabled={isUploading}
+        aria-label="Upload your avatar photo"
+      />
       {/* Info: (20251016 - Julian) Wave shape background */}
       <div className="absolute top-0 z-0 h-300px w-full">
         <Image
@@ -181,15 +260,16 @@ export default function SignupClient() {
             </div>
           </div>
           {/* ToDo: (20251023 - Julian) Upload photo function */}
-          {/* <Button
+          <Button
             type="button"
             variant="primaryBorderless"
             className="mt-10px gap-8px"
             onClick={uploadPhoto}
+            disabled={isUploading}
           >
             <FiUpload size={16} />
-            <p>Upload My Photo</p>
-          </Button> */}
+            <p>{isUploading ? '上傳中...' : 'Upload My Photo'}</p>
+          </Button>
         </div>
 
         {/* Info: (20251016 - Julian) Name input part */}

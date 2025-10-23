@@ -30,6 +30,7 @@ export async function apiMiddleware(req: NextRequest) {
     '/api/v1/pairing/authorize',
     '/api/v1/pairing/complete',
     '/api/v1/pusher/auth',
+    '/api/v1/upload',
   ];
 
   if (publicRoutes.some((path) => pathname.startsWith(path))) {
