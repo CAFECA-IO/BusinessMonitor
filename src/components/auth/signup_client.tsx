@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaUserLarge } from 'react-icons/fa6';
-// import { FiUpload } from 'react-icons/fi';
+import { FiUpload } from 'react-icons/fi';
 import { GiPerspectiveDiceSixFacesOne } from 'react-icons/gi';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
