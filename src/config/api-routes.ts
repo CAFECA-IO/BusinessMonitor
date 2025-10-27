@@ -201,14 +201,6 @@ export const routes = {
       submit: () => `${API_PREFIX}/secure/register`,
     },
 
-    // Info: (20250926 - Tzuhan) 【新增】備份碼恢復流程
-    recover: {
-      // POST /api/v1/secure/recover/initiate (提交備份碼，獲取註冊選項)
-      initiate: () => `${API_PREFIX}/secure/recover/initiate`,
-      // POST /api/v1/secure/recover/complete (提交新裝置的註冊憑證)
-      complete: () => `${API_PREFIX}/secure/recover/complete`,
-    },
-
     // Info: (20250930 - Tzuhan) 跨裝置掃碼登入驗證
     // POST /api/v1/secure/verify-login
     verifyQrLogin: () => `${API_PREFIX}/secure/verify-login`,

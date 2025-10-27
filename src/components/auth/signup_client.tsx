@@ -80,7 +80,11 @@ export default function SignupClient() {
       // Info: (20251008 - Tzuhan) 步驟 1: 從後端獲取註冊選項
       const optionsRes = await fetch(`${origin}${routes.auth.webauthn.options('register')}`);
       if (!optionsRes.ok) throw new Error('無法從伺服器獲取註冊選項。');
-      const options = await optionsRes.json();
+      const optionsResponse = await optionsRes.json();
+      if (!optionsResponse.success) {
+        throw new Error(optionsResponse.message || '無法從伺服器獲取註冊選項。');
+      }
+      const options = optionsResponse.payload;
 
       // Info: (20251008 - Tzuhan) 將使用者輸入的名稱加入到註冊選項中
       options.user.name = name;
