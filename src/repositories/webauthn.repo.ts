@@ -8,8 +8,6 @@ import {
 
 export interface ICreateIdentityData {
   name: string;
-  ethereumAddress: string;
-  encryptedPrivateKey: string;
   credential: {
     credentialID: string;
     credentialPublicKey: string;
@@ -70,11 +68,9 @@ class WebAuthnRepository implements IWebAuthnRepository {
       where: { id },
       select: {
         id: true,
-        ethereumAddress: true,
         name: true,
         email: true,
         photo: true,
-        encryptedPrivateKey: true,
         encryptedBlockchainKey: true,
         blockchainPublicKey: true,
         blockchainAddress: true,
@@ -94,17 +90,13 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.identityAccount.create({
       data: {
         name: data.name,
-        ethereumAddress: data.ethereumAddress,
-        encryptedPrivateKey: data.encryptedPrivateKey,
         authenticators: { create: { ...data.credential } },
       },
       select: {
         id: true,
-        ethereumAddress: true,
         name: true,
         email: true,
         photo: true,
-        encryptedPrivateKey: true,
         encryptedBlockchainKey: true,
         blockchainPublicKey: true,
         blockchainAddress: true,
@@ -162,11 +154,9 @@ class WebAuthnRepository implements IWebAuthnRepository {
       },
       select: {
         id: true,
-        ethereumAddress: true,
         name: true,
         email: true,
         photo: true,
-        encryptedPrivateKey: true,
         encryptedBlockchainKey: true,
         blockchainPublicKey: true,
         blockchainAddress: true,

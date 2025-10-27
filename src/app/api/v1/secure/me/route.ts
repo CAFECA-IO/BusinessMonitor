@@ -34,7 +34,6 @@ export async function PATCH(req: NextRequest) {
 
     const safeUserData = {
       id: updatedUser.id,
-      ethereumAddress: updatedUser.ethereumAddress,
       name: updatedUser.name,
       email: updatedUser.email,
       photo: updatedUser.photo,
@@ -89,10 +88,9 @@ export async function GET(request: NextRequest) {
 
     const safeUserData: Pick<
       IdentityAccount,
-      'id' | 'ethereumAddress' | 'name' | 'email' | 'photo' | 'blockchainAddress'
+      'id' | 'name' | 'email' | 'photo' | 'blockchainAddress'
     > = {
       id: identityAccount.id,
-      ethereumAddress: identityAccount.ethereumAddress,
       name: identityAccount.name,
       email: identityAccount.email,
       photo: identityAccount.photo,

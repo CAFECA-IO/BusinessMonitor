@@ -4,7 +4,6 @@ import type {
 } from '@passwordless-id/webauthn/dist/esm/types';
 import { verifyAuthentication, verifyRegistration } from '@/lib/fido2-server';
 import { signDeWT } from '@/lib/dewt';
-import { generateEthereumKeyPair, encryptPrivateKey } from '@/lib/eth-keys';
 import type { IWebAuthnRepository, ICreateIdentityData } from '@/repositories/webauthn.repo';
 import { webAuthnRepo } from '@/repositories/webauthn.repo';
 import { WebAuthnAlgo } from '@prisma/client';
@@ -54,12 +53,8 @@ class WebAuthnService {
     if (!userHandle)
       throw new AppError(ApiCode.VALIDATION_ERROR, ERROR_MESSAGES.USER_HANDLE_MISSING);
 
-    const ethKeyPair = generateEthereumKeyPair();
-
     const creationData: ICreateIdentityData = {
       name: `User ${userHandle.substring(0, 6)}`,
-      ethereumAddress: ethKeyPair.address,
-      encryptedPrivateKey: encryptPrivateKey(ethKeyPair.privateKey),
       credential: {
         credentialID,
         credentialPublicKey,
