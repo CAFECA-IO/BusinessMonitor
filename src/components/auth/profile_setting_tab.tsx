@@ -2,14 +2,13 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { FaChevronRight, FaChevronLeft, FaPlus } from 'react-icons/fa6';
+import { FaChevronRight, FaChevronLeft } from 'react-icons/fa6';
 import { FiTrash2 } from 'react-icons/fi';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import { useAuth } from '@/contexts/auth_context';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import ToggleSwitch from '@/components/common/toggle_switch';
-import Button from '@/components/common/button';
-import DeviceCard from '@/components/auth/device_card';
+import LoginDeviceTab from '@/components/auth/profile_login_device_tab';
 import { mockDevices } from '@/interfaces/device';
 
 enum SettingTab {
@@ -208,26 +207,11 @@ const ProfileSettingTab: React.FC = () => {
     </div>
   );
 
-  const deviceList = mockDevices.map((device) => (
-    <DeviceCard key={device.deviceName} device={device} />
-  ));
-
-  // Info: (20251027 - Julian) ================== Login & Device Management Tab Content ==================
-  const loginDeviceTab = (
-    <div className="flex flex-col gap-24px px-16px py-24px">
-      <Button type="button" className="w-full gap-8px">
-        <FaPlus size={16} />
-        <p>Add New Device</p>
-      </Button>
-      <div className="flex h-420px flex-col gap-12px overflow-x-auto">{deviceList}</div>
-    </div>
-  );
-
   const displayedTab =
     currentTab === SettingTab.GENERAL ? (
       generalTab
     ) : currentTab === SettingTab.LOGIN_DEVICE ? (
-      loginDeviceTab
+      <LoginDeviceTab devices={mockDevices} />
     ) : (
       <div></div>
     );
