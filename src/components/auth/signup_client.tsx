@@ -298,6 +298,7 @@ export default function SignupClient() {
         </div>
 
         {/* Info: (20251016 - Julian) Terms checkbox part */}
+        {/* ToDo: (20251027 - Julian) 先隱藏 terms 和 privacy policy 路徑 */}
         <div className="mt-32px flex flex-1 items-end">
           <div className="flex items-start gap-8px font-normal">
             <input
@@ -311,17 +312,17 @@ export default function SignupClient() {
             />
             <label htmlFor="terms" className="flex flex-wrap items-center text-base">
               <p>I have read and agree to the</p>
-              <Link href="/terms">
-                <Button type="button" variant="primaryBorderless" size="small">
-                  Terms of Service
-                </Button>
-              </Link>
+              {/* <Link href="/terms"> */}
+              <Button type="button" variant="primaryBorderless" size="small">
+                Terms of Service
+              </Button>
+              {/* </Link> */}
               <p>and</p>
-              <Link href="/privacy">
-                <Button type="button" variant="primaryBorderless" size="small">
-                  Privacy Policy
-                </Button>
-              </Link>
+              {/* <Link href="/privacy"> */}
+              <Button type="button" variant="primaryBorderless" size="small">
+                Privacy Policy
+              </Button>
+              {/* </Link> */}
             </label>
           </div>
         </div>
