@@ -16,6 +16,12 @@ enum SettingTab {
   HELP_CENTER = 'Help Center',
 }
 
+enum LanguageOption {
+  TW = 'Traditional Chinese',
+  CN = 'Simplified Chinese',
+  US = 'English',
+}
+
 const ProfileSettingTab: React.FC = () => {
   const { user } = useAuth();
 
@@ -31,9 +37,12 @@ const ProfileSettingTab: React.FC = () => {
   } = useOuterClick<HTMLDivElement>(false);
 
   const [currentTab, setCurrentTab] = useState<SettingTab>(SettingTab.GENERAL);
+
+  // Info: (20251027 - Julian) General Tab States
   const [isLoginAlertOn, setIsLoginAlertOn] = useState<boolean>(true);
   const [isNewMessageOn, setIsNewMessageOn] = useState<boolean>(true);
   const [isSystemAnnouncementOn, setIsSystemAnnouncementOn] = useState<boolean>(true);
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(LanguageOption.US);
 
   const openGeneralTab = () => {
     setCurrentTab(SettingTab.GENERAL);
@@ -118,9 +127,36 @@ const ProfileSettingTab: React.FC = () => {
     </div>
   );
 
+  const langOptions = Object.values(LanguageOption).map((lang) => {
+    const imgSrc =
+      lang === LanguageOption.TW
+        ? '/countries/tw.svg'
+        : lang === LanguageOption.CN
+          ? '/countries/cn.svg'
+          : '/countries/us.svg';
+
+    const isSelected = selectedLanguage === lang;
+
+    const onClick = () => {
+      setSelectedLanguage(lang);
+    };
+
+    return (
+      <button
+        key={lang}
+        type="button"
+        className={`${isSelected ? 'ring-4' : 'ring-0'} relative size-48px overflow-hidden rounded-full ring-button-primary-hover`}
+        onClick={onClick}
+      >
+        <Image src={imgSrc} fill objectFit="cover" alt={`${lang}_flag`} />
+      </button>
+    );
+  });
+
   const generalTab = (
     <div className="flex gap-40px px-16px py-24px">
       <div className="flex w-full flex-col gap-24px">
+        {/* Info: (20251027 - Julian) Profile Section */}
         <p className="text-lg font-bold text-text-brand">Profile</p>
         <div className="flex items-center justify-between">
           <div className="relative size-66px">
@@ -133,6 +169,7 @@ const ProfileSettingTab: React.FC = () => {
             Change
           </button>
         </div>
+        {/* Info: (20251027 - Julian) Notifications Section */}
         <div className="flex flex-col gap-24px">
           <p className="text-lg font-bold text-text-brand">Notifications</p>
           <ToggleSwitch
@@ -147,6 +184,14 @@ const ProfileSettingTab: React.FC = () => {
             label="System announcement"
           />
         </div>
+        {/* Info: (20251027 - Julian) Language Section */}
+        <div className="flex flex-col gap-24px">
+          <p className="text-lg font-bold text-text-brand">Language</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-text-primary">Language</p>
+            <div className="flex items-center gap-24px">{langOptions}</div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -158,22 +203,20 @@ const ProfileSettingTab: React.FC = () => {
       {/* Info:(20251027 - Julian) Main Content */}
       {mainContent}
 
-      {isTabOpen && (
-        <div
-          ref={tabRef}
-          className="absolute left-0 top-0 flex w-full flex-col bg-rose-200 pt-16px"
-        >
-          {/* Info: (20251027 - Julian) Tab Title */}
-          <div className="flex h-56px items-center gap-8px px-16px">
-            <button type="button" className="p-10px" onClick={closeTab}>
-              <FaChevronLeft size={24} />
-            </button>
-            <p className="font-bold text-text-primary">{currentTab}</p>
-          </div>
-          {/* Info: (20251027 - Julian) Tab Content */}
-          {displayedTab}
+      <div
+        ref={tabRef}
+        className={`${isTabOpen ? 'translate-x-0' : 'translate-x-full'} absolute left-0 top-0 flex size-full flex-col bg-rose-200 pt-16px transition-all duration-300 ease-in-out`}
+      >
+        {/* Info: (20251027 - Julian) Tab Title */}
+        <div className="flex h-56px items-center gap-8px px-16px">
+          <button type="button" className="p-10px" onClick={closeTab}>
+            <FaChevronLeft size={24} />
+          </button>
+          <p className="font-bold text-text-primary">{currentTab}</p>
         </div>
-      )}
+        {/* Info: (20251027 - Julian) Tab Content */}
+        {displayedTab}
+      </div>
     </div>
   );
 };
