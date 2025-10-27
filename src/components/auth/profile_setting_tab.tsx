@@ -2,12 +2,15 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { FaChevronRight, FaChevronLeft } from 'react-icons/fa6';
+import { FaChevronRight, FaChevronLeft, FaPlus } from 'react-icons/fa6';
 import { FiTrash2 } from 'react-icons/fi';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import { useAuth } from '@/contexts/auth_context';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import ToggleSwitch from '@/components/common/toggle_switch';
+import Button from '@/components/common/button';
+import DeviceCard from '@/components/auth/device_card';
+import { mockDevices } from '@/interfaces/device';
 
 enum SettingTab {
   GENERAL = 'General',
@@ -153,8 +156,9 @@ const ProfileSettingTab: React.FC = () => {
     );
   });
 
+  // Info: (20251027 - Julian) ================== General Tab Content ==================
   const generalTab = (
-    <div className="flex gap-40px px-16px py-24px">
+    <div className="flex gap-40px overflow-y-auto px-16px py-24px">
       <div className="flex w-full flex-col gap-24px">
         {/* Info: (20251027 - Julian) Profile Section */}
         <p className="text-lg font-bold text-text-brand">Profile</p>
@@ -164,7 +168,8 @@ const ProfileSettingTab: React.FC = () => {
           </div>
           <button
             type="button"
-            className="text-base font-normal text-button-link hover:text-button-link-hover"
+            disabled // ToDo: (20251027 - Julian) 暫不開放
+            className="text-base font-normal text-button-link hover:text-button-link-hover disabled:text-button-disable"
           >
             Change
           </button>
@@ -176,12 +181,19 @@ const ProfileSettingTab: React.FC = () => {
             isOn={isLoginAlertOn}
             handleToggle={toggleLoginAlert}
             label="Login alerts"
+            disabled // ToDo: (20251027 - Julian) 暫不開放
           />
-          <ToggleSwitch isOn={isNewMessageOn} handleToggle={toggleNewMessage} label="New message" />
+          <ToggleSwitch
+            isOn={isNewMessageOn}
+            handleToggle={toggleNewMessage}
+            label="New message"
+            disabled // ToDo: (20251027 - Julian) 暫不開放
+          />
           <ToggleSwitch
             isOn={isSystemAnnouncementOn}
             handleToggle={toggleSystemAnnouncement}
             label="System announcement"
+            disabled // ToDo: (20251027 - Julian) 暫不開放
           />
         </div>
         {/* Info: (20251027 - Julian) Language Section */}
@@ -196,7 +208,29 @@ const ProfileSettingTab: React.FC = () => {
     </div>
   );
 
-  const displayedTab = currentTab === SettingTab.GENERAL ? generalTab : null;
+  const deviceList = mockDevices.map((device) => (
+    <DeviceCard key={device.deviceName} device={device} />
+  ));
+
+  // Info: (20251027 - Julian) ================== Login & Device Management Tab Content ==================
+  const loginDeviceTab = (
+    <div className="flex flex-col gap-24px px-16px py-24px">
+      <Button type="button" className="w-full gap-8px">
+        <FaPlus size={16} />
+        <p>Add New Device</p>
+      </Button>
+      <div className="flex h-420px flex-col gap-12px overflow-x-auto">{deviceList}</div>
+    </div>
+  );
+
+  const displayedTab =
+    currentTab === SettingTab.GENERAL ? (
+      generalTab
+    ) : currentTab === SettingTab.LOGIN_DEVICE ? (
+      loginDeviceTab
+    ) : (
+      <div></div>
+    );
 
   return (
     <div className="relative flex w-full flex-1 flex-col gap-16px p-16px">
@@ -205,7 +239,7 @@ const ProfileSettingTab: React.FC = () => {
 
       <div
         ref={tabRef}
-        className={`${isTabOpen ? 'translate-x-0' : 'translate-x-full'} absolute left-0 top-0 flex size-full flex-col bg-rose-200 pt-16px transition-all duration-300 ease-in-out`}
+        className={`${isTabOpen ? 'translate-x-0' : 'translate-x-full'} absolute left-0 top-0 flex size-full flex-col bg-surface-background pt-16px transition-all duration-300 ease-in-out`}
       >
         {/* Info: (20251027 - Julian) Tab Title */}
         <div className="flex h-56px items-center gap-8px px-16px">
