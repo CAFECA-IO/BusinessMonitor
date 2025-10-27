@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/auth_context';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import ToggleSwitch from '@/components/common/toggle_switch';
 import LoginDeviceTab from '@/components/auth/profile_login_device_tab';
-import { mockDevices } from '@/interfaces/device';
+import { ILoginDevice, mockDevices } from '@/interfaces/device';
 
 enum SettingTab {
   GENERAL = 'General',
@@ -39,12 +39,14 @@ const ProfileSettingTab: React.FC = () => {
   } = useOuterClick<HTMLDivElement>(false);
 
   const [currentTab, setCurrentTab] = useState<SettingTab>(SettingTab.GENERAL);
-
   // Info: (20251027 - Julian) General Tab States
   const [isLoginAlertOn, setIsLoginAlertOn] = useState<boolean>(true);
   const [isNewMessageOn, setIsNewMessageOn] = useState<boolean>(true);
   const [isSystemAnnouncementOn, setIsSystemAnnouncementOn] = useState<boolean>(true);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(LanguageOption.US);
+  // Info: (20251027 - Julian) Login Device Tab States
+  // ToDo: (20251027 - Julian) Replace mock data with real data from API
+  const [deviceData] = useState<ILoginDevice[]>(mockDevices);
 
   const openGeneralTab = () => {
     setCurrentTab(SettingTab.GENERAL);
@@ -212,7 +214,7 @@ const ProfileSettingTab: React.FC = () => {
     currentTab === SettingTab.GENERAL ? (
       generalTab
     ) : currentTab === SettingTab.LOGIN_DEVICE ? (
-      <LoginDeviceTab devices={mockDevices} />
+      <LoginDeviceTab devices={deviceData} />
     ) : (
       <div></div>
     );

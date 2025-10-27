@@ -86,34 +86,45 @@ const LoginDeviceTab: React.FC<ILoginDeviceTabProps> = ({ devices }) => {
     return () => pusherClient?.disconnect();
   }, [isAuthLoading, login, router, user]);
 
-  const deviceList = devices.map((device) => {
-    const clickRemove = () => {
-      setModalType(ModalType.REMOVE);
-      setSelectedDevice(device);
-      setIsLogoutModalOpen(true);
-    };
+  const deviceList =
+    devices.length > 0 ? (
+      devices.map((device) => {
+        const clickRemove = () => {
+          setModalType(ModalType.REMOVE);
+          setSelectedDevice(device);
+          setIsLogoutModalOpen(true);
+        };
 
-    const clickLogout = () => {
-      setModalType(ModalType.LOGOUT);
-      setSelectedDevice(device);
-      setIsLogoutModalOpen(true);
-    };
+        const clickLogout = () => {
+          setModalType(ModalType.LOGOUT);
+          setSelectedDevice(device);
+          setIsLogoutModalOpen(true);
+        };
 
-    return (
-      <DeviceCard
-        key={device.deviceName}
-        device={device}
-        clickRemove={clickRemove}
-        clickLogout={clickLogout}
-      />
+        return (
+          <DeviceCard
+            key={device.deviceName}
+            device={device}
+            clickRemove={clickRemove}
+            clickLogout={clickLogout}
+          />
+        );
+      })
+    ) : (
+      // ToDo: (20251027 - Julian) Design empty state
+      <div className="p-10px text-center text-text-secondary">No devices found.</div>
     );
-  });
 
   return (
     <>
       {/* Info: (20251027 - Julian) Main Content */}
       <div className="flex flex-col gap-24px px-16px py-24px">
-        <Button type="button" className="w-full gap-8px" onClick={openTab}>
+        <Button
+          type="button"
+          className="w-full gap-8px"
+          onClick={openTab}
+          disabled // Info: (20251027 - Julian) 暫不開放
+        >
           <FaPlus size={16} />
           <p>Add New Device</p>
         </Button>
