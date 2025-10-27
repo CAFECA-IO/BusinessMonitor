@@ -48,22 +48,10 @@ export default function AuthPage() {
     setResult(null);
   };
 
-  const handleAuthSuccess = (data: { dewt: string; backupKey?: string }) => {
+  const handleAuthSuccess = (data: { dewt: string }) => {
     setStatusMessage('✅ Success! Redirecting...');
     localStorage.setItem('dewt', data.dewt);
     setResult(data);
-
-    /**
-     * Info: (20251009 - Tzuhan) Deprecated
-    if (data.backupKey) {
-      // Info: (20251001 - Tzuhan) 改用更友善的提示方式，避免使用 alert
-      prompt(
-        'Registration successful! Please save your backup key in a safe place:',
-        data.backupKey
-      );
-    }
-     */
-
     setTimeout(() => {
       router.push(BM_URL.PROFILE);
     }, 1000);
@@ -116,7 +104,13 @@ export default function AuthPage() {
     try {
       const regOptionsRes = await fetch(routes.auth.webauthn.options('register'));
       if (!regOptionsRes.ok) throw new Error('Could not fetch registration options from server.');
-      const regOptions = await regOptionsRes.json();
+      const regOptionsResponse = await regOptionsRes.json();
+      if (!regOptionsResponse.success) {
+        throw new Error(
+          regOptionsResponse.message || 'Could not fetch registration options from server.'
+        );
+      }
+      const regOptions = regOptionsResponse.payload;
 
       setStatusMessage('Please create your Passkey in the browser prompt...');
       // Info: (20251001-tzuhan) 【修正】使用 fido2ClientService 的方法

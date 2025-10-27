@@ -8,9 +8,6 @@ import {
 
 export interface ICreateIdentityData {
   name: string;
-  ethereumAddress: string;
-  encryptedPrivateKey: string;
-  backupKeyHash: string;
   credential: {
     credentialID: string;
     credentialPublicKey: string;
@@ -39,7 +36,6 @@ export interface IWebAuthnRepository {
   findIdentityAccountById(id: string): Promise<IdentityAccount | null>;
   updateAuthenticatorCounter(id: string, newCounter: number): Promise<void>;
   createIdentityAndAuthenticator(data: ICreateIdentityData): Promise<IdentityAccount>;
-  findIdentityByBackupKeyHash(backupKeyHash: string): Promise<IdentityAccount | null>;
   addAuthenticatorToIdentity(
     identityAccountId: string,
     data: IAddAuthenticatorData
@@ -72,12 +68,9 @@ class WebAuthnRepository implements IWebAuthnRepository {
       where: { id },
       select: {
         id: true,
-        ethereumAddress: true,
         name: true,
         email: true,
         photo: true,
-        encryptedPrivateKey: true,
-        backupKeyHash: true,
         encryptedBlockchainKey: true,
         blockchainPublicKey: true,
         blockchainAddress: true,
@@ -97,38 +90,13 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.identityAccount.create({
       data: {
         name: data.name,
-        ethereumAddress: data.ethereumAddress,
-        encryptedPrivateKey: data.encryptedPrivateKey,
-        backupKeyHash: data.backupKeyHash,
         authenticators: { create: { ...data.credential } },
       },
       select: {
         id: true,
-        ethereumAddress: true,
         name: true,
         email: true,
         photo: true,
-        encryptedPrivateKey: true,
-        backupKeyHash: true,
-        encryptedBlockchainKey: true,
-        blockchainPublicKey: true,
-        blockchainAddress: true,
-        derivationNonce: true,
-      },
-    });
-  }
-
-  public async findIdentityByBackupKeyHash(backupKeyHash: string): Promise<IdentityAccount | null> {
-    return prisma.identityAccount.findUnique({
-      where: { backupKeyHash },
-      select: {
-        id: true,
-        ethereumAddress: true,
-        name: true,
-        email: true,
-        photo: true,
-        encryptedPrivateKey: true,
-        backupKeyHash: true,
         encryptedBlockchainKey: true,
         blockchainPublicKey: true,
         blockchainAddress: true,
@@ -184,15 +152,11 @@ class WebAuthnRepository implements IWebAuthnRepository {
         ...(data.email !== undefined && { email: data.email }),
         ...(data.photo !== undefined && { photo: data.photo }),
       },
-
       select: {
         id: true,
-        ethereumAddress: true,
         name: true,
         email: true,
         photo: true,
-        encryptedPrivateKey: true,
-        backupKeyHash: true,
         encryptedBlockchainKey: true,
         blockchainPublicKey: true,
         blockchainAddress: true,
