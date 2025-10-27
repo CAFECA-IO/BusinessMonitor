@@ -11,17 +11,10 @@ import {
   createAndEncryptBlockchainKey,
   decryptAndUseBlockchainKey,
 } from '@/lib/blockchain-key-manager';
-import type { IdentityAccount } from '@prisma/client';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
-}
-
-// Info: (20251021 - Tzuhan) 擴充 IdentityAccount 型別以包含從 /me API 回傳的額外欄位
-interface IUserProfile extends IdentityAccount {
-  ethAddress: string;
-  isAuthenticated: boolean;
 }
 
 export default function ProfilePage() {
@@ -136,12 +129,6 @@ export default function ProfilePage() {
               <div>
                 <p className="text-sm font-medium text-gray-500">姓名</p>
                 <p className="text-lg font-semibold text-gray-900">{user.name || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">ID / ETH Address (舊)</p>
-                <p className="break-all font-mono text-sm text-gray-700">
-                  {(user as IUserProfile).ethAddress || user.ethereumAddress}
-                </p>
               </div>
             </div>
           </div>

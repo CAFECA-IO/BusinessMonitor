@@ -484,9 +484,6 @@ model IdentityAccount {
   name                   String?         @map("name")// Info: (20251017 - Tzuhan) 首次註冊後可讓用戶補充
   email                  String?         @map("email") // Info: (20251017 - Tzuhan) 首次註冊後可讓用戶補充
   photo                  String?         @map("photo")
-  ethereumAddress        String          @unique @map("ethereum_address")
-  encryptedPrivateKey    String          @map("encrypted_private_key")
-  backupKeyHash          String?         @unique @map("backup_key_hash")
   encryptedBlockchainKey String?         @db.Text @map("encrypted_blockchain_key")
   blockchainPublicKey    String?         @map("blockchain_public_key")
   blockchainAddress      String?         @map("blockchain_address")

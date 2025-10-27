@@ -5,6 +5,7 @@ import { loggerFromRequest } from '@/lib/logger';
 import { webAuthnRepo } from '@/repositories/webauthn.repo';
 import { AppError } from '@/lib/error';
 import { updateProfileSchema } from '@/validators';
+import type { IdentityAccount } from '@prisma/client';
 
 export async function PATCH(req: NextRequest) {
   const log = loggerFromRequest(req);
@@ -31,10 +32,13 @@ export async function PATCH(req: NextRequest) {
 
     log.info('User profile updated successfully', { identityId });
 
-    // Info: (20251023 - Tzuhan) 回傳更新後的使用者資料 (移除敏感資訊)
-    // ToDo: (20251023 - Luphia) remove eslint-disable
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { encryptedPrivateKey, backupKeyHash, ...safeUserData } = updatedUser;
+    const safeUserData = {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      photo: updatedUser.photo,
+      blockchainAddress: updatedUser.blockchainAddress,
+    };
     return jsonOk(safeUserData);
   } catch (err) {
     log.error('Update profile failed', {
@@ -67,12 +71,10 @@ export async function GET(request: NextRequest) {
   });
 
   try {
-    // Info: (20250925 - Tzuhan) 從 middleware 注入的標頭中獲取用戶 ID
     const identityId = request.headers.get('x-identity-id');
 
     if (!identityId) {
       log.error('Missing x-identity-id header in /me route. Middleware might be misconfigured.');
-      // Info: (20250925 - Tzuhan) 這理論上不應該發生，因為 middleware 應該已經攔截了無效請求
       throw new AppError(ApiCode.UNAUTHORIZED, 'Cannot identify user.');
     }
 
@@ -84,9 +86,18 @@ export async function GET(request: NextRequest) {
       throw new AppError(ApiCode.NOT_FOUND, `User with ID ${identityId} not found.`);
     }
 
-    // Info: (20251021 - Tzuhan) : 「更新」直接回傳从 repo 獲取的完整 identityAccount 物件
-    // 這樣可以確保所有欄位都被包含，且型別與 Prisma Client 一致
-    return jsonOk(identityAccount);
+    const safeUserData: Pick<
+      IdentityAccount,
+      'id' | 'name' | 'email' | 'photo' | 'blockchainAddress'
+    > = {
+      id: identityAccount.id,
+      name: identityAccount.name,
+      email: identityAccount.email,
+      photo: identityAccount.photo,
+      blockchainAddress: identityAccount.blockchainAddress,
+    };
+
+    return jsonOk(safeUserData);
   } catch (error) {
     if (error instanceof AppError) {
       log.warn('Handled application error in /me route', {
