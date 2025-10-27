@@ -346,10 +346,10 @@ export default function ProfileClient() {
       displayedProfileTab
     ) : currentTab === ProfileTab.MESSAGE ? (
       // ToDo: (20251022 - Julian) During development
-      <div></div>
+      <div className="h-full"></div>
     ) : currentTab === ProfileTab.ACCESS ? (
-      // ToDo: (20251022 - Julian) D uring development
-      <div></div>
+      // ToDo: (20251022 - Julian) During development
+      <div className="h-full"></div>
     ) : (
       <ProfileSettingTab />
     );

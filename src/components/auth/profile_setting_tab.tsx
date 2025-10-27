@@ -147,7 +147,8 @@ const ProfileSettingTab: React.FC = () => {
       <button
         key={lang}
         type="button"
-        className={`${isSelected ? 'ring-4' : 'ring-0'} relative size-48px overflow-hidden rounded-full ring-button-primary-hover`}
+        disabled // Info: (20251027 - Julian) 暫不開放
+        className={`${isSelected ? 'ring-4' : 'ring-0'} relative size-48px overflow-hidden rounded-full ring-button-primary-hover disabled:opacity-50`}
         onClick={onClick}
       >
         <Image src={imgSrc} fill objectFit="cover" alt={`${lang}_flag`} />

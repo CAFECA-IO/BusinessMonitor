@@ -1,8 +1,11 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { FaRegClock, FaRegUser } from 'react-icons/fa6';
 import { FiMapPin } from 'react-icons/fi';
 import { VscCircleLargeFilled } from 'react-icons/vsc';
 import Button from '@/components/common/button';
+import AnimationModal, { AnimationType } from '@/components/common/animation_modal';
 import { timestampToString } from '@/lib/common';
 import { ILoginDevice } from '@/interfaces/device';
 
@@ -22,6 +25,19 @@ const LogoutOrRemoveModal: React.FC<ILogoutOrRemoveModalProps> = ({
   selectedDevice,
   toggleModal,
 }) => {
+  const [isShowAnimModal, setIsShowAnimModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isShowAnimModal) {
+      const timer = setTimeout(() => {
+        setIsShowAnimModal(false);
+        toggleModal();
+      }, 2000); // Info: (20251027 - Julian) Close after 2 seconds
+
+      return () => clearTimeout(timer); // Info: (20251027 - Julian) Cleanup on unmount
+    }
+  }, [isShowAnimModal, toggleModal]);
+
   if (!selectedDevice) {
     return null;
   }
@@ -31,6 +47,7 @@ const LogoutOrRemoveModal: React.FC<ILogoutOrRemoveModalProps> = ({
     modalType === ModalType.LOGOUT
       ? 'Are you sure you want to log out of this device?'
       : 'Are you sure you want to remove this device?';
+  const animationText = modalType === ModalType.LOGOUT ? 'Logged out' : 'Device removed';
 
   const { deviceName, position, lastActiveTime, status } = selectedDevice;
 
@@ -39,14 +56,12 @@ const LogoutOrRemoveModal: React.FC<ILogoutOrRemoveModalProps> = ({
 
   const removeDevice = () => {
     // ToDo: (20251027 - Julian) Implement remove device functionality
-     
-    console.log(`Removing device: ${deviceName}`);
+    setIsShowAnimModal(true);
   };
 
   const logoutDevice = () => {
     // ToDo: (20251027 - Julian) Implement logout device functionality
-     
-    console.log(`Logging out device: ${deviceName}`);
+    setIsShowAnimModal(true);
   };
 
   const loginStatus =
@@ -96,7 +111,7 @@ const LogoutOrRemoveModal: React.FC<ILogoutOrRemoveModalProps> = ({
     );
 
   return (
-    <div className="fixed left-0 top-0 flex size-full items-center justify-center bg-black/50 px-20px">
+    <div className="fixed left-0 top-0 flex size-full items-center justify-center bg-black/50 p-20px">
       <div className="flex flex-col gap-24px rounded-radius-m bg-white px-24px pb-24px pt-40px">
         <p className="text-center text-lg font-bold text-text-primary">{modalTitle}</p>
         <p className="text-base font-medium text-text-secondary">{modalDescription}</p>
@@ -120,6 +135,8 @@ const LogoutOrRemoveModal: React.FC<ILogoutOrRemoveModalProps> = ({
         </div>
         {buttons}
       </div>
+
+      {isShowAnimModal && <AnimationModal anim={AnimationType.SUCCESS} text={animationText} />}
     </div>
   );
 };
