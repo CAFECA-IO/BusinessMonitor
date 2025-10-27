@@ -90,6 +90,7 @@
   --button-button-primary-hover: var(--color-brand-brand-purple-300);
   --button-button-secondary-hover: var(--color-grey-grey-500);
   --button-button-accent-hover: var(--color-brand-brand-blud-300);
+  --button-button-danger: var(--color-state-danger);
   --button-link: var(--color-state-link);
   --button-link-hover: var(--color-state-link-hover);
   --border-border-primary: var(--color-grey-grey-900);

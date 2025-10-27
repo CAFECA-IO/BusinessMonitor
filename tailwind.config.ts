@@ -108,6 +108,7 @@ module.exports = {
         'button-primary-hover': 'var(--color-brand-brand-purple-300)',
         'button-secondary-hover': 'var(--color-grey-grey-500)',
         'button-accent-hover': 'var(--color-brand-brand-blud-300)',
+        'button-danger': 'var(--color-state-danger)',
         'button-link': 'var(--color-state-link)',
         'button-link-hover': 'var(--color-state-link-hover)',
         'border-primary': 'var(--color-grey-grey-900)',

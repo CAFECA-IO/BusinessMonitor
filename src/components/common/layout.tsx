@@ -51,7 +51,7 @@ const Layout: React.FC<ILayoutProps> = ({
         {/* Info: (20250805 - Julian) Page Content */}
         {/* <div className={`flex min-h-screen w-full flex-col ${className}`}>{children}</div> */}
         <div
-          className={`flex w-full flex-col ${isLoginPage ? 'h-dvh' : 'min-h-screen'} ${className}`}
+          className={`flex w-full flex-col ${isLoginPage ? 'h-dvh overflow-hidden' : 'min-h-screen'} ${className}`}
         >
           {children}
         </div>

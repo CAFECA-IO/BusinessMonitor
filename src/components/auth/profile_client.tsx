@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaChevronRight } from 'react-icons/fa6';
-import { FiMonitor, FiTrash2 } from 'react-icons/fi';
+import { FiMonitor } from 'react-icons/fi';
 import { LuIdCard, LuScanLine, LuSettings } from 'react-icons/lu';
 import { IoChatbubbleEllipsesOutline } from 'react-icons/io5';
 import { PiSignOut } from 'react-icons/pi';
@@ -13,6 +12,7 @@ import { routes } from '@/config/api-routes';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import QRCodeScanner from '@/components/auth/qr_code_scanner';
+import ProfileSettingTab from '@/components/auth/profile_setting_tab';
 import {
   createAndEncryptBlockchainKey,
   decryptAndUseBlockchainKey,
@@ -328,72 +328,17 @@ export default function ProfileClient() {
     </div>
   );
 
-  const displayedSettingTab = (
-    <div className="flex w-full flex-1 flex-col gap-16px p-16px">
-      <div className="flex flex-col gap-24px">
-        <h2 className="text-lg font-bold text-text-primary">Setting</h2>
-        <div className="flex h-420px flex-col gap-16px overflow-y-auto">
-          {/* Info: (20251022 - Julian) Profile */}
-          <div className="flex items-center gap-16px py-12px">
-            <div className="size-66px overflow-hidden rounded-full">
-              <Image
-                src={user.photo ?? DEFAULT_USER_AVATAR}
-                width={66}
-                height={66}
-                alt="user_avatar"
-              />
-            </div>
-            <p className="text-base font-bold text-text-primary">{user.name ?? '-'}</p>
-            <div className="rounded-radius-s bg-surface-brand px-12px py-6px text-xs font-medium text-text-invert">
-              {userTitle}
-            </div>
-          </div>
-          {/* Info: (20251022 - Julian) Divider */}
-          <hr className="border-t border-border-secondary" />
-
-          <div className="flex items-center gap-8px p-16px text-base font-medium text-text-primary">
-            <p className="flex-1">General</p>
-            <FaChevronRight size={20} />
-          </div>
-
-          <div className="flex items-center gap-8px p-16px text-base font-medium text-text-primary">
-            <p className="flex-1">Login & Device Management</p>
-            <FaChevronRight size={20} />
-          </div>
-
-          <div className="flex items-center gap-8px p-16px text-base font-medium text-text-primary">
-            <p className="flex-1">Security & Verification</p>
-            <FaChevronRight size={20} />
-          </div>
-
-          <div className="flex items-center gap-8px p-16px text-base font-medium text-text-primary">
-            <p className="flex-1">Help Center</p>
-            <FaChevronRight size={20} />
-          </div>
-
-          <button
-            type="button"
-            className="flex items-center gap-8px p-16px text-base font-medium text-text-error"
-          >
-            <FiTrash2 size={20} />
-            <p className="flex-1 text-left">Delete Account</p>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   const displayedTab =
     currentTab === ProfileTab.MY_ID ? (
       displayedProfileTab
     ) : currentTab === ProfileTab.MESSAGE ? (
       // ToDo: (20251022 - Julian) During development
-      <div></div>
+      <div className="h-full"></div>
     ) : currentTab === ProfileTab.ACCESS ? (
-      // ToDo: (20251022 - Julian) D uring development
-      <div></div>
+      // ToDo: (20251022 - Julian) During development
+      <div className="h-full"></div>
     ) : (
-      displayedSettingTab
+      <ProfileSettingTab />
     );
   return (
     <div className={`${bgColor} relative flex min-h-[dvh] w-full grow flex-col items-center`}>

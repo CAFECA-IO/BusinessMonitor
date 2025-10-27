@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import QRCode from 'qrcode';
 import Pusher from 'pusher-js';
 import { routes } from '@/config/api-routes';
@@ -11,6 +10,7 @@ import { getPusherInstance } from '@/lib/pusher_client';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import Button from '@/components/common/button';
+import AuthorizeViaExistingDevice from '@/components/auth/authorize_via_existing_device';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -93,30 +93,11 @@ export default function LoginWithDeviceClient() {
       <h1 className="text-h5 font-bold text-text-secondary">Add New Device</h1>
 
       {/* Info: (20251021 - Julian) QR code part */}
-      <div className="mt-40px flex w-full flex-col gap-24px rounded-radius-s bg-surface-secondary px-24px py-16px">
-        <div className="flex flex-col gap-8px">
-          <p className="text-base font-bold text-text-brand">Authorize via Existing Device</p>
-          <p className="text-sm font-normal text-text-secondary">
-            Use a device you&apos;ve already registered to scan the QR code.
-          </p>
-        </div>
-        <div className="flex w-full flex-col items-center justify-center">
-          {isLoading && <div className="animate-pulse">Loading...</div>}
-          {error && <div className="break-all text-xs text-red-500">{error}</div>}
-          {qrCodeDataUrl && (
-            <div className="flex size-72 items-center justify-center">
-              <Image
-                src={qrCodeDataUrl}
-                alt="Login QR Code"
-                width={256}
-                height={256}
-                style={{ objectFit: 'contain' }}
-                unoptimized
-              />
-            </div>
-          )}
-        </div>
-      </div>
+      <AuthorizeViaExistingDevice
+        error={error}
+        isLoading={isLoading}
+        qrCodeDataUrl={qrCodeDataUrl}
+      />
 
       <Link href="/auth/login" className="w-full">
         <Button type="button" size="extraLarge" className="mt-40px w-full">
