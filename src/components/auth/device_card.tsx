@@ -8,23 +8,13 @@ import Button from '@/components/common/button';
 
 const DeviceCard: React.FC<{
   device: ILoginDevice;
-}> = ({ device }) => {
+  clickLogout: () => void;
+  clickRemove: () => void;
+}> = ({ device, clickLogout, clickRemove }) => {
   const { deviceName, position, lastActiveTime, status } = device;
 
   const timeStr = timestampToString(lastActiveTime);
   const lastActiveTimeStr = `${timeStr.formattedDate} ${timeStr.time}`;
-
-  const removeDevice = () => {
-    // ToDo: (20251027 - Julian) Implement remove device functionality
-     
-    console.log(`Removing device: ${deviceName}`);
-  };
-
-  const logoutDevice = () => {
-    // ToDo: (20251027 - Julian) Implement logout device functionality
-     
-    console.log(`Logging out device: ${deviceName}`);
-  };
 
   const loginStatus =
     status === 'Online' ? (
@@ -72,10 +62,10 @@ const DeviceCard: React.FC<{
         {loginStatus}
       </div>
       <div className="grid grid-cols-2 gap-12px">
-        <Button type="button" variant="danger" onClick={removeDevice}>
+        <Button type="button" variant="danger" onClick={clickRemove}>
           Remove
         </Button>
-        <Button type="button" variant="secondary" onClick={logoutDevice}>
+        <Button type="button" variant="secondary" onClick={clickLogout}>
           Log out
         </Button>
       </div>

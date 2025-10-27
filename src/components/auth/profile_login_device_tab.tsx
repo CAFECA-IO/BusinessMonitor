@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/auth_context';
 import Button from '@/components/common/button';
 import DeviceCard from '@/components/auth/device_card';
 import AuthorizeViaExistingDevice from '@/components/auth/authorize_via_existing_device';
+import LogoutOrRemoveModal, { ModalType } from '@/components/auth/logout_or_remove_modal';
 import { ILoginDevice } from '@/interfaces/device';
 
 interface ILoginDeviceTabProps {
@@ -20,9 +21,14 @@ interface ILoginDeviceTabProps {
 }
 
 const LoginDeviceTab: React.FC<ILoginDeviceTabProps> = ({ devices }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  // Info: (20251027 - Julian) QR Code and authorization state
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  // Info: (20251027 - Julian) Device logout modal state
+  const [modalType, setModalType] = useState<ModalType>(ModalType.LOGOUT);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
+  const [selectedDevice, setSelectedDevice] = useState<ILoginDevice | null>(null);
 
   const router = useRouter();
   const { user, isLoading: isAuthLoading, login } = useAuth();
@@ -80,9 +86,28 @@ const LoginDeviceTab: React.FC<ILoginDeviceTabProps> = ({ devices }) => {
     return () => pusherClient?.disconnect();
   }, [isAuthLoading, login, router, user]);
 
-  const deviceList = devices.map((device) => (
-    <DeviceCard key={device.deviceName} device={device} />
-  ));
+  const deviceList = devices.map((device) => {
+    const clickRemove = () => {
+      setModalType(ModalType.REMOVE);
+      setSelectedDevice(device);
+      setIsLogoutModalOpen(true);
+    };
+
+    const clickLogout = () => {
+      setModalType(ModalType.LOGOUT);
+      setSelectedDevice(device);
+      setIsLogoutModalOpen(true);
+    };
+
+    return (
+      <DeviceCard
+        key={device.deviceName}
+        device={device}
+        clickRemove={clickRemove}
+        clickLogout={clickLogout}
+      />
+    );
+  });
 
   return (
     <>
@@ -108,12 +133,22 @@ const LoginDeviceTab: React.FC<ILoginDeviceTabProps> = ({ devices }) => {
           <p className="font-bold text-text-primary">Add New Device</p>
         </div>
         {/* Info: (20251027 - Julian) QR Code part */}
-        <AuthorizeViaExistingDevice
-          error={error}
-          isLoading={isLoading}
-          qrCodeDataUrl={qrCodeDataUrl}
-        />
+        <div className="px-20px">
+          <AuthorizeViaExistingDevice
+            error={error}
+            isLoading={isLoading}
+            qrCodeDataUrl={qrCodeDataUrl}
+          />
+        </div>
       </div>
+
+      {isLogoutModalOpen && (
+        <LogoutOrRemoveModal
+          modalType={modalType}
+          selectedDevice={selectedDevice}
+          toggleModal={() => setIsLogoutModalOpen((prev) => !prev)}
+        />
+      )}
     </>
   );
 };
