@@ -18,6 +18,8 @@ const buttonVariants = cva('group rounded-full text-center justify-center flex i
         'text-text-invert bg-button-accent enabled:hover:bg-button-accent-hover disabled:bg-button-disable',
       accentBorderless:
         'text-button-accent enabled:hover:text-button-accent-hover disabled:text-button-disable',
+      danger:
+        'text-text-invert bg-button-danger enabled:hover:bg-button-secondary-hover disabled:bg-button-disable',
     },
     size: {
       small: 'text-xs p-4px desktop:p-8px desktop:text-sm font-bold',
