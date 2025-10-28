@@ -20,7 +20,7 @@ fi
 # ---------------------------------------------------
 
 # Info: (20251015 - Tzuhan) 步驟 1: 從指令列第一個參數讀取資料的根目錄路徑
-base_data_folder=${1:-"twse_data"}
+base_data_folder=${1:-"private/data/twse_data"}
 mkdir -p "$base_data_folder"
 
 # Info: (20251015 - Tzuhan) 步驟 2: 智慧決定開始日期
