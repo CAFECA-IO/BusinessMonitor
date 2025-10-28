@@ -3,13 +3,15 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { FaChevronRight, FaChevronLeft } from 'react-icons/fa6';
-import { FiTrash2 } from 'react-icons/fi';
+import { FiTrash2, FiHeadphones } from 'react-icons/fi';
 import useOuterClick from '@/lib/hooks/use_outer_click';
 import { useAuth } from '@/contexts/auth_context';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import ToggleSwitch from '@/components/common/toggle_switch';
+import Button from '@/components/common/button';
 import LoginDeviceTab from '@/components/auth/profile_login_device_tab';
 import SecurityTab from '@/components/auth/profile_security_tab';
+import HelpCenterTab from '@/components/auth/profile_help_center_tab';
 import { ILoginDevice, mockDevices } from '@/interfaces/device';
 
 enum SettingTab {
@@ -220,8 +222,14 @@ const ProfileSettingTab: React.FC = () => {
     ) : currentTab === SettingTab.SECURITY ? (
       <SecurityTab />
     ) : (
-      <div></div>
+      <HelpCenterTab />
     );
+
+  const isShowHeadphoneBtn = currentTab === SettingTab.HELP_CENTER && (
+    <Button type="button" variant="secondaryBorderless" size="icon">
+      <FiHeadphones size={24} />
+    </Button>
+  );
 
   return (
     <div className="relative flex w-full flex-1 flex-col gap-16px p-16px">
@@ -237,7 +245,8 @@ const ProfileSettingTab: React.FC = () => {
           <button type="button" className="p-10px" onClick={closeTab}>
             <FaChevronLeft size={24} />
           </button>
-          <p className="font-bold text-text-primary">{currentTab}</p>
+          <p className="flex-1 font-bold text-text-primary">{currentTab}</p>
+          {isShowHeadphoneBtn}
         </div>
         {/* Info: (20251027 - Julian) Tab Content */}
         {displayedTab}
