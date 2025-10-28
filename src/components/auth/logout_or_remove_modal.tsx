@@ -32,9 +32,9 @@ const LogoutOrRemoveModal: React.FC<ILogoutOrRemoveModalProps> = ({
       const timer = setTimeout(() => {
         setIsShowAnimModal(false);
         toggleModal();
-      }, 2000); // Info: (20251027 - Julian) Close after 2 seconds
+      }, 2000); // Info: (20251027 - Julian) 2 秒後關閉
 
-      return () => clearTimeout(timer); // Info: (20251027 - Julian) Cleanup on unmount
+      return () => clearTimeout(timer); // Info: (20251027 - Julian) 清除計時器
     }
   }, [isShowAnimModal, toggleModal]);
 
