@@ -20,10 +20,20 @@ const QRCodeScanner: React.FC<IQRCodeScannerProps> = ({ onClose }) => {
 
   const handleScan = (res: IDetectedBarcode[] | null) => {
     if (res && scanning) {
-      // Info: (20251023 - Julian) 取得掃描到的 QR Code 結果，並導向新地址
+      // Info: (20251023 - Julian) 取得掃描到的 QR Code 結果，並停止掃描
       const rawValue = res[0].rawValue;
       setScanning(false);
-      redirect(rawValue, RedirectType.push);
+      // Info: (20251028 - Julian) 檢查掃描結果格式是否正確
+      const isCorrectFormat = rawValue.includes('/auth/approve_device');
+
+      if (isCorrectFormat) {
+        // Info: (20251028 - Julian) 導向授權頁面
+        redirect(rawValue, RedirectType.push);
+      } else {
+        // ToDo: (20251028 - Julian) 格式錯誤處理
+        alert('QR Code 格式不正確，請使用有效的 Digital ID QR Code。');
+        onClose();
+      }
     }
   };
 
@@ -44,7 +54,7 @@ const QRCodeScanner: React.FC<IQRCodeScannerProps> = ({ onClose }) => {
       >
         <RxCross2 size={24} />
       </button>
-      <div className="max-h-400px">
+      <div className="bg-black">
         {scanning && (
           <Scanner
             onScan={handleScan}

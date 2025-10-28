@@ -12,7 +12,7 @@ import { Suspense } from 'react';
  */
 export default function ApproveDevicePage() {
   return (
-    <Layout>
+    <Layout isLoginPage pageBgColor="bg-surface-background">
       <Suspense
         fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}
       >
