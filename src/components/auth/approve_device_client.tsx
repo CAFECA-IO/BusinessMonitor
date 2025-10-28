@@ -2,10 +2,13 @@
 
 import { useState, useCallback, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { FiMapPin } from 'react-icons/fi';
+import { HiOutlineDeviceTablet } from 'react-icons/hi';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api-routes';
 import { useAuth } from '@/contexts/auth_context';
 import { BM_URL } from '@/constants/url';
+import Button from '@/components/common/button';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -13,9 +16,9 @@ if (!origin) {
 }
 
 const StatusDisplay = ({ status, error }: { status: string; error: string | null }) => (
-  <div className="mt-6 w-full text-center">
-    <p className="text-gray-600">{status}</p>
-    {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+  <div className="w-full text-left text-sm">
+    <p className="text-text-secondary">{status}</p>
+    {error && <p className="mt-2 text-xs text-text-error">{error}</p>}
   </div>
 );
 
@@ -105,28 +108,35 @@ function ApproveDeviceInternal() {
 
   return (
     <div className="flex w-full grow flex-col items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-lg">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">批准新裝置</h1>
-          <p className="mt-4 text-gray-600">一個新裝置正請求加入您的帳戶。請確認這是您本人操作。</p>
-
-          <div className="mt-8 w-full space-y-4">
-            <button
-              onClick={handleApprove}
-              disabled={isLoading || !sessionId}
-              className="w-full rounded-lg bg-purple-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-purple-700 disabled:bg-gray-400"
-            >
-              {isLoading ? '處理中...' : '批准'}
-            </button>
-            <button
-              onClick={handleDeny}
-              disabled={isLoading}
-              className="w-full rounded-lg bg-gray-200 px-5 py-3 text-base font-semibold text-gray-800 shadow-sm hover:bg-gray-300"
-            >
-              拒絕
-            </button>
+      <div className="flex w-full flex-col items-stretch gap-24px rounded-radius-m bg-white px-24px pb-24px pt-40px text-center shadow-lg">
+        <h1 className="text-lg font-bold text-text-primary">批准新裝置</h1>
+        <p className="text-left text-base font-medium text-text-secondary">
+          You&apos;re about to log in to:
+        </p>
+        <div className="flex flex-col gap-24px text-sm font-medium text-text-primary">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4px">
+              <FiMapPin size={20} />
+              <p>Platform:</p>
+            </div>
+            <p>{'Platform'}</p>
           </div>
-          <StatusDisplay status={statusMessage} error={error} />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4px">
+              <HiOutlineDeviceTablet size={20} />
+              <p>Device Info:</p>
+            </div>
+            <p>{'Device Info'}</p>
+          </div>
+        </div>
+        <StatusDisplay status={statusMessage} error={error} />
+        <div className="grid grid-cols-2 gap-8px">
+          <Button type="button" onClick={handleDeny} disabled={isLoading} variant="secondary">
+            拒絕
+          </Button>
+          <Button type="button" onClick={handleApprove} disabled={isLoading || !sessionId}>
+            {isLoading ? '處理中...' : '批准'}
+          </Button>
         </div>
       </div>
     </div>

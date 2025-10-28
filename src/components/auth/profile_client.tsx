@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import { FiMonitor } from 'react-icons/fi';
 import { LuIdCard, LuScanLine, LuSettings } from 'react-icons/lu';
@@ -168,77 +167,44 @@ export default function ProfileClient() {
   // ToDo: (20251022 - Luphia) remove eslint-disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const old = (
-    <div className="w-full max-w-2xl space-y-8">
-      {/* Info: (20251021 - Tzuhan) User Info Section */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">我的 Digital ID</h1>
-        <div className="mt-6 space-y-4 border-t border-gray-200 pt-6">
-          <div>
-            <p className="text-sm font-medium text-gray-500">姓名</p>
-            <p className="text-lg font-semibold text-gray-900">{user.name || 'N/A'}</p>
+    /* Info: (20251021 - Tzuhan) Blockchain Key Section */
+    <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900">區塊鏈錢包</h2>
+      <div className="mt-6 border-t border-gray-200 pt-6">
+        {user.blockchainAddress ? (
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-medium text-gray-500">您的 cafeca 錢包地址</p>
+              <p className="break-all font-mono text-sm text-gray-700">{user.blockchainAddress}</p>
+            </div>
+            <button
+              onClick={handleSignTest}
+              disabled={isKeyLoading}
+              className="w-full rounded-lg bg-green-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-green-700 disabled:bg-gray-400"
+            >
+              {isKeyLoading ? '處理中...' : '簽署一筆測試訊息'}
+            </button>
           </div>
-        </div>
-      </div>
-
-      {/* Info: (20251021 - Tzuhan) Blockchain Key Section */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">區塊鏈錢包</h2>
-        <div className="mt-6 border-t border-gray-200 pt-6">
-          {user.blockchainAddress ? (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">您的 cafeca 錢包地址</p>
-                <p className="break-all font-mono text-sm text-gray-700">
-                  {user.blockchainAddress}
-                </p>
-              </div>
-              <button
-                onClick={handleSignTest}
-                disabled={isKeyLoading}
-                className="w-full rounded-lg bg-green-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-green-700 disabled:bg-gray-400"
-              >
-                {isKeyLoading ? '處理中...' : '簽署一筆測試訊息'}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                您尚未建立您的 cafeca 區塊鏈錢包。建立錢包後，您將能參與未來的鏈上功能。
-              </p>
-              <button
-                onClick={handleCreateKey}
-                disabled={isKeyLoading}
-                className="w-full rounded-lg bg-purple-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-purple-700 disabled:bg-gray-400"
-              >
-                {isKeyLoading ? '生成中...' : '建立我的區塊鏈錢包'}
-              </button>
-            </div>
-          )}
-          {(keyStatus || error) && (
-            <div className="mt-4 rounded-lg bg-gray-50 p-4">
-              <p className="text-sm font-medium text-gray-700">{keyStatus}</p>
-              {error && <p className="mt-2 break-all text-red-600">錯誤訊息: {error}</p>}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Info: (20251021 - Tzuhan) Actions Section */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
-        <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
-          <Link
-            href={BM_URL.ADD_DEVICE}
-            className="block w-full rounded-lg bg-white px-5 py-3 text-center text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-          >
-            新增裝置
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full rounded-lg bg-red-500 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-red-600"
-          >
-            登出
-          </button>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              您尚未建立您的 cafeca 區塊鏈錢包。建立錢包後，您將能參與未來的鏈上功能。
+            </p>
+            <button
+              onClick={handleCreateKey}
+              disabled={isKeyLoading}
+              className="w-full rounded-lg bg-purple-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-purple-700 disabled:bg-gray-400"
+            >
+              {isKeyLoading ? '生成中...' : '建立我的區塊鏈錢包'}
+            </button>
+          </div>
+        )}
+        {(keyStatus || error) && (
+          <div className="mt-4 rounded-lg bg-gray-50 p-4">
+            <p className="text-sm font-medium text-gray-700">{keyStatus}</p>
+            {error && <p className="mt-2 break-all text-red-600">錯誤訊息: {error}</p>}
+          </div>
+        )}
       </div>
     </div>
   );
