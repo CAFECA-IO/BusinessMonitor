@@ -20,7 +20,7 @@ if (!origin) {
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
   // Info: (20251016 - Julian) During development
-   
+
   const [statusMessage, setStatusMessage] = useState('點擊按鈕以 Passkey 登入或註冊。');
   // Info: (20251016 - Julian) During development
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -61,7 +61,7 @@ export default function LoginClient() {
     try {
       const optionsRes = await fetch(`${origin}${routes.auth.webauthn.options()}`);
       if (!optionsRes.ok) throw new Error('無法從伺服器獲取登入選項。');
-      const options = await optionsRes.json();
+      const options = (await optionsRes.json()).payload;
 
       setStatusMessage('請依照瀏覽器提示進行驗證...');
       const authentication = await fido2ClientService.startLogin(options);

@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/auth_context';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import ToggleSwitch from '@/components/common/toggle_switch';
 import LoginDeviceTab from '@/components/auth/profile_login_device_tab';
+import SecurityTab from '@/components/auth/profile_security_tab';
 import { ILoginDevice, mockDevices } from '@/interfaces/device';
 
 enum SettingTab {
@@ -142,6 +143,7 @@ const ProfileSettingTab: React.FC = () => {
     const isSelected = selectedLanguage === lang;
 
     const onClick = () => {
+      // ToDo: (20251027 - Julian) Change language logic
       setSelectedLanguage(lang);
     };
 
@@ -215,6 +217,8 @@ const ProfileSettingTab: React.FC = () => {
       generalTab
     ) : currentTab === SettingTab.LOGIN_DEVICE ? (
       <LoginDeviceTab devices={deviceData} />
+    ) : currentTab === SettingTab.SECURITY ? (
+      <SecurityTab />
     ) : (
       <div></div>
     );
