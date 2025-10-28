@@ -427,11 +427,12 @@ async function importDailyFiles(
 function writeNewSymbolsLog(newSymbols: Set<string>) {
   if (newSymbols.size === 0) return;
 
-  const logDir = path.resolve(process.cwd(), 'logs');
+  const logDir = path.resolve(process.cwd(), 'private', 'logs');
   if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir, { recursive: true });
   }
-  const logFile = path.join(logDir, 'new_symbols_to_backfill.log');
+  const dateSuffix = format(new Date(), 'yyyyMMdd');
+  const logFile = path.join(logDir, `new_symbols_to_backfill_${dateSuffix}.log`);
   const content = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}] 發現 ${newSymbols.size} 個新代號:\n${Array.from(newSymbols).join('\n')}\n\n`;
 
   fs.appendFileSync(logFile, content);
