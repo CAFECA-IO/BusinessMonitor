@@ -61,7 +61,11 @@ export default function LoginClient() {
     try {
       const optionsRes = await fetch(`${origin}${routes.auth.webauthn.options()}`);
       if (!optionsRes.ok) throw new Error('無法從伺服器獲取登入選項。');
-      const options = (await optionsRes.json()).payload;
+      const optionsResponse = await optionsRes.json();
+      if (!optionsResponse.success) {
+        throw new Error(optionsResponse.message || '無法從伺服器獲取註冊選項。');
+      }
+      const options = optionsResponse.payload;
 
       setStatusMessage('請依照瀏覽器提示進行驗證...');
       const authentication = await fido2ClientService.startLogin(options);
