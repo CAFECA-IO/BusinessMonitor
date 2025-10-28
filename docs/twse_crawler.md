@@ -39,7 +39,7 @@
       * 此通道會在背景持續運行。
 
 2.  **確認環境變數 (`.env`)**
-    確保您的 `.env` 檔案指向本地 Docker 資料庫：
+    確保 `.env` 檔案指向本地 Docker 資料庫：
 
     ```dotenv
     # .env
@@ -60,7 +60,7 @@
     https_proxy=socks5h://localhost:8080 npm run start:crawl
     ```
 
-    > 腳本會透過 Tunnel 下載資料到 `twse_data` 資料夾，並將資料匯入到您的**本地 Docker 資料庫**。
+    > 腳本會透過 Tunnel 下載資料到 `twse_data` 資料夾，並將資料匯入到**本地 Docker 資料庫**。
 
 5.  **關閉 Tunnel**
     測試完畢後，執行以下指令找到並關閉背景的 SSH 程序：
@@ -119,7 +119,7 @@
 
 在伺服器上，透過系統級的環境變數來設定資料庫連線。
 
-1.  登入您的 Ubuntu 伺服器。
+1.  登入 Ubuntu 伺服器。
 2.  編輯 `~/.bashrc` 檔案：`nano ~/.bashrc`
 3.  在檔案的最下方，加入以下這行，**請務必將 `[...]` 中的內容替換成正式資料庫的真實資訊**：
     ```bash
