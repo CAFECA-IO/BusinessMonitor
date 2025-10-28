@@ -5,11 +5,13 @@ import { useLottie } from 'lottie-react';
 import { FaRegCircleCheck } from 'react-icons/fa6';
 import errorAnimation from '@/lottie/error.json';
 import successAnimation from '@/lottie/check.json';
+import loadingAnimation from '@/lottie/loading.json';
 
 export enum AnimationType {
   ERROR = 'error',
   SUCCESS = 'success',
   STATIC_SUCCESS = 'static_success',
+  LOADING = 'loading',
 }
 
 interface IAnimationModalProps {
@@ -23,6 +25,7 @@ const AnimationModal: React.FC<IAnimationModalProps> = ({ anim, text, loop }) =>
     [AnimationType.ERROR]: errorAnimation,
     [AnimationType.SUCCESS]: successAnimation,
     [AnimationType.STATIC_SUCCESS]: null,
+    [AnimationType.LOADING]: loadingAnimation,
   };
 
   const options = {
