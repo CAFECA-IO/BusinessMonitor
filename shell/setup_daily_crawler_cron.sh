@@ -46,11 +46,12 @@ mkdir -p "$(dirname "$LOG_FILE_ABS_PATH")"
 # 每天在指定的分鐘和小時執行
 # >> 將標準輸出附加到 log 檔案
 # 2>&1 將標準錯誤也重定向到標準輸出，因此也會被附加到 log 檔案
-CRON_JOB_LINE="$MINUTE $HOUR * * * $CRAWLER_SCRIPT_ABS_PATH >> $LOG_FILE_ABS_PATH 2>&1"
+CRON_JOB_LINE="$MINUTE $HOUR * * * env PATH=$PATH $CRAWLER_SCRIPT_ABS_PATH >> $LOG_FILE_ABS_PATH 2>&1"
 
 # Info: 20251028 - Tzuhan --- 檢查 crontab 是否已存在相同的任務 ---
 EXISTING_CRONTAB=$(crontab -l 2>/dev/null)
-CRON_JOB_COMMAND_PART="$CRAWLER_SCRIPT_ABS_PATH >> $LOG_FILE_ABS_PATH 2>&1"
+# Info: (20251029 - Tzuhan) 修正：搜尋特徵時也加入 PATH，避免誤判
+CRON_JOB_COMMAND_PART="env PATH=$PATH $CRAWLER_SCRIPT_ABS_PATH >> $LOG_FILE_ABS_PATH 2>&1"
 
 TASK_ALREADY_EXISTS=false
 if echo "$EXISTING_CRONTAB" | grep -Fq "$CRON_JOB_COMMAND_PART"; then
@@ -59,8 +60,8 @@ if echo "$EXISTING_CRONTAB" | grep -Fq "$CRON_JOB_COMMAND_PART"; then
      TASK_ALREADY_EXISTS=true
   else
      echo "⚠️  排程任務似乎已存在但時間或 PATH 不同。正在更新..."
-     # Info: 20251028 - Tzuhan 移除舊的
-     (crontab -l 2>/dev/null | grep -vF "$CRON_JOB_COMMAND_PART") | crontab -
+     # Info: (20251029 - Tzuhan) 修正：使用 CRAWLER_SCRIPT_ABS_PATH 作為移除依據
+     (crontab -l 2>/dev/null | grep -vF "$CRAWLER_SCRIPT_ABS_PATH") | crontab -
   fi
 fi
 
@@ -74,16 +75,14 @@ if [ "$TASK_ALREADY_EXISTS" = false ]; then
     echo "   日誌將記錄在：$LOG_FILE_ABS_PATH"
   else
     echo "❌ 錯誤：無法寫入 crontab。請檢查權限或手動設定。"
-    # Info: 20251028 - Tzuhan 即使 crontab 設定失敗，還是嘗試執行一次
   fi
 fi
 
 # Info: 20251028 - Tzuhan --- *** 新增：立即執行一次爬蟲任務 *** ---
 echo "" # 空行分隔
 echo "🚀 正在立即執行一次爬蟲任務 (輸出將附加到 $LOG_FILE_ABS_PATH)..."
-# Info: 20251028 - Tzuhan 使用 nohup 在背景執行，這樣即使關閉終端機也能繼續跑完
-# Info: (20251029 - Tzuhan) 修正：移除無效的 env PATH 設定
-nohup "$CRAWLER_SCRIPT_ABS_PATH" >> "$LOG_FILE_ABS_PATH" 2>&1 &
+# Info: (20251029 - Tzuhan) 修正：使用與 cron 相同的 env PATH="$PATH" 確保環境一致
+nohup env PATH="$PATH" "$CRAWLER_SCRIPT_ABS_PATH" >> "$LOG_FILE_ABS_PATH" 2>&1 &
 
 # Info: 20251028 - Tzuhan 取得背景執行的 PID
 IMMEDIATE_RUN_PID=$!

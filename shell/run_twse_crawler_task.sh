@@ -33,7 +33,9 @@ if [ ${#IMPORT_ARGS[@]} -ne 0 ]; then
 fi
 
 echo "🚀 開始執行爬蟲任務..."
-chmod +x "$DOWNLOADER_SCRIPT_ABS_PATH"
+
+# Info: (20251029 - Tzuhan) 修正：註解掉此行以避免 "Operation not permitted" 錯誤
+# chmod +x "$DOWNLOADER_SCRIPT_ABS_PATH"
 
 # # Info: 20251028 - Tzuhan --- 步驟 1: 下載新資料 ---
 # # Info: 20251028 - Tzuhan 下載腳本不受日期參數影響，它總是會智慧續傳
