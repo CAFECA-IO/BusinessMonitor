@@ -12,6 +12,7 @@ import Button from '@/components/common/button';
 import LoginDeviceTab from '@/components/auth/profile_login_device_tab';
 import SecurityTab from '@/components/auth/profile_security_tab';
 import HelpCenterTab from '@/components/auth/profile_help_center_tab';
+import DeleteAccountModal from '@/components/auth/delete_account_modal';
 import { ILoginDevice, mockDevices } from '@/interfaces/device';
 
 enum SettingTab {
@@ -42,6 +43,7 @@ const ProfileSettingTab: React.FC = () => {
   } = useOuterClick<HTMLDivElement>(false);
 
   const [currentTab, setCurrentTab] = useState<SettingTab>(SettingTab.GENERAL);
+  const [isShowDeleteModal, setIsShowDeleteModal] = useState<boolean>(false);
   // Info: (20251027 - Julian) General Tab States
   const [isLoginAlertOn, setIsLoginAlertOn] = useState<boolean>(true);
   const [isNewMessageOn, setIsNewMessageOn] = useState<boolean>(true);
@@ -70,6 +72,7 @@ const ProfileSettingTab: React.FC = () => {
 
   const closeTab = () => setIsTabOpen(false);
 
+  const toggleDeleteModal = () => setIsShowDeleteModal((prev) => !prev);
   const toggleLoginAlert = () => setIsLoginAlertOn((prev) => !prev);
   const toggleNewMessage = () => setIsNewMessageOn((prev) => !prev);
   const toggleSystemAnnouncement = () => setIsSystemAnnouncementOn((prev) => !prev);
@@ -133,6 +136,7 @@ const ProfileSettingTab: React.FC = () => {
 
         <button
           type="button"
+          onClick={toggleDeleteModal}
           disabled // ToDo: (20251029 - Julian) 暫不開放
           className="flex items-center gap-8px p-16px text-base font-medium text-text-error disabled:text-text-note"
         >
@@ -241,26 +245,31 @@ const ProfileSettingTab: React.FC = () => {
   );
 
   return (
-    <div className="relative flex w-full flex-1 flex-col gap-16px p-16px">
-      {/* Info:(20251027 - Julian) Main Content */}
-      {mainContent}
+    <>
+      <div className="relative flex w-full flex-1 flex-col gap-16px p-16px">
+        {/* Info:(20251027 - Julian) Main Content */}
+        {mainContent}
 
-      <div
-        ref={tabRef}
-        className={`${isTabOpen ? 'translate-x-0' : 'translate-x-full'} absolute left-0 top-0 flex size-full flex-col bg-surface-background pt-16px transition-all duration-300 ease-in-out`}
-      >
-        {/* Info: (20251027 - Julian) Tab Title */}
-        <div className="flex h-56px items-center gap-8px px-16px">
-          <button type="button" className="p-10px" onClick={closeTab}>
-            <FaChevronLeft size={24} />
-          </button>
-          <p className="flex-1 font-bold text-text-primary">{currentTab}</p>
-          {isShowHeadphoneBtn}
+        <div
+          ref={tabRef}
+          className={`${isTabOpen ? 'translate-x-0' : 'translate-x-full'} absolute left-0 top-0 flex size-full flex-col bg-surface-background pt-16px transition-all duration-300 ease-in-out`}
+        >
+          {/* Info: (20251027 - Julian) Tab Title */}
+          <div className="flex h-56px items-center gap-8px px-16px">
+            <button type="button" className="p-10px" onClick={closeTab}>
+              <FaChevronLeft size={24} />
+            </button>
+            <p className="flex-1 font-bold text-text-primary">{currentTab}</p>
+            {isShowHeadphoneBtn}
+          </div>
+          {/* Info: (20251027 - Julian) Tab Content */}
+          {displayedTab}
         </div>
-        {/* Info: (20251027 - Julian) Tab Content */}
-        {displayedTab}
       </div>
-    </div>
+
+      {/* Info: (20251029 - Julian) Delete Account Modal */}
+      {isShowDeleteModal && <DeleteAccountModal onClose={toggleDeleteModal} />}
+    </>
   );
 };
 
