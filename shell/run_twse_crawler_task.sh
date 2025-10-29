@@ -3,6 +3,12 @@
 # # Info: 20251028 - Tzuhan 確保腳本從專案根目錄執行
 cd "$(dirname "$0")/.."
 
+# Info: (20251029 - Tzuhan) 修正：在日誌開頭加入時間戳
+echo ""
+echo "=================================================="
+echo "任務開始時間：$(date '+%Y-%m-%d %H:%M:%S')"
+echo "=================================================="
+
 # # Info: 20251028 - Tzuhan --- 參數解析 ---
 DOWNLOADER_SCRIPT_ABS_PATH="shell/run_twse_crawler_task_download.sh" 
 DATA_FOLDER="private/data/twse_data" # # Info: 20251028 - Tzuhan 預設資料夾
@@ -27,7 +33,9 @@ if [ ${#IMPORT_ARGS[@]} -ne 0 ]; then
 fi
 
 echo "🚀 開始執行爬蟲任務..."
-chmod +x "$DOWNLOADER_SCRIPT_ABS_PATH"
+
+# Info: (20251029 - Tzuhan) 修正：註解掉此行以避免 "Operation not permitted" 錯誤
+# chmod +x "$DOWNLOADER_SCRIPT_ABS_PATH"
 
 # # Info: 20251028 - Tzuhan --- 步驟 1: 下載新資料 ---
 # # Info: 20251028 - Tzuhan 下載腳本不受日期參數影響，它總是會智慧續傳
@@ -35,6 +43,11 @@ echo "--- (1/2) 正在下載 TWSE 每日行情資料 ---"
 bash "$DOWNLOADER_SCRIPT_ABS_PATH" "$DATA_FOLDER"
 if [ $? -ne 0 ]; then
     echo "❌ 下載資料時發生錯誤，任務中止。"
+    # Info: (20251029 - Tzuhan) 修正：在日誌結尾加入時間戳 (失敗時)
+    echo "=================================================="
+    echo "任務失敗時間：$(date '+%Y-%m-%d %H:%M:%S')"
+    echo "=================================================="
+    echo ""
     exit 1
 fi
 
@@ -45,7 +58,18 @@ echo "--- (2/2) 正在將資料匯入資料庫 ---"
 npm run import:market-data -- "$DATA_FOLDER" "${IMPORT_ARGS[@]}"
 if [ $? -ne 0 ]; then
     echo "❌ 匯入資料到資料庫時發生錯誤。"
+    # Info: (20251029 - Tzuhan) 修正：在日誌結尾加入時間戳 (失敗時)
+    echo "=================================================="
+    echo "任務失敗時間：$(date '+%Y-%m-%d %H:%M:%S')"
+    echo "=================================================="
+    echo ""
     exit 1
 fi
 
 echo "✅ 爬蟲任務成功完成！"
+
+# Info: (20251029 - Tzuhan) 修正：在日誌結尾加入時間戳 (成功時)
+echo "=================================================="
+echo "任務結束時間：$(date '+%Y-%m-%d %H:%M:%S')"
+echo "=================================================="
+echo ""
