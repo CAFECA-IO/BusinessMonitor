@@ -2,11 +2,11 @@
 
 # Info: 20251028 - Tzuhan
 # 使用辦法
-# 在終端機中執行 chmod +x shell/setup_cron.sh。
+# 在終端機中執行 chmod +x shell/setup_daily_crawler_cron.sh。
 # 然後執行腳本並指定時間（24 小時制），例如每天凌晨 2 點：
-#   bash shell/setup_cron.sh 02:00
+#   bash shell/setup_daily_crawler_cron.sh 02:00
 # 如果不指定時間，預設為每天凌晨 2 點：
-#   bash shell/setup_cron.sh
+#   bash shell/setup_daily_crawler_cron.sh
 
 
 # Info: 20251028 - Tzuhan --- 設定預設值 ---
