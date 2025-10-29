@@ -65,21 +65,21 @@ const SecurityTab: React.FC = () => {
         <div className="flex flex-col gap-16px rounded-radius-s bg-surface-secondary px-16px py-12px">
           <p className="text-base font-bold text-text-primary">Back Up Your Recovery Key</p>
           <p className="text-sm font-medium text-text-secondary">
-            This recovery key is the way to restore your Digital Identity if you lose or change your
-            device.Please store it safely and privately. If you lose this key.
+            This recovery key is the way to restore your Digital Identity if you lose or change your
+            device.Please store it safely and privately. If you lose this key.
           </p>
           <div className="flex flex-col text-sm font-medium">
             <p>We recommend the following:</p>
             <ul className="ml-20px list-outside list-disc text-text-secondary">
               <li>Write it down and keep it in a secure place (e.g., a locked drawer or safe).</li>
-              <li>Do not store it online or in cloud storage.</li>
-              <li>Do not share it with anyone.</li>
+              <li>Do not store it online or in cloud storage.</li>
+              <li>Do not share it with anyone.</li>
               <li>Consider printing a copy and storing it offline.</li>
             </ul>
             <p></p>
           </div>
           <p className="text-sm font-medium text-text-error">
-            You may permanently lose access to your identity and any connected services.
+            You may permanently lose access to your identity and any connected services.
           </p>
         </div>
       </div>
