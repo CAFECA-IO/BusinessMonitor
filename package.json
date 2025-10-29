@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+229",
+  "version": "0.1.0+230",
   "private": true,
   "type": "module",
   "engines": {
@@ -35,7 +35,7 @@
     "prepare": "husky",
     "i18n:pull": "i18nexus pull && tsx scripts/move_locales.ts",
     "swarm": "next start -p 10002",
-    "start:crawl": "bash shell/run_crawler.sh",
+    "start:crawl": "bash shell/run_twse_crawler_task.sh",
     "import:market-data": "tsx scripts/004_import_market_data.ts"
   },
   "dependencies": {

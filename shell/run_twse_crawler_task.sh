@@ -4,6 +4,7 @@
 cd "$(dirname "$0")/.."
 
 # # Info: 20251028 - Tzuhan --- 參數解析 ---
+DOWNLOADER_SCRIPT_ABS_PATH="shell/run_twse_crawler_task_download.sh" 
 DATA_FOLDER="private/data/twse_data" # # Info: 20251028 - Tzuhan 預設資料夾
 IMPORT_ARGS=() # # Info: 20251028 - Tzuhan 存放傳給 import 腳本的參數
 
@@ -26,11 +27,12 @@ if [ ${#IMPORT_ARGS[@]} -ne 0 ]; then
 fi
 
 echo "🚀 開始執行爬蟲任務..."
+chmod +x "$DOWNLOADER_SCRIPT_ABS_PATH"
 
 # # Info: 20251028 - Tzuhan --- 步驟 1: 下載新資料 ---
 # # Info: 20251028 - Tzuhan 下載腳本不受日期參數影響，它總是會智慧續傳
 echo "--- (1/2) 正在下載 TWSE 每日行情資料 ---"
-bash shell/download_twse_data.sh "$DATA_FOLDER"
+bash "$DOWNLOADER_SCRIPT_ABS_PATH" "$DATA_FOLDER"
 if [ $? -ne 0 ]; then
     echo "❌ 下載資料時發生錯誤，任務中止。"
     exit 1
