@@ -91,41 +91,50 @@ const ProfileSettingTab: React.FC = () => {
         {/* Info: (20251022 - Julian) Divider */}
         <hr className="border-t border-border-secondary" />
 
-        <div
+        <button
+          type="button"
           onClick={openGeneralTab}
-          className="flex items-center gap-8px p-16px text-base font-medium text-text-primary hover:cursor-pointer"
+          disabled // ToDo: (20251029 - Julian) 暫不開放
+          className="flex items-center gap-8px p-16px text-base font-medium text-text-primary disabled:text-text-note"
         >
-          <p className="flex-1">General</p>
+          <p className="flex-1 text-left">General</p>
           <FaChevronRight size={20} />
-        </div>
-
-        <div
-          onClick={openLoginDeviceTab}
-          className="flex items-center gap-8px p-16px text-base font-medium text-text-primary hover:cursor-pointer"
-        >
-          <p className="flex-1">Login & Device Management</p>
-          <FaChevronRight size={20} />
-        </div>
-
-        <div
-          onClick={openSecurityTab}
-          className="flex items-center gap-8px p-16px text-base font-medium text-text-primary hover:cursor-pointer"
-        >
-          <p className="flex-1">Security & Verification</p>
-          <FaChevronRight size={20} />
-        </div>
-
-        <div
-          onClick={openHelpCenterTab}
-          className="flex items-center gap-8px p-16px text-base font-medium text-text-primary hover:cursor-pointer"
-        >
-          <p className="flex-1">Help Center</p>
-          <FaChevronRight size={20} />
-        </div>
+        </button>
 
         <button
           type="button"
-          className="flex items-center gap-8px p-16px text-base font-medium text-text-error"
+          onClick={openLoginDeviceTab}
+          disabled // ToDo: (20251029 - Julian) 暫不開放
+          className="flex items-center gap-8px p-16px text-base font-medium text-text-primary disabled:text-text-note"
+        >
+          <p className="flex-1 text-left">Login & Device Management</p>
+          <FaChevronRight size={20} />
+        </button>
+
+        <button
+          type="button"
+          onClick={openSecurityTab}
+          disabled // ToDo: (20251029 - Julian) 暫不開放
+          className="flex items-center gap-8px p-16px text-base font-medium text-text-primary disabled:text-text-note"
+        >
+          <p className="flex-1 text-left">Security & Verification</p>
+          <FaChevronRight size={20} />
+        </button>
+
+        <button
+          type="button"
+          onClick={openHelpCenterTab}
+          disabled // ToDo: (20251029 - Julian) 暫不開放
+          className="flex items-center gap-8px p-16px text-base font-medium text-text-primary disabled:text-text-note"
+        >
+          <p className="flex-1 text-left">Help Center</p>
+          <FaChevronRight size={20} />
+        </button>
+
+        <button
+          type="button"
+          disabled // ToDo: (20251029 - Julian) 暫不開放
+          className="flex items-center gap-8px p-16px text-base font-medium text-text-error disabled:text-text-note"
         >
           <FiTrash2 size={20} />
           <p className="flex-1 text-left">Delete Account</p>

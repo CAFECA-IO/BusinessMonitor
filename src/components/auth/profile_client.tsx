@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
+import { FaChartBar } from 'react-icons/fa';
 import { FiMonitor } from 'react-icons/fi';
 import { LuIdCard, LuScanLine, LuSettings } from 'react-icons/lu';
 import { IoChatbubbleEllipsesOutline } from 'react-icons/io5';
@@ -265,7 +267,13 @@ export default function ProfileClient() {
 
       <div className="flex h-full flex-col">
         {/* Info: (20251022 - Julian) Header */}
-        <div className="z-10 flex w-full justify-end px-16px py-20px">
+        <div className="z-10 flex w-full items-center justify-between px-16px py-20px">
+          {/* ToDo: (20251029 - Julian) Temporary Business Monitor Link */}
+          <Link href={BM_URL.BUSINESS_MONITOR}>
+            <button type="button" className="p-10px text-text-primary">
+              <FaChartBar size={24} />
+            </button>
+          </Link>
           <button type="button" onClick={handleLogout} className="p-10px text-text-primary">
             <PiSignOut size={24} />
           </button>
