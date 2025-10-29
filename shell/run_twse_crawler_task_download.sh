@@ -9,6 +9,8 @@ if [[ "$OS_TYPE" == "Darwin" ]]; then
     seconds_to_date() { date -j -f "%s" "$1" "+%Y%m%d"; }
     seconds_to_year() { date -j -f "%s" "$1" "+%Y"; }
     next_day_from_date() { date -j -v+1d -f "%Y%m%d" "$1" "+%Y%m%d"; }
+    # Info: (20251029 - Tzuhan) 修正：設定 macOS 的 stat 參數
+    STAT_OPTS="-f%z"
 else
     # Info: (20251015 - Tzuhan) Linux (GNU) date
     echo "🐧 偵測到作業系統為 Linux/Ubuntu"
@@ -16,6 +18,8 @@ else
     seconds_to_date() { date -d "@$1" "+%Y%m%d"; }
     seconds_to_year() { date -d "@$1" "+%Y"; }
     next_day_from_date() { date -d "$1 + 1 day" "+%Y%m%d"; }
+    # Info: (20251029 - Tzuhan) 修正：設定 Linux 的 stat 參數
+    STAT_OPTS="-c%s"
 fi
 # ---------------------------------------------------
 
@@ -73,7 +77,8 @@ while [ "$current_sec" -le "$end_sec" ]; do
     echo "📅 正在下載 $date_str -> ${output_file}"
     curl -s -o "$output_file" "$url" --connect-timeout 15
 
-    if [ -f "$output_file" ] && [ $(stat -f%z "$output_file") -gt 1024 ]; then
+    # Info: (20251029 - Tzuhan) 修正：使用跨平台的 $STAT_OPTS 變數來檢查檔案大小
+    if [ -f "$output_file" ] && [ $(stat $STAT_OPTS "$output_file") -gt 1024 ]; then
         echo "✅ 下載成功。"
     else
         echo "⚠️  $date_str 無資料 (可能為假日或非交易日)，已刪除空檔案。"

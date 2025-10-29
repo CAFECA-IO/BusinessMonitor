@@ -23,8 +23,9 @@ if ! [[ "$SCHEDULE_TIME" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
   exit 1
 fi
 
-HOUR=$(echo "$SCHEDULE_TIME" | cut -d: -f1)
-MINUTE=$(echo "$SCHEDULE_TIME" | cut -d: -f2 | sed 's/^0*//')
+# Info: (20251029 - Tzuhan) 修正：使用 sed 's/^0//' 避免 "00" 變為空字串
+HOUR=$(echo "$SCHEDULE_TIME" | cut -d: -f1 | sed 's/^0//')
+MINUTE=$(echo "$SCHEDULE_TIME" | cut -d: -f2 | sed 's/^0//')
 
 # Info: 20251028 - Tzuhan --- 取得絕對路徑 ---
 PROJECT_ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -81,8 +82,8 @@ fi
 echo "" # 空行分隔
 echo "🚀 正在立即執行一次爬蟲任務 (輸出將附加到 $LOG_FILE_ABS_PATH)..."
 # Info: 20251028 - Tzuhan 使用 nohup 在背景執行，這樣即使關閉終端機也能繼續跑完
-# Info: 20251028 - Tzuhan 使用與 cron 相同的 PATH 設定確保環境一致
-nohup env PATH="$NODE_BIN_PATH:$PATH" "$CRAWLER_SCRIPT_ABS_PATH" >> "$LOG_FILE_ABS_PATH" 2>&1 &
+# Info: (20251029 - Tzuhan) 修正：移除無效的 env PATH 設定
+nohup "$CRAWLER_SCRIPT_ABS_PATH" >> "$LOG_FILE_ABS_PATH" 2>&1 &
 
 # Info: 20251028 - Tzuhan 取得背景執行的 PID
 IMMEDIATE_RUN_PID=$!
