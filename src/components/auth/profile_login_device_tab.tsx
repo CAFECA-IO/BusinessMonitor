@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState /* useEffect */ } from 'react';
 import { FaChevronLeft, FaPlus } from 'react-icons/fa6';
-import { useRouter } from 'next/navigation';
-import QRCode from 'qrcode';
-import Pusher from 'pusher-js';
-import { routes } from '@/config/api-routes';
-import { getPusherInstance } from '@/lib/pusher_client';
+// import { useRouter } from 'next/navigation';
+// import QRCode from 'qrcode';
+// import Pusher from 'pusher-js';
+// import { routes } from '@/config/api-routes';
+// import { getPusherInstance } from '@/lib/pusher_client';
 import useOuterClick from '@/lib/hooks/use_outer_click';
-import { BM_URL } from '@/constants/url';
-import { useAuth } from '@/contexts/auth_context';
+// import { BM_URL } from '@/constants/url';
+// import { useAuth } from '@/contexts/auth_context';
 import Button from '@/components/common/button';
 import DeviceCard from '@/components/auth/device_card';
 import AuthorizeViaExistingDevice from '@/components/auth/authorize_via_existing_device';
@@ -21,17 +21,21 @@ interface ILoginDeviceTabProps {
 }
 
 const LoginDeviceTab: React.FC<ILoginDeviceTabProps> = ({ devices }) => {
-  // Info: (20251027 - Julian) QR Code and authorization state
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  // ToDo: (20251029 - Julian) QR Code and authorization state
+  // const [isLoading, setIsLoading] = useState<boolean>(true);
+  // const [error, setError] = useState<string | null>(null);
+  // const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [isLoading] = useState<boolean>(false);
+  const [error] = useState<string | null>(null);
+  const [qrCodeDataUrl] = useState<string>('');
+
   // Info: (20251027 - Julian) Device logout modal state
   const [modalType, setModalType] = useState<ModalType>(ModalType.LOGOUT);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
   const [selectedDevice, setSelectedDevice] = useState<ILoginDevice | null>(null);
 
-  const router = useRouter();
-  const { user, isLoading: isAuthLoading, login } = useAuth();
+  // const router = useRouter();
+  // const { user, isLoading: isAuthLoading, login } = useAuth();
 
   const {
     targetRef: tabRef,
@@ -42,49 +46,50 @@ const LoginDeviceTab: React.FC<ILoginDeviceTabProps> = ({ devices }) => {
   const openTab = () => setIsTabOpen(true);
   const closeTab = () => setIsTabOpen(false);
 
-  // Info: (20251027 - Julian) 產生 QR Code 並監聽授權結果
-  useEffect(() => {
-    if (isAuthLoading || user) {
-      return;
-    }
-    let pusherClient: Pusher | null = null;
-    const initializeQrSession = async () => {
-      try {
-        const res = await fetch(`${origin}${routes.pairing.initiate()}`, { method: 'POST' });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.message);
+  // ToDo: (20251029 - Julian) 調整邏輯：在登入情況下授權新裝置
+  // useEffect(() => {
+  //   if (isAuthLoading || user) {
+  //     return;
+  //   }
+  //   let pusherClient: Pusher | null = null;
+  //   const initializeQrSession = async () => {
+  //     try {
+  //       const res = await fetch(`${origin}${routes.pairing.initiate()}`, { method: 'POST' });
 
-        const { sessionId, challenge } = data.payload;
-        const scanUrl = new URL(`${origin}${BM_URL.APPROVE_DEVICE}`);
-        scanUrl.searchParams.set('sessionId', sessionId);
-        scanUrl.searchParams.set('challenge', challenge);
+  //       const data = await res.json();
+  //       if (!res.ok || !data.success) throw new Error(data.message);
 
-        const dataUrl = await QRCode.toDataURL(scanUrl.toString(), { width: 256, margin: 2 });
-        setQrCodeDataUrl(dataUrl);
+  //       const { sessionId, challenge } = data.payload;
+  //       const scanUrl = new URL(`${origin}${BM_URL.APPROVE_DEVICE}`);
+  //       scanUrl.searchParams.set('sessionId', sessionId);
+  //       scanUrl.searchParams.set('challenge', challenge);
 
-        pusherClient = getPusherInstance();
-        const channel = pusherClient.subscribe(`private-login-session-${sessionId}`);
+  //       const dataUrl = await QRCode.toDataURL(scanUrl.toString(), { width: 256, margin: 2 });
+  //       setQrCodeDataUrl(dataUrl);
 
-        channel.bind('login-success', async (eventData: { dewt: string }) => {
-          // localStorage.setItem('dewt', eventData.dewt);
-          await login(eventData.dewt);
-          setTimeout(() => router.push('/profile'), 1500);
-        });
+  //       pusherClient = getPusherInstance();
+  //       const channel = pusherClient.subscribe(`private-login-session-${sessionId}`);
 
-        channel.bind('login-error', (eventData: { message: string }) => {
-          setError(eventData.message || '手機端授權失敗。');
-        });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '初始化 QR Code 失敗。');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  //       channel.bind('login-success', async (eventData: { dewt: string }) => {
+  //         // localStorage.setItem('dewt', eventData.dewt);
+  //         await login(eventData.dewt);
+  //         setTimeout(() => router.push('/profile'), 1500);
+  //       });
 
-    initializeQrSession();
+  //       channel.bind('login-error', (eventData: { message: string }) => {
+  //         setError(eventData.message || '手機端授權失敗。');
+  //       });
+  //     } catch (err) {
+  //       setError(err instanceof Error ? err.message : '初始化 QR Code 失敗。');
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
-    return () => pusherClient?.disconnect();
-  }, [isAuthLoading, login, router, user]);
+  //   initializeQrSession();
+
+  //   return () => pusherClient?.disconnect();
+  // }, [isAuthLoading, login, router, user]);
 
   const deviceList =
     devices.length > 0 ? (
@@ -119,12 +124,7 @@ const LoginDeviceTab: React.FC<ILoginDeviceTabProps> = ({ devices }) => {
     <>
       {/* Info: (20251027 - Julian) Main Content */}
       <div className="flex flex-col gap-24px px-16px py-24px">
-        <Button
-          type="button"
-          className="w-full gap-8px"
-          onClick={openTab}
-          disabled // Info: (20251027 - Julian) 暫不開放
-        >
+        <Button type="button" className="w-full gap-8px" onClick={openTab}>
           <FaPlus size={16} />
           <p>Add New Device</p>
         </Button>

@@ -40,11 +40,11 @@ const MessageModal: React.FC<IMessageModalProps> = ({
   return (
     <div className="fixed left-0 top-0 z-50 flex size-full flex-col items-center justify-center bg-black/50">
       <div className="relative flex w-350px flex-col gap-24px rounded-radius-m bg-surface-primary px-24px pb-24px pt-40px">
-        {/* Info: (20241017 - Julian) Title */}
+        {/* Info: (20251017 - Julian) Title */}
         {displayedTitle}
-        {/* Info: (20241017 - Julian) Content */}
+        {/* Info: (20251017 - Julian) Content */}
         <p className="text-base font-medium text-text-secondary">{content}</p>
-        {/* Info: (20241017 - Julian) Buttons */}
+        {/* Info: (20251017 - Julian) Buttons */}
         <div className={`${isShowSubmit ? 'grid-cols-2' : 'grid-cols-1'} grid gap-8px`}>
           <Button
             type="button"

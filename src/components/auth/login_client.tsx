@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { TbFaceId } from 'react-icons/tb';
 import { useRouter } from 'next/navigation';
@@ -31,6 +32,7 @@ export default function LoginClient() {
   const toggleMessageModal = () => setIsMessageModalVisible((prev) => !prev);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading: isAuthLoading, login } = useAuth();
 
   useEffect(() => {
@@ -58,6 +60,8 @@ export default function LoginClient() {
     setError(null);
     setStatusMessage('正在準備 Passkey 登入...');
 
+    const redirectTo = searchParams.get('redirectTo') || '';
+
     try {
       const optionsRes = await fetch(`${origin}${routes.auth.webauthn.options()}`);
       if (!optionsRes.ok) throw new Error('無法從伺服器獲取登入選項。');
@@ -84,7 +88,15 @@ export default function LoginClient() {
       setStatusMessage('✅ 登入成功！正在跳轉...');
       // localStorage.setItem('dewt', verifyData.payload.dewt);
       await login(verifyData.payload.dewt);
-      setTimeout(() => router.push('/profile'), 1500);
+
+      if (redirectTo) {
+        // Info: (20251029 - Julian) 如果 redirectTo 有值，則導向 approve_device 頁面，並帶上原本的參數
+        const currentRedirectTo = `${BM_URL.APPROVE_DEVICE}?${decodeURIComponent(redirectTo)}`;
+        setTimeout(() => router.push(currentRedirectTo), 500);
+      } else {
+        //  Info: (20251016 - Julian) 預設導向 Profile 頁面
+        setTimeout(() => router.push('/profile'), 1500);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
       setStatusMessage(

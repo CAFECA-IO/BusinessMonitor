@@ -21,7 +21,7 @@ export default function LoginSuccessClient() {
     <div className="flex flex-1 flex-col items-center justify-center p-24px">
       <h1 className="text-h3 font-bold text-text-secondary">Congratulation</h1>
       <div className="mt-24px flex flex-col items-center gap-20px">
-        {/* Info: (20241017 - Julian) Replace with Lottie */}
+        {/* Info: (20251017 - Julian) Replace with Lottie */}
         <div className="relative size-220px">{View}</div>
         <p className="text-base font-medium text-text-secondary">
           You have your own Digital ID now.

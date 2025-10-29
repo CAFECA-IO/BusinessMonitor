@@ -32,6 +32,9 @@ function ApproveDeviceInternal() {
   const challenge = searchParams.get('challenge');
   const { user, isLoading: isAuthLoading } = useAuth();
 
+  const redirectTo = searchParams.toString();
+  const redirectUrl = `${BM_URL.LOGIN}?redirectTo=${encodeURIComponent(redirectTo)}`;
+
   useEffect(() => {
     if (isAuthLoading) {
       return;
@@ -41,7 +44,8 @@ function ApproveDeviceInternal() {
       setError('您必須先登入才能新增裝置。');
       setStatusMessage('錯誤：未授權');
       setIsLoading(false);
-      setTimeout(() => router.push(BM_URL.LOGIN), 3000);
+
+      setTimeout(() => router.push(redirectUrl), 3000);
       return;
     }
     if (!sessionId || !challenge) {
