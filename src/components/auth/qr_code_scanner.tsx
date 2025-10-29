@@ -5,6 +5,7 @@ import { redirect, RedirectType } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { RxCross2 } from 'react-icons/rx';
 import { IDetectedBarcode } from '@yudiel/react-qr-scanner';
+import { BM_URL } from '@/constants/url';
 
 const Scanner = dynamic(() => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner), {
   ssr: false,
@@ -24,7 +25,7 @@ const QRCodeScanner: React.FC<IQRCodeScannerProps> = ({ onClose }) => {
       const rawValue = res[0].rawValue;
       setScanning(false);
       // Info: (20251028 - Julian) 檢查掃描結果格式是否正確
-      const isCorrectFormat = rawValue.includes('/auth/approve_device');
+      const isCorrectFormat = rawValue.includes(BM_URL.APPROVE_DEVICE);
 
       if (isCorrectFormat) {
         // Info: (20251028 - Julian) 導向授權頁面
