@@ -13,6 +13,7 @@ import { routes } from '@/config/api-routes';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import QRCodeScanner from '@/components/auth/qr_code_scanner';
+import ProfileMessageTab from '@/components/auth/profile_message_tab';
 import ProfileSettingTab from '@/components/auth/profile_setting_tab';
 import {
   createAndEncryptBlockchainKey,
@@ -306,8 +307,7 @@ export default function ProfileClient() {
     currentTab === ProfileTab.MY_ID ? (
       displayedProfileTab
     ) : currentTab === ProfileTab.MESSAGE ? (
-      // ToDo: (20251022 - Julian) During development
-      <div className="h-full"></div>
+      <ProfileMessageTab />
     ) : currentTab === ProfileTab.ACCESS ? (
       // ToDo: (20251022 - Julian) During development
       <div className="h-full"></div>
