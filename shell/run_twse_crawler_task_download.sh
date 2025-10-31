@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Info: (20251029 - Tzuhan) 確保腳本從專案根目錄執行
+cd "$(dirname "$0")/.."
+
 # Info: (20251015 - Tzuhan) --- 跨平台相容性設定 (偵測 macOS 或 Ubuntu) ---
 OS_TYPE=$(uname)
 if [[ "$OS_TYPE" == "Darwin" ]]; then
@@ -74,20 +77,28 @@ while [ "$current_sec" -le "$end_sec" ]; do
     url="https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?date=${date_str}&type=ALL&response=csv"
     output_file="${year_folder}/${date_str}.csv"
 
-    echo "📅 正在下載 $date_str -> ${output_file}"
-    curl -s -o "$output_file" "$url" --connect-timeout 15
-
-    # Info: (20251029 - Tzuhan) 修正：使用跨平台的 $STAT_OPTS 變數來檢查檔案大小
+    # Info: (20251030 - Tzuhan) 增加下載前的檔案存在檢查
+    # Info: (20251030 - Tzuhan) 檢查檔案是否已存在且有效 (大於 1KB)
     if [ -f "$output_file" ] && [ $(stat $STAT_OPTS "$output_file") -gt 1024 ]; then
-        echo "✅ 下載成功。"
+        echo "↪️  檔案 $date_str.csv 已存在且有效，略過下載。"
     else
-        echo "⚠️  $date_str 無資料 (可能為假日或非交易日)，已刪除空檔案。"
-        rm -f "$output_file"
-    fi
+        # Info: (20251030 - Tzuhan) 檔案不存在或無效，執行下載
+        echo "📅 正在下載 $date_str -> ${output_file}"
+        curl -s -o "$output_file" "$url" --connect-timeout 15
 
-    sleep_time=$((2 + RANDOM % 5))
-    echo "⏳ 等待 $sleep_time 秒..."
-    sleep "$sleep_time"
+        # Info: (20251030 - Tzuhan) 檢查下載下來的檔案是否有效
+        if [ -f "$output_file" ] && [ $(stat $STAT_OPTS "$output_file") -gt 1024 ]; then
+            echo "✅ 下載成功。"
+        else
+            echo "⚠️  $date_str 無資料 (可能為假日或非交易日)，已刪除空檔案。"
+            rm -f "$output_file"
+        fi
+
+        # Info: (20251030 - Tzuhan) 修正：僅在有實際下載 (或刪除) 動作時才等待
+        sleep_time=$((2 + RANDOM % 5))
+        echo "⏳ 等待 $sleep_time 秒..."
+        sleep "$sleep_time"
+    fi
 
     current_sec=$((current_sec + 86400))
 done

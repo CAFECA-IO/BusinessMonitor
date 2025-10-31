@@ -1,10 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { PrismaClient, Prisma, Board } from '@prisma/client';
-import { format, subDays, startOfDay } from 'date-fns';
+import { format, addDays, startOfDay } from 'date-fns';
 import { parse } from 'csv-parse/sync';
 import iconv from 'iconv-lite';
 import { z } from 'zod';
+import { fetchCompanyDataBySymbol } from 'scripts/lib/fetch_mops'; // Info: (20251030 - Tzuhan)匯入 MOPS 爬蟲
 
 const prisma = new PrismaClient();
 
@@ -45,9 +46,6 @@ type SummaryRow = {
   tradeVolume?: bigint | null;
   tradeCount?: number | null;
 };
-
-// Info: (20251007 - Tzuhan) --- 用於資料轉換的輔助函式 ---
-
 function rocToDate(str: string): Date | null {
   const m = str.match(/(\d{2,3})年(\d{2})月(\d{2})日/);
   if (!m) return null;
@@ -209,7 +207,6 @@ function parseTwseCsv(
       try {
         priceRows.push(DailyPriceRowSchema.parse(data));
       } catch (e) {
-        // Info: (20251007 - Tzuhan) 記錄解析失敗的行，但不中斷流程
         console.warn(
           `[WARN] 解析檔案 ${path.basename(filePath)} 的某一行因格式問題被跳過: ${JSON.stringify(row)} -> ${(e as Error).message}`
         );
@@ -235,69 +232,180 @@ async function importOneFile(
     }
   });
 
+  // Info: (20251030 - Tzuhan) --- 步驟 1: (網路/快取) 在交易*之外*，*並行*爬取所有新代號的 MOPS 資料 ---
+  const companiesToCreate: Prisma.CompanyCreateInput[] = [];
+  // 修正：symbolsDataForUpsert 用於收集所有新代號的資料 (包含公司和ETF)
+  const symbolsDataForUpsert: (Prisma.StockSymbolCreateInput & { symbol: string })[] = [];
+  const mopsDataMap = new Map<string, Prisma.CompanyCreateInput | null>();
+  const priceDataMap = new Map(prices.map((p) => [p.symbol, p]));
+
   if (newSymbols.size > 0) {
-    const newSymbolData = Array.from(newSymbols).map((symbol) => {
-      const priceData = prices.find((p) => p.symbol === symbol);
-      return {
-        symbol,
-        name: priceData?.name || 'N/A',
-        board: classifyBoard(symbol),
-        updated_at: new Date(),
-      };
-    });
-
-    await prisma.stockSymbol.createMany({
-      data: newSymbolData,
-      skipDuplicates: true,
-    });
-
-    newSymbols.forEach((s) => {
-      existingSymbols.add(s);
-      newSymbolLog.add(s);
-    });
     console.log(
-      `[INFO] 在 ${path.basename(filePath)} 中發現並新增了 ${newSymbols.size} 個股票代號。`
+      `[INFO] 在 ${path.basename(filePath)} 發現 ${newSymbols.size} 個新代號，開始並行爬取 MOPS...`
     );
+    const mopsFetchPromises = Array.from(newSymbols).map((symbol) =>
+      fetchCompanyDataBySymbol(symbol).then((companyInfo) => ({
+        symbol,
+        companyInfo,
+      }))
+    );
+
+    // Info: (20251030 - Tzuhan) 等待所有爬蟲完成
+    const mopsFetchResults = await Promise.all(mopsFetchPromises);
+
+    // Info: (20251030 - Tzuhan) --- 步驟 2: (準備) 整理要寫入資料庫的資料 ---
+    const regNoSet = new Set<string>();
+
+    for (const { symbol, companyInfo } of mopsFetchResults) {
+      const priceData = priceDataMap.get(symbol);
+
+      if (companyInfo && companyInfo.registrationNo) {
+        // Info: (20251030 - Tzuhan) ** 情況 A: 爬到公司資料 **
+        if (!regNoSet.has(companyInfo.registrationNo)) {
+          companiesToCreate.push(companyInfo);
+          regNoSet.add(companyInfo.registrationNo);
+        }
+        mopsDataMap.set(symbol, companyInfo);
+      } else {
+        // Info: (20251030 - Tzuhan) ** 情況 B: 爬不到資料 (ETF/權證) **
+        symbolsDataForUpsert.push({
+          symbol: symbol,
+          name: priceData?.name || 'N/A',
+          board: classifyBoard(symbol),
+          updated_at: new Date(),
+          company: undefined,
+        });
+      }
+    }
   }
 
-  if (prices.length > 0) {
-    await prisma.marketDailyPrice.createMany({
-      data: prices.map((p) => ({
-        market: p.market,
-        date: p.date,
-        symbol: p.symbol,
-        name: p.name,
-        tradeVolume: p.tradeVolume,
-        tradeValue: toDecimalOrNull(p.tradeValue),
-        tradeCount: p.tradeCount,
-        openPrice: toDecimalOrNull(p.openPrice),
-        highPrice: toDecimalOrNull(p.highPrice),
-        lowPrice: toDecimalOrNull(p.lowPrice),
-        closePrice: toDecimalOrNull(p.closePrice),
-        changeSign: p.changeSign,
-        changeAmount: toDecimalOrNull(p.changeAmount),
-        finalBidPrice: toDecimalOrNull(p.finalBidPrice),
-        finalBidVolume: p.finalBidVolume,
-        finalAskPrice: toDecimalOrNull(p.finalAskPrice),
-        finalAskVolume: p.finalAskVolume,
-        peRatio: toDecimalOrNull(p.peRatio),
-      })),
-      skipDuplicates: true,
-    });
-  }
-  if (summary.length > 0) {
-    await prisma.marketDailySummary.createMany({
-      data: summary.map((s) => ({
-        market: s.market,
-        date: s.date,
-        category: s.category,
-        tradeValue: toDecimalOrNull(s.tradeValue),
-        tradeVolume: s.tradeVolume,
-        tradeCount: s.tradeCount,
-      })),
-      skipDuplicates: true,
-    });
-  }
+  // Info: (20251030 - Tzuhan) --- 步驟 3: (資料庫) 在單一 Transaction 中執行所有寫入操作 ---
+  await prisma.$transaction(
+    async (tx) => {
+      // Info: (20251030 - Tzuhan) 3a: 寫入新公司 (Company)
+      if (companiesToCreate.length > 0) {
+        console.log(`[DB] 正在 Upsert ${companiesToCreate.length} 筆公司資料...`);
+        for (const companyData of companiesToCreate) {
+          await tx.company.upsert({
+            where: { registrationNo: companyData.registrationNo },
+            create: companyData,
+            update: companyData,
+          });
+        }
+      }
+
+      // Info: (20251030 - Tzuhan) 3b: 建立新代號 (StockSymbol) - 包含已關聯和未關聯的
+      const regNosToQuery = companiesToCreate.map((c) => c.registrationNo);
+      const companyMap = new Map<string, number>();
+
+      if (regNosToQuery.length > 0) {
+        // Info: (20251030 - Tzuhan) 取得剛剛寫入的公司 ID
+        const companies = await tx.company.findMany({
+          where: { registrationNo: { in: regNosToQuery } },
+          select: { id: true, registrationNo: true },
+        });
+        companies.forEach((c) => companyMap.set(c.registrationNo, c.id));
+      }
+
+      // Info: (20251030 - Tzuhan) 補完那些需要關聯 company_id 的 StockSymbol
+      for (const [symbol, companyInfo] of mopsDataMap.entries()) {
+        if (companyInfo && companyInfo.registrationNo) {
+          const companyId = companyMap.get(companyInfo.registrationNo);
+          const priceData = priceDataMap.get(symbol);
+          symbolsDataForUpsert.push({
+            symbol: symbol,
+            name: companyInfo.name || priceData?.name || 'N/A',
+            board: classifyBoard(symbol),
+            updated_at: new Date(),
+            company: companyId ? { connect: { id: companyId } } : undefined, // 關聯 ID
+          });
+        }
+      }
+
+      if (symbolsDataForUpsert.length > 0) {
+        console.log(`[DB] 正在 Upsert ${symbolsDataForUpsert.length} 筆股票代號...`);
+        for (const symbolData of symbolsDataForUpsert) {
+          const createData = {
+            symbol: symbolData.symbol,
+            name: symbolData.name,
+            board: symbolData.board,
+            company: symbolData.company,
+            updated_at: symbolData.updated_at,
+          };
+
+          const updateData = {
+            name: symbolData.name,
+            company: symbolData.company,
+            updated_at: new Date(),
+          };
+
+          await tx.stockSymbol.upsert({
+            where: { symbol: symbolData.symbol },
+            create: createData,
+            update: updateData,
+          });
+        }
+      }
+
+      // 3c: 寫入每日價格 (MarketDailyPrice)
+      if (prices.length > 0) {
+        console.log(`[DB] 正在 CreateMany ${prices.length} 筆每日價格...`);
+        await tx.marketDailyPrice.createMany({
+          data: prices.map((p) => ({
+            market: p.market,
+            date: p.date,
+            symbol: p.symbol,
+            name: p.name,
+            tradeVolume: p.tradeVolume,
+            tradeValue: toDecimalOrNull(p.tradeValue),
+            tradeCount: p.tradeCount,
+            openPrice: toDecimalOrNull(p.openPrice),
+            highPrice: toDecimalOrNull(p.highPrice),
+            lowPrice: toDecimalOrNull(p.lowPrice),
+            closePrice: toDecimalOrNull(p.closePrice),
+            changeSign: p.changeSign,
+            changeAmount: toDecimalOrNull(p.changeAmount),
+            finalBidPrice: toDecimalOrNull(p.finalBidPrice),
+            finalBidVolume: p.finalBidVolume,
+            finalAskPrice: toDecimalOrNull(p.finalAskPrice),
+            finalAskVolume: p.finalAskVolume,
+            peRatio: toDecimalOrNull(p.peRatio),
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      // 3d: 寫入每日總覽 (MarketDailySummary)
+      if (summary.length > 0) {
+        console.log(`[DB] 正在 CreateMany ${summary.length} 筆每日總覽...`);
+        await tx.marketDailySummary.createMany({
+          data: summary.map((s) => ({
+            market: s.market,
+            date: s.date,
+            category: s.category,
+            tradeValue: toDecimalOrNull(s.tradeValue),
+            tradeVolume: s.tradeVolume,
+            tradeCount: s.tradeCount,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    },
+    {
+      maxWait: 30000, // 30 秒
+      timeout: 60000, // 60 秒
+    }
+  ); // Info: (20251030 - Tzuhan) Transaction 結束
+
+  // Info: (20251030 - Tzuhan) 只有在 transaction 成功後，才更新記憶體中的 set
+  newSymbols.forEach((s) => {
+    existingSymbols.add(s);
+    // Info: (20251030 - Tzuhan) 記錄那些爬不到資料的代號
+    if (!mopsDataMap.has(s) || !mopsDataMap.get(s)) {
+      newSymbolLog.add(s);
+    }
+  });
+
   console.log(
     `[OK] ${path.basename(filePath)} → 寫入/更新 ${prices.length} 筆 (prices), ${summary.length} 筆 (summary)`
   );
@@ -310,14 +418,24 @@ async function importOneFile(
  * =================================================================
  */
 
-async function loadExistingDates(targetYear?: string): Promise<Set<string>> {
-  console.log(`🔍 正在從資料庫載入已存在的市場行情日期...`);
-  let whereClause = {};
+// Info: (20251030 - Tzuhan) 增加 fromDate 參數，只載入需要的日期
+async function loadExistingDates(fromDate: Date, targetYear?: string): Promise<Set<string>> {
+  console.log(`🔍 正在從資料庫載入 ${format(fromDate, 'yyyy-MM-dd')} 之後已存在的市場行情日期...`);
+
+  // Info: (20251030 - Tzuhan) 基礎 where 條件：只撈 fromDate 之後的
+  let whereClause: Prisma.MarketDailyPriceWhereInput = {
+    date: { gte: fromDate },
+  };
+
   if (targetYear) {
+    // Info: (20251030 - Tzuhan) 如果指定了年份，增加年份的篩選
     const year = parseInt(targetYear, 10);
-    const startDate = new Date(Date.UTC(year, 0, 1)); // Info: (20251015 - Tzuhan) 該年 1 月 1 日
-    const endDate = new Date(Date.UTC(year + 1, 0, 0, 23, 59, 59)); // Info: (20251015 - Tzuhan) 該年 12 月 31 日
-    whereClause = { date: { gte: startDate, lte: endDate } };
+    const startDate = new Date(Date.UTC(year, 0, 1));
+    const endDate = new Date(Date.UTC(year + 1, 0, 0, 23, 59, 59));
+    // Info: (20251030 - Tzuhan) 合併 fromDate 和年份的篩選
+    whereClause = {
+      AND: [whereClause, { date: { gte: startDate, lte: endDate } }],
+    };
     console.log(`   (僅篩選年份: ${targetYear})`);
   }
 
@@ -327,7 +445,7 @@ async function loadExistingDates(targetYear?: string): Promise<Set<string>> {
     distinct: ['date'],
   });
   const dateSet = new Set(dates.map((d) => format(d.date, 'yyyyMMdd')));
-  console.log(`✅ 已載入 ${dateSet.size} 個已存在的日期。`);
+  console.log(`✅ 已載入 ${dateSet.size} 個相關日期。 (效能優化)`);
   return dateSet;
 }
 
@@ -343,7 +461,6 @@ function findCsvFiles(baseDir: string, fromDate: Date, targetYear?: string): str
   const allFiles: string[] = [];
   let searchDir = baseDir;
 
-  // Info: (20251015 - Tzuhan) 如果指定了年份，直接鎖定到該年份的資料夾
   if (targetYear) {
     searchDir = path.join(baseDir, targetYear);
     console.log(`🎯 已鎖定目標資料夾: ${searchDir}`);
@@ -365,7 +482,6 @@ function findCsvFiles(baseDir: string, fromDate: Date, targetYear?: string): str
             walk(fullPath);
           } else if (/^\d{8}\.csv$/i.test(entry)) {
             const fileDateStr = path.basename(entry).slice(0, 8);
-            // Info: (20251015 - Tzuhan) 確保檔案日期在指定的處理範圍內
             if (fileDateStr >= fromDateStr) {
               allFiles.push(fullPath);
             }
@@ -409,7 +525,9 @@ async function importDailyFiles(
 
   for (const f of files) {
     const fileDateStr = path.basename(f).slice(0, 8);
+    // Info: (20251030 - Tzuhan) 這裡的 existingDates 已經被優化過了，只包含相關日期
     if (existingDates.has(fileDateStr)) {
+      console.log(`↪️  檔案 ${fileDateStr}.csv 已存在於資料庫中，略過匯入。`);
       continue;
     }
     try {
@@ -433,7 +551,7 @@ function writeNewSymbolsLog(newSymbols: Set<string>) {
   }
   const dateSuffix = format(new Date(), 'yyyyMMdd');
   const logFile = path.join(logDir, `new_symbols_to_backfill_${dateSuffix}.log`);
-  const content = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}] 發現 ${newSymbols.size} 個新代號:\n${Array.from(newSymbols).join('\n')}\n\n`;
+  const content = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}] 發現 ${newSymbols.size} 個新代號 (未能在 MOPS 找到關聯):\n${Array.from(newSymbols).join('\n')}\n\n`;
 
   fs.appendFileSync(logFile, content);
   console.log(`\n📝 已將 ${newSymbols.size} 個新發現的股票代號記錄至 ${logFile}`);
@@ -478,6 +596,7 @@ async function main() {
 
   try {
     if (fromDateRaw) {
+      // Info: (20251030 - Tzuhan) 1. 如果 --from-date 存在，優先使用
       let dateStr = fromDateRaw;
       if (/^\d{8}$/.test(dateStr)) {
         dateStr = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
@@ -487,6 +606,7 @@ async function main() {
       }
       fromDate = startOfDay(new Date(dateStr));
     } else if (fromMonthRaw) {
+      // Info: (20251030 - Tzuhan) 2. 如果 --from-month 存在，次要使用
       let year: number | undefined;
       let month: number | undefined;
       if (/^\d{6}$/.test(fromMonthRaw)) {
@@ -500,14 +620,30 @@ async function main() {
       }
       fromDate = new Date(year, month - 1, 1);
     } else if (fromYearRaw) {
+      // Info: (20251030 - Tzuhan) 3. 如果 --from-year 存在，再次要使用
       const year = parseInt(fromYearRaw, 10);
       if (isNaN(year)) {
         throw new Error('❌ 錯誤: --from-year 需為有效的年份');
       }
       targetYear = fromYearRaw;
-      fromDate = new Date(Date.UTC(year, 0, 1)); // Info: (20251015 - Tzuhan) 從該年的 1 月 1 日開始
+      fromDate = new Date(Date.UTC(year, 0, 1));
     } else {
-      fromDate = startOfDay(subDays(new Date(), 1));
+      // Info: (20251030 - Tzuhan) 4. (預設行為) 查詢資料庫決定起始日
+      console.log('ℹ️  未指定日期參數，正在查詢資料庫決定預設起始日期...');
+      const latestEntry = await prisma.marketDailyPrice.findFirst({
+        orderBy: { date: 'desc' },
+        select: { date: true },
+      });
+
+      if (latestEntry) {
+        // Info: (20251030 - Tzuhan) 從資料庫最新日期的 *下一天* 開始處理
+        // Info: (20251030 - Tzuhan) 使用 .getTime() 和 86400000 毫秒 (24小時) 來安全地增加一天 (避免時區問題)
+        const nextDay = addDays(new Date(latestEntry.date.getTime()), 1);
+        fromDate = startOfDay(nextDay);
+      } else {
+        // Info: (20251030 - Tzuhan) 資料庫為空，使用硬編碼的預設起始日 (同 download.sh)
+        fromDate = new Date(Date.UTC(2024, 0, 1)); // 2024-01-01
+      }
     }
   } catch (e) {
     console.error((e as Error).message);
@@ -522,7 +658,6 @@ async function main() {
     process.exit(1);
   }
 
-  // Info: (20251015 - Tzuhan) 處理波浪號 `~` 代表的家目錄
   if (targetPath.startsWith('~/')) {
     targetPath = path.join(process.env.HOME || '', targetPath.substring(2));
   }
@@ -535,8 +670,9 @@ async function main() {
   }
 
   try {
+    // Info: (20251030 - Tzuhan) 將計算好的 fromDate 傳入 loadExistingDates
     const [existingDates, existingSymbols] = await Promise.all([
-      loadExistingDates(targetYear),
+      loadExistingDates(fromDate, targetYear),
       loadExistingSymbols(),
     ]);
     const newSymbolsFound = await importDailyFiles(
@@ -548,15 +684,15 @@ async function main() {
     );
 
     if (newSymbolsFound.size > 0) {
+      // Info: (20251030 - Tzuhan) 現在这个日誌只會包含那些 *真的* 爬不到資料的代號 (例如 ETF)
       writeNewSymbolsLog(newSymbolsFound);
-      console.warn(`\n🟡 警告: 發現 ${newSymbolsFound.size} 個新的股票代號！`);
-      console.warn('   這些代號已被自動新增至 StockSymbol 表，但尚未關聯公司。');
       console.warn(
-        '   請更新您的公司對照表，並執行 `npx tsx scripts/003_backfill_company_ids.ts <path/to/mapping_data>` 以完成關聯。'
+        `\n🟡 警告: 發現 ${newSymbolsFound.size} 個無法自動關聯的代號 (例如 ETF 或權證)。`
       );
-      console.warn('   新代號列表:', Array.from(newSymbolsFound).join(', '));
+      console.warn('   這些代號已被新增至 StockSymbol 表，但未關聯公司。');
+      console.warn('   無法關聯的代號列表:', Array.from(newSymbolsFound).join(', '));
     } else {
-      console.log(`\n🟢 資料驗證完成，沒有發現新的股票代號。`);
+      console.log(`\n🟢 資料驗證完成，所有新代號均已自動關聯或新增。`);
     }
 
     console.log('\n✅✅✅ 市場資料匯入與驗證任務已成功完成！ ✅✅✅');
