@@ -9,14 +9,59 @@
   * **跨平台相容**：腳本可在 macOS (開發環境) 和 Ubuntu (部署環境) 上無縫運行。
   * **參數化執行**：支援指定資料夾路徑及按年、月、日等特定時間範圍進行匯入。
 
-### 核心指令概覽
+是的，你的理解完全正確。
 
-| 指令 | 對應腳本 | 說明 |
-| :--- | :--- | :--- |
-| `npm run start:crawl` | `shell/run_twse_crawler_task.sh` | **(主要指令)** 執行完整的自動化流程：先**下載**所有最新資料，然後**匯入**資料到資料庫。 |
-| `npm run import:market-data` | `scripts/004_import_market_data.ts` | **(僅匯入)** 僅執行**匯入**操作，讀取指定路徑的 CSV 檔案並寫入資料庫。 |
-| `bash shell/run_twse_crawler_task_download.sh` | (N/A) | **(僅下載)** 僅執行**下載**操作，智慧續傳 CSV 檔案。 |
-| `bash shell/setup_daily_crawler_cron.sh` | (N/A) | **(設定排程)** 將 `start:crawl` 任務自動加入 `crontab` 排程。 |
+這四個指令的層級和用途區分得很清楚。你提供的 `shell` 和 `scripts` 檔案正是這樣設計的。
+
+這是一份關於「TWSE 每日行情爬蟲任務」的指令說明文件，用於整理你的理解：
+
+-----
+
+### 指令說明
+
+用於下載和匯入 TWSE（台灣證券交易所）每日行情資料的相關指令，及其各自的用途。
+
+#### 1\. 僅執行「下載」：`run_twse_crawler_task_download.sh`
+
+  * **指令**：
+    ```bash
+    bash shell/run_twse_crawler_task_download.sh [資料夾路徑]
+    ```
+  * **用途**：
+    此腳本**只負責下載**。它會智慧地判斷需要補齊的日期（優先檢查資料庫，其次檢查本地檔案），然後從 TWSE 網站 `curl` 下載缺失日期的 CSV 檔案，並儲存到指定的資料夾路徑（預設為 `private/data/twse_data`）。
+  * **不會**：此腳本不會將資料寫入資料庫。
+
+#### 2\. 僅執行「寫入」：`004_import_market_data.ts`
+
+  * **指令**：
+    ```bash
+    npx tsx scripts/004_import_market_data.ts <資料夾路徑> [--from-date=YYYYMMDD]
+    ```
+  * **用途**：
+    此腳本**只負責寫入**。它會讀取指定資料夾路徑下的 CSV 檔案，解析其內容，然後將資料（包含每日價格、每日總結、以及新發現的股票代號）寫入 PostgreSQL 資料庫。
+  * **不會**：此腳本不會執行任何網路下載。
+
+#### 3\. 整合任務：「下載」後「寫入」：`run_twse_crawler_task.sh`
+
+  * **指令**：
+    ```bash
+    bash shell/run_twse_crawler_task.sh [資料夾路徑] [--from-date=...]
+    ```
+  * **用途**：
+    這是一個**整合腳本**，它會依序執行上述兩個步驟：
+    1.  **下載**：首先，它會呼叫 `run_twse_crawler_task_download.sh` 腳本來下載最新的 CSV 檔案。
+    2.  **寫入**：下載成功後，它會接著呼叫 `npm run import:market-data`（即 `scripts/004_import_market_data.ts`），將資料夾中的資料寫入資料庫。
+  * **備註**：`package.json` 中定義了 `import:market-data` 指令。
+
+#### 4\. 設定自動排程 (Cronjob)：`setup_daily_crawler_cron.sh`
+
+  * **指令**：
+    ```bash
+    bash shell/setup_daily_crawler_cron.sh [HH:MM]
+    ```
+  * **用途**：
+    這是一個**設定腳本**。它會將「步驟 3」的整合任務（`run_twse_crawler_task.sh`） 添加到你系統的 `crontab` 排程中，使其在每天指定的 `HH:MM` 時間自動執行（預設為 02:00）。
+  * **結果**：自動化每日的「下載」與「寫入」流程。
 
 -----
 
