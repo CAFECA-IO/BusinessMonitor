@@ -6,7 +6,7 @@ import { FiSearch } from 'react-icons/fi';
 import { IoNotificationsOffOutline } from 'react-icons/io5';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import { timestampToString } from '@/lib/common';
-import { IChatRoom, mockChatRooms } from '@/interfaces/chat';
+import { IChatRoom } from '@/interfaces/chat';
 import ChatRoomTab from '@/components/auth/chat_room_tab';
 
 const ChatRoomItem: React.FC<{ roomData: IChatRoom; openChatRoom: () => void }> = ({
@@ -15,7 +15,7 @@ const ChatRoomItem: React.FC<{ roomData: IChatRoom; openChatRoom: () => void }> 
 }) => {
   const { name, messages, roomPic, isMuted, unreadMessageCount } = roomData;
 
-  // Info: (20251030 - Julian) 取得今天的 00:00 時間戳記
+  // Info: (20251030 - Julian) 取得今天的 00:00 timestamp
   const todayStartTimestamp = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
 
   const chatRoomPic = roomPic ?? DEFAULT_USER_AVATAR;
@@ -67,8 +67,8 @@ const ChatRoomItem: React.FC<{ roomData: IChatRoom; openChatRoom: () => void }> 
 
 const ProfileMessageTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
-  // ToDo: (20251030 - Julian) Develop search message functionality
-  const [chatRooms /* setChatRooms */] = useState<IChatRoom[]>(mockChatRooms);
+  // ToDo: (20251030 - Julian) Get chat rooms from API
+  const [chatRooms /* setChatRooms */] = useState<IChatRoom[]>([]);
   const [isShowChatRoom, setIsShowChatRoom] = useState<boolean>(false);
   const [currentChatRoomId, setCurrentChatRoomId] = useState<string>('');
 
@@ -81,13 +81,18 @@ const ProfileMessageTab: React.FC = () => {
     setIsShowChatRoom(false);
   };
 
-  const chatList = chatRooms.map((room) => {
-    const openChatRoom = () => {
-      setCurrentChatRoomId(room.id);
-      setIsShowChatRoom(true);
-    };
-    return <ChatRoomItem key={room.id} roomData={room} openChatRoom={openChatRoom} />;
-  });
+  const chatList =
+    chatRooms.length > 0 ? (
+      chatRooms.map((room) => {
+        const openChatRoom = () => {
+          setCurrentChatRoomId(room.id);
+          setIsShowChatRoom(true);
+        };
+        return <ChatRoomItem key={room.id} roomData={room} openChatRoom={openChatRoom} />;
+      })
+    ) : (
+      <div className="flex items-center justify-center text-text-secondary">No Message</div>
+    );
 
   return (
     <>

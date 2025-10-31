@@ -45,7 +45,7 @@ const AnimationModal: React.FC<IAnimationModalProps> = ({ anim, text, loop }) =>
     );
 
   return (
-    <div className="fixed left-0 top-0 flex size-full items-center justify-center bg-black/50 p-20px">
+    <div className="fixed left-0 top-0 z-50 flex size-full items-center justify-center bg-black/50 p-20px">
       <div className="flex min-h-150px min-w-150px flex-col items-center gap-8px rounded-radius-l bg-white p-16px">
         {ViewToRender}
         {text && <p className="text-sm font-medium text-text-primary">{text}</p>}
