@@ -234,8 +234,11 @@ async function importOneFile(
 
   // Info: (20251030 - Tzuhan) --- 步驟 1: (網路/快取) 在交易*之外*，*並行*爬取所有新代號的 MOPS 資料 ---
   const companiesToCreate: Prisma.CompanyCreateInput[] = [];
-  // 修正：symbolsDataForUpsert 用於收集所有新代號的資料 (包含公司和ETF)
-  const symbolsDataForUpsert: (Prisma.StockSymbolCreateInput & { symbol: string })[] = [];
+  const symbolsDataForUpsert: (Omit<Prisma.StockSymbolCreateInput, 'company'> & {
+    symbol: string;
+    company_id?: number;
+  })[] = [];
+
   const mopsDataMap = new Map<string, Prisma.CompanyCreateInput | null>();
   const priceDataMap = new Map(prices.map((p) => [p.symbol, p]));
 
@@ -273,7 +276,7 @@ async function importOneFile(
           name: priceData?.name || 'N/A',
           board: classifyBoard(symbol),
           updated_at: new Date(),
-          company: undefined,
+          company_id: undefined,
         });
       }
     }
@@ -317,37 +320,58 @@ async function importOneFile(
             name: companyInfo.name || priceData?.name || 'N/A',
             board: classifyBoard(symbol),
             updated_at: new Date(),
-            company: companyId ? { connect: { id: companyId } } : undefined, // 關聯 ID
+            company_id: companyId,
           });
         }
       }
 
       if (symbolsDataForUpsert.length > 0) {
-        console.log(`[DB] 正在 Upsert ${symbolsDataForUpsert.length} 筆股票代號...`);
+        console.log(
+          `[DB] 正在循序 Upsert ${symbolsDataForUpsert.length} 筆股票代號 (使用 update/create)...`
+        );
+
         for (const symbolData of symbolsDataForUpsert) {
-          const createData = {
+          // Info: (20251030 - Tzuhan) 1. 定義 create 和 update 所需的資料
+          const createData: Prisma.StockSymbolCreateInput = {
             symbol: symbolData.symbol,
             name: symbolData.name,
             board: symbolData.board,
-            company: symbolData.company,
             updated_at: symbolData.updated_at,
+            ...(symbolData.company_id && { company_id: symbolData.company_id }),
           };
 
-          const updateData = {
+          const updateData: Prisma.StockSymbolUpdateInput = {
             name: symbolData.name,
-            company: symbolData.company,
             updated_at: new Date(),
+            ...(symbolData.company_id && { company_id: symbolData.company_id }),
           };
 
-          await tx.stockSymbol.upsert({
-            where: { symbol: symbolData.symbol },
-            create: createData,
-            update: updateData,
-          });
+          try {
+            // Info: (20251030 - Tzuhan) 2. 嘗試 UPDATE
+            const updateResult = await tx.stockSymbol.updateMany({
+              where: { symbol: symbolData.symbol },
+              data: updateData,
+            });
+
+            // Info: (20251030 - Tzuhan) 3. 如果 `updateResult.count` 為 0，代表 symbol 不存在，執行 CREATE
+            if (updateResult.count === 0) {
+              // Info: (20251030 - Tzuhan) 這裡的 create 絕對不會包含 'id' 欄位，因此 100% 安全
+              await tx.stockSymbol.create({
+                data: createData,
+              });
+            }
+          } catch (e) {
+            // Info: (20251030 - Tzuhan) (偵錯日誌)
+            console.error(`\n[DEBUG] 🔴 手動 Upsert 失敗: Symbol = ${symbolData.symbol}`);
+            console.error('[DEBUG] 嘗試 Create 的資料:', JSON.stringify(createData, null, 2));
+            console.error('[DEBUG] 嘗試 Update 的資料:', JSON.stringify(updateData, null, 2));
+            console.error('[DEBUG] 原始錯誤:', e);
+            throw e; // Info: (20251030 - Tzuhan) 拋出錯誤，中斷並回滾整個 $transaction
+          }
         }
       }
 
-      // 3c: 寫入每日價格 (MarketDailyPrice)
+      // Info: (20251030 - Tzuhan) 3c: 寫入每日價格 (MarketDailyPrice)
       if (prices.length > 0) {
         console.log(`[DB] 正在 CreateMany ${prices.length} 筆每日價格...`);
         await tx.marketDailyPrice.createMany({
@@ -375,7 +399,7 @@ async function importOneFile(
         });
       }
 
-      // 3d: 寫入每日總覽 (MarketDailySummary)
+      // Info: (20251030 - Tzuhan) 3d: 寫入每日總覽 (MarketDailySummary)
       if (summary.length > 0) {
         console.log(`[DB] 正在 CreateMany ${summary.length} 筆每日總覽...`);
         await tx.marketDailySummary.createMany({
