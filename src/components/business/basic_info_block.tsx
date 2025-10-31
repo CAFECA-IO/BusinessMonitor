@@ -55,7 +55,7 @@ const BasicInfoBlock: React.FC<IBasicInfoSkeletonProps> = ({ basicData }) => {
           <div className="relative size-150px overflow-hidden rounded-full">{isShowLogo}</div>
           {/* Info: (20250812 - Julian) Business Name & Tax ID */}
           <div className="flex flex-col items-center gap-12px">
-            <div className="flex w-full items-center gap-4px overflow-x-auto overflow-y-hidden text-2xl font-bold text-text-primary desktop:w-350px desktop:whitespace-nowrap desktop:text-h4">
+            <div className="flex w-full items-center gap-4px text-2xl font-bold text-text-primary desktop:w-350px desktop:text-h4">
               {isVerified && (
                 <Image src="/icons/verified.svg" width={32} height={32} alt="verified_icon" />
               )}
