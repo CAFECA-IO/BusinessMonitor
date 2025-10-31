@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export const timestampToString = (timestamp: number) => {
-  if (!timestamp || timestamp == 0) return { formattedDate: '-', time: '-' };
+  if (!timestamp || timestamp == 0) return { formattedDate: '-', time: '-', timeWithAMorPM: '-' };
 
   const date = new Date(timestamp * 1000);
   const year = date.getFullYear();
@@ -16,9 +16,12 @@ export const timestampToString = (timestamp: number) => {
   const hourWithDoubleDigit = hour.toString().padStart(2, '0');
   const minuteWithDoubleDigit = minute.toString().padStart(2, '0');
 
+  const isAMorPM = hour >= 12 ? 'PM' : 'AM';
+
   return {
     formattedDate: `${year}-${monthWithDoubleDigit}-${dayWithDoubleDigit}`,
     time: `${hourWithDoubleDigit}:${minuteWithDoubleDigit}`,
+    timeWithAMorPM: `${hourWithDoubleDigit}:${minuteWithDoubleDigit} ${isAMorPM}`,
   };
 };
 
