@@ -1,16 +1,16 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+238",
+  "version": "0.1.0+239",
   "private": true,
   "type": "module",
   "engines": {
     "node": "22.x"
   },
   "scripts": {
-    "gen:env": "tsx scripts/initial_env.ts",
+    "gen:env": "npx tsx scripts/initial_env.ts",
     "gen:prisma": "DISABLE_ERD=true prisma generate",
     "gen:erd": "DISABLE_ERD=false prisma generate",
-    "gen:openapi": "tsx scripts/generate_openapi.ts > openapi.json",
+    "gen:openapi": "npx tsx scripts/generate_openapi.ts > openapi.json",
     "gen:types": "tsc -p tsconfig.types.json",
     "gen:all": "npm run gen:openapi && npm run gen:types",
     "db:up": "docker compose up -d postgres",
@@ -30,13 +30,13 @@
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|jsx|ts|tsx|json)\"",
     "check-format": "prettier --ignore-path .gitignore --list-different \"**/*.+(js|jsx|ts|tsx|json)\"",
     "validate": "prettier --ignore-path .gitignore --write \"**/*.+(js|jsx|ts|tsx|json|css)\" && next lint && eslint --fix --ext .js,.jsx,.ts,.tsx . && npm run test",
-    "update-version": "tsx scripts/update_version.ts && git add package.json",
-    "import-data": "tsx scripts/import_data.ts",
+    "update-version": "npx tsx scripts/update_version.ts && git add package.json",
+    "import-data": "npx tsx scripts/import_data.ts",
     "prepare": "husky",
     "i18n:pull": "i18nexus pull && tsx scripts/move_locales.ts",
     "swarm": "next start -p 10002",
     "start:crawl": "bash shell/run_twse_crawler_task.sh",
-    "import:market-data": "tsx scripts/004_import_market_data.ts"
+    "import:market-data": "npx tsx scripts/004_import_market_data.ts"
   },
   "dependencies": {
     "@passwordless-id/webauthn": "^2.3.1",
