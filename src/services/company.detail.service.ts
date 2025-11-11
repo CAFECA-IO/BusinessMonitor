@@ -28,6 +28,13 @@ import {
   type MarketSummaryPayload, // Info: (20251007 - Tzuhan) 新增
 } from '@/validators';
 import { makePaginated } from '@/types/common';
+import {
+  isNil,
+  parseToBigInt,
+  safeSubtract,
+  safePercentageChange,
+  formatBigInt,
+} from '@/lib/decimal_utils';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -184,22 +191,47 @@ export async function getCompanyMarketData(
   ]);
 
   // Info: (20251007 - Tzuhan) 3. 從 K 線圖資料中計算當前區間的統計數據
-  let periodOpen: number | null = null;
-  let periodLow: number | null = null;
-  let periodHigh: number | null = null;
-  let periodClose: number | null = null;
+  let periodOpen: bigint | null = null;
+  let periodLow: bigint | null = null;
+  let periodHigh: bigint | null = null;
+  let periodClose: bigint | null = null;
   let periodVolume: string | null = null;
-  let periodChange: number | null = null;
-  let periodChangePct: number | null = null;
+  let periodChange: bigint | null = null;
+  let periodChangePct: bigint | null = null;
 
   if (prices.length > 0) {
-    periodOpen = prices[0].open.toNumber();
-    periodLow = Math.min(...prices.map((p) => p.low.toNumber()));
-    periodHigh = Math.max(...prices.map((p) => p.high.toNumber()));
-    periodClose = prices[prices.length - 1].close.toNumber();
-    periodChange = prices[prices.length - 1].close.toNumber() - periodOpen;
-    periodChangePct =
-      ((prices[prices.length - 1].close.toNumber() - periodOpen) / periodOpen) * 100;
+    // Info: (20251111 - Tzuhan) 1. 獲取原始字串值
+    const openStr = prices[0].open.toString();
+    const closeStr = prices[prices.length - 1].close.toString();
+
+    // Info: (20251111 - Tzuhan) 2. 解析為 BigInt 供後續 Low/High/Summary 使用
+    periodOpen = parseToBigInt(openStr);
+    periodClose = parseToBigInt(closeStr);
+
+    // Info: (20251111 - Tzuhan) 3. 計算 Low / High (這部分您寫的是對的)
+    periodLow = prices.reduce(
+      (min, p) => {
+        const current = parseToBigInt(p.low.toString());
+        if (isNil(current)) return min;
+        return isNil(min) || current < min ? current : min;
+      },
+      null as bigint | null
+    );
+
+    periodHigh = prices.reduce(
+      (max, p) => {
+        const current = parseToBigInt(p.high.toString());
+        if (isNil(current)) return max;
+        return isNil(max) || current > max ? current : max;
+      },
+      null as bigint | null
+    );
+
+    // Info: (20251111 - Tzuhan) 4. 將「原始字串」傳遞給 helper 函式
+    periodChange = safeSubtract(closeStr, openStr);
+    periodChangePct = safePercentageChange(closeStr, openStr);
+
+    // Info: (20251111 - Tzuhan) 5. 計算 Volume (BigInt 保持不變)
     periodVolume = prices
       .reduce((sum, p) => sum + BigInt(p.volume.toString()), BigInt(0))
       .toString();
@@ -207,12 +239,15 @@ export async function getCompanyMarketData(
 
   // Info: (20251007 - Tzuhan) 4. 組合 Summary 物件
   const summary: MarketSummaryPayload = {
-    open: periodOpen,
-    low: periodLow,
-    high: periodHigh,
-    close: periodClose,
-    change: periodChange,
-    changePct: periodChangePct,
+    open: Number(formatBigInt(periodOpen, 2)) || null,
+    low: Number(formatBigInt(periodLow, 2)) || null,
+    high: Number(formatBigInt(periodHigh, 2)) || null,
+    close: Number(formatBigInt(periodClose, 2)) || null,
+
+    // Info: (20251111 - Tzuhan) 這裡將得到精確的 -0.55
+    change: Number(formatBigInt(periodChange, 2)) || null,
+    // Info: (20251111 - Tzuhan) 這裡將得到精確的百分比，例如 -1.32
+    changePct: Number(formatBigInt(periodChangePct, 2)) || null,
     volume: periodVolume,
     fiftyTwoWeekHigh: summaryStats.fiftyTwoWeekHigh?.toNumber() ?? null,
     fiftyTwoWeekLow: summaryStats.fiftyTwoWeekLow?.toNumber() ?? null,
