@@ -17,7 +17,6 @@ if [ "$LOCAL" != "$REMOTE" ]; then
   echo "New commits detected. Pulling latest changes..."
   git pull
   echo "Installing dependencies..."
-  rm -rf node_modules
   npm install
   echo "Running build..."
   npm run build
