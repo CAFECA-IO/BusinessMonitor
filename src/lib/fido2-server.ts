@@ -47,6 +47,12 @@ export const generateRegistrationOptions = (params: { name: string; userHandle: 
       userVerification: 'required' as const,
       residentKey: 'required' as const, // Info: (20250917 - Tzuhan) 啟用「可發現憑證」
     },
+    pubKeyCredParams: [
+      {
+        type: 'public-key' as const,
+        alg: -7, // Info: (20251112 - Tzuhan) ES256 (P-256)
+      },
+    ],
   };
   return options;
 };
