@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 定義要檢查的應用程式名稱
-APP_NAME="CAFECA"
+APP_NAME="cafeca.io"
 
 # 設定工作目錄
 cd /workspace/BusinessMonitor/
