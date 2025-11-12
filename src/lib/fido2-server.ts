@@ -50,7 +50,7 @@ export const generateRegistrationOptions = (params: { name: string; userHandle: 
     pubKeyCredParams: [
       {
         type: 'public-key' as const,
-        alg: -7, // ES256 (P-256)
+        alg: -7, // Info: (20251112 - Tzuhan) ES256 (P-256)
       },
     ],
   };
