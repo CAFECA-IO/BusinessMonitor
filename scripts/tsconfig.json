@@ -1,0 +1,20 @@
+/* Based on https://github.com/tsconfig/bases/blob/501da2bcd640cf95c95805783e1012b992338f28/bases/node22.json */
+{
+  "compilerOptions": {
+    "lib": ["es2023"],
+    "module": "node16",
+    "target": "es2022",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node16",
+    "outDir": "dist"
+  },
+  "include": [
+    "./**/*.ts", // 包含 scripts 裡的所有 .ts 檔
+    "../hardhat.config.ts" // 讓 TS 能讀到 Hardhat 設定
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

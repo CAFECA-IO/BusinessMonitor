@@ -41,11 +41,16 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/app/page.tsx",
-    "scripts/**/*.ts",
+    // "scripts/**/*.ts", 
     ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    ".next"
+    ".next",
+    "scripts",
+    "scripts",
+    "test",
+    "ignition",
+    "dist"
   ]
 }
