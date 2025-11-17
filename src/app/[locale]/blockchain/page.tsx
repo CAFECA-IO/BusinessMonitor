@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import Layout from '@/components/common/layout';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';

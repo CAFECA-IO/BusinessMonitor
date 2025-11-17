@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fido2ClientService } from '@/lib/fido2-client';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import Link from 'next/link';
 
 // Info: (20251001-tzuhan) 輔助元件：用於優雅地顯示 JSON 結果

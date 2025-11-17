@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
 import Link from 'next/link';
 import Pusher from 'pusher-js';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;

@@ -1,4 +1,4 @@
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import Pusher from 'pusher-js';
 
 let pusherInstance: Pusher | undefined;

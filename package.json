@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+243",
+  "version": "0.1.0+244",
   "private": true,
   "type": "module",
   "engines": {
@@ -39,6 +39,8 @@
     "import:market-data": "npx tsx scripts/004_import_market_data.ts"
   },
   "dependencies": {
+    "@account-abstraction/contracts": "^0.6.0",
+    "@openzeppelin/contracts": "^4.9.6",
     "@passwordless-id/webauthn": "^2.3.1",
     "@prisma/client": "^6.16.1",
     "@simplewebauthn/server": "^13.2.2",

@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { getAgent } from '@/__tests__/helpers/agent';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { ApiCode } from '@/lib/status';
 
 const agent = getAgent();

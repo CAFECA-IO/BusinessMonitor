@@ -8,7 +8,7 @@ import { FaUserLarge } from 'react-icons/fa6';
 import { FiUpload } from 'react-icons/fi';
 import { GiPerspectiveDiceSixFacesOne } from 'react-icons/gi';
 import { fido2ClientService } from '@/lib/fido2-client';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import Button from '@/components/common/button';
