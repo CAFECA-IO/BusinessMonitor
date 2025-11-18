@@ -3,7 +3,7 @@ import { network } from 'hardhat';
 
 const { viem } = await network.connect({
   network: 'isuncoin_mainnet',
-  chainType: 'lv',
+  chainType: 'l1',
 });
 
 console.log('Sending transaction using the OP chain type');
