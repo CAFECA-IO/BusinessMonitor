@@ -2,8 +2,8 @@ import 'hardhat/config';
 import { network } from 'hardhat';
 
 const { viem } = await network.connect({
-  network: 'hardhatOp',
-  chainType: 'op',
+  network: 'isuncoin_mainnet',
+  chainType: 'lv',
 });
 
 console.log('Sending transaction using the OP chain type');
@@ -13,13 +13,13 @@ const [senderClient] = await viem.getWalletClients();
 
 console.log('Sending 1 wei from', senderClient.account.address, 'to itself');
 
-const l1Gas = await publicClient.estimateL1Gas({
+const gas = await publicClient.estimateGas({
   account: senderClient.account.address,
   to: senderClient.account.address,
   value: 1n,
 });
 
-console.log('Estimated L1 gas:', l1Gas);
+console.log('Estimated L1 gas:', gas);
 
 console.log('Sending L2 transaction');
 const tx = await senderClient.sendTransaction({
