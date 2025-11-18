@@ -1,5 +1,5 @@
 import { getAgent } from '@/__tests__/helpers/agent';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 
 const agent = getAgent();
 

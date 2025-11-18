@@ -1,6 +1,6 @@
 {
   "name": "BusinessMonitor",
-  "version": "0.1.0+242",
+  "version": "0.1.0+247",
   "private": true,
   "type": "module",
   "engines": {
@@ -39,6 +39,8 @@
     "import:market-data": "npx tsx scripts/004_import_market_data.ts"
   },
   "dependencies": {
+    "@account-abstraction/contracts": "^0.6.0",
+    "@openzeppelin/contracts": "^4.9.6",
     "@passwordless-id/webauthn": "^2.3.1",
     "@prisma/client": "^6.16.1",
     "@simplewebauthn/server": "^13.2.2",
@@ -82,6 +84,8 @@
     "@eslint/eslintrc": "^3",
     "@mermaid-js/mermaid-cli": "^11.6.0",
     "@next/eslint-plugin-next": "^15.5.3",
+    "@nomicfoundation/hardhat-ignition": "^3.0.5",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.1",
     "@tailwindcss/postcss": "^4.1.11",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
@@ -91,7 +95,7 @@
     "@types/jest": "^30.0.0",
     "@types/json2csv": "^5.0.7",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^20.19.24",
+    "@types/node": "^22.19.1",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -109,7 +113,9 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-tailwindcss": "^3.18.2",
+    "forge-std": "github:foundry-rs/forge-std#v1.9.4",
     "globals": "^16.4.0",
+    "hardhat": "^3.0.14",
     "husky": "^9.1.7",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
@@ -122,7 +128,8 @@
     "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2",
-    "typescript-eslint": "^8.44.0"
+    "typescript": "~5.8.0",
+    "typescript-eslint": "^8.44.0",
+    "viem": "^2.39.0"
   }
 }

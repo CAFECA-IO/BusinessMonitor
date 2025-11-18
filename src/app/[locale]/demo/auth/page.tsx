@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { fido2ClientService } from '@/lib/fido2-client';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { BM_URL } from '@/constants/url';
 
 // Info: (20250925 - Tzuhan) 輔助元件：用於優雅地顯示 JSON 結果

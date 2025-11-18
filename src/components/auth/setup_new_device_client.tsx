@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Pusher from 'pusher-js';
 import { fido2ClientService } from '@/lib/fido2-client';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 import { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
 import { useAuth } from '@/contexts/auth_context';

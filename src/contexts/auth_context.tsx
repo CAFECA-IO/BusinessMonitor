@@ -2,7 +2,7 @@
 
 import { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import type { IdentityAccount } from '@prisma/client';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { logger } from '@/lib/logger';
 
 interface IAuthContext {

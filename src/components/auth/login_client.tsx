@@ -7,7 +7,7 @@ import { TbFaceId } from 'react-icons/tb';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { fido2ClientService } from '@/lib/fido2-client';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import Button from '@/components/common/button';

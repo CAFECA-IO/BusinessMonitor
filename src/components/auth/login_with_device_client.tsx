@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import QRCode from 'qrcode';
 import Pusher from 'pusher-js';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';

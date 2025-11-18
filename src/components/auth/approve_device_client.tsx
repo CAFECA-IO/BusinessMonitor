@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FiMapPin } from 'react-icons/fi';
 import { HiOutlineDeviceTablet } from 'react-icons/hi';
 import { fido2ClientService } from '@/lib/fido2-client';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { useAuth } from '@/contexts/auth_context';
 import { BM_URL } from '@/constants/url';
 import Button from '@/components/common/button';

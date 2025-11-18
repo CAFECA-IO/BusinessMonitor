@@ -9,7 +9,7 @@ import { FiMonitor } from 'react-icons/fi';
 import { LuIdCard, LuScanLine, LuSettings } from 'react-icons/lu';
 import { IoChatbubbleEllipsesOutline } from 'react-icons/io5';
 import { PiSignOut } from 'react-icons/pi';
-import { routes } from '@/config/api-routes';
+import { routes } from '@/config/api_routes';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import QRCodeScanner from '@/components/auth/qr_code_scanner';
