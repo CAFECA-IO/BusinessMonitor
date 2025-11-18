@@ -56,7 +56,7 @@ const tslintConfigs = [
 
   // Info: (20251113 - Tzuhan) --- CONFIG 1: Next.js / React App (src) ---
   {
-    files: ['src/**/*.{js,mjs,cjs,ts,jsx,tsx}', 'next.config.ts'], // <-- 鎖定 Next.js 相關檔案
+    files: ['src/**/*.{js,mjs,cjs,ts,jsx,tsx}', 'next.config.ts'], // Info: (20251113 - Tzuhan) <-- 鎖定 Next.js 相關檔案
     plugins: {
       react,
       'react-hooks': reactHooks,
