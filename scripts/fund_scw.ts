@@ -6,7 +6,7 @@ const rpcUrl = process.env.ISUNCOIN_MAINNET_RPC_URL;
 const privateKey = process.env.ISUNCOIN_PRIVATE_KEY as `0x${string}`;
 
 // Info: (20251118 - Tzuhan) 目標 SCW 地址 (可替換為任何有效地址)
-const targetScwAddress = '0x640D6725b687d630fe364c7e47Aca116B74E7007';
+const targetScwAddress = '0xaABd043Ab33a83aB5Ea89f61bbc1Ab5963163798';
 
 async function main() {
   if (!privateKey || !rpcUrl) {

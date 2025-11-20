@@ -5,7 +5,7 @@ import { format, addDays, startOfDay } from 'date-fns';
 import { parse } from 'csv-parse/sync';
 import iconv from 'iconv-lite';
 import { z } from 'zod';
-import { fetchCompanyDataBySymbol } from 'scripts/lib/fetch_mops'; // Info: (20251030 - Tzuhan)匯入 MOPS 爬蟲
+import { fetchCompanyDataBySymbol } from './lib/fetch_mops.js'; // Info: (20251030 - Tzuhan)匯入 MOPS 爬蟲
 
 const prisma = new PrismaClient();
 
