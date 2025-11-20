@@ -1,4 +1,4 @@
-// Info: (20251118 - Tzuhan) SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
 // Info: (20251118 - Tzuhan) 從 node_modules/@account-abstraction 導入
@@ -24,27 +24,32 @@ contract SCW is IAccount {
     }
 
     /**
-     * Info: (20251118 - Tzuhan) Validates a user operation.
-     * Info: (20251118 - Tzuhan) This is a stub and needs implementation.
-     * * * */
+     * Info: (20251120 - Tzuhan)
+     * 驗證 UserOperation。
+     * 關鍵修正：移除了 'pure'，並加入了付費邏輯。
+     */
     function validateUserOp(
-        UserOperation calldata /*Info: (20251118 - Tzuhan)  userOp */,
-        bytes32 /* Info: (20251118 - Tzuhan) userOpHash */,
-        uint256 /* Info: (20251118 - Tzuhan) missingAccountFunds */
-    ) external pure returns (uint256) {
-        // Info: (20251118 - Tzuhan) [PoC 2 - Stub]
-        // Info: (20251118 - Tzuhan) 暫時返回 0 (VALIDATION_SUCCESS)
-        // Info: (20251118 - Tzuhan) 真正的實作將在 Phase 2 中完成
-        return 0; 
+        UserOperation calldata,
+        bytes32,
+        uint256 missingAccountFunds
+    ) external override returns (uint256) {
+        // Info: (20251120 - Tzuhan) 這裡依舊是 Stub (不驗證簽名，直接回傳 0)
+        // Info: (20251120 - Tzuhan) 但增加了 "付費" 的動作
+        
+        // Info: (20251120 - Tzuhan) 只有 EntryPoint 可以呼叫此函式
+        require(msg.sender == address(entryPoint), "SCW: unauthorized");
+
+        // Info: (20251120 - Tzuhan) 如果 EntryPoint 要求預付款，我們就付給它
+        if (missingAccountFunds != 0) {
+            (bool success, ) = payable(msg.sender).call{value: missingAccountFunds}("");
+            (success); // Info: (20251120 - Tzuhan) 忽略回傳值，如果失敗 EntryPoint 會自己處理
+        }
+
+        return 0; // Info: (20251120 - Tzuhan) 驗證成功
     }
 
-    /**
-     * Info: (20251118 - Tzuhan) 執行交易。只有 SCW 自己 (透過 EntryPoint) 可以呼叫。
-     */
     function execute(address dest, uint256 value, bytes calldata func) external {
-        // Info: (20251118 - Tzuhan) 確保只有 EntryPoint (或自己) 可以呼叫
         require(msg.sender == address(this) || msg.sender == address(entryPoint), "SCW: unauthorized");
-        
         (bool success, ) = dest.call{value: value}(func);
         require(success, "SCW: execution failed");
     }

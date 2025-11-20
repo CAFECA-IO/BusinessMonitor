@@ -6,3 +6,4 @@ export * from '@/validators/news';
 export * from '@/validators/announcements';
 export * from '@/validators/comments';
 export * from '@/validators/auth';
+export * from '@/validators/erc4337';
