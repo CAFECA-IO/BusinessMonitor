@@ -8,8 +8,8 @@ import type { RegisterOptions, RegistrationJSON } from '@passwordless-id/webauth
 
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
 
-const ENTRY_POINT_ADDRESS = '0x79a1C201a58537d0448D78fa297a242884613Dca';
-const SCW_ADDRESS = '0xd2dD53816B70668621b08176E86a16cd9A2167af';
+const ENTRY_POINT_ADDRESS = '0x419E0A9B97310cB9CE9745d32F2E3de8444144df';
+const SCW_ADDRESS = '0x640D6725b687d630fe364c7e47Aca116B74E7007';
 
 type IApiSuccessResponse = IApiResponse<RegisterOptions>;
 type StatusType = 'idle' | 'loading' | 'success' | 'error';

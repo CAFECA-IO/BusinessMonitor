@@ -12,6 +12,7 @@ const entryPointAbi = parseAbi([
   'struct UserOperation { address sender; uint256 nonce; bytes initCode; bytes callData; uint256 callGasLimit; uint256 verificationGasLimit; uint256 preVerificationGas; uint256 maxFeePerGas; uint256 maxPriorityFeePerGas; bytes paymasterAndData; bytes signature; }',
   'function handleOps(UserOperation[] calldata ops, address payable beneficiary)',
   'function getSenderAddress(bytes calldata initCode) external view returns (address)',
+  'error FailedOp(uint256 opIndex, string reason)',
 ]);
 
 // Info: (20251118 - Tzuhan) 從 .env 讀取 isuncoin 主網的 Relayer (Bundler) 私鑰
