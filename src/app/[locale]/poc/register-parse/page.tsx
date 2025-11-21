@@ -4,15 +4,19 @@ import { useState } from 'react';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { bufferToBase64Url, ICoordinates, parsePublicKeyCoordinates } from '@/lib/fido2-parse';
 import type { IApiResponse } from '@/lib/response';
-import type { RegisterOptions, RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
+import type {
+  RegisterOptions,
+  RegistrationJSON,
+  AuthenticateOptions,
+} from '@passwordless-id/webauthn/dist/esm/types';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
 import { createPublicClient, http, parseAbi } from 'viem';
 
-const ENTRY_POINT_ADDRESS = '0xBe9e7DA48681AeC4f973F724394113da255480Df';
-const SCW_ADDRESS = '0xaABd043Ab33a83aB5Ea89f61bbc1Ab5963163798';
-const RPC_URL = 'https://mainnet.isuncoin.com';
+const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as `0x${string}`;
+const SCW_ADDRESS = (process.env.NEXT_PUBLIC_SCW_ADDRESS || '') as `0x${string}`;
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 const entryPointAbi = parseAbi([
   'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
@@ -21,6 +25,21 @@ const entryPointAbi = parseAbi([
 
 type IApiSuccessResponse = IApiResponse<RegisterOptions>;
 type StatusType = 'idle' | 'loading' | 'success' | 'error';
+
+// Info: (20251120 - Tzuhan) 輔助函式：將 Base64URL 轉為 BigInt 十進位字串
+const toBigInt = (base64Url: string) => {
+  try {
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(base64);
+    let hex = '0x';
+    for (let i = 0; i < bin.length; i++) {
+      hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
+    }
+    return BigInt(hex).toString();
+  } catch (e) {
+    return `Error converting ${(e as Error).message}`;
+  }
+};
 
 export default function PocRegisterAndParsePage() {
   const [logs, setLogs] = useState<string[]>([]);
@@ -35,7 +54,7 @@ export default function PocRegisterAndParsePage() {
     setLogs((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${log}`]);
   };
 
-  // Info: (20251118 - Tzuhan) --- PoC 1.x 函式 (保持不變) ---
+  // Info: (20251118 - Tzuhan) --- PoC 1.x 函式 (註冊新 Passkey) ---
   const handleRegister = async () => {
     setIsLoading(true);
     setXyCoords(null);
@@ -78,7 +97,7 @@ export default function PocRegisterAndParsePage() {
         // Info: (20251111 - Tzuhan) 4. [PoC 1-2 AC #3] 瀏覽器 console.log 正確輸出了 { x: '...', y: '...' }
         addLog(`[PoC 1.2] SUCCESS! Found coordinates. x: ${coords.x}, y: ${coords.y}`);
         setXyCoords(coords);
-        setStatusMessage('✅ PoC 1.2 Success!');
+        setStatusMessage('✅ Passkey Registered! (請更新 .env 並重新部署合約)');
         setStatusType('success');
       } else {
         throw new Error('Failed to parse coordinates from attestationObject.');
@@ -103,23 +122,32 @@ export default function PocRegisterAndParsePage() {
     }
   };
 
-  const toBigInt = (base64Url: string) => {
+  // Info: (20251120 - Tzuhan) --- [PoC 3a] 1.5 檢查現有 Passkey ---
+  const handleLoginCheck = async () => {
+    setIsLoading(true);
+    setLogs([]);
+    setStatusMessage('Checking existing Passkey...');
     try {
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const bin = atob(base64);
-      let hex = '0x';
-      for (let i = 0; i < bin.length; i++) {
-        hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
-      }
-      return BigInt(hex).toString();
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Unknown error';
-      addLog(`[toBigInt] FAILED: ${msg}`);
-      return 'Error converting';
+      // Info: (20251120 - Tzuhan) 隨機挑戰，僅用於喚起 Passkey 視窗確認
+      const randomChallenge = bufferToBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+      const options: AuthenticateOptions = {
+        challenge: randomChallenge,
+        userVerification: 'required',
+      };
+      await fido2ClientService.startLogin(options);
+      addLog('[Login Check] Success! 您擁有有效的 Passkey。');
+      setStatusMessage('✅ Passkey Available (可進行交易)');
+      setStatusType('success');
+    } catch (e) {
+      addLog(`[Login Check] Failed: ${(e as Error).message}`);
+      setStatusMessage('❌ No valid Passkey found');
+      setStatusType('error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Info: (20251120 - Tzuhan) --- [PoC 3a] 真實簽名測試 ---
+  // Info: (20251120 - Tzuhan) --- [PoC 3a] 真實簽名測試 (發送交易) ---
   const handleRealSignatureTest = async () => {
     setIsLoading(true);
     setLogs([]);
@@ -149,25 +177,22 @@ export default function PocRegisterAndParsePage() {
       addLog(`[PoC 3a] Nonce: ${nonce}`);
 
       // Info: (20251120 - Tzuhan) 2. 建構 UserOperation (尚未簽名)
-      // Info: (20251120 - Tzuhan) 注意：signature 先填入假的 '0x'，因為計算 Hash 時不包含 signature (或者填入預設長度)
-      // Info: (20251120 - Tzuhan) 但 EntryPoint.getUserOpHash 會忽略 signature 欄位
       const unsignedUserOp: UserOperation = {
         sender: SCW_ADDRESS as `0x${string}`,
         nonce: nonce,
         initCode: '0x',
-        callData: '0x', // Info: (20251120 - Tzuhan) 這裡可以放真正的交易，例如轉帳。目前先放 0x (什麼都不做)
+        callData: '0x', // Info: (20251120 - Tzuhan) 目前先放 0x (什麼都不做)
         callGasLimit: BigInt(100_000),
         verificationGasLimit: BigInt(500_000), // Info: (20251120 - Tzuhan) 驗證 FIDO2 需要較多 Gas
         preVerificationGas: BigInt(50_000),
-        maxFeePerGas: BigInt(10_000_000_000),
-        maxPriorityFeePerGas: BigInt(2_000_000_000),
+        maxFeePerGas: BigInt(10_000_000_000), // 10 Gwei
+        maxPriorityFeePerGas: BigInt(2_000_000_000), // 2 Gwei
         paymasterAndData: '0x',
         signature: '0x', // 暫位符
       };
 
       // Info: (20251120 - Tzuhan) 3. 計算 UserOpHash (這就是我們要簽署的 Challenge)
       addLog('[PoC 3a] 2. Calculating UserOpHash...');
-      // Info: (20251120 - Tzuhan) 為了呼叫合約，我們需要把 UserOp 轉成 Tuple 格式
       const userOpTuple = {
         ...unsignedUserOp,
         sender: SCW_ADDRESS as `0x${string}`,
@@ -185,7 +210,7 @@ export default function PocRegisterAndParsePage() {
       });
       addLog(`[PoC 3a] UserOpHash (Challenge): ${userOpHash}`);
 
-      // Info: (20251120 - Tzuhan) 4. 喚起 Passkey 進行簽名 (navigator.credentials.get)
+      // Info: (20251120 - Tzuhan) 4. 喚起 Passkey 進行簽名
       addLog('[PoC 3a] 3. Prompting Passkey for signature...');
       setStatusMessage('請使用 FaceID / 指紋進行簽名...');
 
@@ -193,16 +218,12 @@ export default function PocRegisterAndParsePage() {
       const challengeBase64 = bufferToBase64Url(Buffer.from(userOpHash.slice(2), 'hex'));
       setChallengeBase64(challengeBase64);
 
-      // Info: (20251120 - Tzuhan) 呼叫瀏覽器 API
-      // Info: (20251120 - Tzuhan) 注意：這裡我們直接使用原生 API，或者您也可以用 fido2ClientService.startLogin
-      // Info: (20251120 - Tzuhan) 但我們需要傳入特定的 challenge。fido2ClientService 可能封裝了 challenge 獲取邏輯。
-      // Info: (20251120 - Tzuhan) 為了 PoC 精確控制，我們這裡直接呼叫原生 API。
       const assertion = (await navigator.credentials.get({
         publicKey: {
           challenge: Buffer.from(userOpHash.slice(2), 'hex'), // 傳入 UserOpHash 作為 challenge
           rpId: window.location.hostname, // Info: (20251120 - Tzuhan) 必須與註冊時一致
           userVerification: 'required',
-          allowCredentials: [], // Info: (20251120 - Tzuhan) 空陣列表示允許任何已註冊的 Passkey (Discoverable Credential)
+          allowCredentials: [], // Info: (20251120 - Tzuhan) 空陣列表示允許任何已註冊的 Passkey
         },
       })) as PublicKeyCredential;
 
@@ -403,7 +424,7 @@ export default function PocRegisterAndParsePage() {
               disabled={isLoading}
               className="w-full rounded-lg bg-purple-600 px-6 py-4 font-semibold text-white shadow-lg hover:bg-purple-700 disabled:bg-gray-400"
             >
-              1. Register Passkey (If not yet)
+              1. Register New Passkey (Get Public Key)
             </button>
 
             <button
@@ -414,12 +435,23 @@ export default function PocRegisterAndParsePage() {
               {isLoading ? 'Processing...' : 'Run PoC 2.4 + 2.5 (Test Bundler)'}
             </button>
 
+            {/* Info: (20251120 - Tzuhan) 新增按鈕: 檢查現有鑰匙 */}
+            <button
+              onClick={handleLoginCheck}
+              disabled={isLoading}
+              className="w-full rounded-lg bg-gray-600 px-6 py-2 text-sm font-medium text-white shadow hover:bg-gray-700 disabled:bg-gray-400"
+            >
+              (Optional) Check Existing Passkey
+            </button>
+
+            <div className="my-2 border-b border-gray-200"></div>
+
             <button
               onClick={handleRealSignatureTest}
               disabled={isLoading}
               className="w-full rounded-lg bg-green-600 px-6 py-4 font-semibold text-white shadow-lg hover:bg-green-700 disabled:bg-gray-400"
             >
-              2. Send Real Transaction (PoC 3a)
+              2. Send Real Transaction (Use Registered Key)
             </button>
           </div>
         </div>
@@ -448,10 +480,10 @@ export default function PocRegisterAndParsePage() {
               <hr className="my-3 border-green-300" />
               <h3 className="mb-2 font-bold text-green-700">👇 請複製到 .env (Deploy config)</h3>
               <div className="space-y-2 overflow-x-auto rounded bg-slate-100 p-2">
-                <p className="font-mono text-xs text-slate-600">
+                <p className="break-all font-mono text-xs text-slate-600">
                   SCW_OWNER_PUBLIC_KEY_X=&quot;{toBigInt(xyCoords.x)}&quot;
                 </p>
-                <p className="font-mono text-xs text-slate-600">
+                <p className="break-all font-mono text-xs text-slate-600">
                   SCW_OWNER_PUBLIC_KEY_Y=&quot;{toBigInt(xyCoords.y)}&quot;
                 </p>
               </div>

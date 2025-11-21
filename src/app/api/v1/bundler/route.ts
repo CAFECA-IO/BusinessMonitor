@@ -19,7 +19,7 @@ const entryPointAbi = parseAbi([
 const RELAYER_PRIVATE_KEY = process.env.ISUNCOIN_PRIVATE_KEY as `0x${string}` | undefined;
 
 // Info: (20251118 - Tzuhan) 從 .env 讀取 isuncoin 主網的 RPC URL
-const rpcUrl = process.env.ISUNCOIN_MAINNET_RPC_URL;
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
 
 /**
  * Info: (20251118 - Tzuhan)
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       throw new Error('Server configuration error: ISUNCOIN_PRIVATE_KEY is not set in .env');
     }
     if (!rpcUrl) {
-      throw new Error('Server configuration error: ISUNCOIN_MAINNET_RPC_URL is not set in .env');
+      throw new Error('Server configuration error: NEXT_PUBLIC_RPC_URL is not set in .env');
     }
 
     // Info: (20251118 - Tzuhan) 1. 設定 Viem 客戶端連接至 isuncoin_mainnet

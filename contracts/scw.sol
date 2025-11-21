@@ -3,9 +3,8 @@ pragma solidity ^0.8.28;
 
 import "@account-abstraction/contracts/interfaces/IAccount.sol";
 import "@account-abstraction/contracts/core/EntryPoint.sol";
-
-// Info: (20251120 - Tzuhan) 引入 FCL_ecdsa 庫 (它封裝了 FCL_Elliptic_ZZ 的複雜操作)
 import "./lib/FCL_ecdsa.sol";
+import "./lib/utils/Base64Url.sol";
 
 contract SCW is IAccount {
     EntryPoint public immutable entryPoint;
@@ -51,18 +50,21 @@ contract SCW is IAccount {
     function _verifyWebAuthnSignature(bytes calldata signature, bytes32 userOpHash) internal view returns (bool) {
         WebAuthnSignature memory sig = abi.decode(signature, (WebAuthnSignature));
 
-        // Info: (20251120 - Tzuhan) 1. 驗證 Challenge
-        string memory challengeBase64 = _toBase64URL(abi.encodePacked(userOpHash));
+        // Info: (20251121 - Tzuhan) 1. 驗證 Challenge (使用 Base64Url.encode 確保格式正確)
+        string memory challengeBase64 = Base64Url.encode(abi.encodePacked(userOpHash));
         bytes memory challengeBytes = bytes(challengeBase64);
 
+        // Info: (20251121 - Tzuhan) 防止越界讀取
         if (sig.challengeLocation + challengeBytes.length > sig.clientDataJSON.length) return false;
+        
+        // Info: (20251121 - Tzuhan) 比對內容
         for (uint i = 0; i < challengeBytes.length; i++) {
             if (sig.clientDataJSON[sig.challengeLocation + i] != challengeBytes[i]) {
-                return false;
+                return false; // Info: (20251121 - Tzuhan) Challenge 不匹配 (這就是導致 AA24 的原因)
             }
         }
 
-        // Info: (20251120 - Tzuhan) 2. 驗證 Type
+        // Info: (20251121 - Tzuhan) 2. 驗證 Type
         bytes memory expectedType = bytes("webauthn.get");
         if (sig.responseTypeLocation + expectedType.length > sig.clientDataJSON.length) return false;
         for (uint i = 0; i < expectedType.length; i++) {
@@ -71,40 +73,11 @@ contract SCW is IAccount {
             }
         }
 
-        // Info: (20251120 - Tzuhan) 3. 驗證簽名
+        // Info: (20251121 - Tzuhan) 3. 驗證 P-256 簽名
         bytes32 clientDataHash = sha256(sig.clientDataJSON);
         bytes32 messageHash = sha256(abi.encodePacked(sig.authenticatorData, clientDataHash));
-
         // Info: (20251120 - Tzuhan) 使用 FCL_ecdsa.ecdsa_verify
         return FCL_ecdsa.ecdsa_verify(messageHash, sig.r, sig.s, ownerPubKeyX, ownerPubKeyY);
-    }
-
-    function _toBase64URL(bytes memory data) internal pure returns (string memory) {
-        string memory TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-        bytes memory result = new bytes(43);
-        uint256 len = data.length;
-        uint256 i = 0;
-        uint256 j = 0;
-
-        for (; i < len - 2; i += 3) {
-            uint256 n = (uint8(data[i]) << 16) | (uint8(data[i + 1]) << 8) | uint8(data[i + 2]);
-            result[j++] = bytes(TABLE)[(n >> 18) & 0x3F];
-            result[j++] = bytes(TABLE)[(n >> 12) & 0x3F];
-            result[j++] = bytes(TABLE)[(n >> 6) & 0x3F];
-            result[j++] = bytes(TABLE)[n & 0x3F];
-        }
-        
-        if (i < len) {
-            uint256 n = (uint8(data[i]) << 16) | (i + 1 < len ? (uint8(data[i + 1]) << 8) : 0);
-            result[j++] = bytes(TABLE)[(n >> 18) & 0x3F];
-            result[j++] = bytes(TABLE)[(n >> 12) & 0x3F];
-            if (i + 1 < len) {
-               result[j++] = bytes(TABLE)[(n >> 6) & 0x3F];
-            } else {
-               result[j++] = bytes(TABLE)[(n >> 6) & 0x3F]; 
-            }
-        }
-        return string(result);
     }
 
     function execute(address dest, uint256 value, bytes calldata func) external {
