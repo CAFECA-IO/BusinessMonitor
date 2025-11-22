@@ -3,8 +3,8 @@ pragma solidity ^0.8.28;
 
 import "@account-abstraction/contracts/interfaces/IAccount.sol";
 import "@account-abstraction/contracts/core/EntryPoint.sol";
-import "./lib/FCL_ecdsa.sol";
-import "./lib/utils/Base64Url.sol";
+import "./lib/fcl_ecdsa.sol";
+import "./lib/utils/base64url.sol";
 
 contract SCW is IAccount {
     EntryPoint public immutable entryPoint;
