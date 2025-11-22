@@ -21,7 +21,7 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 
-import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
+import {FCL_Elliptic_ZZ} from "./fcl_elliptic.sol";
 
 
 
