@@ -17,12 +17,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19 <0.9.0;
 
-//import "./FCL_ed25519.sol" as Curve;
-import "./FCL_sha512.sol";
-import "./FCL_edwards.sol";
+//import "./fcl_ed25519.sol" as Curve;
+import "./fcl_sha512.sol";
+import "./fcl_edwards.sol";
 
 
-import {p, gx, gy, n, d, deux_d, MINUS_2, MINUS_1, MODEXP_PRECOMPILE} from "./FCL_ed25519.sol";
+import {p, gx, gy, n, d, deux_d, MINUS_2, MINUS_1, MODEXP_PRECOMPILE} from "./fcl_ed25519.sol";
 
 library EDDSA {
 
