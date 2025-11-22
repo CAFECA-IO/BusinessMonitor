@@ -20,11 +20,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19 <0.9.0;
 
-import {Base64Url} from "./utils/Base64Url.sol";
-import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
-import {FCL_ecdsa} from "./FCL_ecdsa.sol";
+import {Base64Url} from "./utils/base64url.sol";
+import {FCL_Elliptic_ZZ} from "./fcl_elliptic.sol";
+import {FCL_ecdsa} from "./fcl_ecdsa.sol";
 
-import {FCL_ecdsa_utils} from "./FCL_ecdsa_utils.sol";
+import {FCL_ecdsa_utils} from "./fcl_ecdsa_utils.sol";
 
 library FCL_WebAuthn {
     error InvalidAuthenticatorData();
