@@ -17,8 +17,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19 <0.9.0;
 
-import "./FCL_ed25519.sol" as Curve;
-import {p, gx, gy, n, d, deux_d, MINUS_2, MINUS_1, MODEXP_PRECOMPILE, SqrtMod, pModInv} from "./FCL_ed25519.sol";
+import "./fcl_ed25519.sol" as Curve;
+import {p, gx, gy, n, d, deux_d, MINUS_2, MINUS_1, MODEXP_PRECOMPILE, SqrtMod, pModInv} from "./fcl_ed25519.sol";
 
 library Edwards {
     using {Curve.pModInv, Curve.nModInv} for uint256;
