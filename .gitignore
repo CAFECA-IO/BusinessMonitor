@@ -22,12 +22,8 @@ package-lock.json
 # Hardhat coverage reports
 /coverage
 
-# Ignition build artifacts
-/ignition/deployments/**/artifacts/
-/ignition/deployments/**/build-info/
-
-# Ignition local chain deployment
-/ignition/deployments/chain-31337/
+# Ignition deployment
+/ignition/deployments/
 
 # next.js
 /.next/
