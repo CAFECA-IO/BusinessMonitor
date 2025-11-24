@@ -2,15 +2,14 @@ import 'dotenv/config';
 import { createWalletClient, http, parseEther } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
-const rpcUrl = process.env.ISUNCOIN_MAINNET_RPC_URL;
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
+// Info: (20251118 - Tzuhan) 目標 SCW 地址 (可替換為任何有效地址)
+const targetScwAddress = process.env.NEXT_PUBLIC_SCW_ADDRESS as `0x${string}`;
 const privateKey = process.env.ISUNCOIN_PRIVATE_KEY as `0x${string}`;
 
-// Info: (20251118 - Tzuhan) 目標 SCW 地址 (可替換為任何有效地址)
-const targetScwAddress = '0x640D6725b687d630fe364c7e47Aca116B74E7007';
-
 async function main() {
-  if (!privateKey || !rpcUrl) {
-    console.error('❌ 錯誤: 請檢查 .env 中的 ISUNCOIN_PRIVATE_KEY 和 ISUNCOIN_MAINNET_RPC_URL');
+  if (!privateKey || !rpcUrl || !targetScwAddress) {
+    console.error('❌ 錯誤: 請檢查 .env 中的 NEXT_PUBLIC_RPC_URL 和 NEXT_PUBLIC_SCW_ADDRESS');
     process.exit(1);
   }
 

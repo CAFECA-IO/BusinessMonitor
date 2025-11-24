@@ -22,6 +22,9 @@ package-lock.json
 # Hardhat coverage reports
 /coverage
 
+# Ignition deployment
+/ignition/deployments/
+
 # next.js
 /.next/
 /out/

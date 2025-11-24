@@ -36,7 +36,7 @@ function base64UrlToArrayBuffer(base64Url: string): ArrayBuffer {
  * Info: (20251112 - Tzuhan)
  * 將 ArrayBuffer 或 Uint8Array 轉換為 Base64URL 字串
  */
-function bufferToBase64Url(buffer: ArrayBuffer | Uint8Array): string {
+export function bufferToBase64Url(buffer: ArrayBuffer | Uint8Array): string {
   // Info: (20251112 - Tzuhan) 如果是 ArrayBuffer，則建立一個檢視整個緩衝區的 Uint8Array。
   // Info: (20251112 - Tzuhan) 如果是 Uint8Array，則 'bytes' 將是該視圖 (尊重 offset 和 length)。
   const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer;
