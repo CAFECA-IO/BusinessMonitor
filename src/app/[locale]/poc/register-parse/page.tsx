@@ -169,8 +169,10 @@ export default function PocRegisterAndParsePage() {
       });
       addLog(`[PoC 3a] Nonce: ${nonce}`);
 
-      // Info: (20251121 - Tzuhan) [流程說明] 2. 建構交易意圖 (UserOperation)
-      // 這是用戶宣告「我要做什麼」以及「我願意付多少錢」的地方。
+      /**
+       * Info: (20251121 - Tzuhan) [流程說明] 2. 建構交易意圖 (UserOperation)
+       * 這是用戶宣告「我要做什麼」以及「我願意付多少錢」的地方。
+       */
       const unsignedUserOp: UserOperation = {
         sender: SCW_ADDRESS,
         nonce: nonce,
@@ -180,25 +182,29 @@ export default function PocRegisterAndParsePage() {
         verificationGasLimit: BigInt(500_000),
         preVerificationGas: BigInt(50_000),
 
-        // Info: (20251121 - Tzuhan) [資金流向] 費率設定
-        // 這裡設定了 Gas Price (例如 10 Gwei)。EntryPoint 會根據這個費率計算 SCW 需支付的費用。
-        //
-        // ★★★ 如果要實現「Relayer 全額買單 (不扣 SCW 錢)」★★★
-        // 要將 maxFeePerGas 和 maxPriorityFeePerGas 設為 0：
-        // maxFeePerGas: BigInt(0),
-        // maxPriorityFeePerGas: BigInt(0),
-        // 結果：EntryPoint 計算出 prefund = 0，SCW 不需要付任何錢。
-        // 代價：Relayer 發送交易時仍需付 Gas 給礦工，但拿不到退款 (自行吸收成本)。
+        /**
+         * Info: (20251121 - Tzuhan) [資金流向] 費率設定
+         * 這裡設定了 Gas Price (例如 10 Gwei)。EntryPoint 會根據這個費率計算 SCW 需支付的費用。
+         *
+         * ★★★ 如果要實現「Relayer 全額買單 (不扣 SCW 錢)」★★★
+         * 要將 maxFeePerGas 和 maxPriorityFeePerGas 設為 0：
+         * maxFeePerGas: BigInt(0),
+         * maxPriorityFeePerGas: BigInt(0),
+         * 結果：EntryPoint 計算出 prefund = 0，SCW 不需要付任何錢。
+         * 代價：Relayer 發送交易時仍需付 Gas 給礦工，但拿不到退款 (自行吸收成本)。
+         */
         maxFeePerGas: BigInt(10_000_000_000),
         maxPriorityFeePerGas: BigInt(2_000_000_000),
 
-        paymasterAndData: '0x', // 若有 Paymaster 代付，這裡填 Paymaster 地址
+        paymasterAndData: '0x', // Info: (20251121 - Tzuhan) 若有 Paymaster 代付，這裡填 Paymaster 地址
         signature: '0x',
       };
 
-      // Info: (20251121 - Tzuhan) [流程說明] 3. 計算數位指紋 (UserOpHash)
-      // 我們將整筆交易 (包含上述費率、nonce、callData) 進行雜湊。
-      // 用戶簽名時，是針對這個 Hash 簽名，保證了交易內容不可被篡改。
+      /**
+       * Info: (20251121 - Tzuhan) [流程說明] 3. 計算數位指紋 (UserOpHash)
+       * 我們將整筆交易 (包含上述費率、nonce、callData) 進行雜湊。
+       * 用戶簽名時，是針對這個 Hash 簽名，保證了交易內容不可被篡改。
+       */
       const userOpTuple = {
         ...unsignedUserOp,
         sender: SCW_ADDRESS as `0x${string}`,
@@ -216,16 +222,20 @@ export default function PocRegisterAndParsePage() {
       });
       addLog(`[PoC 3a] UserOpHash (Challenge): ${userOpHash}`);
 
-      // Info: (20251121 - Tzuhan) [流程說明] 4. 生物辨識簽名
-      // 將 UserOpHash 作為 Challenge 傳給 Passkey。私鑰從未離開手機。
+      /**
+       * Info: (20251121 - Tzuhan) [流程說明] 4. 生物辨識簽名
+       * 將 UserOpHash 作為 Challenge 傳給 Passkey。私鑰從未離開手機。
+       */
       const challengeBase64 = bufferToBase64Url(Buffer.from(userOpHash.slice(2), 'hex'));
       setChallengeBase64(challengeBase64);
 
-      // Info: (20251121 - Tzuhan) 呼叫 FIDO2 API 要求使用者進行生物辨識
-      // 這會喚起手機或電腦的生物辨識介面 (指紋、Face ID 等)
-      // 用戶通過後，Passkey 會使用內部私鑰對 Challenge 簽名並返回簽名結果。
-      // 注意：這裡的 challenge 是 base64url 編碼格式
-      // 因為 WebAuthn API 要求的 Challenge 是 byte array，我們在內部會自動轉換。
+      /**
+       * Info: (20251121 - Tzuhan) 呼叫 FIDO2 API 要求使用者進行生物辨識
+       * 這會喚起手機或電腦的生物辨識介面 (指紋、Face ID 等)
+       * 用戶通過後，Passkey 會使用內部私鑰對 Challenge 簽名並返回簽名結果。
+       * 注意：這裡的 challenge 是 base64url 編碼格式
+       * 因為 WebAuthn API 要求的 Challenge 是 byte array，我們在內部會自動轉換。
+       */
       const assertion = (await navigator.credentials.get({
         publicKey: {
           challenge: Buffer.from(userOpHash.slice(2), 'hex'),
@@ -315,10 +325,10 @@ export default function PocRegisterAndParsePage() {
         callGasLimit: BigInt(100_000),
         verificationGasLimit: BigInt(150_000),
         preVerificationGas: BigInt(21_000),
-        maxFeePerGas: BigInt(10_000_000_000), // 10 Gwei
-        maxPriorityFeePerGas: BigInt(2_000_000_000), // 2 Gwei
+        maxFeePerGas: BigInt(10_000_000_000), // Info: (20251118 - Tzuhan) 10 Gwei
+        maxPriorityFeePerGas: BigInt(2_000_000_000), // Info: (20251118 - Tzuhan) 2 Gwei
         paymasterAndData: '0x',
-        signature: '0xdeadbeef', // [PoC 2] 假的 stub 簽名
+        signature: '0xdeadbeef', // Info: (20251118 - Tzuhan) [PoC 2] 假的 stub 簽名
       };
       addLog('[PoC 2.4] Constructed Mock UserOperation (with BigInt):');
       const loggableUserOp = Object.fromEntries(
