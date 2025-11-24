@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 import "@account-abstraction/contracts/interfaces/IAccount.sol";
@@ -39,14 +39,16 @@ contract SCW is IAccount {
         // Info: (20251124 - Tzuhan) 1. 安全檢查：只允許 EntryPoint 呼叫
         require(msg.sender == address(entryPoint), "SCW: unauthorized");
 
-        // Info: (20251121 - Tzuhan) [資金流向] 支付 Gas 預付款
-        // 這是用戶「歸墊」給 EntryPoint 的地方。
-        //
-        // ★★★ 關於 Relayer 全額買單 ★★★
-        // 如果前端傳來的 UserOp 中 maxFeePerGas 為 0，
-        // EntryPoint 計算出的 missingAccountFunds 就會是 0。
-        // 下面的 if 條件就不會成立，SCW 就不會轉出任何代幣。
-        // 這樣就實現了「不扣 SCW 錢」的目標。
+        /**
+         * Info: (20251121 - Tzuhan) [資金流向] 支付 Gas 預付款
+         * 這是用戶「歸墊」給 EntryPoint 的地方。
+         *
+         * ★★★ 關於 Relayer 全額買單 ★★★
+         * 如果前端傳來的 UserOp 中 maxFeePerGas 為 0，
+         * EntryPoint 計算出的 missingAccountFunds 就會是 0。
+         * 下面的 if 條件就不會成立，SCW 就不會轉出任何代幣。
+         * 這樣就實現了「不扣 SCW 錢」的目標。
+         */
         if (missingAccountFunds != 0) {
             (bool success, ) = payable(msg.sender).call{value: missingAccountFunds}("");
             (success);
