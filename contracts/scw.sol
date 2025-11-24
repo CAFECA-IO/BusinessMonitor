@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 import "@account-abstraction/contracts/interfaces/IAccount.sol";
@@ -8,8 +8,6 @@ import "./lib/utils/base64url.sol";
 
 contract SCW is IAccount {
     EntryPoint public immutable entryPoint;
-    
-    // Info: (20251120 - Tzuhan) FIDO2 公鑰 (P-256 Curve)
     uint256 public ownerPubKeyX;
     uint256 public ownerPubKeyY;
 
@@ -28,18 +26,35 @@ contract SCW is IAccount {
         uint256 s;
     }
 
+    /**
+     * Info: (20251124 - Tzuhan) 
+     * 驗證並支付 EntryPoint
+     * @param missingAccountFunds EntryPoint 要求此合約支付的預付款 (Gas)
+     */
     function validateUserOp(
         UserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) external override returns (uint256) {
+        // Info: (20251124 - Tzuhan) 1. 安全檢查：只允許 EntryPoint 呼叫
         require(msg.sender == address(entryPoint), "SCW: unauthorized");
 
+        /**
+         * Info: (20251121 - Tzuhan) [資金流向] 支付 Gas 預付款
+         * 這是用戶「歸墊」給 EntryPoint 的地方。
+         *
+         * ★★★ 關於 Relayer 全額買單 ★★★
+         * 如果前端傳來的 UserOp 中 maxFeePerGas 為 0，
+         * EntryPoint 計算出的 missingAccountFunds 就會是 0。
+         * 下面的 if 條件就不會成立，SCW 就不會轉出任何代幣。
+         * 這樣就實現了「不扣 SCW 錢」的目標。
+         */
         if (missingAccountFunds != 0) {
             (bool success, ) = payable(msg.sender).call{value: missingAccountFunds}("");
             (success);
         }
 
+        // Info: (20251124 - Tzuhan) 2. 驗證簽名
         if (!_verifyWebAuthnSignature(userOp.signature, userOpHash)) {
             return 1;
         }

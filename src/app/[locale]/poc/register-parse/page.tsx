@@ -10,10 +10,10 @@ import type {
   AuthenticateOptions,
 } from '@passwordless-id/webauthn/dist/esm/types';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
-
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
 import { createPublicClient, http, parseAbi } from 'viem';
 
+// Info: (20251121 - Tzuhan) 環境變數讀取
 const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as `0x${string}`;
 const SCW_ADDRESS = (process.env.NEXT_PUBLIC_SCW_ADDRESS || '') as `0x${string}`;
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
@@ -26,7 +26,6 @@ const entryPointAbi = parseAbi([
 type IApiSuccessResponse = IApiResponse<RegisterOptions>;
 type StatusType = 'idle' | 'loading' | 'success' | 'error';
 
-// Info: (20251120 - Tzuhan) 輔助函式：將 Base64URL 轉為 BigInt 十進位字串
 const toBigInt = (base64Url: string) => {
   try {
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -54,23 +53,19 @@ export default function PocRegisterAndParsePage() {
     setLogs((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${log}`]);
   };
 
-  // Info: (20251118 - Tzuhan) --- PoC 1.x 函式 (註冊新 Passkey) ---
   const handleRegister = async () => {
     setIsLoading(true);
     setXyCoords(null);
-    setLogs([]); // Info: (20251118 - Tzuhan) 清空日誌
+    setLogs([]);
     setStatusMessage('Loading...');
     setStatusType('loading');
-
     try {
       // Info: (20251111 - Tzuhan) 1. 呼叫我們現有的 API Route
       addLog(
         '[PoC 1.2] Fetching registration options from /api/v1/secure/webauthn-options?intent=register ...'
       );
       const response = await fetch('/api/v1/secure/webauthn-options?intent=register');
-
       const apiResponse: IApiSuccessResponse | IApiResponse<null> = await response.json();
-
       if (!response.ok || !apiResponse.success || !apiResponse.payload) {
         throw new Error((apiResponse as IApiResponse<null>).message || 'Failed to fetch options');
       }
@@ -122,7 +117,6 @@ export default function PocRegisterAndParsePage() {
     }
   };
 
-  // Info: (20251120 - Tzuhan) --- [PoC 3a] 1.5 檢查現有 Passkey ---
   const handleLoginCheck = async () => {
     setIsLoading(true);
     setLogs([]);
@@ -147,7 +141,6 @@ export default function PocRegisterAndParsePage() {
     }
   };
 
-  // Info: (20251120 - Tzuhan) --- [PoC 3a] 真實簽名測試 (發送交易) ---
   const handleRealSignatureTest = async () => {
     setIsLoading(true);
     setLogs([]);
@@ -169,30 +162,49 @@ export default function PocRegisterAndParsePage() {
       // Info: (20251120 - Tzuhan) 1. 從鏈上獲取最新的 Nonce
       addLog('[PoC 3a] 1. Fetching Nonce from EntryPoint...');
       const nonce = await publicClient.readContract({
-        address: ENTRY_POINT_ADDRESS as `0x${string}`,
+        address: ENTRY_POINT_ADDRESS,
         abi: entryPointAbi,
         functionName: 'getNonce',
-        args: [SCW_ADDRESS as `0x${string}`, BigInt(0)],
+        args: [SCW_ADDRESS, BigInt(0)],
       });
       addLog(`[PoC 3a] Nonce: ${nonce}`);
 
-      // Info: (20251120 - Tzuhan) 2. 建構 UserOperation (尚未簽名)
+      /**
+       * Info: (20251121 - Tzuhan) [流程說明] 2. 建構交易意圖 (UserOperation)
+       * 這是用戶宣告「我要做什麼」以及「我願意付多少錢」的地方。
+       */
       const unsignedUserOp: UserOperation = {
-        sender: SCW_ADDRESS as `0x${string}`,
+        sender: SCW_ADDRESS,
         nonce: nonce,
         initCode: '0x',
-        callData: '0x', // Info: (20251120 - Tzuhan) 目前先放 0x (什麼都不做)
+        callData: '0x', // Info: (20251124 - Tzuhan) 目前為空操作 (不轉帳)
         callGasLimit: BigInt(100_000),
-        verificationGasLimit: BigInt(500_000), // Info: (20251120 - Tzuhan) 驗證 FIDO2 需要較多 Gas
+        verificationGasLimit: BigInt(500_000),
         preVerificationGas: BigInt(50_000),
-        maxFeePerGas: BigInt(10_000_000_000), // 10 Gwei
-        maxPriorityFeePerGas: BigInt(2_000_000_000), // 2 Gwei
-        paymasterAndData: '0x',
-        signature: '0x', // 暫位符
+
+        /**
+         * Info: (20251121 - Tzuhan) [資金流向] 費率設定
+         * 這裡設定了 Gas Price (例如 10 Gwei)。EntryPoint 會根據這個費率計算 SCW 需支付的費用。
+         *
+         * ★★★ 如果要實現「Relayer 全額買單 (不扣 SCW 錢)」★★★
+         * 要將 maxFeePerGas 和 maxPriorityFeePerGas 設為 0：
+         * maxFeePerGas: BigInt(0),
+         * maxPriorityFeePerGas: BigInt(0),
+         * 結果：EntryPoint 計算出 prefund = 0，SCW 不需要付任何錢。
+         * 代價：Relayer 發送交易時仍需付 Gas 給礦工，但拿不到退款 (自行吸收成本)。
+         */
+        maxFeePerGas: BigInt(10_000_000_000),
+        maxPriorityFeePerGas: BigInt(2_000_000_000),
+
+        paymasterAndData: '0x', // Info: (20251121 - Tzuhan) 若有 Paymaster 代付，這裡填 Paymaster 地址
+        signature: '0x',
       };
 
-      // Info: (20251120 - Tzuhan) 3. 計算 UserOpHash (這就是我們要簽署的 Challenge)
-      addLog('[PoC 3a] 2. Calculating UserOpHash...');
+      /**
+       * Info: (20251121 - Tzuhan) [流程說明] 3. 計算數位指紋 (UserOpHash)
+       * 我們將整筆交易 (包含上述費率、nonce、callData) 進行雜湊。
+       * 用戶簽名時，是針對這個 Hash 簽名，保證了交易內容不可被篡改。
+       */
       const userOpTuple = {
         ...unsignedUserOp,
         sender: SCW_ADDRESS as `0x${string}`,
@@ -203,49 +215,46 @@ export default function PocRegisterAndParsePage() {
       };
 
       const userOpHash = await publicClient.readContract({
-        address: ENTRY_POINT_ADDRESS as `0x${string}`,
+        address: ENTRY_POINT_ADDRESS,
         abi: entryPointAbi,
         functionName: 'getUserOpHash',
         args: [userOpTuple],
       });
       addLog(`[PoC 3a] UserOpHash (Challenge): ${userOpHash}`);
 
-      // Info: (20251120 - Tzuhan) 4. 喚起 Passkey 進行簽名
-      addLog('[PoC 3a] 3. Prompting Passkey for signature...');
-      setStatusMessage('請使用 FaceID / 指紋進行簽名...');
-
-      // Info: (20251120 - Tzuhan) 將 hex string (0x...) 轉為 base64url string
+      /**
+       * Info: (20251121 - Tzuhan) [流程說明] 4. 生物辨識簽名
+       * 將 UserOpHash 作為 Challenge 傳給 Passkey。私鑰從未離開手機。
+       */
       const challengeBase64 = bufferToBase64Url(Buffer.from(userOpHash.slice(2), 'hex'));
       setChallengeBase64(challengeBase64);
 
+      /**
+       * Info: (20251121 - Tzuhan) 呼叫 FIDO2 API 要求使用者進行生物辨識
+       * 這會喚起手機或電腦的生物辨識介面 (指紋、Face ID 等)
+       * 用戶通過後，Passkey 會使用內部私鑰對 Challenge 簽名並返回簽名結果。
+       * 注意：這裡的 challenge 是 base64url 編碼格式
+       * 因為 WebAuthn API 要求的 Challenge 是 byte array，我們在內部會自動轉換。
+       */
       const assertion = (await navigator.credentials.get({
         publicKey: {
-          challenge: Buffer.from(userOpHash.slice(2), 'hex'), // 傳入 UserOpHash 作為 challenge
-          rpId: window.location.hostname, // Info: (20251120 - Tzuhan) 必須與註冊時一致
+          challenge: Buffer.from(userOpHash.slice(2), 'hex'),
+          rpId: window.location.hostname,
           userVerification: 'required',
-          allowCredentials: [], // Info: (20251120 - Tzuhan) 空陣列表示允許任何已註冊的 Passkey
+          allowCredentials: [],
         },
       })) as PublicKeyCredential;
 
       const response = assertion.response as AuthenticatorAssertionResponse;
 
-      addLog('[PoC 3a] 4. Signature received from device!');
-      addLog(
-        `[PoC 3a] AuthenticatorData: ${Buffer.from(response.authenticatorData).toString('hex')}`
-      );
-      addLog(`[PoC 3a] ClientDataJSON: ${new TextDecoder().decode(response.clientDataJSON)}`);
-
-      // Info: (20251120 - Tzuhan) 5. 打包簽名數據
-      addLog('[PoC 3a] 5. Packing signature for SCW...');
+      // Info: (20251121 - Tzuhan) [流程說明] 5. 打包簽名
       const packedSignature = packWebAuthnSignature(
         new Uint8Array(response.authenticatorData),
         new TextDecoder().decode(response.clientDataJSON),
         new Uint8Array(response.signature)
       );
 
-      // Info: (20251120 - Tzuhan) 6. 發送給 Bundler
-      addLog('[PoC 3a] 6. Sending to Bundler...');
-
+      // Info: (20251121 - Tzuhan) [流程說明] 6. 發送給 Relayer
       const signedUserOpJson: UserOperationJson = {
         ...unsignedUserOp,
         nonce: `0x${unsignedUserOp.nonce.toString(16)}`,
@@ -254,7 +263,7 @@ export default function PocRegisterAndParsePage() {
         preVerificationGas: `0x${unsignedUserOp.preVerificationGas.toString(16)}`,
         maxFeePerGas: `0x${unsignedUserOp.maxFeePerGas.toString(16)}`,
         maxPriorityFeePerGas: `0x${unsignedUserOp.maxPriorityFeePerGas.toString(16)}`,
-        signature: packedSignature, // Info: (20251120 - Tzuhan) <--- 這裡填入真實簽名
+        signature: packedSignature,
       };
 
       const res = await fetch('/api/v1/bundler', {
@@ -271,7 +280,7 @@ export default function PocRegisterAndParsePage() {
       addLog(JSON.stringify(result, null, 2));
 
       if (result.payload?.transactionHash && result.payload?.status === 'success') {
-        addLog('[PoC 3a] 🎉🎉🎉 SUCCESS! 交易成功上鏈，簽名驗證通過！');
+        addLog('[PoC 3a] 🎉🎉🎉 SUCCESS! 交易成功上鏈！');
         setStatusMessage('✅ PoC 3a SUCCESS');
         setStatusType('success');
       } else {
@@ -316,10 +325,10 @@ export default function PocRegisterAndParsePage() {
         callGasLimit: BigInt(100_000),
         verificationGasLimit: BigInt(150_000),
         preVerificationGas: BigInt(21_000),
-        maxFeePerGas: BigInt(10_000_000_000), // 10 Gwei
-        maxPriorityFeePerGas: BigInt(2_000_000_000), // 2 Gwei
+        maxFeePerGas: BigInt(10_000_000_000), // Info: (20251118 - Tzuhan) 10 Gwei
+        maxPriorityFeePerGas: BigInt(2_000_000_000), // Info: (20251118 - Tzuhan) 2 Gwei
         paymasterAndData: '0x',
-        signature: '0xdeadbeef', // [PoC 2] 假的 stub 簽名
+        signature: '0xdeadbeef', // Info: (20251118 - Tzuhan) [PoC 2] 假的 stub 簽名
       };
       addLog('[PoC 2.4] Constructed Mock UserOperation (with BigInt):');
       const loggableUserOp = Object.fromEntries(
