@@ -16,12 +16,16 @@ const toBigInt = (base64Url: string) => {
 };
 
 export default function FactoryTestPage() {
+  // Deprecated: (20251125 - Luphia) remove eslint-disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [logs, setLogs] = useState<string[]>([]);
+  // Deprecated: (20251125 - Luphia) remove eslint-disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [statusType, setStatusType] = useState<StatusType>('idle');
+  // Deprecated: (20251125 - Luphia) remove eslint-disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoading, setIsLoading] = useState(false);
+  // Deprecated: (20251125 - Luphia) remove eslint-disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [pubKey, setPubKey] = useState<{ x: bigint; y: bigint } | null>(null);
 
@@ -29,6 +33,7 @@ export default function FactoryTestPage() {
     setLogs((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${log}`]);
 
   // Info: (20251125 - Tzuhan) --- 步驟 1: 註冊 Passkey (取得公鑰) ---
+  // Deprecated: (20251125 - Luphia) remove eslint-disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleRegister = async () => {
     try {
