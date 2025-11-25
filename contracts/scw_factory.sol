@@ -46,9 +46,9 @@ contract SCWFactory {
         bytes32 hash = keccak256(
             abi.encodePacked(
                 bytes1(0xff),
-                address(this),     // sender (工廠地址)
-                salt,              // salt
-                bytecodeHash       // init code hash
+                address(this),     // Info: (20251125 - Tzuhan) sender (工廠地址)
+                salt,              // Info: (20251125 - Tzuhan) salt
+                bytecodeHash       // Info: (20251125 - Tzuhan) init code hash
             )
         );
 
@@ -65,7 +65,7 @@ contract SCWFactory {
         // Info: (20251125 - Tzuhan) 1. 計算預期地址
         address addr = getAddress(pubKeyX, pubKeyY, salt);
 
-        // Info: (20251125 - Tzuhan)2. 檢查是否已經部署 (使用 Solidity 0.8+ 內建語法，更乾淨)
+        // Info: (20251125 - Tzuhan) 2. 檢查是否已經部署 (使用 Solidity 0.8+ 內建語法，更乾淨)
         if (addr.code.length > 0) {
             return SCW(payable(addr));
         }
