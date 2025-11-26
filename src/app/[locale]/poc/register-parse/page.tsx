@@ -251,7 +251,9 @@ export default function PocRegisterAndParsePage() {
       const packedSignature = packWebAuthnSignature(
         new Uint8Array(response.authenticatorData),
         new TextDecoder().decode(response.clientDataJSON),
-        new Uint8Array(response.signature)
+        new Uint8Array(response.signature),
+        xyCoords ? BigInt(xyCoords.x) : undefined,
+        xyCoords ? BigInt(xyCoords.y) : undefined
       );
 
       // Info: (20251121 - Tzuhan) [流程說明] 6. 發送給 Relayer

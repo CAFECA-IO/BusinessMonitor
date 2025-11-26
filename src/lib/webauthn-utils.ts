@@ -47,37 +47,55 @@ function findindexOf(jsonString: string, key: string): number {
 
 /**
  * Info: (20251120 - Tzuhan) 將 WebAuthn 的回應打包成 SCW 合約需要的 WebAuthnSignature 結構
+ * Info: (20251126 - Tzuhan) [PoC 4 Update] 打包簽名數據，新增 pubKeyX 和 pubKeyY
  */
 export function packWebAuthnSignature(
   authenticatorData: Uint8Array,
   clientDataJSON: string,
-  signature: Uint8Array
+  signature: Uint8Array,
+  pubKeyX: bigint | undefined,
+  pubKeyY: bigint | undefined
 ): string {
-  // Info: (20251120 - Tzuhan) 1. 解析 r, s
   const { r, s } = parseDerSignature(signature);
 
-  // Info: (20251120 - Tzuhan) 2. 找出 challenge 和 type 在 JSON 中的位置
-  // Info: (20251120 - Tzuhan) clientDataJSON 範例: {"type":"webauthn.get","challenge":"Base64...","origin":"..."}
   const challengeLocation = findindexOf(clientDataJSON, 'challenge');
   const responseTypeLocation = findindexOf(clientDataJSON, 'type');
 
-  // Info: (20251120 - Tzuhan) 3. 使用 viem 的 encodeAbiParameters 打包成 bytes
-  // Info: (20251120 - Tzuhan) 對應合約中的 struct WebAuthnSignature
-  const encoded = encodeAbiParameters(
-    parseAbiParameters(
-      '(bytes authenticatorData, bytes clientDataJSON, uint256 challengeLocation, uint256 responseTypeLocation, uint256 r, uint256 s)'
-    ),
-    [
-      {
-        authenticatorData: `0x${Buffer.from(authenticatorData).toString('hex')}`,
-        clientDataJSON: `0x${Buffer.from(clientDataJSON).toString('hex')}`,
-        challengeLocation: BigInt(challengeLocation),
-        responseTypeLocation: BigInt(responseTypeLocation),
-        r,
-        s,
-      },
-    ]
-  );
+  const encoded =
+    pubKeyX !== undefined && pubKeyY !== undefined
+      ? encodeAbiParameters(
+          parseAbiParameters(
+            // Info: (20251126 - Tzuhan) 對應合約的新結構
+            '(bytes authenticatorData, bytes clientDataJSON, uint256 challengeLocation, uint256 responseTypeLocation, uint256 r, uint256 s, uint256 pubKeyX, uint256 pubKeyY)'
+          ),
+          [
+            {
+              authenticatorData: `0x${Buffer.from(authenticatorData).toString('hex')}`,
+              clientDataJSON: `0x${Buffer.from(clientDataJSON).toString('hex')}`,
+              challengeLocation: BigInt(challengeLocation),
+              responseTypeLocation: BigInt(responseTypeLocation),
+              r,
+              s,
+              pubKeyX, // [新增]
+              pubKeyY, // [新增]
+            },
+          ]
+        )
+      : encodeAbiParameters(
+          parseAbiParameters(
+            '(bytes authenticatorData, bytes clientDataJSON, uint256 challengeLocation, uint256 responseTypeLocation, uint256 r, uint256 s)'
+          ),
+          [
+            {
+              authenticatorData: `0x${Buffer.from(authenticatorData).toString('hex')}`,
+              clientDataJSON: `0x${Buffer.from(clientDataJSON).toString('hex')}`,
+              challengeLocation: BigInt(challengeLocation),
+              responseTypeLocation: BigInt(responseTypeLocation),
+              r,
+              s,
+            },
+          ]
+        );
 
   return encoded;
 }
