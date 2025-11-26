@@ -76,8 +76,8 @@ export function packWebAuthnSignature(
               responseTypeLocation: BigInt(responseTypeLocation),
               r,
               s,
-              pubKeyX, // [新增]
-              pubKeyY, // [新增]
+              pubKeyX,
+              pubKeyY,
             },
           ]
         )
