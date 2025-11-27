@@ -247,13 +247,15 @@ export default function PocRegisterAndParsePage() {
 
       const response = assertion.response as AuthenticatorAssertionResponse;
 
+      if (!xyCoords) throw new Error('Public key coordinates are not set from registration.');
+
       // Info: (20251121 - Tzuhan) [流程說明] 5. 打包簽名
       const packedSignature = packWebAuthnSignature(
         new Uint8Array(response.authenticatorData),
         new TextDecoder().decode(response.clientDataJSON),
         new Uint8Array(response.signature),
-        xyCoords ? BigInt(xyCoords.x) : undefined,
-        xyCoords ? BigInt(xyCoords.y) : undefined
+        BigInt(xyCoords.x),
+        BigInt(xyCoords.y)
       );
 
       // Info: (20251121 - Tzuhan) [流程說明] 6. 發送給 Relayer

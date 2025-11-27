@@ -53,49 +53,31 @@ export function packWebAuthnSignature(
   authenticatorData: Uint8Array,
   clientDataJSON: string,
   signature: Uint8Array,
-  pubKeyX: bigint | undefined,
-  pubKeyY: bigint | undefined
+  pubKeyX: bigint,
+  pubKeyY: bigint
 ): string {
   const { r, s } = parseDerSignature(signature);
 
   const challengeLocation = findindexOf(clientDataJSON, 'challenge');
   const responseTypeLocation = findindexOf(clientDataJSON, 'type');
 
-  const encoded =
-    pubKeyX !== undefined && pubKeyY !== undefined
-      ? encodeAbiParameters(
-          parseAbiParameters(
-            // Info: (20251126 - Tzuhan) 對應合約的新結構
-            '(bytes authenticatorData, bytes clientDataJSON, uint256 challengeLocation, uint256 responseTypeLocation, uint256 r, uint256 s, uint256 pubKeyX, uint256 pubKeyY)'
-          ),
-          [
-            {
-              authenticatorData: `0x${Buffer.from(authenticatorData).toString('hex')}`,
-              clientDataJSON: `0x${Buffer.from(clientDataJSON).toString('hex')}`,
-              challengeLocation: BigInt(challengeLocation),
-              responseTypeLocation: BigInt(responseTypeLocation),
-              r,
-              s,
-              pubKeyX,
-              pubKeyY,
-            },
-          ]
-        )
-      : encodeAbiParameters(
-          parseAbiParameters(
-            '(bytes authenticatorData, bytes clientDataJSON, uint256 challengeLocation, uint256 responseTypeLocation, uint256 r, uint256 s)'
-          ),
-          [
-            {
-              authenticatorData: `0x${Buffer.from(authenticatorData).toString('hex')}`,
-              clientDataJSON: `0x${Buffer.from(clientDataJSON).toString('hex')}`,
-              challengeLocation: BigInt(challengeLocation),
-              responseTypeLocation: BigInt(responseTypeLocation),
-              r,
-              s,
-            },
-          ]
-        );
-
+  const encoded = encodeAbiParameters(
+    parseAbiParameters(
+      // Info: (20251126 - Tzuhan) 對應合約的新結構
+      '(bytes authenticatorData, bytes clientDataJSON, uint256 challengeLocation, uint256 responseTypeLocation, uint256 r, uint256 s, uint256 pubKeyX, uint256 pubKeyY)'
+    ),
+    [
+      {
+        authenticatorData: `0x${Buffer.from(authenticatorData).toString('hex')}`,
+        clientDataJSON: `0x${Buffer.from(clientDataJSON).toString('hex')}`,
+        challengeLocation: BigInt(challengeLocation),
+        responseTypeLocation: BigInt(responseTypeLocation),
+        r,
+        s,
+        pubKeyX,
+        pubKeyY,
+      },
+    ]
+  );
   return encoded;
 }
