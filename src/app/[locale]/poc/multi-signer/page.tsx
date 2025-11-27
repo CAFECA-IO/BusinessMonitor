@@ -22,6 +22,7 @@ const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com
 // Info: (20251127 - Tzuhan) ABI 定義
 const scwAbi = parseAbi([
   'function addSigner(uint256 x, uint256 y) external',
+  'function removeSigner(uint256 x, uint256 y) external', // [新增]
   'function execute(address dest, uint256 value, bytes func) external',
 ]);
 
@@ -79,17 +80,13 @@ export default function MultiSignerPage() {
     }
   };
 
-  // Info: (20251127 - Tzuhan) 2. 授權新鑰匙 (用舊鑰匙 Signer A 簽名)
+  // 2. 授權新鑰匙 (Signer A 簽名)
   const handleAddSigner = async () => {
-    if (!newSigner) return addLog('❌ 請先產生新鑰匙');
-    if (!SCW_ADDRESS) return addLog('❌ SCW Address not set');
-
+    if (!newSigner || !SCW_ADDRESS) return addLog('❌ Missing setup');
     setIsLoading(true);
     try {
-      addLog('[2] Authorizing New Signer...');
+      addLog('[2] Authorizing New Signer (Add)...');
 
-      // Info: (20251127 - Tzuhan) A. 準備 CallData: SCW.execute(SCW, 0, addSigner(B))
-      // Info: (20251127 - Tzuhan) 這是 Nested Call：UserOp 呼叫 execute -> execute 呼叫 addSigner
       const innerCallData = encodeFunctionData({
         abi: scwAbi,
         functionName: 'addSigner',
@@ -115,7 +112,6 @@ export default function MultiSignerPage() {
       if (signerAX === BigInt(0)) return addLog('❌ Env SCW_OWNER_PUBLIC_KEY not set');
 
       await sendUserOp(userOpCallData, { x: signerAX, y: signerAY }, 'Signer A (Original)');
-
       addLog('[2] 🎉 Add Signer Transaction Sent!');
     } catch (e: unknown) {
       addLog(`❌ Error: ${(e as Error).message}`);
@@ -138,9 +134,70 @@ export default function MultiSignerPage() {
       });
 
       await sendUserOp(userOpCallData, newSigner, 'Signer B (New)');
-      addLog('[3] 🎉 Signer B works! Multi-device support verified.');
+      addLog('[3] 🎉 Signer B works! Verified.');
     } catch (e: unknown) {
       addLog(`❌ Error: ${(e as Error).message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Info: (20251127 - Tzuhan) 4. 移除新鑰匙 (Signer A 簽名)
+  const handleRemoveSigner = async () => {
+    if (!newSigner || !SCW_ADDRESS) return addLog('❌ Missing setup');
+    setIsLoading(true);
+    try {
+      addLog('[4] Revoking Signer B (Remove)...');
+
+      const innerCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'removeSigner',
+        args: [newSigner.x, newSigner.y],
+      });
+
+      const userOpCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'execute',
+        args: [SCW_ADDRESS, BigInt(0), innerCallData],
+      });
+
+      const signerAX = BigInt(process.env.NEXT_PUBLIC_SCW_OWNER_PUBLIC_KEY_X || '0');
+      const signerAY = BigInt(process.env.NEXT_PUBLIC_SCW_OWNER_PUBLIC_KEY_Y || '0');
+
+      // 使用 Signer A (Admin) 來移除 B
+      await sendUserOp(userOpCallData, { x: signerAX, y: signerAY }, 'Signer A (Original)');
+      addLog('[4] 🎉 Remove Signer Transaction Sent!');
+    } catch (e: unknown) {
+      addLog(`❌ Error: ${(e as Error).message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  //Info: (20251127 - Tzuhan) 5. 驗證移除 (Signer B 簽名 -> 應失敗)
+  const handleVerifyRemoval = async () => {
+    if (!newSigner) return addLog('❌ 請先產生新鑰匙');
+    setIsLoading(true);
+    try {
+      addLog('[5] Testing Signer B again (Should Fail)...');
+      const userOpCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'execute',
+        args: [SCW_ADDRESS, BigInt(0), '0x'],
+      });
+
+      // Info: (20251127 - Tzuhan) 嘗試用已移除的 B 簽名
+      await sendUserOp(userOpCallData, newSigner, 'Signer B (Revoked)');
+
+      // Info: (20251127 - Tzuhan) 如果這裡成功了，代表移除失敗 (Bug)
+      addLog('❌ [Unexpected] Signer B still works!');
+    } catch (e: unknown) {
+      // 如果報錯包含 AA24，代表驗證失敗，符合預期
+      if ((e as Error).message.includes('AA24') || (e as Error).message.includes('reverted')) {
+        addLog('[5] ✅ Expected Failure: Signer B is revoked (AA24/Revert).');
+      } else {
+        addLog(`❌ Error: ${(e as Error).message}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -162,7 +219,6 @@ export default function MultiSignerPage() {
       args: [SCW_ADDRESS, BigInt(0)],
     });
 
-    // Info: (20251127 - Tzuhan) 2. Build UserOp
     const userOp: UserOperation = {
       sender: SCW_ADDRESS,
       nonce,
@@ -238,7 +294,7 @@ export default function MultiSignerPage() {
       signature: packedSignature,
     };
 
-    addLog(`[${signerName}] Sending to Bundler...`);
+    addLog(`[${signerName}] Sending...`);
     const res = await fetch('/api/v1/bundler', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -249,7 +305,9 @@ export default function MultiSignerPage() {
     if (result.payload?.transactionHash && result.payload?.status === 'success') {
       addLog(`[${signerName}] Success! Tx: ${result.payload.transactionHash}`);
     } else {
-      throw new Error(result.payload?.error || 'Tx Failed');
+      // Info: (20251127 - Tzuhan) 拋出包含詳細錯誤訊息的 Error
+      const details = result.payload?.details || result.message || 'Tx Failed';
+      throw new Error(`${details}`);
     }
   };
 
@@ -257,12 +315,11 @@ export default function MultiSignerPage() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6">
       <div className="w-full max-w-2xl">
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">[PoC 4] Multi-Signer Management</h1>
-          <p className="mt-2 text-gray-600">Add a second device to your SCW</p>
+          <h1 className="text-3xl font-bold text-gray-900">[PoC 4] Multi-Signer Lifecycle</h1>
         </div>
 
         <div className="flex flex-col gap-4 rounded-xl bg-white p-8 shadow-lg">
-          {/* 步驟 1 */}
+          {/* Step 1 */}
           <div className="border-b pb-4">
             <h3 className="mb-2 text-lg font-bold">Step 1: Generate New Key</h3>
             <button
@@ -272,13 +329,13 @@ export default function MultiSignerPage() {
             >
               Generate Signer B
             </button>
-            {newSigner && <p className="mt-1 text-xs text-green-600">New Key Ready!</p>}
+            {newSigner && <p className="mt-1 text-xs text-green-600">Ready</p>}
           </div>
 
-          {/* 步驟 2 */}
+          {/* Step 2 */}
           <div className="border-b pb-4">
-            <h3 className="mb-2 text-lg font-bold">Step 2: Authorize (Use Signer A)</h3>
-            <p className="mb-2 text-xs text-gray-500">Requires Signer A (Original) signature</p>
+            <h3 className="mb-2 text-lg font-bold">Step 2: Add Signer B</h3>
+            <p className="mb-2 text-xs text-gray-500">Requires Signer A (Owner) signature</p>
             <button
               onClick={handleAddSigner}
               disabled={isLoading || !newSigner}
@@ -288,16 +345,42 @@ export default function MultiSignerPage() {
             </button>
           </div>
 
-          {/* 步驟 3 */}
-          <div>
-            <h3 className="mb-2 text-lg font-bold">Step 3: Verify (Use Signer B)</h3>
-            <p className="mb-2 text-xs text-gray-500">Requires Signer B (New) signature</p>
+          {/* Step 3 */}
+          <div className="border-b pb-4">
+            <h3 className="mb-2 text-lg font-bold">Step 3: Verify Signer B</h3>
+            <p className="mb-2 text-xs text-gray-500">Use Signer B to send a tx</p>
             <button
               onClick={handleTestNewSigner}
               disabled={isLoading || !newSigner}
               className="w-full rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:bg-gray-400"
             >
               Send Tx with Signer B
+            </button>
+          </div>
+
+          {/* Step 4 */}
+          <div className="border-b pb-4">
+            <h3 className="mb-2 text-lg font-bold">Step 4: Remove Signer B</h3>
+            <p className="mb-2 text-xs text-gray-500">Use Signer A (Owner) to revoke B</p>
+            <button
+              onClick={handleRemoveSigner}
+              disabled={isLoading || !newSigner}
+              className="w-full rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:bg-gray-400"
+            >
+              Submit RemoveSigner Tx
+            </button>
+          </div>
+
+          {/* Step 5 */}
+          <div className="pb-4">
+            <h3 className="mb-2 text-lg font-bold">Step 5: Verify Removal</h3>
+            <p className="mb-2 text-xs text-gray-500">Try sending tx with B (Should Fail)</p>
+            <button
+              onClick={handleVerifyRemoval}
+              disabled={isLoading || !newSigner}
+              className="w-full rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700 disabled:bg-gray-400"
+            >
+              Test Signer B Again
             </button>
           </div>
 
