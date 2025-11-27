@@ -1,0 +1,313 @@
+'use client';
+
+import { useState } from 'react';
+import { fido2ClientService } from '@/lib/fido2-client';
+import { bufferToBase64Url, parsePublicKeyCoordinates } from '@/lib/fido2-parse';
+import { packWebAuthnSignature } from '@/lib/webauthn-utils';
+import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
+import {
+  createPublicClient,
+  http,
+  parseAbi,
+  encodeFunctionData,
+  type Hex,
+  type Address,
+} from 'viem';
+
+// Info: (20251127 - Tzuhan) 環境變數
+const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
+const SCW_ADDRESS = (process.env.NEXT_PUBLIC_SCW_ADDRESS || '') as Address;
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
+
+// Info: (20251127 - Tzuhan) ABI 定義
+const scwAbi = parseAbi([
+  'function addSigner(uint256 x, uint256 y) external',
+  'function execute(address dest, uint256 value, bytes func) external',
+]);
+
+const entryPointAbi = parseAbi([
+  'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
+  'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
+]);
+
+// Info: (20251127 - Tzuhan) 輔助函式
+const toBigInt = (base64Url: string) => {
+  try {
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(base64);
+    let hex = '0x';
+    for (let i = 0; i < bin.length; i++) hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
+    return BigInt(hex);
+  } catch (e) {
+    throw new Error(`Error converting base64url: ${(e as Error).message}`);
+  }
+};
+
+export default function MultiSignerPage() {
+  const [logs, setLogs] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Info: (20251127 - Tzuhan) 新鑰匙 (Signer B) 的資料
+  const [newSigner, setNewSigner] = useState<{ x: bigint; y: bigint } | null>(null);
+
+  const addLog = (log: string) =>
+    setLogs((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${log}`]);
+
+  // Info: (20251127 - Tzuhan) 1. 產生新鑰匙 (模擬在第二台裝置上操作)
+  const handleCreateNewKey = async () => {
+    setIsLoading(true);
+    setLogs([]);
+    try {
+      addLog('[1] Creating NEW Passkey (Signer B)...');
+      const response = await fetch('/api/v1/secure/webauthn-options?intent=register');
+      const { payload: options } = await response.json();
+
+      const credential = await fido2ClientService.startRegistration(options);
+      const coords = parsePublicKeyCoordinates(credential.response.attestationObject);
+      if (!coords) throw new Error('Failed to parse coordinates');
+
+      const x = toBigInt(coords.x);
+      const y = toBigInt(coords.y);
+      setNewSigner({ x, y });
+      addLog(`[1] New Key Generated!`);
+      addLog(`X: ${x}`);
+      addLog(`Y: ${y}`);
+    } catch (e: unknown) {
+      addLog(`❌ Error: ${(e as Error).message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Info: (20251127 - Tzuhan) 2. 授權新鑰匙 (用舊鑰匙 Signer A 簽名)
+  const handleAddSigner = async () => {
+    if (!newSigner) return addLog('❌ 請先產生新鑰匙');
+    if (!SCW_ADDRESS) return addLog('❌ SCW Address not set');
+
+    setIsLoading(true);
+    try {
+      addLog('[2] Authorizing New Signer...');
+
+      // Info: (20251127 - Tzuhan) A. 準備 CallData: SCW.execute(SCW, 0, addSigner(B))
+      // Info: (20251127 - Tzuhan) 這是 Nested Call：UserOp 呼叫 execute -> execute 呼叫 addSigner
+      const innerCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'addSigner',
+        args: [newSigner.x, newSigner.y],
+      });
+
+      const userOpCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'execute',
+        args: [SCW_ADDRESS, BigInt(0), innerCallData],
+      });
+
+      // Info: (20251127 - Tzuhan) B. 發送交易
+      // Info: (20251127 - Tzuhan) 注意：這裡我們假設目前 .env 裡設定的 SCW_OWNER_PUBLIC_KEY 就是 Signer A
+      // Info: (20251127 - Tzuhan) 所以打包簽名時，我們會用到 .env 裡的公鑰 (這需要在 packWebAuthnSignature 時傳入)
+      // Info: (20251127 - Tzuhan) 但前端無法直接讀取 .env 裡的 BigInt，所以我們用一個臨時變數或假設用戶知道
+
+      // Info: (20251127 - Tzuhan) [Hack] 為了 Demo 方便，我們從 .env 讀取 Signer A 的公鑰字串並轉回 BigInt
+      // Info: (20251127 - Tzuhan) 在正式版中，這應該由 AuthContext 管理
+      const signerAX = BigInt(process.env.NEXT_PUBLIC_SCW_OWNER_PUBLIC_KEY_X || '0');
+      const signerAY = BigInt(process.env.NEXT_PUBLIC_SCW_OWNER_PUBLIC_KEY_Y || '0');
+
+      if (signerAX === BigInt(0)) return addLog('❌ Env SCW_OWNER_PUBLIC_KEY not set');
+
+      await sendUserOp(userOpCallData, { x: signerAX, y: signerAY }, 'Signer A (Original)');
+
+      addLog('[2] 🎉 Add Signer Transaction Sent!');
+    } catch (e: unknown) {
+      addLog(`❌ Error: ${(e as Error).message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Info: (20251127 - Tzuhan) 3. 測試新鑰匙 (用新鑰匙 Signer B 簽名)
+  const handleTestNewSigner = async () => {
+    if (!newSigner) return addLog('❌ 請先產生新鑰匙');
+    setIsLoading(true);
+    try {
+      addLog('[3] Testing New Signer (Signer B)...');
+      // Info: (20251127 - Tzuhan) 發送一個空交易，證明 B 能控制帳戶
+      const userOpCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'execute',
+        args: [SCW_ADDRESS, BigInt(0), '0x'],
+      });
+
+      await sendUserOp(userOpCallData, newSigner, 'Signer B (New)');
+      addLog('[3] 🎉 Signer B works! Multi-device support verified.');
+    } catch (e: unknown) {
+      addLog(`❌ Error: ${(e as Error).message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Info: (20251127 - Tzuhan) 通用發送函式
+  const sendUserOp = async (
+    callData: Hex,
+    signerPubKey: { x: bigint; y: bigint },
+    signerName: string
+  ) => {
+    const client = createPublicClient({ transport: http(RPC_URL) });
+
+    // Info: (20251127 - Tzuhan) 1. Get Nonce
+    const nonce = await client.readContract({
+      address: ENTRY_POINT_ADDRESS,
+      abi: entryPointAbi,
+      functionName: 'getNonce',
+      args: [SCW_ADDRESS, BigInt(0)],
+    });
+
+    // Info: (20251127 - Tzuhan) 2. Build UserOp
+    const userOp: UserOperation = {
+      sender: SCW_ADDRESS,
+      nonce,
+      initCode: '0x', // Info: (20251127 - Tzuhan) 假設已部署
+      callData,
+      callGasLimit: BigInt(100_000),
+      verificationGasLimit: BigInt(500_000),
+      preVerificationGas: BigInt(50_000),
+      maxFeePerGas: BigInt(0),
+      maxPriorityFeePerGas: BigInt(0),
+      paymasterAndData: '0x',
+      signature: '0x',
+    };
+
+    // Info: (20251127 - Tzuhan) 3. Hash
+    const userOpHash = await client.readContract({
+      address: ENTRY_POINT_ADDRESS,
+      abi: entryPointAbi,
+      functionName: 'getUserOpHash',
+      args: [
+        {
+          sender: SCW_ADDRESS as `0x${string}`,
+          nonce,
+          initCode: '0x' as `0x${string}`,
+          callData: callData as `0x${string}`,
+          callGasLimit: BigInt(100_000),
+          verificationGasLimit: BigInt(500_000),
+          preVerificationGas: BigInt(50_000),
+          maxFeePerGas: BigInt(0),
+          maxPriorityFeePerGas: BigInt(0),
+          paymasterAndData: '0x' as `0x${string}`,
+          signature: '0x' as `0x${string}`,
+        },
+      ],
+    });
+
+    // Info: (20251127 - Tzuhan) 4. Sign
+    addLog(`[${signerName}] UserOpHash: ${userOpHash}`);
+
+    addLog(`[${signerName}] Please sign transaction...`);
+    const challengeBase64 = bufferToBase64Url(Buffer.from(userOpHash.slice(2), 'hex'));
+    addLog(`[${signerName}] Challenge (Base64URL): ${challengeBase64}`);
+
+    const assertion = (await navigator.credentials.get({
+      publicKey: {
+        challenge: Buffer.from(userOpHash.slice(2), 'hex'),
+        rpId: window.location.hostname,
+        userVerification: 'required',
+        allowCredentials: [], // Info: (20251127 - Tzuhan) 讓用戶選擇要用哪把鑰匙 (A 或 B)
+      },
+    })) as PublicKeyCredential;
+
+    const response = assertion.response as AuthenticatorAssertionResponse;
+
+    // Info: (20251127 - Tzuhan) 5. Pack Signature (包含公鑰！)
+    const packedSignature = packWebAuthnSignature(
+      new Uint8Array(response.authenticatorData),
+      new TextDecoder().decode(response.clientDataJSON),
+      new Uint8Array(response.signature),
+      signerPubKey.x, // Info: (20251127 - Tzuhan) 傳入當前簽名者的公鑰
+      signerPubKey.y
+    );
+
+    // Info: (20251127 - Tzuhan) 6. Send
+    const signedUserOpJson: UserOperationJson = {
+      ...userOp,
+      nonce: `0x${userOp.nonce.toString(16)}`,
+      callGasLimit: `0x${userOp.callGasLimit.toString(16)}`,
+      verificationGasLimit: `0x${userOp.verificationGasLimit.toString(16)}`,
+      preVerificationGas: `0x${userOp.preVerificationGas.toString(16)}`,
+      maxFeePerGas: `0x${userOp.maxFeePerGas.toString(16)}`,
+      maxPriorityFeePerGas: `0x${userOp.maxPriorityFeePerGas.toString(16)}`,
+      signature: packedSignature,
+    };
+
+    addLog(`[${signerName}] Sending to Bundler...`);
+    const res = await fetch('/api/v1/bundler', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userOp: signedUserOpJson, entryPointAddress: ENTRY_POINT_ADDRESS }),
+    });
+    const result: BundlerResponse = await res.json();
+
+    if (result.payload?.transactionHash && result.payload?.status === 'success') {
+      addLog(`[${signerName}] Success! Tx: ${result.payload.transactionHash}`);
+    } else {
+      throw new Error(result.payload?.error || 'Tx Failed');
+    }
+  };
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6">
+      <div className="w-full max-w-2xl">
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-bold text-gray-900">[PoC 4] Multi-Signer Management</h1>
+          <p className="mt-2 text-gray-600">Add a second device to your SCW</p>
+        </div>
+
+        <div className="flex flex-col gap-4 rounded-xl bg-white p-8 shadow-lg">
+          {/* 步驟 1 */}
+          <div className="border-b pb-4">
+            <h3 className="mb-2 text-lg font-bold">Step 1: Generate New Key</h3>
+            <button
+              onClick={handleCreateNewKey}
+              disabled={isLoading}
+              className="w-full rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700 disabled:bg-gray-400"
+            >
+              Generate Signer B
+            </button>
+            {newSigner && <p className="mt-1 text-xs text-green-600">New Key Ready!</p>}
+          </div>
+
+          {/* 步驟 2 */}
+          <div className="border-b pb-4">
+            <h3 className="mb-2 text-lg font-bold">Step 2: Authorize (Use Signer A)</h3>
+            <p className="mb-2 text-xs text-gray-500">Requires Signer A (Original) signature</p>
+            <button
+              onClick={handleAddSigner}
+              disabled={isLoading || !newSigner}
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
+            >
+              Submit AddSigner Tx
+            </button>
+          </div>
+
+          {/* 步驟 3 */}
+          <div>
+            <h3 className="mb-2 text-lg font-bold">Step 3: Verify (Use Signer B)</h3>
+            <p className="mb-2 text-xs text-gray-500">Requires Signer B (New) signature</p>
+            <button
+              onClick={handleTestNewSigner}
+              disabled={isLoading || !newSigner}
+              className="w-full rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:bg-gray-400"
+            >
+              Send Tx with Signer B
+            </button>
+          </div>
+
+          <div className="mt-4 h-60 overflow-auto rounded bg-gray-100 p-4 font-mono text-xs">
+            {logs.map((l, i) => (
+              <div key={i}>{l}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}

@@ -8,13 +8,49 @@ import "./lib/utils/base64url.sol";
 
 contract SCW is IAccount {
     EntryPoint public immutable entryPoint;
-    uint256 public ownerPubKeyX;
-    uint256 public ownerPubKeyY;
+    
+    // [PoC 4] 改用 Mapping 儲存多個 Signer
+    // Key: keccak256(abi.encode(x, y))
+    // Value: true (authorized) / false (unauthorized)
+    mapping(bytes32 => bool) public signers;
+
+    event SignerAdded(bytes32 indexed pubKeyHash, uint256 x, uint256 y);
+    event SignerRemoved(bytes32 indexed pubKeyHash, uint256 x, uint256 y);
+
+    // 限制只能由合約自己呼叫 (透過 execute)
+    modifier onlySelf() {
+        require(msg.sender == address(this), "SCW: must call via UserOp");
+        _;
+    }
 
     constructor(address payable _entryPoint, uint256 _pubKeyX, uint256 _pubKeyY) {
         entryPoint = EntryPoint(_entryPoint);
-        ownerPubKeyX = _pubKeyX;
-        ownerPubKeyY = _pubKeyY;
+        // 初始化時加入第一把鑰匙
+        _addSigner(_pubKeyX, _pubKeyY);
+    }
+
+    /**
+     * [PoC 4] 新增管理介面
+     * 用戶可以發送 UserOp 呼叫此函式來授權新裝置
+     */
+    function addSigner(uint256 x, uint256 y) public onlySelf {
+        _addSigner(x, y);
+    }
+
+    function removeSigner(uint256 x, uint256 y) public onlySelf {
+        bytes32 hash = keccak256(abi.encode(x, y));
+        if (signers[hash]) {
+            signers[hash] = false;
+            emit SignerRemoved(hash, x, y);
+        }
+    }
+
+    function _addSigner(uint256 x, uint256 y) internal {
+        bytes32 hash = keccak256(abi.encode(x, y));
+        if (!signers[hash]) {
+            signers[hash] = true;
+            emit SignerAdded(hash, x, y);
+        }
     }
 
     struct WebAuthnSignature {
@@ -24,6 +60,9 @@ contract SCW is IAccount {
         uint256 responseTypeLocation;
         uint256 r;
         uint256 s;
+        // [PoC 4] 簽名中必須包含公鑰，以便合約知道要用哪把鑰匙驗證
+        uint256 pubKeyX;
+        uint256 pubKeyY;
     }
 
     /**
@@ -63,9 +102,16 @@ contract SCW is IAccount {
     }
 
     function _verifyWebAuthnSignature(bytes calldata signature, bytes32 userOpHash) internal view returns (bool) {
+        // 1. 解碼包含公鑰的簽名結構
         WebAuthnSignature memory sig = abi.decode(signature, (WebAuthnSignature));
 
-        // Info: (20251121 - Tzuhan) 1. 驗證 Challenge (使用 Base64Url.encode 確保格式正確)
+        // 2. [PoC 4] 檢查公鑰是否為授權的 Signer
+        bytes32 pubKeyHash = keccak256(abi.encode(sig.pubKeyX, sig.pubKeyY));
+        if (!signers[pubKeyHash]) {
+            return false; // 簽名者未授權
+        }
+
+        // 3. 驗證 Challenge (UserOpHash)
         string memory challengeBase64 = Base64Url.encode(abi.encodePacked(userOpHash));
         bytes memory challengeBytes = bytes(challengeBase64);
 
@@ -75,7 +121,7 @@ contract SCW is IAccount {
         // Info: (20251121 - Tzuhan) 比對內容
         for (uint i = 0; i < challengeBytes.length; i++) {
             if (sig.clientDataJSON[sig.challengeLocation + i] != challengeBytes[i]) {
-                return false; // Info: (20251121 - Tzuhan) Challenge 不匹配 (這就是導致 AA24 的原因)
+                return false;
             }
         }
 
@@ -88,11 +134,11 @@ contract SCW is IAccount {
             }
         }
 
-        // Info: (20251121 - Tzuhan) 3. 驗證 P-256 簽名
+        // Info: (20251127 - Tzuhan) 5. 驗證 P-256 簽名 (使用結構中傳入的 X, Y)
         bytes32 clientDataHash = sha256(sig.clientDataJSON);
         bytes32 messageHash = sha256(abi.encodePacked(sig.authenticatorData, clientDataHash));
         // Info: (20251120 - Tzuhan) 使用 FCL_ecdsa.ecdsa_verify
-        return FCL_ecdsa.ecdsa_verify(messageHash, sig.r, sig.s, ownerPubKeyX, ownerPubKeyY);
+        return FCL_ecdsa.ecdsa_verify(messageHash, sig.r, sig.s, sig.pubKeyX, sig.pubKeyY);
     }
 
     function execute(address dest, uint256 value, bytes calldata func) external {
