@@ -11,7 +11,7 @@ import {
 export interface ICreateIdentityData {
   name: string;
   blockchainAddress?: string;
-  initPublicKey?: Prisma.InputJsonValue; // 對應 Json 類型
+  initPublicKey?: Prisma.InputJsonValue; // Info: (20251128 - Tzuhan) 對應 Json 類型
   deploymentSalt?: string;
 
   credential: {
@@ -80,8 +80,8 @@ class WebAuthnRepository implements IWebAuthnRepository {
         // encryptedBlockchainKey: true, // Deprecated
         // blockchainPublicKey: true, // Deprecated
         blockchainAddress: true,
-        initPublicKey: true, // Info: (20251128 - Tzuhan) 新增
-        deploymentSalt: true, // Info: (20251128 - Tzuhan) 新增
+        initPublicKey: true,
+        deploymentSalt: true,
         derivationNonce: true,
       },
     });
@@ -113,8 +113,8 @@ class WebAuthnRepository implements IWebAuthnRepository {
         // encryptedBlockchainKey: true,
         // blockchainPublicKey: true, // Deprecated
         blockchainAddress: true,
-        initPublicKey: true, // Info: (20251128 - Tzuhan)
-        deploymentSalt: true, // Info: (20251128 - Tzuhan)
+        initPublicKey: true,
+        deploymentSalt: true,
         derivationNonce: true,
       },
     });
@@ -165,7 +165,7 @@ class WebAuthnRepository implements IWebAuthnRepository {
         ...(data.email !== undefined && { email: data.email }),
         ...(data.photo !== undefined && { photo: data.photo }),
 
-        // [PoC 4] 支援更新 SCW 資訊 (用於舊用戶初始化或修復)
+        // Info: (20251128 - Tzuhan) [PoC 4] 支援更新 SCW 資訊 (用於舊用戶初始化或修復)
         ...(data.blockchainAddress !== undefined && { blockchainAddress: data.blockchainAddress }),
         ...(data.initPublicKey !== undefined && { initPublicKey: data.initPublicKey }),
         ...(data.deploymentSalt !== undefined && { deploymentSalt: data.deploymentSalt }),
