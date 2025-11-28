@@ -9,13 +9,26 @@ import { IoNotificationsOffOutline } from 'react-icons/io5';
 import { PiPaperPlaneTiltBold } from 'react-icons/pi';
 import { RxCross2 } from 'react-icons/rx';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
-import { mockChatRooms } from '@/interfaces/chat';
+import { IChatRoom } from '@/interfaces/chat';
 
-const MessageBubble: React.FC<{
+interface IMessageBubbleProps {
   senderAvatar: string | null;
   messageContent: string;
   isFromMe?: boolean;
-}> = ({ senderAvatar, messageContent, isFromMe }) => {
+}
+
+interface IChatRoomTabProps {
+  isShowChatRoom: boolean;
+  chatRoomList: IChatRoom[];
+  currentChatRoomId: string;
+  closeChatRoom: () => void;
+}
+
+const MessageBubble: React.FC<IMessageBubbleProps> = ({
+  senderAvatar,
+  messageContent,
+  isFromMe,
+}) => {
   const senderImg = senderAvatar ?? DEFAULT_USER_AVATAR;
 
   const messageLines = messageContent.split('\n').map((line, index) => (
@@ -41,11 +54,12 @@ const MessageBubble: React.FC<{
   );
 };
 
-const ChatRoomTab: React.FC<{
-  isShowChatRoom: boolean;
-  currentChatRoomId: string;
-  closeChatRoom: () => void;
-}> = ({ isShowChatRoom, currentChatRoomId, closeChatRoom }) => {
+const ChatRoomTab: React.FC<IChatRoomTabProps> = ({
+  isShowChatRoom,
+  chatRoomList,
+  currentChatRoomId,
+  closeChatRoom,
+}) => {
   const {
     targetRef: searchBarRef,
     componentVisible: isShowSearchBar,
@@ -55,7 +69,7 @@ const ChatRoomTab: React.FC<{
   const [messageInput, setMessageInput] = useState<string>('');
   const [searchInput, setSearchInput] = useState<string>('');
 
-  const chatRoomData = mockChatRooms.find((room) => room.id === currentChatRoomId);
+  const chatRoomData = chatRoomList.find((room) => room.id === currentChatRoomId);
 
   const chatRoomName = chatRoomData?.name ?? '-';
   const messages = chatRoomData?.messages ?? [];
@@ -126,8 +140,10 @@ const ChatRoomTab: React.FC<{
   const tabContent = chatRoomData ? (
     <>
       {/* Info: (20251030 - Julian) Message Bubbles */}
-      <div className="flex h-500px flex-1 flex-col gap-24px overflow-y-auto px-16px py-40px">
-        {messageBubbles}
+      <div className="flex flex-1 justify-center px-16px py-40px">
+        <div className="flex h-400px w-full max-w-350px flex-col gap-24px overflow-y-auto">
+          {messageBubbles}
+        </div>
       </div>
 
       {/* Info: (20251030 - Julian) Input Box */}

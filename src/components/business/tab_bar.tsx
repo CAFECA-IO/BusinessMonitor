@@ -24,7 +24,7 @@ const TabBar: React.FC<ITabBarProps> = ({ currentTab, onTabChange }) => {
         disabled={isActive}
         className={`rounded-full p-8px text-xs font-medium enabled:hover:bg-tab-active enabled:hover:text-text-note desktop:px-48px desktop:py-12px desktop:text-base ${isActive ? 'bg-button-primary text-text-invert' : 'bg-transparent text-text-secondary'}`}
       >
-        {t(`DETAIL_TAB_${item}`)}
+        {t(`DETAIL_TAB_${item.toUpperCase()}`)}
       </button>
     );
   });

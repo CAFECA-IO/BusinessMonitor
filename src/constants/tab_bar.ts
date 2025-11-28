@@ -1,10 +1,10 @@
 export enum TabBarItem {
-  BASIC_INFO = 'BASIC_INFO',
-  MARKET_INFO = 'MARKET_INFO',
-  OPERATIONS = 'OPERATIONS',
-  FINANCIAL_REPORT = 'FINANCIAL_REPORT',
-  FLAGS = 'FLAGS',
-  DISCUSSION = 'DISCUSSION',
+  BASIC_INFO = 'basic_info',
+  MARKET_INFO = 'market_info',
+  OPERATIONS = 'operations',
+  FINANCIAL_REPORT = 'financial_report',
+  FLAGS = 'flags',
+  DISCUSSION = 'discussion',
 }
 
 export const TAB_BAR_ITEMS: TabBarItem[] = Object.values(TabBarItem);
