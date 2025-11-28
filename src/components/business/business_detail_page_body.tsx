@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BM_URL } from '@/constants/url';
-import { TAB_BAR_ITEMS, TabBarItem } from '@/constants/tab_bar';
+import { TabBarItem, TAB_BAR_ITEMS } from '@/constants/tab_bar';
 import TabBar from '@/components/business/tab_bar';
 import Layout from '@/components/common/layout';
 import BasicInfoTab from '@/components/business/basic_info_tab';
@@ -23,7 +24,12 @@ interface IBusinessDetailPageProps {
 
 const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
-  const [currentTab, setCurrentTab] = useState<TabBarItem>(TAB_BAR_ITEMS[0]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const queryTab: TabBarItem = (searchParams.get('tab') as TabBarItem) || '';
+
+  const [currentTab, setCurrentTab] = useState<TabBarItem>(TabBarItem.BASIC_INFO);
 
   const { payload: companyData } = useApi<IBasicResponse>(APIName.GET_BASIC_INFO_BY_COMPANY_ID, {
     params: { id: businessId },
@@ -48,8 +54,20 @@ const BusinessDetailPageBody: React.FC<IBusinessDetailPageProps> = ({ businessId
     { name: businessName, link: '' },
   ];
 
+  useEffect(() => {
+    if (queryTab && TAB_BAR_ITEMS.includes(queryTab)) {
+      setCurrentTab(queryTab);
+    } else {
+      // Info: (20251128 - Julian) 若網址參數 tab 不存在或不正確，則預設 BASIC_INFO 並更新網址
+      setCurrentTab(TabBarItem.BASIC_INFO);
+      router.replace(`?tab=${TabBarItem.BASIC_INFO}`, { scroll: false });
+    }
+  }, [queryTab]);
+
   const onTabChange = (tab: TabBarItem) => {
     setCurrentTab(tab);
+    // Info: (20251128 - Julian) 切換 tab 同步更新網址，但不滾動頁面
+    router.replace(`?tab=${tab}`, { scroll: false });
   };
 
   const currentTabContent =

@@ -10,9 +10,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const { t } = await initTranslations(locale, ['business_detail']);
-  return {
-    title: `CAFECA - ${t('business_detail:HEAD_TITLE')}`,
-  };
+  return { title: `CAFECA - ${t('business_detail:HEAD_TITLE')}` };
 }
 
 interface IBusinessDetailPageProps {
