@@ -11,15 +11,17 @@ contract SCW is IAccount {
 
     uint256 public signerCount;
     
-    // [PoC 4] 改用 Mapping 儲存多個 Signer
-    // Key: keccak256(abi.encode(x, y))
-    // Value: true (authorized) / false (unauthorized)
+    /**
+     * Info: (20251127 - Tzuhan) [PoC 4] 改用 Mapping 儲存多個 Signer
+     * Key: keccak256(abi.encode(x, y))
+     * Value: true (authorized) / false (unauthorized)
+     */
     mapping(bytes32 => bool) public signers;
 
     event SignerAdded(bytes32 indexed pubKeyHash, uint256 x, uint256 y);
     event SignerRemoved(bytes32 indexed pubKeyHash, uint256 x, uint256 y);
 
-    // 限制只能由合約自己呼叫 (透過 execute)
+    // Info: (20251127 - Tzuhan) 限制只能由合約自己呼叫 (透過 execute)
     modifier onlySelf() {
         require(msg.sender == address(this), "SCW: must call via UserOp");
         _;
@@ -27,12 +29,12 @@ contract SCW is IAccount {
 
     constructor(address payable _entryPoint, uint256 _pubKeyX, uint256 _pubKeyY) {
         entryPoint = EntryPoint(_entryPoint);
-        // 初始化時加入第一把鑰匙
+        // Info: (20251127 - Tzuhan) 初始化時加入第一把鑰匙
         _addSigner(_pubKeyX, _pubKeyY);
     }
 
     /**
-     * [PoC 4] 新增管理介面
+     * Info: (20251127 - Tzuhan) [PoC 4] 新增管理介面
      * 用戶可以發送 UserOp 呼叫此函式來授權新裝置
      */
     function addSigner(uint256 x, uint256 y) public onlySelf {
@@ -109,16 +111,16 @@ contract SCW is IAccount {
     }
 
     function _verifyWebAuthnSignature(bytes calldata signature, bytes32 userOpHash) internal view returns (bool) {
-        // 1. 解碼包含公鑰的簽名結構
+        // Info: (20251127 - Tzuhan) 1. 解碼包含公鑰的簽名結構
         WebAuthnSignature memory sig = abi.decode(signature, (WebAuthnSignature));
 
-        // 2. [PoC 4] 檢查公鑰是否為授權的 Signer
+        // Info: (20251127 - Tzuhan) 2. [PoC 4] 檢查公鑰是否為授權的 Signer
         bytes32 pubKeyHash = keccak256(abi.encode(sig.pubKeyX, sig.pubKeyY));
         if (!signers[pubKeyHash]) {
             return false; // 簽名者未授權
         }
 
-        // 3. 驗證 Challenge (UserOpHash)
+        // Info: (20251127 - Tzuhan) 3. 驗證 Challenge (UserOpHash)
         string memory challengeBase64 = Base64Url.encode(abi.encodePacked(userOpHash));
         bytes memory challengeBytes = bytes(challengeBase64);
 

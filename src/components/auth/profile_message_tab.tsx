@@ -113,7 +113,7 @@ const ProfileMessageTab: React.FC = () => {
           </div>
         </div>
         {/* Info: (20251030 - Julian) Chat List */}
-        <div className="flex h-400px flex-col gap-16px overflow-x-auto px-16px py-40px">
+        <div className="flex max-h-400px flex-col gap-16px overflow-x-auto px-16px py-40px">
           {chatList}
         </div>
       </div>
@@ -121,6 +121,7 @@ const ProfileMessageTab: React.FC = () => {
       {/* Info: (20251030 - Julian) Chat Room */}
       <ChatRoomTab
         isShowChatRoom={isShowChatRoom}
+        chatRoomList={chatRooms}
         closeChatRoom={closeChatRoom}
         currentChatRoomId={currentChatRoomId}
       />

@@ -22,7 +22,7 @@ const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com
 // Info: (20251127 - Tzuhan) ABI 定義
 const scwAbi = parseAbi([
   'function addSigner(uint256 x, uint256 y) external',
-  'function removeSigner(uint256 x, uint256 y) external', // [新增]
+  'function removeSigner(uint256 x, uint256 y) external',
   'function execute(address dest, uint256 value, bytes func) external',
 ]);
 
@@ -80,7 +80,7 @@ export default function MultiSignerPage() {
     }
   };
 
-  // 2. 授權新鑰匙 (Signer A 簽名)
+  // Info: (20251127 - Tzuhan) 2. 授權新鑰匙 (Signer A 簽名)
   const handleAddSigner = async () => {
     if (!newSigner || !SCW_ADDRESS) return addLog('❌ Missing setup');
     setIsLoading(true);
@@ -99,13 +99,18 @@ export default function MultiSignerPage() {
         args: [SCW_ADDRESS, BigInt(0), innerCallData],
       });
 
-      // Info: (20251127 - Tzuhan) B. 發送交易
-      // Info: (20251127 - Tzuhan) 注意：這裡我們假設目前 .env 裡設定的 SCW_OWNER_PUBLIC_KEY 就是 Signer A
-      // Info: (20251127 - Tzuhan) 所以打包簽名時，我們會用到 .env 裡的公鑰 (這需要在 packWebAuthnSignature 時傳入)
-      // Info: (20251127 - Tzuhan) 但前端無法直接讀取 .env 裡的 BigInt，所以我們用一個臨時變數或假設用戶知道
+      /**
+       * Info: (20251127 - Tzuhan) B. 發送交易
+       * 注意：這裡我們假設目前 .env 裡設定的 SCW_OWNER_PUBLIC_KEY 就是 Signer A
+       * 所以打包簽名時，我們會用到 .env 裡的公鑰 (這需要在 packWebAuthnSignature 時傳入)
+       * 但前端無法直接讀取 .env 裡的 BigInt，所以我們用一個臨時變數或假設用戶知道
+       */
 
-      // Info: (20251127 - Tzuhan) [Hack] 為了 Demo 方便，我們從 .env 讀取 Signer A 的公鑰字串並轉回 BigInt
-      // Info: (20251127 - Tzuhan) 在正式版中，這應該由 AuthContext 管理
+      /**
+       * Info: (20251127 - Tzuhan)
+       * [Hack] 為了 Demo 方便，我們從 .env 讀取 Signer A 的公鑰字串並轉回 BigInt
+       * 在正式版中，這應該由 AuthContext 管理
+       */
       const signerAX = BigInt(process.env.NEXT_PUBLIC_SCW_OWNER_PUBLIC_KEY_X || '0');
       const signerAY = BigInt(process.env.NEXT_PUBLIC_SCW_OWNER_PUBLIC_KEY_Y || '0');
 
@@ -164,7 +169,7 @@ export default function MultiSignerPage() {
       const signerAX = BigInt(process.env.NEXT_PUBLIC_SCW_OWNER_PUBLIC_KEY_X || '0');
       const signerAY = BigInt(process.env.NEXT_PUBLIC_SCW_OWNER_PUBLIC_KEY_Y || '0');
 
-      // 使用 Signer A (Admin) 來移除 B
+      // Info: (20251127 - Tzuhan) 使用 Signer A (Admin) 來移除 B
       await sendUserOp(userOpCallData, { x: signerAX, y: signerAY }, 'Signer A (Original)');
       addLog('[4] 🎉 Remove Signer Transaction Sent!');
     } catch (e: unknown) {
@@ -192,7 +197,7 @@ export default function MultiSignerPage() {
       // Info: (20251127 - Tzuhan) 如果這裡成功了，代表移除失敗 (Bug)
       addLog('❌ [Unexpected] Signer B still works!');
     } catch (e: unknown) {
-      // 如果報錯包含 AA24，代表驗證失敗，符合預期
+      // Info: (20251127 - Tzuhan) 如果報錯包含 AA24，代表驗證失敗，符合預期
       if ((e as Error).message.includes('AA24') || (e as Error).message.includes('reverted')) {
         addLog('[5] ✅ Expected Failure: Signer B is revoked (AA24/Revert).');
       } else {
@@ -319,7 +324,7 @@ export default function MultiSignerPage() {
         </div>
 
         <div className="flex flex-col gap-4 rounded-xl bg-white p-8 shadow-lg">
-          {/* Step 1 */}
+          {/* Info: (20251127 - Tzuhan) Step 1 */}
           <div className="border-b pb-4">
             <h3 className="mb-2 text-lg font-bold">Step 1: Generate New Key</h3>
             <button
@@ -332,7 +337,7 @@ export default function MultiSignerPage() {
             {newSigner && <p className="mt-1 text-xs text-green-600">Ready</p>}
           </div>
 
-          {/* Step 2 */}
+          {/* Info: (20251127 - Tzuhan) Step 2 */}
           <div className="border-b pb-4">
             <h3 className="mb-2 text-lg font-bold">Step 2: Add Signer B</h3>
             <p className="mb-2 text-xs text-gray-500">Requires Signer A (Owner) signature</p>
@@ -345,7 +350,7 @@ export default function MultiSignerPage() {
             </button>
           </div>
 
-          {/* Step 3 */}
+          {/* Info: (20251127 - Tzuhan) Step 3 */}
           <div className="border-b pb-4">
             <h3 className="mb-2 text-lg font-bold">Step 3: Verify Signer B</h3>
             <p className="mb-2 text-xs text-gray-500">Use Signer B to send a tx</p>
@@ -358,7 +363,7 @@ export default function MultiSignerPage() {
             </button>
           </div>
 
-          {/* Step 4 */}
+          {/* Info: (20251127 - Tzuhan) Step 4 */}
           <div className="border-b pb-4">
             <h3 className="mb-2 text-lg font-bold">Step 4: Remove Signer B</h3>
             <p className="mb-2 text-xs text-gray-500">Use Signer A (Owner) to revoke B</p>
@@ -371,7 +376,7 @@ export default function MultiSignerPage() {
             </button>
           </div>
 
-          {/* Step 5 */}
+          {/* Info: (20251127 - Tzuhan) Step 5 */}
           <div className="pb-4">
             <h3 className="mb-2 text-lg font-bold">Step 5: Verify Removal</h3>
             <p className="mb-2 text-xs text-gray-500">Try sending tx with B (Should Fail)</p>
