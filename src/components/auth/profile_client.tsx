@@ -17,27 +17,31 @@ import ProfileMessageTab from '@/components/auth/profile_message_tab';
 import ProfileAccessTab from '@/components/auth/profile_access_tab';
 import ProfileSettingTab from '@/components/auth/profile_setting_tab';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
-
 import { fido2ClientService } from '@/lib/fido2-client';
-import { parsePublicKeyCoordinates, bufferToBase64Url } from '@/lib/fido2-parse';
-import { createPublicClient, http, parseAbi, type Address } from 'viem';
+import { parsePublicKeyCoordinates } from '@/lib/fido2-parse';
+import { packWebAuthnSignature } from '@/lib/webauthn-utils';
+import { getInitCode } from '@/lib/aa-utils';
+import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
+import { createPublicClient, http, parseAbi, type Address, type Hex } from 'viem';
 import type { IApiResponse } from '@/lib/response';
-import type {
-  RegisterOptions,
-  AuthenticateOptions,
-} from '@passwordless-id/webauthn/dist/esm/types';
+import type { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
 
-// Info: (20251128 - Tzuhan) Factory 設定
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
+const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 const factoryAbi = parseAbi([
   'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',
+]);
+
+const entryPointAbi = parseAbi([
+  'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
+  'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
 ]);
 
 const toBigInt = (base64Url: string) => {
@@ -69,10 +73,9 @@ export default function ProfileClient() {
   const [isKeyLoading, setIsKeyLoading] = useState<boolean>(false);
   const router = useRouter();
 
-  const { user, isLoading: isAuthLoading, logout } = useAuth();
+  const { user, isLoading: isAuthLoading, logout, refetchUser } = useAuth();
 
   const userTitle = 'Digital Citizen';
-
   const bgColor =
     currentTab === ProfileTab.MY_ID ? 'bg-profile bg-cover bg-no-repeat' : 'bg-surface-background';
   const scanBtnStyle =
@@ -87,7 +90,6 @@ export default function ProfileClient() {
     currentTab === ProfileTab.SETTING ? 'text-text-brand' : 'text-text-secondary';
 
   const toggleScanner = () => setIsShowScanner((prev) => !prev);
-
   const myIdClickHandler = () => setCurrentTab(ProfileTab.MY_ID);
   const messageClickHandler = () => setCurrentTab(ProfileTab.MESSAGE);
   const accessClickHandler = () => setCurrentTab(ProfileTab.ACCESS);
@@ -122,46 +124,46 @@ export default function ProfileClient() {
 
       // Info: (20251128 - Tzuhan) 3. 計算 SCW 地址
       let scwAddress = '';
-      let pubKeyX = '';
-      let pubKeyY = '';
+      let pubKeyXStr = '';
+      let pubKeyYStr = '';
       const salt = '0';
 
       if (FACTORY_ADDRESS) {
         const coords = parsePublicKeyCoordinates(credential.response.attestationObject);
         if (coords) {
-          pubKeyX = toBigInt(coords.x).toString();
-          pubKeyY = toBigInt(coords.y).toString();
+          const pubKeyX = toBigInt(coords.x);
+          const pubKeyY = toBigInt(coords.y);
+          pubKeyXStr = pubKeyX.toString();
+          pubKeyYStr = pubKeyY.toString();
 
           const client = createPublicClient({ transport: http(RPC_URL) });
           scwAddress = await client.readContract({
             address: FACTORY_ADDRESS,
             abi: factoryAbi,
             functionName: 'getAddress',
-            args: [BigInt(pubKeyX), BigInt(pubKeyY), BigInt(salt)],
+            args: [pubKeyX, pubKeyY, BigInt(salt)],
           });
         }
       }
 
       if (!scwAddress) throw new Error('無法計算 SCW 地址');
 
-      // Info: (20251128 - Tzuhan) 4. 更新後端資料庫
       const dewt = localStorage.getItem('dewt');
+      // Info: (20251128 - Tzuhan) 呼叫 PATCH /me 更新用戶資料
       const updateRes = await fetch(`${origin}${routes.auth.me()}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
-
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          blockchainAddress: scwAddress,
+          initPublicKey: { x: pubKeyXStr, y: pubKeyYStr },
+          deploymentSalt: salt,
+        }),
       });
 
-      setKeyStatus(`✅ 錢包初始化成功！地址: ${scwAddress} (請重新登入以生效)`);
+      if (!updateRes.ok) throw new Error('更新資料庫失敗');
 
-      // Info: (20251128 - Tzuhan) 在真實場景中，這裡應該呼叫 API 更新 DB
-      console.log(
-        'TODO: Update DB with',
-        { scwAddress, pubKeyX, pubKeyY },
-        'updateRes:',
-        updateRes
-      );
+      setKeyStatus(`✅ 錢包初始化成功！地址: ${scwAddress}`);
+      await refetchUser();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '發生未知錯誤';
       setError(message);
@@ -170,23 +172,147 @@ export default function ProfileClient() {
     }
   };
 
-  // Info: (20251128 - Tzuhan) 測試 SCW 簽名 (證明擁有權)
+  // Info: (20251128 - Tzuhan) 真實交易測試 (包含 Lazy Deployment 與 簽名驗證)
   const handleTestSignature = async () => {
+    if (!user?.blockchainAddress) {
+      setError('找不到錢包地址，請先初始化。');
+      return;
+    }
+    if (!FACTORY_ADDRESS || !ENTRY_POINT_ADDRESS) {
+      setError('系統設定錯誤：缺少合約地址。');
+      return;
+    }
+
     setIsKeyLoading(true);
-    setKeyStatus('請驗證您的 Passkey...');
+    setKeyStatus('正在準備交易...');
     setError(null);
+
     try {
-      const challenge = bufferToBase64Url(crypto.getRandomValues(new Uint8Array(32)));
-      const options: AuthenticateOptions = {
-        challenge,
-        userVerification: 'required',
+      const client = createPublicClient({ transport: http(RPC_URL) });
+      const scwAddr = user.blockchainAddress as Address;
+
+      // Info: (20251128 - Tzuhan) 1. 檢查合約狀態 (Lazy Deployment)
+      const code = await client.getBytecode({ address: scwAddr });
+      const isDeployed = code !== undefined && code !== '0x';
+
+      let initCode: Hex = '0x';
+      let nonce = BigInt(0);
+
+      if (!isDeployed) {
+        setKeyStatus('偵測到新帳戶，準備執行自動部署...');
+        const initKey = user.initPublicKey as { x: string; y: string } | null;
+        const salt = user.deploymentSalt ? BigInt(user.deploymentSalt) : BigInt(0);
+
+        if (!initKey || !initKey.x || !initKey.y) {
+          throw new Error('無法取得初始化公鑰，請重新初始化錢包。');
+        }
+
+        initCode = getInitCode(FACTORY_ADDRESS, BigInt(initKey.x), BigInt(initKey.y), salt);
+      } else {
+        setKeyStatus('帳戶已部署，準備發送交易...');
+        nonce = await client.readContract({
+          address: ENTRY_POINT_ADDRESS,
+          abi: entryPointAbi,
+          functionName: 'getNonce',
+          args: [scwAddr, BigInt(0)],
+        });
+      }
+
+      // Info: (20251128 - Tzuhan) 2. 建構 UserOp
+      const unsignedUserOp: UserOperation = {
+        sender: scwAddr,
+        nonce,
+        initCode,
+        callData: '0x', // Info: (20251128 - Tzuhan) 空操作測試
+        callGasLimit: BigInt(100_000),
+        verificationGasLimit: isDeployed ? BigInt(500_000) : BigInt(2_000_000), // Info: (20251128 - Tzuhan) 部署需要較多 Gas
+        preVerificationGas: BigInt(50_000),
+        maxFeePerGas: BigInt(0), // Info: (20251128 - Tzuhan) Gasless: Relayer 全額買單
+        maxPriorityFeePerGas: BigInt(0),
+        paymasterAndData: '0x',
+        signature: '0x',
       };
-      await fido2ClientService.startLogin(options);
-      setKeyStatus('✅ 簽名驗證成功！您擁有此錢包的控制權。');
+
+      // Info: (20251128 - Tzuhan) 3. 計算 Hash (Challenge)
+      const userOpTuple = {
+        ...unsignedUserOp,
+        sender: scwAddr as `0x${string}`,
+        initCode: initCode as `0x${string}`,
+        callData: '0x' as `0x${string}`,
+        paymasterAndData: '0x' as `0x${string}`,
+        signature: '0x' as `0x${string}`,
+      };
+      const userOpHash = await client.readContract({
+        address: ENTRY_POINT_ADDRESS,
+        abi: entryPointAbi,
+        functionName: 'getUserOpHash',
+        args: [userOpTuple],
+      });
+
+      // Info: (20251128 - Tzuhan) 4. 喚起 Passkey 簽名
+      setKeyStatus('請使用您的 Passkey (FaceID/指紋) 簽署交易...');
+
+      const assertion = (await navigator.credentials.get({
+        publicKey: {
+          challenge: Buffer.from(userOpHash.slice(2), 'hex'),
+          rpId: window.location.hostname,
+          userVerification: 'required',
+          allowCredentials: [], // 允許使用任意註冊過的 Passkey
+        },
+      })) as PublicKeyCredential;
+
+      const response = assertion.response as AuthenticatorAssertionResponse;
+
+      // Info: (20251128 - Tzuhan) 這裡需要公鑰來打包簽名。
+      // Info: (20251128 - Tzuhan) 如果是新部署，用 initPublicKey。
+      // Info: (20251128 - Tzuhan) 如果是已部署，理想上應從合約讀取或由用戶選擇，這裡簡化為使用 initPublicKey (假設是同一把鑰匙)
+      // Info: (20251128 - Tzuhan) 如果是 Multi-Signer 情境，這裡就需要更複雜的邏輯來決定用哪把公鑰打包
+      const initKey = user.initPublicKey as { x: string; y: string };
+
+      const packedSignature = packWebAuthnSignature(
+        new Uint8Array(response.authenticatorData),
+        new TextDecoder().decode(response.clientDataJSON),
+        new Uint8Array(response.signature),
+        BigInt(initKey.x),
+        BigInt(initKey.y)
+      );
+
+      // Info: (20251128 - Tzuhan) 5. 發送給 Bundler
+      setKeyStatus('正在提交交易至區塊鏈...');
+      const signedUserOpJson: UserOperationJson = {
+        ...unsignedUserOp,
+        nonce: `0x${unsignedUserOp.nonce.toString(16)}`,
+        callGasLimit: `0x${unsignedUserOp.callGasLimit.toString(16)}`,
+        verificationGasLimit: `0x${unsignedUserOp.verificationGasLimit.toString(16)}`,
+        preVerificationGas: `0x${unsignedUserOp.preVerificationGas.toString(16)}`,
+        maxFeePerGas: `0x${unsignedUserOp.maxFeePerGas.toString(16)}`,
+        maxPriorityFeePerGas: `0x${unsignedUserOp.maxPriorityFeePerGas.toString(16)}`,
+        signature: packedSignature,
+      };
+
+      const res = await fetch('/api/v1/bundler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userOp: signedUserOpJson,
+          entryPointAddress: ENTRY_POINT_ADDRESS,
+        }),
+      });
+
+      const result: BundlerResponse = await res.json();
+
+      if (result.payload?.transactionHash && result.payload?.status === 'success') {
+        setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash.slice(0, 10)}...)`);
+        // 如果是第一次部署，重新整理用戶資料以更新狀態
+        if (!isDeployed) {
+          await refetchUser();
+        }
+      } else {
+        throw new Error(result.payload?.error || '交易失敗');
+      }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : '發生未知錯誤';
-      setError(message);
-      setKeyStatus('驗證失敗');
+      setError((err as Error).message || '驗證失敗');
+      setKeyStatus('❌ 交易失敗');
     } finally {
       setIsKeyLoading(false);
     }
@@ -225,13 +351,13 @@ export default function ProfileClient() {
                 disabled={isKeyLoading}
                 className="w-full rounded-lg bg-blue-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700 disabled:bg-gray-400"
               >
-                {isKeyLoading ? '驗證中...' : 'Test SCW Signature'}
+                {isKeyLoading ? '處理中...' : '發送測試交易 (上鏈驗證)'}
               </button>
 
               {/* Info: (20251128 - Tzuhan) 管理裝置按鈕 */}
               <Link href="/poc/multi-signer" className="w-full">
                 <button className="w-full rounded-lg bg-gray-800 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-gray-900">
-                  管理裝置 (Multi-Signer)
+                  管理多重裝置
                 </button>
               </Link>
             </div>
@@ -246,7 +372,7 @@ export default function ProfileClient() {
               disabled={isKeyLoading}
               className="w-full rounded-lg bg-purple-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-purple-700 disabled:bg-gray-400"
             >
-              {isKeyLoading ? '初始化中...' : 'Initialize Wallet'}
+              {isKeyLoading ? '初始化中...' : '初始化錢包 (Initialize SCW)'}
             </button>
           </div>
         )}
