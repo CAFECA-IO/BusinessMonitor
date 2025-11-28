@@ -257,7 +257,7 @@ export default function ProfileClient() {
           challenge: Buffer.from(userOpHash.slice(2), 'hex'),
           rpId: window.location.hostname,
           userVerification: 'required',
-          allowCredentials: [], // 允許使用任意註冊過的 Passkey
+          allowCredentials: [], // Info: (20251128 - Tzuhan) 允許使用任意註冊過的 Passkey
         },
       })) as PublicKeyCredential;
 
@@ -303,7 +303,7 @@ export default function ProfileClient() {
 
       if (result.payload?.transactionHash && result.payload?.status === 'success') {
         setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash.slice(0, 10)}...)`);
-        // 如果是第一次部署，重新整理用戶資料以更新狀態
+        // Info: (20251128 - Tzuhan) 如果是第一次部署，重新整理用戶資料以更新狀態
         if (!isDeployed) {
           await refetchUser();
         }
