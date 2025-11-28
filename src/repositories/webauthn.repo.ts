@@ -10,7 +10,6 @@ import {
 // Info: (20251128 - Tzuhan) 更新介面，加入 SCW 相關欄位
 export interface ICreateIdentityData {
   name: string;
-  // 新增欄位
   blockchainAddress?: string;
   initPublicKey?: Prisma.InputJsonValue; // 對應 Json 類型
   deploymentSalt?: string;
@@ -26,8 +25,11 @@ export interface ICreateIdentityData {
 
 export interface IUpdateIdentityData {
   name?: string;
-  photo?: string | null;
-  email?: string | null;
+  photo?: string;
+  email?: string;
+  blockchainAddress?: string;
+  initPublicKey?: Prisma.InputJsonValue;
+  deploymentSalt?: string;
 }
 
 export interface IAddAuthenticatorData {
@@ -162,13 +164,18 @@ class WebAuthnRepository implements IWebAuthnRepository {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.email !== undefined && { email: data.email }),
         ...(data.photo !== undefined && { photo: data.photo }),
+
+        // [PoC 4] 支援更新 SCW 資訊 (用於舊用戶初始化或修復)
+        ...(data.blockchainAddress !== undefined && { blockchainAddress: data.blockchainAddress }),
+        ...(data.initPublicKey !== undefined && { initPublicKey: data.initPublicKey }),
+        ...(data.deploymentSalt !== undefined && { deploymentSalt: data.deploymentSalt }),
       },
       select: {
         id: true,
         name: true,
         email: true,
         photo: true,
-        // encryptedBlockchainKey: true,
+        // encryptedBlockchainKey: true, // Deprecated
         // blockchainPublicKey: true, // Deprecated
         blockchainAddress: true,
         initPublicKey: true,
