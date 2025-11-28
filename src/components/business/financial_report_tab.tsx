@@ -5,14 +5,12 @@ import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { IPeriod } from '@/interfaces/period';
 import DatePicker, { DatePickerType } from '@/components/common/date_picker';
-// import InvestmentAdvisoryReportViewer from '@/components/business/investment_advisory_report_viewer';
+import dynamic from 'next/dynamic';
 
-// import dynamic from 'next/dynamic';
-
-// const InvestmentAdvisoryReportViewer = dynamic(
-//   () => import('@/components/business/investment_advisory_report_viewer'),
-//   { ssr: false }
-// );
+const InvestmentAdvisoryReportViewer = dynamic(
+  () => import('@/components/business/investment_advisory_report_viewer'),
+  { ssr: false }
+);
 
 const BalanceSheetViewer: React.FC<{ businessId: string }> = () => {
   return <div>No Balance Sheet Data</div>;
@@ -24,10 +22,6 @@ const CashFlowStatementViewer: React.FC<{ businessId: string }> = () => {
 
 const IncomeStatementViewer: React.FC<{ businessId: string }> = () => {
   return <div>No Income Statement Data</div>;
-};
-
-const InvestmentAdvisoryReportViewer: React.FC<{ businessId: string }> = () => {
-  return <div>No Investment Advisory Report Data</div>;
 };
 
 const ProfitabilityAnalysisReportViewer: React.FC<{ businessId: string }> = () => {
