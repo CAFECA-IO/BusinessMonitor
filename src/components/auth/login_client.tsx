@@ -13,15 +13,21 @@ import { useAuth } from '@/contexts/auth_context';
 import Button from '@/components/common/button';
 import MessageModal from '@/components/auth/message_modal';
 
+// Info: (20251128 - Tzuhan) 引入新依賴
+import { createPublicClient, http, type Address } from 'viem';
+import { getInitCode } from '@/lib/aa-utils';
+
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
 
+// Info: (20251128 - Tzuhan) 環境變數
+const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
+
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
-  // Info: (20251016 - Julian) During development
-
   const [statusMessage, setStatusMessage] = useState('點擊按鈕以 Passkey 登入或註冊。');
   // Info: (20251016 - Julian) During development
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -63,6 +69,7 @@ export default function LoginClient() {
     const redirectTo = searchParams.get('redirectTo') || '';
 
     try {
+      // Info: (20251128 - Tzuhan) 步驟 1: 獲取登入選項
       const optionsRes = await fetch(`${origin}${routes.auth.webauthn.options()}`);
       if (!optionsRes.ok) throw new Error('無法從伺服器獲取登入選項。');
       const optionsResponse = await optionsRes.json();
@@ -71,9 +78,11 @@ export default function LoginClient() {
       }
       const options = optionsResponse.payload;
 
+      // Info: (20251128 - Tzuhan) 步驟 2: Passkey 驗證
       setStatusMessage('請依照瀏覽器提示進行驗證...');
       const authentication = await fido2ClientService.startLogin(options);
 
+      // Info: (20251128 - Tzuhan) 步驟 3: 後端驗證
       setStatusMessage('正在驗證您的 Passkey...');
       const verifyRes = await fetch(`${origin}${routes.auth.webauthn.verify()}`, {
         method: 'POST',
@@ -85,16 +94,68 @@ export default function LoginClient() {
         throw new Error(verifyData.message || '登入驗證失敗。');
       }
 
-      setStatusMessage('✅ 登入成功！正在跳轉...');
-      // localStorage.setItem('dewt', verifyData.payload.dewt);
-      await login(verifyData.payload.dewt);
+      const token = verifyData.payload.dewt;
+      setStatusMessage('✅ 驗證成功！正在檢查帳戶狀態...');
+
+      // -----------------------------------------------------------------------
+      // Info: (20251128 - Tzuhan) 新增邏輯：Lazy Deployment (自動補部署 SCW)
+      // -----------------------------------------------------------------------
+      try {
+        // Info: (20251128 - Tzuhan) 1. 用 Token 換取用戶詳細資料 (含 SCW 地址 & InitKey)
+        const meRes = await fetch(`${origin}${routes.auth.me()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const meData = await meRes.json();
+        const userData = meData.payload;
+
+        if (userData && userData.blockchainAddress && FACTORY_ADDRESS) {
+          const scwAddress = userData.blockchainAddress as Address;
+          const client = createPublicClient({ transport: http(RPC_URL) });
+
+          // Info: (20251128 - Tzuhan) 2. 檢查鏈上是否已部署
+          const code = await client.getBytecode({ address: scwAddress });
+
+          // Info: (20251128 - Tzuhan) 如果未部署 (code 為 undefined 或 0x)，則觸發部署交易
+          if (!code || code === '0x') {
+            console.log('[Login] SCW not deployed, initiating Lazy Deployment...');
+            setStatusMessage('正在初始化您的區塊鏈帳戶 (首次登入)...');
+
+            // Info: (20251128 - Tzuhan) 準備 initCode
+            const initKey = userData.initPublicKey; // { x: "...", y: "..." }
+            if (initKey && initKey.x && initKey.y) {
+              const initCode = getInitCode(
+                FACTORY_ADDRESS,
+                BigInt(initKey.x),
+                BigInt(initKey.y),
+                BigInt(userData.deploymentSalt || 0)
+              );
+
+              /**
+               * 這裡有一個 UX 挑戰：發送 UserOp 需要用戶「再次簽名」。
+               * 為了不打斷登入流程，通常這裡會做成「背景靜默處理」或「跳轉後提示」。
+               * 為了不打斷登入流程，通常這裡會做成「背景靜默處理」或「跳轉後提示」。
+               * 但如果我們想要「登入即部署」，我們需要再喚起一次 Passkey 簽署一個 UserOp。
+               *
+               * [策略] 為了保持登入流暢，我們先不在此處強制部署。
+               * 因為 Lazy Deployment 的精隨在於「發送第一筆交易時順便部署」。
+               * 所以我們只要確保前端知道這還是個 Fresh Account 即可。
+               */
+
+              console.log('[Login] Account is fresh. Will deploy on first transaction.', initCode);
+            }
+          }
+        }
+      } catch (deployCheckErr) {
+        console.warn('[Login] Failed to check SCW status:', deployCheckErr);
+        //  Info: (20251128 - Tzuhan) 不阻擋登入
+      }
+
+      await login(token);
 
       if (redirectTo) {
-        // Info: (20251029 - Julian) 如果 redirectTo 有值，則導向 approve_device 頁面，並帶上原本的參數
         const currentRedirectTo = `${BM_URL.APPROVE_DEVICE}?${decodeURIComponent(redirectTo)}`;
         setTimeout(() => router.push(currentRedirectTo), 500);
       } else {
-        //  Info: (20251016 - Julian) 預設導向 Profile 頁面
         setTimeout(() => router.push('/profile'), 1500);
       }
     } catch (err) {
@@ -107,7 +168,7 @@ export default function LoginClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [router, isFidoAvailable, login]);
+  }, [router, isFidoAvailable, login, searchParams]);
 
   if (isAuthLoading || user) {
     return (

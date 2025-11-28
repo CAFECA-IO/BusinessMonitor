@@ -10,11 +10,10 @@ function ab2hex(ab: ArrayBuffer): string {
 }
 
 /**
- * Info: (20251020 - Tzuhan)
- * 首次生成區塊鏈私鑰，並使用 FIDO2 派生的金鑰對其進行加密。
- * @param userId - 當前登入的使用者 ID
- * @returns {Promise<{encryptedPrivateKey: string, publicKey: string, address: string, derivationNonce: string}>}
- * 加密後的私鑰、公鑰和地址，準備存儲到後端。
+ * Info: (20251128 - Tzuhan)
+ * @deprecated [PoC 4]
+ * 此函式用於產生託管錢包 (Custodial Wallet)，現已改用 SCW 非託管架構。
+ * 請勿再使用。
  */
 export async function createAndEncryptBlockchainKey(userId: string) {
   logger.debug('[DEBUG] --- createAndEncryptBlockchainKey ---');
@@ -106,12 +105,8 @@ export async function createAndEncryptBlockchainKey(userId: string) {
 }
 
 /**
- * Info: (20251022 - Tzuhan)
- * 使用 FIDO2 驗證來解密已儲存的區塊鏈私鑰。
- * @param userId - 當前登入的使用者 ID
- * @param encryptedPrivateKeyPayload - 從後端獲取的加密 payload (包含 iv 和 encryptedData)
- * @param derivationNonce - 從後端獲取的、當初用於派生的 nonce
- * @returns {Promise<ethers.Wallet>} 解密後的 ethers.js Wallet 物件，可用於簽署
+ * Info: (20251128 - Tzuhan)
+ * @deprecated 現已改用 SCW 非託管架構。
  */
 export async function decryptAndUseBlockchainKey(
   userId: string,

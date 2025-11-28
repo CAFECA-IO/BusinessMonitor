@@ -8,6 +8,8 @@ import "./lib/utils/base64url.sol";
 
 contract SCW is IAccount {
     EntryPoint public immutable entryPoint;
+
+    uint256 public signerCount;
     
     // [PoC 4] 改用 Mapping 儲存多個 Signer
     // Key: keccak256(abi.encode(x, y))
@@ -40,7 +42,11 @@ contract SCW is IAccount {
     function removeSigner(uint256 x, uint256 y) public onlySelf {
         bytes32 hash = keccak256(abi.encode(x, y));
         if (signers[hash]) {
+            // Info: (20251128 - Tzuhan) 安全檢查：確保移除後至少還剩一個 Signer
+            require(signerCount > 1, "SCW: cannot remove last signer");
+            
             signers[hash] = false;
+            signerCount--;
             emit SignerRemoved(hash, x, y);
         }
     }
@@ -49,6 +55,7 @@ contract SCW is IAccount {
         bytes32 hash = keccak256(abi.encode(x, y));
         if (!signers[hash]) {
             signers[hash] = true;
+            signerCount++;
             emit SignerAdded(hash, x, y);
         }
     }

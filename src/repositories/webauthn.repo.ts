@@ -4,10 +4,17 @@ import {
   type IdentityAccount,
   type Authenticator,
   type DevicePairingSession,
+  Prisma,
 } from '@prisma/client';
 
+// Info: (20251128 - Tzuhan) 更新介面，加入 SCW 相關欄位
 export interface ICreateIdentityData {
   name: string;
+  // 新增欄位
+  blockchainAddress?: string;
+  initPublicKey?: Prisma.InputJsonValue; // 對應 Json 類型
+  deploymentSalt?: string;
+
   credential: {
     credentialID: string;
     credentialPublicKey: string;
@@ -41,9 +48,7 @@ export interface IWebAuthnRepository {
     data: IAddAuthenticatorData
   ): Promise<Authenticator>;
   findPairingSessionById(id: string): Promise<DevicePairingSession | null>;
-  // Info: (20251001-tzuhan) 【新增】為 QR Code 登入流程建立一個新的裝置配對會話
   createPairingSession(data: { challenge: string; expiresAt: Date }): Promise<DevicePairingSession>;
-  // Info: (20251001-tzuhan) 【新增】在登入成功後更新會話狀態
   updatePairingSessionStatus(
     id: string,
     status: 'COMPLETED' | 'AUTHORIZED',
@@ -63,7 +68,6 @@ class WebAuthnRepository implements IWebAuthnRepository {
   }
 
   public async findIdentityAccountById(id: string): Promise<IdentityAccount | null> {
-    // Info: (20251001-tzuhan) 確保關聯查詢中包含必要的 dewt 欄位
     return prisma.identityAccount.findUnique({
       where: { id },
       select: {
@@ -71,9 +75,11 @@ class WebAuthnRepository implements IWebAuthnRepository {
         name: true,
         email: true,
         photo: true,
-        encryptedBlockchainKey: true,
-        blockchainPublicKey: true,
+        // encryptedBlockchainKey: true, // Deprecated
+        // blockchainPublicKey: true, // Deprecated
         blockchainAddress: true,
+        initPublicKey: true, // Info: (20251128 - Tzuhan) 新增
+        deploymentSalt: true, // Info: (20251128 - Tzuhan) 新增
         derivationNonce: true,
       },
     });
@@ -90,6 +96,11 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.identityAccount.create({
       data: {
         name: data.name,
+        // Info: (20251128 - Tzuhan) 寫入 SCW 相關資訊
+        blockchainAddress: data.blockchainAddress,
+        initPublicKey: data.initPublicKey ?? Prisma.DbNull,
+        deploymentSalt: data.deploymentSalt,
+
         authenticators: { create: { ...data.credential } },
       },
       select: {
@@ -97,9 +108,11 @@ class WebAuthnRepository implements IWebAuthnRepository {
         name: true,
         email: true,
         photo: true,
-        encryptedBlockchainKey: true,
-        blockchainPublicKey: true,
+        // encryptedBlockchainKey: true,
+        // blockchainPublicKey: true, // Deprecated
         blockchainAddress: true,
+        initPublicKey: true, // Info: (20251128 - Tzuhan)
+        deploymentSalt: true, // Info: (20251128 - Tzuhan)
         derivationNonce: true,
       },
     });
@@ -121,7 +134,6 @@ class WebAuthnRepository implements IWebAuthnRepository {
     });
   }
 
-  // Info: (20251001-tzuhan) 【新增】建立一個新的裝置配對會話
   public async createPairingSession(data: {
     challenge: string;
     expiresAt: Date;
@@ -129,7 +141,6 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.devicePairingSession.create({ data });
   }
 
-  // Info: (20251001-tzuhan) 【新增】在登入成功後更新會話狀態
   public async updatePairingSessionStatus(
     id: string,
     status: 'COMPLETED' | 'AUTHORIZED',
@@ -157,9 +168,11 @@ class WebAuthnRepository implements IWebAuthnRepository {
         name: true,
         email: true,
         photo: true,
-        encryptedBlockchainKey: true,
-        blockchainPublicKey: true,
+        // encryptedBlockchainKey: true,
+        // blockchainPublicKey: true, // Deprecated
         blockchainAddress: true,
+        initPublicKey: true,
+        deploymentSalt: true,
         derivationNonce: true,
       },
     });

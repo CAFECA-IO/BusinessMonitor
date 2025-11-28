@@ -484,9 +484,11 @@ model IdentityAccount {
   name                   String?         @map("name")// Info: (20251017 - Tzuhan) 首次註冊後可讓用戶補充
   email                  String?         @map("email") // Info: (20251017 - Tzuhan) 首次註冊後可讓用戶補充
   photo                  String?         @map("photo")
-  encryptedBlockchainKey String?         @db.Text @map("encrypted_blockchain_key")
-  blockchainPublicKey    String?         @map("blockchain_public_key")
-  blockchainAddress      String?         @map("blockchain_address")
+  // encryptedBlockchainKey String?         @db.Text @map("encrypted_blockchain_key") // Info: (20251128 - Tzuhan) Deprecated (私鑰在手機) 
+  // blockchainPublicKey    String?         @map("blockchain_public_key") 
+  initPublicKey          Json?           @map("init_public_key") // Info: (20251121 - Tzuhan) 儲存用戶註冊時的公鑰座標 { x: string, y: string }
+  blockchainAddress      String?         @map("blockchain_address") // Info: (20251128 - Tzuhan) SCW 合約地址
+  deploymentSalt         String?         @map("deployment_salt") @default("0") // Info: (20251128 - Tzuhan) 這是 Factory 部署時用的 Salt
   derivationNonce        String?         @map("derivation_nonce")
   authenticators      Authenticator[]
   comments            Comment[]
@@ -498,6 +500,7 @@ model Authenticator {
   id                  String          @id @default(cuid())
   credentialID        String          @unique @map("credential_id")
   credentialPublicKey String          @map("credential_public_key")
+  label               String?         @map("label") // Info: (20251128 - Tzuhan) 方便用戶辨識裝置名稱 (e.g. "Kevin's iPhone")
   identityAccountId   String          @map("identity_account_id")
   counter             BigInt          @map("counter") @default(0)
   algorithm           WebAuthnAlgo    @map("algorithm")  @default(ES256)
@@ -523,6 +526,7 @@ model DevicePairingSession {
 
   // Info: (20250930 - Tzuhan) 登入成功後，可以選擇性地儲存授權的用戶資訊
   identityId String?
+  pendingCandidateData Json? @map("pending_candidate_data") // Info: (20251128 - Tzuhan) 用於 Add Signer 流程：暫存新裝置的公鑰資訊，方便擴充 (e.g. { x: "...", y: "...", name: "MacBook Pro" }
 
   createdAt DateTime      @default(now())
 
