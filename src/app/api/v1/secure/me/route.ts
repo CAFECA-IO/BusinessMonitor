@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { loggerFromRequest } from '@/lib/logger';
-import { webAuthnRepo } from '@/repositories/webauthn.repo';
+import { webAuthnRepo, type IUpdateIdentityData } from '@/repositories/webauthn.repo'; // [修正 1] 引入型別
 import { AppError } from '@/lib/error';
 import { updateProfileSchema } from '@/validators';
 import type { IdentityAccount } from '@prisma/client';
@@ -28,7 +28,10 @@ export async function PATCH(req: NextRequest) {
 
     log.info('Updating user profile', { identityId, data: dataToUpdate });
 
-    const updatedUser = await webAuthnRepo.updateIdentityAccount(identityId, dataToUpdate);
+    const updatedUser = await webAuthnRepo.updateIdentityAccount(
+      identityId,
+      dataToUpdate as IUpdateIdentityData
+    );
 
     log.info('User profile updated successfully', { identityId });
 
@@ -38,6 +41,8 @@ export async function PATCH(req: NextRequest) {
       email: updatedUser.email,
       photo: updatedUser.photo,
       blockchainAddress: updatedUser.blockchainAddress,
+      initPublicKey: updatedUser.initPublicKey,
+      deploymentSalt: updatedUser.deploymentSalt,
     };
     return jsonOk(safeUserData);
   } catch (err) {
@@ -88,13 +93,15 @@ export async function GET(request: NextRequest) {
 
     const safeUserData: Pick<
       IdentityAccount,
-      'id' | 'name' | 'email' | 'photo' | 'blockchainAddress'
+      'id' | 'name' | 'email' | 'photo' | 'blockchainAddress' | 'initPublicKey' | 'deploymentSalt'
     > = {
       id: identityAccount.id,
       name: identityAccount.name,
       email: identityAccount.email,
       photo: identityAccount.photo,
       blockchainAddress: identityAccount.blockchainAddress,
+      initPublicKey: identityAccount.initPublicKey,
+      deploymentSalt: identityAccount.deploymentSalt,
     };
 
     return jsonOk(safeUserData);
