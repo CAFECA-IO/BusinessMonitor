@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { PiSignOut } from 'react-icons/pi';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import { timestampToString } from '@/lib/common';
-import { IAccess, mockAccessData } from '@/interfaces/access';
+import { IAccess } from '@/interfaces/access';
 import LogoutAccessModal from '@/components/auth/logout_access_modal';
 
 const AccessItem: React.FC<{
@@ -24,8 +24,8 @@ const AccessItem: React.FC<{
       <div className="relative size-44px overflow-hidden rounded-full">
         <Image src={platformImgSrc} fill objectFit="contain" alt="platform_pic" />
       </div>
-      <div className="flex max-w-220px flex-1 flex-col">
-        <div className="flex items-center gap-8px text-base font-bold">
+      <div className="flex flex-1 flex-col">
+        <div className="flex max-w-220px items-center gap-8px text-base font-bold">
           <p className="whitespace-nowrap text-text-primary">{platformName}</p>
           <p className="truncate whitespace-nowrap text-text-secondary">{loginDevice}</p>
         </div>
@@ -41,9 +41,12 @@ const AccessItem: React.FC<{
 };
 
 const ProfileAccessTab: React.FC = () => {
-  const [accessData /* setAccessData */] = useState<IAccess[]>(mockAccessData);
+  const [accessData /* setAccessData */] = useState<IAccess[]>([]);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
   const [preLogoutAccess, setPreLogoutAccess] = useState<IAccess | null>(null);
+
+  const loginAccessCount = accessData.length;
+  const isShowList = loginAccessCount > 0;
 
   const toggleLogoutModal = () => setIsLogoutModalOpen((prev) => !prev);
 
@@ -52,13 +55,19 @@ const ProfileAccessTab: React.FC = () => {
     setIsLogoutModalOpen(true);
   };
 
-  const accessList = accessData.map((access) => {
-    const logoutHandler = () => {
-      setPreLogoutAccess(access); // Info: (20251031 - Julian) 設定要 logout 的 access
-      setIsLogoutModalOpen(true);
-    };
-    return <AccessItem key={access.id} access={access} logoutHandler={logoutHandler} />;
-  });
+  const accessList = isShowList ? (
+    accessData.map((access) => {
+      const logoutHandler = () => {
+        setPreLogoutAccess(access); // Info: (20251031 - Julian) 設定要 logout 的 access
+        setIsLogoutModalOpen(true);
+      };
+      return <AccessItem key={access.id} access={access} logoutHandler={logoutHandler} />;
+    })
+  ) : (
+    <div className="flex items-center justify-center text-text-secondary">
+      No active sessions found.
+    </div>
+  );
 
   return (
     <>
@@ -68,8 +77,8 @@ const ProfileAccessTab: React.FC = () => {
           {/* Info: (20251031 - Julian) Logged in platforms info box */}
           <div className="flex flex-col gap-8px rounded-radius-s bg-surface-secondary px-16px py-12px">
             <p className="text-sm font-medium text-text-primary">
-              You&apos;re currently logged in on <span className="text-text-brand">6</span>{' '}
-              platforms
+              You&apos;re currently logged in on{' '}
+              <span className="text-text-brand">{loginAccessCount}</span> platforms
             </p>
             <p className="text-xs text-text-secondary">
               Manage your sessions below. Logging out will revoke access immediately.
@@ -77,13 +86,15 @@ const ProfileAccessTab: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-col items-end gap-8px px-16px">
-          <button
-            type="button"
-            onClick={clickLogoutAll}
-            className="text-base font-normal text-button-link hover:text-button-link-hover"
-          >
-            Logout All
-          </button>
+          {isShowList && (
+            <button
+              type="button"
+              onClick={clickLogoutAll}
+              className="text-base font-normal text-button-link hover:text-button-link-hover"
+            >
+              Logout All
+            </button>
+          )}
           <div className="flex max-h-360px w-full flex-1 flex-col gap-16px overflow-y-auto pb-40px">
             {accessList}
           </div>

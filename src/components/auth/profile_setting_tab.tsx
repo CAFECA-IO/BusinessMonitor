@@ -13,7 +13,7 @@ import LoginDeviceTab from '@/components/auth/profile_login_device_tab';
 import SecurityTab from '@/components/auth/profile_security_tab';
 import HelpCenterTab from '@/components/auth/profile_help_center_tab';
 import DeleteAccountModal from '@/components/auth/delete_account_modal';
-import { ILoginDevice, mockDevices } from '@/interfaces/device';
+import { ILoginDevice } from '@/interfaces/device';
 
 enum SettingTab {
   GENERAL = 'General',
@@ -51,7 +51,7 @@ const ProfileSettingTab: React.FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(LanguageOption.US);
   // Info: (20251027 - Julian) Login Device Tab States
   // ToDo: (20251027 - Julian) Replace mock data with real data from API
-  const [deviceData] = useState<ILoginDevice[]>(mockDevices);
+  const [deviceData] = useState<ILoginDevice[]>([]);
 
   const openGeneralTab = () => {
     setCurrentTab(SettingTab.GENERAL);
