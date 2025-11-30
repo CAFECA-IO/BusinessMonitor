@@ -13,10 +13,35 @@ import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import Button from '@/components/common/button';
 
+// Info: (20251128 - Tzuhan) 引入新依賴
+import { parsePublicKeyCoordinates } from '@/lib/fido2-parse';
+import { createPublicClient, http, parseAbi, type Address } from 'viem';
+
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
+
+// Info: (20251128 - Tzuhan) Factory 設定
+const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
+
+const factoryAbi = parseAbi([
+  'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',
+]);
+
+const toBigInt = (base64Url: string) => {
+  try {
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(base64);
+    let hex = '0x';
+    for (let i = 0; i < bin.length; i++) hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
+    return BigInt(hex);
+  } catch (e) {
+    console.error('Base64 conversion error:', e);
+    return BigInt(0);
+  }
+};
 
 export default function SignupClient() {
   // ToDo: (20251016 - Julian) Default avatar image path
@@ -29,11 +54,7 @@ export default function SignupClient() {
   const [randomBtnLoading, setRandomBtnLoading] = useState<boolean>(false);
   const [agreed, setAgreed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  // Info: (20251016 - Julian) During development
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [statusMessage, setStatusMessage] = useState('請輸入您的資訊以建立 Digital ID。');
-  // Info: (20251016 - Julian) During development
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
   const [isFidoAvailable, setIsFidoAvailable] = useState<boolean>(true);
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -85,8 +106,6 @@ export default function SignupClient() {
         throw new Error(optionsResponse.message || '無法從伺服器獲取註冊選項。');
       }
       const options = optionsResponse.payload;
-
-      // Info: (20251008 - Tzuhan) 將使用者輸入的名稱加入到註冊選項中
       options.user.name = name;
       options.user.displayName = name;
 
@@ -94,13 +113,65 @@ export default function SignupClient() {
       setStatusMessage('請依照瀏覽器提示，建立您的 Passkey...');
       const registration = await fido2ClientService.startRegistration(options);
 
-      // Info: (20251008 - Tzuhan) 步驟 3: 將註冊結果傳送至後端進行驗證
+      // -----------------------------------------------------------------------
+      // Info: (20251128 - Tzuhan) 新增邏輯：計算 SCW 地址 (Lazy Deployment 準備)
+      // -----------------------------------------------------------------------
+      setStatusMessage('正在計算您的區塊鏈錢包地址...');
+      let scwAddress = '';
+      let pubKeyXStr = '';
+      let pubKeyYStr = '';
+      const salt = '0';
+
+      if (FACTORY_ADDRESS) {
+        try {
+          const coords = parsePublicKeyCoordinates(registration.response.attestationObject);
+          if (coords) {
+            const pubKeyX = toBigInt(coords.x);
+            const pubKeyY = toBigInt(coords.y);
+
+            // Info: (20251128 - Tzuhan) 轉字串以便傳輸
+            pubKeyXStr = pubKeyX.toString();
+            pubKeyYStr = pubKeyY.toString();
+
+            const client = createPublicClient({ transport: http(RPC_URL) });
+
+            // Info: (20251128 - Tzuhan) 呼叫工廠預測地址
+            const address = await client.readContract({
+              address: FACTORY_ADDRESS,
+              abi: factoryAbi,
+              functionName: 'getAddress',
+              args: [pubKeyX, pubKeyY, BigInt(salt)],
+            });
+
+            scwAddress = address;
+            console.log(`[Signup] Calculated SCW Address: ${scwAddress}`);
+          }
+        } catch (calcErr) {
+          console.warn('[Signup] Failed to calculate SCW address:', calcErr);
+        }
+      }
+
+      // Info: (20251128 - Tzuhan) 步驟 3: 驗證 + 儲存 (夾帶 SCW 資料)
       setStatusMessage('正在驗證您的新 Passkey...');
+
+      const verifyPayload = {
+        ...registration,
+        // Info: (20251128 - Tzuhan) 額外欄位，後端需修改以接收這些資料
+        scwData: scwAddress
+          ? {
+              address: scwAddress,
+              initPublicKey: { x: pubKeyXStr, y: pubKeyYStr },
+              deploymentSalt: salt,
+            }
+          : undefined,
+      };
+
       const verifyRes = await fetch(`${origin}${routes.auth.webauthn.verify()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(registration),
+        body: JSON.stringify(verifyPayload),
       });
+
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok || !verifyData.success) {
         throw new Error(verifyData.message || '註冊驗證失敗。');
@@ -108,10 +179,7 @@ export default function SignupClient() {
 
       // Info: (20251008 - Tzuhan) 步驟 4: 註冊成功
       setStatusMessage('✅ 註冊成功！正在為您登入...');
-      // localStorage.setItem('dewt', verifyData.payload.dewt);
       await login(verifyData.payload.dewt);
-      // Info: (20251008 - Tzuhan) 提示使用者備份恢復金鑰
-      // alert(`請務必備份您的恢復金鑰，它只會出現這一次：\n\n${verifyData.payload.backupKey}`); // Info: (20251009 - Tzuhan) Deprecated
 
       if (uploadedAvatarUrl) {
         setStatusMessage('正在更新頭像...');
@@ -124,13 +192,10 @@ export default function SignupClient() {
             },
             body: JSON.stringify({ photo: uploadedAvatarUrl }),
           });
-          if (!updateRes.ok) {
-            console.warn('Avatar update failed post-registration.');
-          } else {
-            await refetchUser();
-          }
+          if (!updateRes.ok) console.warn('Avatar update failed.');
+          else await refetchUser();
         } catch (updateErr) {
-          console.warn('Error updating avatar post-registration:', updateErr);
+          console.warn('Error updating avatar:', updateErr);
         }
       }
 
@@ -179,12 +244,10 @@ export default function SignupClient() {
 
     try {
       const uploadApiUrl = `${origin}${routes.upload.file()}`;
-
       const response = await fetch(uploadApiUrl, {
         method: 'POST',
         body: formData,
       });
-
       const data = await response.json();
 
       if (!response.ok || !data.success) {
@@ -192,9 +255,7 @@ export default function SignupClient() {
       }
 
       const newAvatarUrl = data.payload.url;
-      if (!newAvatarUrl) {
-        throw new Error('Upload successful but response missing url.');
-      }
+      if (!newAvatarUrl) throw new Error('Upload successful but response missing url.');
 
       setAvatarUrl(newAvatarUrl);
       setUploadedAvatarUrl(newAvatarUrl);
@@ -225,11 +286,10 @@ export default function SignupClient() {
         ref={fileInputRef}
         onChange={handleFileChange}
         style={{ display: 'none' }}
-        accept="image/png, image/jpeg, image/gif" // Info: (20251023 - Tzuhan) 限制只能選圖片
+        accept="image/png, image/jpeg, image/gif"
         disabled={isUploading}
         aria-label="Upload your avatar photo"
       />
-      {/* Info: (20251016 - Julian) Wave shape background */}
       <div className="absolute top-0 z-0 h-300px w-full">
         <Image
           src="/elements/signup_bg.svg"
@@ -240,12 +300,9 @@ export default function SignupClient() {
         />
       </div>
 
-      {/* Info: (20251016 - Julian) Main content */}
       <div className="z-10 flex flex-1 flex-col items-center justify-center px-24px py-32px">
-        {/* Info: (20251016 - Julian) Title */}
         <h1 className="text-h5 font-bold text-text-invert">Create Your Digital ID</h1>
 
-        {/* Info: (20251016 - Julian) Avatar part */}
         <div className="mt-40px flex flex-col items-center gap-20px">
           <div className="relative">
             <div className="relative size-150px overflow-hidden rounded-full">
@@ -263,7 +320,6 @@ export default function SignupClient() {
               </Button>
             </div>
           </div>
-          {/* ToDo: (20251023 - Julian) Upload photo function */}
           <Button
             type="button"
             variant="primaryBorderless"
@@ -276,7 +332,6 @@ export default function SignupClient() {
           </Button>
         </div>
 
-        {/* Info: (20251016 - Julian) Name input part */}
         <div className="mt-40px flex flex-col gap-4px font-normal">
           <div
             className={`${
@@ -295,14 +350,11 @@ export default function SignupClient() {
               disabled={isLoading}
             />
           </div>
-          {/* Info: (20251016 - Julian) Naming rule */}
           {!isNameValid && (
             <p className="text-sm text-text-error">No numbers or symbols, e.g. 123, @, #, !</p>
           )}
         </div>
 
-        {/* Info: (20251016 - Julian) Terms checkbox part */}
-        {/* ToDo: (20251027 - Julian) 先隱藏 terms 和 privacy policy 路徑 */}
         <div className="mt-32px flex flex-1 items-end">
           <div className="flex items-start gap-8px font-normal">
             <input
@@ -316,22 +368,17 @@ export default function SignupClient() {
             />
             <label htmlFor="terms" className="flex flex-wrap items-center text-base">
               <p>I have read and agree to the</p>
-              {/* <Link href="/terms"> */}
               <Button type="button" variant="primaryBorderless" size="small">
                 Terms of Service
               </Button>
-              {/* </Link> */}
               <p>and</p>
-              {/* <Link href="/privacy"> */}
               <Button type="button" variant="primaryBorderless" size="small">
                 Privacy Policy
               </Button>
-              {/* </Link> */}
             </label>
           </div>
         </div>
 
-        {/* Info: (20251016 - Julian) Button part */}
         <div className="mt-10px flex flex-col items-center gap-8px">
           <Button
             type="button"
@@ -347,6 +394,15 @@ export default function SignupClient() {
             </Button>
           </Link>
         </div>
+
+        {error && (
+          <div className="mt-4 w-full max-w-md rounded-md bg-red-50 p-3 text-center text-sm text-red-600">
+            {error}
+          </div>
+        )}
+        {statusMessage && isLoading && (
+          <p className="mt-2 text-center text-sm text-gray-500">{statusMessage}</p>
+        )}
       </div>
     </>
   );

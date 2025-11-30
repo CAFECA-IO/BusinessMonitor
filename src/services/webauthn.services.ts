@@ -29,22 +29,31 @@ interface ILoginResult {
   dewt: string;
 }
 
+// Info: (20251128 - Tzuhan) 定義 SCW Data 介面
+interface IScwData {
+  address: string;
+  initPublicKey: { x: string; y: string };
+  deploymentSalt: string;
+}
+
 class WebAuthnService {
   constructor(private readonly repo: IWebAuthnRepository) {}
 
   public async loginOrRegister(
     fido2Response: RegistrationJSON | AuthenticationJSON,
-    expectedChallenge: string
+    expectedChallenge: string,
+    scwData?: IScwData // Info: (20251128 - Tzuhan) 新增可選參數
   ): Promise<ILoginResult> {
     if (isRegistrationJSON(fido2Response)) {
-      return this.handleRegistration(fido2Response, expectedChallenge);
+      return this.handleRegistration(fido2Response, expectedChallenge, scwData);
     }
     return this.handleAuthentication(fido2Response, expectedChallenge);
   }
 
   private async handleRegistration(
     registrationData: RegistrationJSON,
-    expectedChallenge: string
+    expectedChallenge: string,
+    scwData?: IScwData // Info: (20251128 - Tzuhan) 接收 SCW 資料
   ): Promise<ILoginResult> {
     const verification = await verifyRegistration(registrationData, expectedChallenge);
     const { id: credentialID, publicKey: credentialPublicKey, algorithm } = verification.credential;
@@ -55,6 +64,11 @@ class WebAuthnService {
 
     const creationData: ICreateIdentityData = {
       name: `User ${userHandle.substring(0, 6)}`,
+      // Info: (20251128 - Tzuhan) 將 SCW 資料填入
+      blockchainAddress: scwData?.address,
+      initPublicKey: scwData?.initPublicKey,
+      deploymentSalt: scwData?.deploymentSalt,
+
       credential: {
         credentialID,
         credentialPublicKey,
