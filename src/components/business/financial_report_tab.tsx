@@ -5,6 +5,32 @@ import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { IPeriod } from '@/interfaces/period';
 import DatePicker, { DatePickerType } from '@/components/common/date_picker';
+import dynamic from 'next/dynamic';
+
+const InvestmentAdvisoryReportViewer = dynamic(
+  () => import('@/components/business/investment_advisory_report_viewer'),
+  { ssr: false }
+);
+
+const BalanceSheetViewer: React.FC<{ businessId: string }> = () => {
+  return <div>No Balance Sheet Data</div>;
+};
+
+const CashFlowStatementViewer: React.FC<{ businessId: string }> = () => {
+  return <div>No Cash Flow Statement Data</div>;
+};
+
+const IncomeStatementViewer: React.FC<{ businessId: string }> = () => {
+  return <div>No Income Statement Data</div>;
+};
+
+const ProfitabilityAnalysisReportViewer: React.FC<{ businessId: string }> = () => {
+  return <div>No Profitability Analysis Report Data</div>;
+};
+
+const SolvencyAnalysisReportViewer: React.FC<{ businessId: string }> = () => {
+  return <div>No Solvency Analysis Report Data</div>;
+};
 
 enum FinancialReportType {
   BALANCE_SHEET = 'Balance Sheet',
@@ -15,7 +41,11 @@ enum FinancialReportType {
   SOLVENCY = 'Solvency Analysis Report',
 }
 
-const FinancialReportTab: React.FC = () => {
+interface IFinancialReportTabProps {
+  businessId: string;
+}
+
+const FinancialReportTab: React.FC<IFinancialReportTabProps> = ({ businessId }) => {
   const { t } = useTranslation(['business_detail']);
 
   const [selectedPeriod, setSelectedPeriod] = useState<IPeriod>({
@@ -69,17 +99,17 @@ const FinancialReportTab: React.FC = () => {
 
   const reportContent =
     currentTab === FinancialReportType.BALANCE_SHEET ? (
-      <div>Balance Sheet Content</div>
+      <BalanceSheetViewer businessId={businessId} />
     ) : currentTab === FinancialReportType.CASH_FLOW ? (
-      <div>Cash Flow Statement Content</div>
+      <CashFlowStatementViewer businessId={businessId} />
     ) : currentTab === FinancialReportType.INCOME_STATEMENT ? (
-      <div>Income Statement Content</div>
+      <IncomeStatementViewer businessId={businessId} />
     ) : currentTab === FinancialReportType.PROFITABILITY ? (
-      <div>Profitability Analysis Report Content</div>
+      <ProfitabilityAnalysisReportViewer businessId={businessId} />
     ) : currentTab === FinancialReportType.INVESTMENT ? (
-      <div>Investment Advisory Report Content</div>
+      <InvestmentAdvisoryReportViewer businessId={businessId} />
     ) : currentTab === FinancialReportType.SOLVENCY ? (
-      <div>Solvency Analysis Report Content</div>
+      <SolvencyAnalysisReportViewer businessId={businessId} />
     ) : null;
 
   return (
