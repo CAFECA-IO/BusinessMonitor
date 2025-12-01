@@ -6,56 +6,97 @@ import { ApiCode } from '@/lib/status';
 import { verifyRegistration } from '@/lib/fido2-server';
 import { AppError } from '@/lib/error';
 import { logger } from '@/lib/logger';
-import { signDeWT } from '@/lib/dewt';
 import type { RegistrationJSON } from '@passwordless-id/webauthn/dist/esm/types';
+
+// [PoC 4] 定義前端傳來的額外資料 (公鑰)
+interface IPairingCompleteBody {
+  sessionId: string;
+  fido2Registration: RegistrationJSON;
+  // 前端解析好的 P-256 座標 (因為後端解析 COSE 比較麻煩，PoC 階段先信賴前端)
+  candidatePublicKey?: {
+    x: string;
+    y: string;
+  };
+}
 
 export async function POST(request: NextRequest) {
   const pusherServer = getPusherInstance();
   let sessionId = '';
 
   try {
-    const {
-      sessionId: reqSessionId,
-      fido2Registration,
-    }: { sessionId: string; fido2Registration: RegistrationJSON } = await request.json();
-    sessionId = reqSessionId;
+    const body = (await request.json()) as IPairingCompleteBody;
+    sessionId = body.sessionId;
+    const { fido2Registration, candidatePublicKey } = body;
 
     if (!sessionId || !fido2Registration) {
       throw new AppError(ApiCode.VALIDATION_ERROR, 'sessionId and fido2Registration are required.');
     }
 
-    // Info: (20251013 - Tzuhan) 1. 查找 session 並確認其狀態為 AUTHORIZED
+    // 1. 查找 session
+    // 注意：狀態必須是 AUTHORIZED (表示 Device A 已經掃碼並同意進行流程)
     const session = await webAuthnRepo.findPairingSessionById(sessionId);
     if (!session || session.status !== 'AUTHORIZED' || !session.challenge || !session.identityId) {
       throw new AppError(ApiCode.UNAUTHORIZED, 'Session is not valid for registration.');
     }
 
-    // Info: (20251013 - Tzuhan) 2. 使用 session 中儲存的 challenge 驗證 FIDO2 註冊資料
+    // 2. 驗證 FIDO2 註冊資料 (確保 Passkey 合法)
+    // 這一步很重要，證明 Device B 真的產生了有效的 Passkey
     const registrationInfo = await verifyRegistration(fido2Registration, session.challenge);
 
-    // Info: (20251013 - Tzuhan) 3. 使用 webAuthnRepo 將新裝置存入資料庫
-    await webAuthnRepo.addAuthenticatorToIdentity(session.identityId, {
-      credentialID: registrationInfo.credential.id,
-      credentialPublicKey: registrationInfo.credential.publicKey,
-      counter: registrationInfo.authenticator.counter,
-      algorithm: registrationInfo.credential.algorithm,
-      userHandle: registrationInfo.user.id,
-    });
+    // [PoC 4 分歧點]
+    // 舊流程：直接寫入 Authenticator 表 -> 完成
+    // 新流程：暫存公鑰 -> 通知 Device A 發送 UserOp -> 等待鏈上結果
 
-    // Info: (20251013 - Tzuhan) 4. 使用 webAuthnRepo 將 session 狀態更新為 COMPLETED
-    await webAuthnRepo.updatePairingSessionStatus(sessionId, 'COMPLETED', session.identityId);
+    if (candidatePublicKey) {
+      // === 新流程 (SCW Add Signer) ===
 
-    // Info: (20251013 - Tzuhan) 5. 為新裝置簽發一個 DeWT，讓它可以直接登入
-    const identityAccount = await webAuthnRepo.findIdentityAccountById(session.identityId);
-    if (!identityAccount) throw new AppError(ApiCode.NOT_FOUND, 'Identity account not found.');
-    const dewt = await signDeWT(identityAccount);
+      // 3. 將公鑰與憑證 ID 暫存到 Session
+      // 這些資料稍後 Device A 會讀取，用來打包 UserOp
+      const candidateData = {
+        credentialID: registrationInfo.credential.id,
+        credentialPublicKey: registrationInfo.credential.publicKey, // Raw Base64
+        counter: registrationInfo.authenticator.counter,
+        algorithm: registrationInfo.credential.algorithm,
+        userHandle: registrationInfo.user.id,
+        // 關鍵：前端解析好的 X, Y (BigInt string)
+        pubKeyX: candidatePublicKey.x,
+        pubKeyY: candidatePublicKey.y,
+      };
 
-    // Info: (20251013 - Tzuhan) 6. 透過 Pusher 通知舊裝置，新增成功
-    const channelName = `private-login-session-${sessionId}`;
-    await pusherServer.trigger(channelName, 'device-added-success', {});
+      await webAuthnRepo.updateSessionCandidateData(sessionId, candidateData);
 
-    // Info: (20251013 - Tzuhan) 7. 將 DeWT 回傳給新裝置
-    return jsonOk({ message: 'Device added successfully.', payload: { dewt } });
+      // 4. 透過 Pusher 通知 Device A：「新裝置已準備好，請簽名上鏈」
+      const channelName = `private-login-session-${sessionId}`;
+      await pusherServer.trigger(channelName, 'client-candidate-ready', {
+        // 把需要的 X, Y 傳給 A
+        pubKeyX: candidatePublicKey.x,
+        pubKeyY: candidatePublicKey.y,
+        deviceName: 'New Device', // 這裡可以讓前端傳入裝置名稱
+      });
+
+      return jsonOk({
+        message: 'Candidate key stored. Waiting for on-chain authorization.',
+        status: 'WAITING_ON_CHAIN',
+      });
+    } else {
+      // === 舊流程 (如果沒有傳 candidatePublicKey，維持原樣以相容舊代碼) ===
+
+      await webAuthnRepo.addAuthenticatorToIdentity(session.identityId, {
+        credentialID: registrationInfo.credential.id,
+        credentialPublicKey: registrationInfo.credential.publicKey,
+        counter: registrationInfo.authenticator.counter,
+        algorithm: registrationInfo.credential.algorithm,
+        userHandle: registrationInfo.user.id,
+      });
+
+      await webAuthnRepo.updatePairingSessionStatus(sessionId, 'COMPLETED', session.identityId);
+
+      const channelName = `private-login-session-${sessionId}`;
+      await pusherServer.trigger(channelName, 'device-added-success', {});
+
+      // 這裡需要回傳 token 讓 B 登入，但舊流程暫不變動
+      return jsonOk({ message: 'Device added successfully (Legacy).', payload: {} });
+    }
   } catch (error) {
     const isAppError = error instanceof AppError;
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';

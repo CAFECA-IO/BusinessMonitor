@@ -56,6 +56,10 @@ export interface IWebAuthnRepository {
     status: 'COMPLETED' | 'AUTHORIZED',
     identityId: string
   ): Promise<DevicePairingSession>;
+  updateSessionCandidateData(
+    sessionId: string,
+    candidateData: Prisma.InputJsonValue
+  ): Promise<void>;
 }
 
 class WebAuthnRepository implements IWebAuthnRepository {
@@ -151,6 +155,16 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.devicePairingSession.update({
       where: { id },
       data: { status, identityId },
+    });
+  }
+
+  public async updateSessionCandidateData(
+    sessionId: string,
+    candidateData: Prisma.InputJsonValue
+  ): Promise<void> {
+    await prisma.devicePairingSession.update({
+      where: { id: sessionId },
+      data: { pendingCandidateData: candidateData },
     });
   }
 
