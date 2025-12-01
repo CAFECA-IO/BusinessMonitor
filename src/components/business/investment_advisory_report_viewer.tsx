@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { IPeriod } from '@/interfaces/period';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -14,10 +15,15 @@ const BUSINESS_ID = '1419726';
 const FILE_URL =
   'https://storage.cafeca.io/api/v1/file/QmTzzMVfUGg6evKAABryMQy1SKHhePxwUHd3PgjtoGeyJg';
 
-const InvestmentAdvisoryReportViewer: React.FC<{ businessId: string }> = ({ businessId }) => {
+const InvestmentAdvisoryReportViewer: React.FC<{ businessId: string; activePeriod: IPeriod }> = ({
+  businessId,
+  activePeriod,
+}) => {
+  const isSelectedPeriodValid =
+    activePeriod.startTimestamp !== 0 && activePeriod.endTimestamp !== 0;
+
   // ToDo: (20251128 - Julian) During Development:
   // 1. Document styles are not fully applied.
-  // 2. PDF should be loaded after period selection.
   const isShowViewer =
     businessId === BUSINESS_ID ? (
       <Document file={FILE_URL}>
@@ -27,7 +33,13 @@ const InvestmentAdvisoryReportViewer: React.FC<{ businessId: string }> = ({ busi
       <div>No Investment Advisory Report Data</div>
     );
 
-  return <>{isShowViewer}</>;
+  const isDisplayReport = isSelectedPeriodValid ? (
+    isShowViewer
+  ) : (
+    <div>Please select a valid period to view the report.</div>
+  );
+
+  return <>{isDisplayReport}</>;
 };
 
 export default InvestmentAdvisoryReportViewer;
