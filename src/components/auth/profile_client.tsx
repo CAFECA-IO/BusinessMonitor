@@ -25,6 +25,7 @@ import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators'
 import { createPublicClient, http, parseAbi, type Address, type Hex } from 'viem';
 import type { IApiResponse } from '@/lib/response';
 import type { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
+import { RPC_URL } from '@/constants/config';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -33,7 +34,6 @@ if (!origin) {
 
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
 const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 const factoryAbi = parseAbi([
   'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',

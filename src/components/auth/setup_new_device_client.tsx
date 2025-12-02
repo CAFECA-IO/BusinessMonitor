@@ -10,7 +10,7 @@ import { getPusherInstance } from '@/lib/pusher_client';
 import { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
 import { useAuth } from '@/contexts/auth_context';
 
-// [PoC 4] 引入公鑰解析工具
+// Info: (20251202 - Tzuhan) 引入公鑰解析工具
 import { parsePublicKeyCoordinates } from '@/lib/fido2-parse';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
@@ -18,7 +18,7 @@ if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
 
-// [PoC 4] 輔助函式
+// Info: (20251202 - Tzuhan) 輔助函式
 const toBigInt = (base64Url: string) => {
   try {
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -54,13 +54,13 @@ function SetupNewDeviceInternal() {
       setStatusMessage('請在此裝置上建立 Passkey...');
       const registration = await fido2ClientService.startRegistration(registrationOptions);
 
-      // [PoC 4] 解析公鑰
+      // Info: (20251202 - Tzuhan) 解析公鑰
       const coords = parsePublicKeyCoordinates(registration.response.attestationObject);
       if (!coords) throw new Error('無法解析 Passkey 公鑰。');
 
       setStatusMessage('正在傳送公鑰給舊裝置...');
 
-      // [PoC 4] 呼叫後端，傳送候選公鑰
+      // Info: (20251202 - Tzuhan) 呼叫後端，傳送候選公鑰
       const res = await fetch(`${origin}${routes.pairing.complete()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,7 +79,7 @@ function SetupNewDeviceInternal() {
         throw new Error(result.message || '傳送公鑰失敗。');
       }
 
-      // [PoC 4] 成功傳送後，進入等待模式，不直接登入
+      // Info: (20251202 - Tzuhan) 成功傳送後，進入等待模式，不直接登入
       setStatusMessage('✅ 公鑰已傳送！請回到舊裝置上「批准」此請求 (簽署區塊鏈交易)...');
       setIsWaitingForApproval(true);
     } catch (err) {
@@ -88,7 +88,7 @@ function SetupNewDeviceInternal() {
         (err as Error).name === 'NotAllowedError' ? '您取消了操作。' : '設定失敗，請重試。'
       );
       setError(errorMessage);
-      setIsLoading(false); // 只有失敗才取消 loading，成功的話保持 loading 狀態直到跳轉
+      setIsLoading(false); // Info: (20251202 - Tzuhan) 只有失敗才取消 loading，成功的話保持 loading 狀態直到跳轉
     }
   }, [registrationOptions, sessionId]);
 
@@ -114,7 +114,7 @@ function SetupNewDeviceInternal() {
       setError('無法建立安全連線，請重試。');
     });
 
-    // 1. 收到註冊選項 (開始流程)
+    //  Info: (20251202 - Tzuhan)1. 收到註冊選項 (開始流程)
     channel.bind(
       'client-initiate-registration',
       (payload: { registrationOptions: RegisterOptions }) => {
@@ -127,15 +127,15 @@ function SetupNewDeviceInternal() {
       }
     );
 
-    // [PoC 4] 2. 收到授權成功通知 (流程結束)
-    // 當 Device A 完成 addSigner 交易後，後端會發送此事件並帶上 Token
+    //  Info: (20251202 - Tzuhan)[PoC 4] 2. 收到授權成功通知 (流程結束)
+    //  Info: (20251202 - Tzuhan)當 Device A 完成 addSigner 交易後，後端會發送此事件並帶上 Token
     channel.bind('device-added-success', async (data: { dewt: string }) => {
       if (data && data.dewt) {
         setStatusMessage('🎉 授權成功！區塊鏈已確認您的身份。正在登入...');
         await login(data.dewt);
         router.push('/profile');
       } else {
-        // 如果是舊流程或沒帶 token，嘗試重新導向登入頁
+        //  Info: (20251202 - Tzuhan)如果是舊流程或沒帶 token，嘗試重新導向登入頁
         setStatusMessage('裝置新增成功！請重新登入。');
         setTimeout(() => router.push('/auth/login'), 2000);
       }

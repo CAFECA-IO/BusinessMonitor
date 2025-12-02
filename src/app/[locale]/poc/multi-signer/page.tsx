@@ -13,11 +13,11 @@ import {
   type Hex,
   type Address,
 } from 'viem';
+import { RPC_URL } from '@/constants/config';
 
 // Info: (20251127 - Tzuhan) 環境變數
 const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
 const SCW_ADDRESS = (process.env.NEXT_PUBLIC_SCW_ADDRESS || '') as Address;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 // Info: (20251127 - Tzuhan) ABI 定義
 const scwAbi = parseAbi([

@@ -27,6 +27,7 @@ import type {
   RegisterOptions,
   AuthenticateOptions,
 } from '@passwordless-id/webauthn/dist/esm/types';
+import { RPC_URL } from '@/constants/config';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -35,7 +36,6 @@ if (!origin) {
 
 // Info: (20251128 - Tzuhan) Factory 設定
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 // Info: (20251128 - Tzuhan) Factory ABI
 const factoryAbi = parseAbi([
@@ -153,9 +153,7 @@ export default function ProfileClient() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
         body: JSON.stringify({
-          // 這裡嘗試更新 SCW 地址，需確保後端 Validator 允許此欄位
-          // 如果後端尚未支援，這裡僅為演示前端邏輯
-          // blockchainAddress: scwAddress
+          blockchainAddress: scwAddress,
         }),
       });
 

@@ -16,6 +16,7 @@ import MessageModal from '@/components/auth/message_modal';
 // Info: (20251128 - Tzuhan) 引入新依賴
 import { createPublicClient, http, type Address } from 'viem';
 import { getInitCode } from '@/lib/aa-utils';
+import { RPC_URL } from '@/constants/config';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -24,7 +25,6 @@ if (!origin) {
 
 // Info: (20251128 - Tzuhan) 環境變數
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);

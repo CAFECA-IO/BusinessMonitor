@@ -16,6 +16,7 @@ import Button from '@/components/common/button';
 // Info: (20251128 - Tzuhan) 引入新依賴
 import { parsePublicKeyCoordinates } from '@/lib/fido2-parse';
 import { createPublicClient, http, parseAbi, type Address } from 'viem';
+import { RPC_URL } from '@/constants/config';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -24,7 +25,6 @@ if (!origin) {
 
 // Info: (20251128 - Tzuhan) Factory 設定
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 const factoryAbi = parseAbi([
   'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',

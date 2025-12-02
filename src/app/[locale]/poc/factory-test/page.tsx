@@ -7,11 +7,11 @@ import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { getInitCode, factoryAbi } from '@/lib/aa-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
 import { createPublicClient, http, parseAbi, type Hex, type Address } from 'viem';
+import { RPC_URL } from '@/constants/config';
 
 // Info: (20251126 - Tzuhan) 環境變數讀取
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
 const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 const entryPointAbi = parseAbi([
   'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',

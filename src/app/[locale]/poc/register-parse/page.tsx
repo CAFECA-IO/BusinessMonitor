@@ -12,11 +12,11 @@ import type {
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
 import { createPublicClient, http, parseAbi } from 'viem';
+import { RPC_URL } from '@/constants/config';
 
 // Info: (20251121 - Tzuhan) 環境變數讀取
 const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as `0x${string}`;
 const SCW_ADDRESS = (process.env.NEXT_PUBLIC_SCW_ADDRESS || '') as `0x${string}`;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 const entryPointAbi = parseAbi([
   'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
