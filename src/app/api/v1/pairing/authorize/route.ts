@@ -4,11 +4,13 @@ import { jsonOk, jsonFail } from '@/lib/response';
 import { ApiCode } from '@/lib/status';
 import { AppError } from '@/lib/error';
 import { logger } from '@/lib/logger';
-import { getIdentityFromDeWT } from '@/lib/dewt';
+import { getIdentityFromDeWT, signDeWT } from '@/lib/dewt';
+import { getPusherInstance } from '@/lib/pusher';
 
 export async function POST(request: NextRequest) {
+  const pusherServer = getPusherInstance();
+
   try {
-    // Info: (20251013 - Tzuhan) 1. 驗證發起請求的使用者身份
     const identity = await getIdentityFromDeWT(request.headers.get('Authorization'));
     if (!identity) {
       throw new AppError(ApiCode.UNAUTHORIZED, 'Invalid or missing token.');
@@ -19,13 +21,29 @@ export async function POST(request: NextRequest) {
       throw new AppError(ApiCode.VALIDATION_ERROR, 'sessionId and challenge are required.');
     }
 
-    // Info: (20251013 - Tzuhan) 2. 查找 session 並確認其狀態為 PENDING
     const session = await prisma.devicePairingSession.findUnique({ where: { id: sessionId } });
-    if (!session || session.status !== 'PENDING') {
-      throw new AppError(ApiCode.NOT_FOUND, 'Session not found, expired, or already processed.');
+    if (!session || session.status === 'COMPLETED' || session.status === 'EXPIRED') {
+      // Info: (20251202 - Tzuhan) 狀態檢查放寬一點，只要不是已完成或過期即可 (因為 Add Device 流程狀態可能是 PENDING)
+      throw new AppError(ApiCode.NOT_FOUND, 'Session not valid.');
     }
 
-    // Info: (20251013 - Tzuhan) 3. 更新 session 狀態，並關聯使用者與 challenge
+    if (challenge === 'poc4-authorized' && session.pendingCandidateData) {
+      // Info: (20251202 - Tzuhan) 2. 簽發 Token 給新裝置
+      const dewt = await signDeWT(identity);
+
+      // Info: (20251202 - Tzuhan) 3. 更新 Session 狀態
+      await prisma.devicePairingSession.update({
+        where: { id: sessionId },
+        data: { status: 'COMPLETED', identityId: identity.id },
+      });
+
+      // Info: (20251202 - Tzuhan) 4. [重要] 推送成功事件給 Device B
+      const channelName = `private-login-session-${sessionId}`;
+      await pusherServer.trigger(channelName, 'device-added-success', { dewt });
+
+      return jsonOk({ message: 'Device added and notified.' });
+    }
+
     await prisma.devicePairingSession.update({
       where: { id: sessionId },
       data: {

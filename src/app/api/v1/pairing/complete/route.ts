@@ -35,7 +35,14 @@ export async function POST(request: NextRequest) {
     // Info: (20251202 - Tzuhan) 1. 查找 session
     // Info: (20251202 - Tzuhan) 注意：狀態必須是 AUTHORIZED (表示 Device A 已經掃碼並同意進行流程)
     const session = await webAuthnRepo.findPairingSessionById(sessionId);
-    if (!session || session.status !== 'AUTHORIZED' || !session.challenge || !session.identityId) {
+
+    // Info: (20251202 - Tzuhan) 邏輯調整：
+    // 1. 如果是「掃碼登入」，狀態通常是 AUTHORIZED (A 掃 B)。
+    // 2. 如果是「新增裝置」，狀態是 PENDING (A 建立 Session)，但必須有 identityId (A 已登入)。
+    const isValidForAddDevice = session?.status === 'PENDING' && session?.identityId;
+    const isValidForLogin = session?.status === 'AUTHORIZED';
+
+    if (!session || (!isValidForAddDevice && !isValidForLogin)) {
       throw new AppError(ApiCode.UNAUTHORIZED, 'Session is not valid for registration.');
     }
 
@@ -53,7 +60,7 @@ export async function POST(request: NextRequest) {
       // Info: (20251202 - Tzuhan) 這些資料稍後 Device A 會讀取，用來打包 UserOp
       const candidateData = {
         credentialID: registrationInfo.credential.id,
-        credentialPublicKey: registrationInfo.credential.publicKey, // Raw Base64
+        credentialPublicKey: registrationInfo.credential.publicKey,
         counter: registrationInfo.authenticator.counter,
         algorithm: registrationInfo.credential.algorithm,
         userHandle: registrationInfo.user.id,
@@ -80,7 +87,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Info: (20251202 - Tzuhan) === 舊流程 (如果沒有傳 candidatePublicKey，維持原樣以相容舊代碼) ===
 
-      await webAuthnRepo.addAuthenticatorToIdentity(session.identityId, {
+      await webAuthnRepo.addAuthenticatorToIdentity(session.identityId!, {
         credentialID: registrationInfo.credential.id,
         credentialPublicKey: registrationInfo.credential.publicKey,
         counter: registrationInfo.authenticator.counter,
@@ -88,7 +95,7 @@ export async function POST(request: NextRequest) {
         userHandle: registrationInfo.user.id,
       });
 
-      await webAuthnRepo.updatePairingSessionStatus(sessionId, 'COMPLETED', session.identityId);
+      await webAuthnRepo.updatePairingSessionStatus(sessionId, 'COMPLETED', session.identityId!);
 
       const channelName = `private-login-session-${sessionId}`;
       await pusherServer.trigger(channelName, 'device-added-success', {});
