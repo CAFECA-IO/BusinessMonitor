@@ -227,9 +227,9 @@ export default function ProfileClient() {
               </button>
 
               {/* Info: (20251128 - Tzuhan) 管理裝置按鈕 */}
-              <Link href="/poc/multi-signer" className="w-full">
+              <Link href={BM_URL.ADD_DEVICE} className="w-full">
                 <button className="w-full rounded-lg bg-gray-800 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-gray-900">
-                  管理裝置 (Multi-Signer)
+                  新增裝置 (Add Device)
                 </button>
               </Link>
             </div>
