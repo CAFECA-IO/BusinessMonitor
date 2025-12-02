@@ -11,7 +11,14 @@ import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
-import { createPublicClient, http, parseAbi, encodeFunctionData, type Address } from 'viem';
+import {
+  createPublicClient,
+  http,
+  parseAbi,
+  encodeFunctionData,
+  type Address,
+  type Hex,
+} from 'viem';
 import { RPC_URL } from '@/constants/config';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
@@ -106,20 +113,16 @@ export default function AddDeviceClient() {
       };
 
       // Info: (20251202 - Tzuhan) 4. 計算 Hash
+      // 確保型別正確轉型為 Hex
       const userOpTuple = {
         ...userOp,
-        sender: userOp.sender.startsWith('0x')
-          ? (userOp.sender as `0x${string}`)
-          : (`0x${userOp.sender}` as `0x${string}`),
-        initCode: userOp.initCode.startsWith('0x')
-          ? (userOp.initCode as `0x${string}`)
-          : (`0x${userOp.initCode}` as `0x${string}`),
-        callData: userOp.callData.startsWith('0x')
-          ? (userOp.callData as `0x${string}`)
-          : (`0x${userOp.callData}` as `0x${string}`),
-        paymasterAndData: '0x' as `0x${string}`,
-        signature: '0x' as `0x${string}`,
+        sender: userOp.sender as Address,
+        initCode: userOp.initCode as Hex,
+        callData: userOp.callData as Hex,
+        paymasterAndData: userOp.paymasterAndData as Hex,
+        signature: userOp.signature as Hex,
       };
+
       const userOpHash = await client.readContract({
         address: ENTRY_POINT_ADDRESS,
         abi: entryPointAbi,
@@ -143,6 +146,7 @@ export default function AddDeviceClient() {
 
       // Info: (20251202 - Tzuhan) 需要當前使用者的 initPublicKey 來打包簽名
       // Info: (20251202 - Tzuhan) (假設 user.initPublicKey 是 {x, y} 格式)
+      // 注意：這裡假設 A 是用 initKey 簽名。如果是多裝置情境，理想上應該讓用戶選鑰匙或從 LocalStorage 讀取
       const ownerKey = user.initPublicKey as { x: string; y: string } | null;
       if (!ownerKey?.x || !ownerKey?.y) throw new Error('無法取得您的公鑰資訊');
 

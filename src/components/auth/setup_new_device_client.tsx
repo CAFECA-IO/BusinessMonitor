@@ -3,22 +3,19 @@
 import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Pusher from 'pusher-js';
 import { fido2ClientService } from '@/lib/fido2-client';
 import { routes } from '@/config/api_routes';
 import { getPusherInstance } from '@/lib/pusher_client';
 import { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
 import { useAuth } from '@/contexts/auth_context';
-
-// Info: (20251202 - Tzuhan) 引入公鑰解析工具
 import { parsePublicKeyCoordinates } from '@/lib/fido2-parse';
+import type { IApiResponse } from '@/lib/response';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
 
-// Info: (20251202 - Tzuhan) 輔助函式
 const toBigInt = (base64Url: string) => {
   try {
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -33,16 +30,43 @@ const toBigInt = (base64Url: string) => {
 };
 
 function SetupNewDeviceInternal() {
-  const [statusMessage, setStatusMessage] = useState('正在連接安全頻道...');
+  const [statusMessage, setStatusMessage] = useState('正在初始化...');
   const [error, setError] = useState<string | null>(null);
   const [registrationOptions, setRegistrationOptions] = useState<RegisterOptions | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isWaitingForApproval, setIsWaitingForApproval] = useState(false); // [PoC 4] 等待授權狀態
+  const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
   const { login } = useAuth();
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setStatusMessage('正在獲取設定參數...');
+        const response = await fetch(`${origin}${routes.auth.webauthn.options('register')}`);
+        const apiResponse: IApiResponse<RegisterOptions> = await response.json();
+
+        if (!response.ok || !apiResponse.success || !apiResponse.payload) {
+          throw new Error(apiResponse.message || '無法獲取註冊選項');
+        }
+
+        setRegistrationOptions(apiResponse.payload);
+        setStatusMessage('請點擊下方按鈕以設定此裝置');
+      } catch (err) {
+        setError((err as Error).message);
+        setStatusMessage('初始化失敗');
+      }
+    };
+
+    if (sessionId) {
+      fetchOptions();
+    } else {
+      setError('無效的連結 (Missing Session ID)');
+      setStatusMessage('錯誤');
+    }
+  }, [sessionId]);
 
   const handleStartRegistration = useCallback(async () => {
     if (!registrationOptions || !sessionId) return;
@@ -51,14 +75,13 @@ function SetupNewDeviceInternal() {
     setError(null);
 
     try {
-      setStatusMessage('請在此裝置上建立 Passkey...');
+      setStatusMessage('請依照瀏覽器提示建立 Passkey...');
       const registration = await fido2ClientService.startRegistration(registrationOptions);
 
-      // Info: (20251202 - Tzuhan) 解析公鑰
       const coords = parsePublicKeyCoordinates(registration.response.attestationObject);
       if (!coords) throw new Error('無法解析 Passkey 公鑰。');
 
-      setStatusMessage('正在傳送公鑰給舊裝置...');
+      setStatusMessage('正在傳送公鑰給管理員裝置...');
 
       // Info: (20251202 - Tzuhan) 呼叫後端，傳送候選公鑰
       const res = await fetch(`${origin}${routes.pairing.complete()}`, {
@@ -76,73 +99,45 @@ function SetupNewDeviceInternal() {
 
       const result = await res.json();
       if (!res.ok || !result.success) {
-        throw new Error(result.message || '傳送公鑰失敗。');
+        throw new Error(result.message || '傳送失敗。');
       }
 
-      // Info: (20251202 - Tzuhan) 成功傳送後，進入等待模式，不直接登入
-      setStatusMessage('✅ 公鑰已傳送！請回到舊裝置上「批准」此請求 (簽署區塊鏈交易)...');
+      setStatusMessage('✅ 公鑰已傳送！請回到舊裝置 (管理員) 上點擊「批准」以完成授權...');
       setIsWaitingForApproval(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '未知錯誤';
-      setStatusMessage(
-        (err as Error).name === 'NotAllowedError' ? '您取消了操作。' : '設定失敗，請重試。'
-      );
+      setStatusMessage((err as Error).name === 'NotAllowedError' ? '您取消了操作。' : '設定失敗。');
       setError(errorMessage);
-      setIsLoading(false); // Info: (20251202 - Tzuhan) 只有失敗才取消 loading，成功的話保持 loading 狀態直到跳轉
+      setIsLoading(false);
     }
   }, [registrationOptions, sessionId]);
 
+  // Pusher 監聽 (只負責聽成功訊號)
   useEffect(() => {
-    if (!sessionId) {
-      setStatusMessage('錯誤：無效的設定連結。');
-      setError('請返回您已登入的裝置，重新產生 QR Code。');
-      return;
-    }
+    if (!sessionId) return;
 
-    const pusherClient: Pusher = getPusherInstance();
+    const pusherClient = getPusherInstance();
     const channelName = `private-login-session-${sessionId}`;
     const channel = pusherClient.subscribe(channelName);
 
     channel.bind('pusher:subscription_succeeded', () => {
-      if (!isWaitingForApproval) {
-        setStatusMessage('連線成功！正在等待您的舊裝置發起邀請...');
-        channel.trigger('client-new-device-ready', {});
-      }
+      console.log('Pusher connected');
     });
 
-    channel.bind('pusher:subscription_error', () => {
-      setError('無法建立安全連線，請重試。');
-    });
-
-    //  Info: (20251202 - Tzuhan)1. 收到註冊選項 (開始流程)
-    channel.bind(
-      'client-initiate-registration',
-      (payload: { registrationOptions: RegisterOptions }) => {
-        if (!payload.registrationOptions) {
-          setError('授權資訊無效。');
-          return;
-        }
-        setStatusMessage('✅ 連線建立！請點擊下方按鈕產生新鑰匙。');
-        setRegistrationOptions(payload.registrationOptions);
-      }
-    );
-
-    //  Info: (20251202 - Tzuhan)[PoC 4] 2. 收到授權成功通知 (流程結束)
-    //  Info: (20251202 - Tzuhan)當 Device A 完成 addSigner 交易後，後端會發送此事件並帶上 Token
+    // Info: (20251202 - Tzuhan) s監聽授權成功 (Device A 完成鏈上交易後觸發)
     channel.bind('device-added-success', async (data: { dewt: string }) => {
       if (data && data.dewt) {
-        setStatusMessage('🎉 授權成功！區塊鏈已確認您的身份。正在登入...');
+        setStatusMessage('🎉 授權成功！正在登入...');
         await login(data.dewt);
         router.push('/profile');
       } else {
-        //  Info: (20251202 - Tzuhan)如果是舊流程或沒帶 token，嘗試重新導向登入頁
-        setStatusMessage('裝置新增成功！請重新登入。');
+        setStatusMessage('授權完成！請嘗試重新登入。');
         setTimeout(() => router.push('/auth/login'), 2000);
       }
     });
 
     channel.bind('device-added-error', (data: { message: string }) => {
-      setError(data.message || '授權失敗，請重試。');
+      setError(data.message || '授權失敗');
       setIsLoading(false);
       setIsWaitingForApproval(false);
     });
@@ -150,7 +145,7 @@ function SetupNewDeviceInternal() {
     return () => {
       pusherClient.unsubscribe(channelName);
     };
-  }, [sessionId, isWaitingForApproval, login, router]);
+  }, [sessionId, login, router]);
 
   return (
     <div className="flex grow flex-col items-center justify-center p-4">
@@ -161,7 +156,6 @@ function SetupNewDeviceInternal() {
           {error && <p className="mt-2 text-red-500">{error}</p>}
         </div>
 
-        {/* 顯示按鈕條件：有選項 且 還沒進入等待授權階段 */}
         {registrationOptions && !isWaitingForApproval && (
           <div className="mt-8 w-full">
             <button
@@ -174,7 +168,6 @@ function SetupNewDeviceInternal() {
           </div>
         )}
 
-        {/* 等待授權時顯示 Loading 動畫 */}
         {isWaitingForApproval && (
           <div className="mt-8 flex justify-center">
             <div className="size-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>

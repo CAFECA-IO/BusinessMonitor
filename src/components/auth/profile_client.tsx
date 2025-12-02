@@ -302,7 +302,7 @@ export default function ProfileClient() {
       const result: BundlerResponse = await res.json();
 
       if (result.payload?.transactionHash && result.payload?.status === 'success') {
-        setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash.slice(0, 10)}...)`);
+        setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash})`);
         // Info: (20251128 - Tzuhan) 如果是第一次部署，重新整理用戶資料以更新狀態
         if (!isDeployed) {
           await refetchUser();
