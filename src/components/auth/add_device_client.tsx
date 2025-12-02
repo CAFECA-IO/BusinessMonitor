@@ -231,12 +231,13 @@ export default function AddDeviceClient() {
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message);
 
-        const newSessionId = data.payload.sessionId;
-        setSessionId(newSessionId);
+        const { sessionId, challenge } = data.payload;
+        setSessionId(sessionId);
 
         // Info: (20251202 - Tzuhan) 產生 Setup URL (給 Device B 掃的)
         const setupUrl = new URL(`${origin}${BM_URL.SETUP_NEW_DEVICE}`);
-        setupUrl.searchParams.set('sessionId', newSessionId);
+        setupUrl.searchParams.set('sessionId', sessionId);
+        setupUrl.searchParams.set('challenge', challenge);
 
         const dataUrl = await QRCode.toDataURL(setupUrl.toString(), { width: 256, margin: 2 });
         setQrCodeDataUrl(dataUrl);

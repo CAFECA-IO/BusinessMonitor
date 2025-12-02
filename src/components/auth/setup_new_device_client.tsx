@@ -39,6 +39,7 @@ function SetupNewDeviceInternal() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
+  const urlChallenge = searchParams.get('challenge');
   const { login } = useAuth();
 
   useEffect(() => {
@@ -52,7 +53,13 @@ function SetupNewDeviceInternal() {
           throw new Error(apiResponse.message || '無法獲取註冊選項');
         }
 
-        setRegistrationOptions(apiResponse.payload);
+        const options = apiResponse.payload;
+
+        if (urlChallenge) {
+          options.challenge = urlChallenge;
+        }
+
+        setRegistrationOptions(options);
         setStatusMessage('請點擊下方按鈕以設定此裝置');
       } catch (err) {
         setError((err as Error).message);
