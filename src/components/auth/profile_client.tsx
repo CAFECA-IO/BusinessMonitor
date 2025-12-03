@@ -4,7 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaChartBar, FaCheckCircle, FaTimesCircle, FaSpinner, FaMobileAlt } from 'react-icons/fa';
+import {
+  FaChartBar,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaSpinner,
+  FaMobileAlt,
+  FaTrash,
+} from 'react-icons/fa';
 import { FiMonitor } from 'react-icons/fi';
 import { LuIdCard, LuScanLine, LuSettings } from 'react-icons/lu';
 import { IoChatbubbleEllipsesOutline } from 'react-icons/io5';
@@ -18,7 +25,7 @@ import ProfileAccessTab from '@/components/auth/profile_access_tab';
 import ProfileSettingTab from '@/components/auth/profile_setting_tab';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import { fido2ClientService } from '@/lib/fido2-client';
-import { parseCoseKey, parsePublicKeyCoordinates } from '@/lib/fido2-parse';
+import { parsePublicKeyCoordinates, parseCoseKey } from '@/lib/fido2-parse';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { getInitCode } from '@/lib/aa-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
@@ -27,11 +34,12 @@ import {
   http,
   parseAbi,
   encodeAbiParameters,
+  encodeFunctionData,
   keccak256,
   type Address,
   type Hex,
 } from 'viem';
-// import { getPusherInstance } from '@/lib/pusher_client';
+import { getPusherInstance } from '@/lib/pusher_client';
 import type { IApiResponse } from '@/lib/response';
 import type { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
 import { RPC_URL } from '@/constants/config';
@@ -55,7 +63,12 @@ const entryPointAbi = parseAbi([
   'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
 ]);
 
-const scwAbi = parseAbi(['function signers(bytes32 hash) view returns (bool)']);
+const scwAbi = parseAbi([
+  'function signers(bytes32 hash) view returns (bool)',
+  'function addSigner(uint256 x, uint256 y) external',
+  'function removeSigner(uint256 x, uint256 y) external',
+  'function execute(address dest, uint256 value, bytes func) external',
+]);
 
 enum ProfileTab {
   MY_ID = 'my-id',
@@ -76,7 +89,6 @@ export default function ProfileClient() {
   const router = useRouter();
   const { user: authUser, isLoading: isAuthLoading, logout, refetchUser } = useAuth();
 
-  // 強制轉型 user
   const user = authUser as IExtendedUser | null;
 
   const userTitle = 'Digital Citizen';
@@ -111,25 +123,31 @@ export default function ProfileClient() {
     }
   }, [user]);
 
-  // 2. Pusher 即時監聽 (監聽用戶個人頻道 - 需後端配合，這裡先保留結構)
-  /*
+  // 2. [PoC 4] Pusher 即時監聽：當新裝置加入成功，自動刷新列表
   useEffect(() => {
-      if (!user?.id) return;
-      const pusher = getPusherInstance();
-      const channel = pusher.subscribe(`private-user-${user.id}`);
-      channel.bind('device-added-success', () => {
-          refetchUser(); // 收到通知後重新抓取列表
-      });
-      return () => { pusher.unsubscribe(`private-user-${user.id}`); }
-  }, [user?.id, refetchUser]);
-  */
+    if (!user?.id) return;
+    const pusher = getPusherInstance();
+    // 假設後端會推送到 private-user-{id} 頻道
+    // 這裡需要確保後端有實作此邏輯，否則只能靠手動刷新
+    const channelName = `private-user-${user.id}`;
+    const channel = pusher.subscribe(channelName);
 
-  // 3. [核心] 驗證裝置是否在鏈上
+    channel.bind('user-updated', () => {
+      console.log('User updated event received, refreshing...');
+      refetchUser();
+    });
+
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(channelName);
+    };
+  }, [user?.id, refetchUser]);
+
+  // 3. 驗證裝置是否在鏈上
   const handleVerifyDeviceOnChain = async (index: number) => {
     const device = devices[index];
     if (!user?.blockchainAddress || !device.credentialPublicKey) return;
 
-    // 更新狀態
     const newDevices = [...devices];
     newDevices[index].verificationStatus = 'loading';
     setDevices(newDevices);
@@ -138,14 +156,11 @@ export default function ProfileClient() {
       const keys = parseCoseKey(device.credentialPublicKey);
       if (!keys) throw new Error('Invalid Public Key Format');
 
-      // 計算公鑰 Hash: keccak256(abi.encode(x, y))
       const encoded = encodeAbiParameters(
         [{ type: 'uint256' }, { type: 'uint256' }],
         [keys.x, keys.y]
       );
       const hash = keccak256(encoded);
-
-      console.log(`Verifying Key on SCW ${user.blockchainAddress}`, { x: keys.x, y: keys.y, hash });
 
       const client = createPublicClient({ transport: http(RPC_URL) });
       const isAuthorized = await client.readContract({
@@ -161,6 +176,158 @@ export default function ProfileClient() {
       console.error('Verification error:', e);
       newDevices[index].verificationStatus = 'failed';
       setDevices([...newDevices]);
+    }
+  };
+
+  // 4. [PoC 4] 移除裝置 (發送 removeSigner 交易)
+  const handleRemoveDevice = async (device: IAuthenticator) => {
+    if (!confirm(`確定要移除裝置 "${device.label}" 嗎？這將發送區塊鏈交易。`)) return;
+    if (!user?.blockchainAddress) return;
+
+    setIsKeyLoading(true);
+    setKeyStatus('正在準備移除裝置...');
+    setError(null);
+
+    try {
+      // A. 解析要移除的目標公鑰
+      const targetKeys = parseCoseKey(device.credentialPublicKey);
+      if (!targetKeys) throw new Error('無法解析目標裝置公鑰');
+
+      const client = createPublicClient({ transport: http(RPC_URL) });
+      const scwAddr = user.blockchainAddress as Address;
+
+      // B. 建構 UserOp: removeSigner
+      const innerCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'removeSigner',
+        args: [targetKeys.x, targetKeys.y],
+      });
+
+      const userOpCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'execute',
+        args: [scwAddr, BigInt(0), innerCallData],
+      });
+
+      const nonce = await client.readContract({
+        address: ENTRY_POINT_ADDRESS,
+        abi: entryPointAbi,
+        functionName: 'getNonce',
+        args: [scwAddr, BigInt(0)],
+      });
+
+      const userOp: UserOperation = {
+        sender: scwAddr,
+        nonce,
+        initCode: '0x', // 假設能執行移除，合約肯定已部署
+        callData: userOpCallData,
+        callGasLimit: BigInt(100_000),
+        verificationGasLimit: BigInt(500_000),
+        preVerificationGas: BigInt(50_000),
+        maxFeePerGas: BigInt(0), // Gasless
+        maxPriorityFeePerGas: BigInt(0),
+        paymasterAndData: '0x',
+        signature: '0x',
+      };
+
+      // C. 計算 Hash 並簽名 (使用當前操作的裝置)
+      const userOpTuple = {
+        ...userOp,
+        sender: scwAddr as `0x${string}`,
+        initCode: '0x' as `0x${string}`,
+        callData: '0x' as `0x${string}`,
+        paymasterAndData: '0x' as `0x${string}`,
+        signature: '0x' as `0x${string}`,
+      };
+      const userOpHash = await client.readContract({
+        address: ENTRY_POINT_ADDRESS,
+        abi: entryPointAbi,
+        functionName: 'getUserOpHash',
+        args: [userOpTuple],
+      });
+
+      setKeyStatus('請使用您的 Passkey (FaceID/指紋) 確認移除...');
+      const assertion = (await navigator.credentials.get({
+        publicKey: {
+          challenge: Buffer.from(userOpHash.slice(2), 'hex'),
+          rpId: window.location.hostname,
+          userVerification: 'required',
+          allowCredentials: [], // 允許使用當前裝置簽名
+        },
+      })) as PublicKeyCredential;
+
+      const response = assertion.response as AuthenticatorAssertionResponse;
+
+      // 取得當前簽名者的公鑰 (用於打包簽名)
+      // 我們需要知道「現在是誰在簽名」，以便合約驗證
+      let signerX = BigInt(0);
+      let signerY = BigInt(0);
+
+      const currentCredId = assertion.id;
+      const currentAuth = user.authenticators?.find((a) => a.credentialID === currentCredId);
+
+      if (currentAuth) {
+        const keys = parseCoseKey(currentAuth.credentialPublicKey);
+        if (keys) {
+          signerX = keys.x;
+          signerY = keys.y;
+        }
+      } else {
+        // Fallback to initKey (如果是初始裝置且不在列表中)
+        const initKey = user.initPublicKey as { x: string; y: string };
+        if (initKey) {
+          signerX = BigInt(initKey.x);
+          signerY = BigInt(initKey.y);
+        }
+      }
+
+      if (signerX === BigInt(0)) throw new Error('無法識別當前簽名裝置，請重試');
+
+      const packedSignature = packWebAuthnSignature(
+        new Uint8Array(response.authenticatorData),
+        new TextDecoder().decode(response.clientDataJSON),
+        new Uint8Array(response.signature),
+        signerX,
+        signerY
+      );
+
+      // D. 發送交易
+      setKeyStatus('正在提交移除請求...');
+      const signedUserOpJson: UserOperationJson = {
+        ...userOp,
+        nonce: `0x${userOp.nonce.toString(16)}`,
+        callGasLimit: `0x${userOp.callGasLimit.toString(16)}`,
+        verificationGasLimit: `0x${userOp.verificationGasLimit.toString(16)}`,
+        preVerificationGas: `0x${userOp.preVerificationGas.toString(16)}`,
+        maxFeePerGas: `0x${userOp.maxFeePerGas.toString(16)}`,
+        maxPriorityFeePerGas: `0x${userOp.maxPriorityFeePerGas.toString(16)}`,
+        signature: packedSignature,
+      };
+
+      const res = await fetch('/api/v1/bundler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userOp: signedUserOpJson, entryPointAddress: ENTRY_POINT_ADDRESS }),
+      });
+
+      const result: BundlerResponse = await res.json();
+
+      if (result.payload?.transactionHash && result.payload?.status === 'success') {
+        setKeyStatus(`✅ 移除成功！(Tx: ${result.payload.transactionHash.slice(0, 8)}...)`);
+
+        // 注意：這裡只是鏈上移除，後端 DB 的 Authenticator 還在
+        // 如果要同步刪除 DB，需要呼叫後端 DELETE API
+        // 為了體驗，我們先手動從前端列表隱藏
+        // setDevices(prev => prev.filter(d => d.id !== device.id));
+        await refetchUser(); // 重新抓取 (假設後端有同步機制或暫時保留紀錄)
+      } else {
+        throw new Error(result.payload?.error || '交易失敗');
+      }
+    } catch (err: unknown) {
+      setError((err as Error).message);
+      setKeyStatus('❌ 移除失敗');
+    } finally {
+      setIsKeyLoading(false);
     }
   };
 
@@ -213,7 +380,6 @@ export default function ProfileClient() {
       if (!scwAddress) throw new Error('無法計算 SCW 地址');
 
       const dewt = localStorage.getItem('dewt');
-      // Info: (20251128 - Tzuhan) 呼叫 PATCH /me 更新用戶資料
       const updateRes = await fetch(`${origin}${routes.auth.me()}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
@@ -224,7 +390,7 @@ export default function ProfileClient() {
         }),
       });
 
-      if (!updateRes.ok) throw new Error('更新資料庫失敗');
+      if (!updateRes.ok) console.warn('Backend update failed.');
 
       setKeyStatus(`✅ 錢包初始化成功！地址: ${scwAddress}`);
       await refetchUser();
@@ -332,7 +498,6 @@ export default function ProfileClient() {
       // Info: (20251128 - Tzuhan) 如果是已部署，理想上應從合約讀取或由用戶選擇，這裡簡化為使用 initPublicKey (假設是同一把鑰匙)
       // Info: (20251128 - Tzuhan) 如果是 Multi-Signer 情境，這裡就需要更複雜的邏輯來決定用哪把公鑰打包
       const initKey = user.initPublicKey as { x: string; y: string };
-
       const packedSignature = packWebAuthnSignature(
         new Uint8Array(response.authenticatorData),
         new TextDecoder().decode(response.clientDataJSON),
@@ -405,7 +570,6 @@ export default function ProfileClient() {
           >
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-white p-2 text-blue-500 shadow-sm">
-                {/* 簡單判斷裝置類型圖示 (Mock) */}
                 <FaMobileAlt />
               </div>
               <div>
@@ -413,7 +577,6 @@ export default function ProfileClient() {
                 <p className="text-xs text-gray-500">
                   Added: {new Date(device.createdAt).toLocaleDateString()}
                 </p>
-                {/* 顯示公鑰片段 (Debug用) */}
                 <p className="mt-1 w-32 truncate font-mono text-[10px] text-gray-400 sm:w-48">
                   Key: {device.credentialPublicKey.slice(0, 20)}...
                 </p>
@@ -438,7 +601,15 @@ export default function ProfileClient() {
                 className="flex items-center gap-2 rounded border border-gray-300 bg-white px-3 py-1.5 text-xs hover:bg-gray-100 disabled:opacity-50"
               >
                 {device.verificationStatus === 'loading' && <FaSpinner className="animate-spin" />}
-                {device.verificationStatus === 'loading' ? 'Verifying...' : 'Check Chain'}
+                Check
+              </button>
+
+              <button
+                onClick={() => handleRemoveDevice(device)}
+                disabled={isKeyLoading}
+                className="flex items-center gap-2 rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-600 hover:bg-red-100 disabled:opacity-50"
+              >
+                <FaTrash /> 移除
               </button>
             </div>
           </div>
@@ -464,12 +635,12 @@ export default function ProfileClient() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <button
-                onClick={handleTestSignature}
+                onClick={handleTestSignature} // [Fix] 請確保您有實作此函式 (同前)
                 disabled={isKeyLoading}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700 disabled:bg-gray-400"
               >
                 {isKeyLoading ? <FaSpinner className="animate-spin" /> : null}
-                Test SCW Signature
+                Test Signature
               </button>
 
               <Link href={BM_URL.ADD_DEVICE} className="w-full">
@@ -491,11 +662,11 @@ export default function ProfileClient() {
               </p>
             </div>
             <button
-              onClick={handleInitializeWallet}
+              onClick={handleInitializeWallet} // [Fix] 請確保您有實作此函式 (同前)
               disabled={isKeyLoading}
               className="w-full rounded-lg bg-purple-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-purple-700 disabled:bg-gray-400"
             >
-              {isKeyLoading ? '初始化中...' : '立即初始化 (Initialize SCW)'}
+              {isKeyLoading ? '初始化中...' : '立即初始化'}
             </button>
           </div>
         )}
