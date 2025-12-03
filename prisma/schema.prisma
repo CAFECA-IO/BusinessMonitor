@@ -486,12 +486,15 @@ model IdentityAccount {
   photo                  String?         @map("photo")
   // encryptedBlockchainKey String?         @db.Text @map("encrypted_blockchain_key") // Info: (20251128 - Tzuhan) Deprecated (私鑰在手機) 
   // blockchainPublicKey    String?         @map("blockchain_public_key") 
+  // derivationNonce        String?         @map("derivation_nonce")
   initPublicKey          Json?           @map("init_public_key") // Info: (20251121 - Tzuhan) 儲存用戶註冊時的公鑰座標 { x: string, y: string }
   blockchainAddress      String?         @map("blockchain_address") // Info: (20251128 - Tzuhan) SCW 合約地址
   deploymentSalt         String?         @map("deployment_salt") @default("0") // Info: (20251128 - Tzuhan) 這是 Factory 部署時用的 Salt
-  derivationNonce        String?         @map("derivation_nonce")
   authenticators      Authenticator[]
   comments            Comment[]
+
+  createdAt              DateTime        @default(now()) @map("created_at")
+  updatedAt              DateTime        @default(now()) @updatedAt @map("updated_at")
 
   @@map("identity_account")
 }

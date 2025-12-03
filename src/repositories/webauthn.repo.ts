@@ -86,7 +86,18 @@ class WebAuthnRepository implements IWebAuthnRepository {
         blockchainAddress: true,
         initPublicKey: true,
         deploymentSalt: true,
-        derivationNonce: true,
+        // derivationNonce: true,
+        createdAt: true,
+        updatedAt: true,
+        authenticators: {
+          select: {
+            id: true,
+            label: true,
+            credentialPublicKey: true,
+            createdAt: true,
+            counter: true,
+          },
+        },
       },
     });
   }
@@ -119,7 +130,18 @@ class WebAuthnRepository implements IWebAuthnRepository {
         blockchainAddress: true,
         initPublicKey: true,
         deploymentSalt: true,
-        derivationNonce: true,
+        // derivationNonce: true,
+        createdAt: true,
+        updatedAt: true,
+        authenticators: {
+          select: {
+            id: true,
+            label: true,
+            credentialPublicKey: true,
+            createdAt: true,
+            counter: true,
+          },
+        },
       },
     });
   }
@@ -194,7 +216,18 @@ class WebAuthnRepository implements IWebAuthnRepository {
         blockchainAddress: true,
         initPublicKey: true,
         deploymentSalt: true,
-        derivationNonce: true,
+        // derivationNonce: true,
+        createdAt: true,
+        updatedAt: true,
+        authenticators: {
+          select: {
+            id: true,
+            label: true,
+            credentialPublicKey: true,
+            createdAt: true,
+            counter: true,
+          },
+        },
       },
     });
   }
