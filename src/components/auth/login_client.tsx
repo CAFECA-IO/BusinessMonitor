@@ -113,7 +113,7 @@ export default function LoginClient() {
           const client = createPublicClient({ transport: http(RPC_URL) });
 
           // Info: (20251128 - Tzuhan) 2. 檢查鏈上是否已部署
-          const code = await client.getBytecode({ address: scwAddress });
+          const code = await client.getCode({ address: scwAddress });
 
           // Info: (20251128 - Tzuhan) 如果未部署 (code 為 undefined 或 0x)，則觸發部署交易
           if (!code || code === '0x') {

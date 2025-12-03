@@ -28,6 +28,7 @@ import type {
   AuthenticateOptions,
 } from '@passwordless-id/webauthn/dist/esm/types';
 import { RPC_URL } from '@/constants/config';
+import { toBigInt } from 'ethers';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -41,20 +42,6 @@ const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as A
 const factoryAbi = parseAbi([
   'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',
 ]);
-
-// Info: (20251128 - Tzuhan) 輔助函式
-const toBigInt = (base64Url: string) => {
-  try {
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const bin = atob(base64);
-    let hex = '0x';
-    for (let i = 0; i < bin.length; i++) hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
-    return BigInt(hex);
-  } catch (e) {
-    console.error('Base64 conversion error:', e);
-    return BigInt(0);
-  }
-};
 
 enum ProfileTab {
   MY_ID = 'my-id',

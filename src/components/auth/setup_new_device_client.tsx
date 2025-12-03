@@ -10,24 +10,12 @@ import { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
 import { useAuth } from '@/contexts/auth_context';
 import { parsePublicKeyCoordinates } from '@/lib/fido2-parse';
 import type { IApiResponse } from '@/lib/response';
+import { toBigInt } from '@/lib/common';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
-
-const toBigInt = (base64Url: string) => {
-  try {
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const bin = atob(base64);
-    let hex = '0x';
-    for (let i = 0; i < bin.length; i++) hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
-    return BigInt(hex);
-  } catch (e) {
-    console.error('Base64 conversion error:', e);
-    return BigInt(0);
-  }
-};
 
 function SetupNewDeviceInternal() {
   const [statusMessage, setStatusMessage] = useState('正在初始化...');

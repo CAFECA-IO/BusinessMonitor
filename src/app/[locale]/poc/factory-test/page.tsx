@@ -8,6 +8,7 @@ import { getInitCode, factoryAbi } from '@/lib/aa-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
 import { createPublicClient, http, parseAbi, type Hex, type Address } from 'viem';
 import { RPC_URL } from '@/constants/config';
+import { toBigInt } from '@/lib/common';
 
 // Info: (20251126 - Tzuhan) 環境變數讀取
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
@@ -18,15 +19,6 @@ const entryPointAbi = parseAbi([
   'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
 ]);
 type StatusType = 'idle' | 'loading' | 'success' | 'error';
-
-// Info: (20251125 - Tzuhan) 輔助：Base64URL -> BigInt
-const toBigInt = (base64Url: string) => {
-  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  const bin = atob(base64);
-  let hex = '0x';
-  for (let i = 0; i < bin.length; i++) hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
-  return BigInt(hex);
-};
 
 export default function FactoryTestPage() {
   const [logs, setLogs] = useState<string[]>([]);

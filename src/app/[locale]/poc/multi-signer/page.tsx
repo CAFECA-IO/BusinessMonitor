@@ -14,6 +14,7 @@ import {
   type Address,
 } from 'viem';
 import { RPC_URL } from '@/constants/config';
+import { toBigInt } from '@/lib/common';
 
 // Info: (20251127 - Tzuhan) 環境變數
 const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
@@ -30,19 +31,6 @@ const entryPointAbi = parseAbi([
   'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
   'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
 ]);
-
-// Info: (20251127 - Tzuhan) 輔助函式
-const toBigInt = (base64Url: string) => {
-  try {
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const bin = atob(base64);
-    let hex = '0x';
-    for (let i = 0; i < bin.length; i++) hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
-    return BigInt(hex);
-  } catch (e) {
-    throw new Error(`Error converting base64url: ${(e as Error).message}`);
-  }
-};
 
 export default function MultiSignerPage() {
   const [logs, setLogs] = useState<string[]>([]);

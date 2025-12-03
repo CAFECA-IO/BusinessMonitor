@@ -48,3 +48,16 @@ export const formatNumberWithCommas = (
 export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs));
 };
+
+export const toBigInt = (base64Url: string) => {
+  try {
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(base64);
+    let hex = '0x';
+    for (let i = 0; i < bin.length; i++) hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
+    return BigInt(hex);
+  } catch (e) {
+    console.error('Base64 conversion error:', e);
+    return BigInt(0);
+  }
+};

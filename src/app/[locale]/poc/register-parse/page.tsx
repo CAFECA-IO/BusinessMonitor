@@ -13,6 +13,7 @@ import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
 import { createPublicClient, http, parseAbi } from 'viem';
 import { RPC_URL } from '@/constants/config';
+import { toBigInt } from '@/lib/common';
 
 // Info: (20251121 - Tzuhan) 環境變數讀取
 const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as `0x${string}`;
@@ -25,20 +26,6 @@ const entryPointAbi = parseAbi([
 
 type IApiSuccessResponse = IApiResponse<RegisterOptions>;
 type StatusType = 'idle' | 'loading' | 'success' | 'error';
-
-const toBigInt = (base64Url: string) => {
-  try {
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const bin = atob(base64);
-    let hex = '0x';
-    for (let i = 0; i < bin.length; i++) {
-      hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
-    }
-    return BigInt(hex).toString();
-  } catch (e) {
-    return `Error converting ${(e as Error).message}`;
-  }
-};
 
 export default function PocRegisterAndParsePage() {
   const [logs, setLogs] = useState<string[]>([]);
