@@ -106,7 +106,7 @@ export default function AddDeviceClient() {
         callGasLimit: BigInt(100_000),
         verificationGasLimit: BigInt(500_000),
         preVerificationGas: BigInt(50_000),
-        maxFeePerGas: BigInt(0), // Gasless
+        maxFeePerGas: BigInt(0),
         maxPriorityFeePerGas: BigInt(0),
         paymasterAndData: '0x',
         signature: '0x',
@@ -174,7 +174,10 @@ export default function AddDeviceClient() {
       const bundlerRes = await fetch('/api/v1/bundler', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userOp: signedUserOpJson, entryPointAddress: ENTRY_POINT_ADDRESS }),
+        body: JSON.stringify({
+          userOp: signedUserOpJson,
+          entryPointAddress: ENTRY_POINT_ADDRESS,
+        }),
       });
 
       const bundlerResult: BundlerResponse = await bundlerRes.json();
@@ -201,7 +204,7 @@ export default function AddDeviceClient() {
       // Info: (20251202 - Tzuhan) 在正式版中，應該由後端監聽鏈上事件或由 authorize API 觸發
       // Info: (20251202 - Tzuhan) 這裡我們先假設 authorize API 會處理，或者 B 會因為 sessionId 狀態改變而完成
       alert(`成功新增裝置！交易 Hash: ${bundlerResult.payload.transactionHash.slice(0, 10)}...`);
-      setCandidate(null); // 重置狀態
+      setCandidate(null);
       router.push(BM_URL.PROFILE);
     } catch (err: unknown) {
       setError((err as Error).message || '批准失敗');
@@ -282,35 +285,52 @@ export default function AddDeviceClient() {
         <h1 className="text-2xl font-bold">新增一個裝置</h1>
         <p className="mt-4 text-gray-600">{statusMessage}</p>
 
-        <div className="mt-6 flex size-72 w-full items-center justify-center self-center rounded-lg border p-2">
+        <div className="flex size-full w-full flex-col items-center justify-center self-center rounded-lg p-2">
           {isLoading && !qrCodeDataUrl && <div className="animate-pulse">Loading...</div>}
           {error && <p className="text-red-500">{error}</p>}
 
           {/* Info: (20251202 - Tzuhan) 顯示 QR Code */}
           {qrCodeDataUrl && !candidate && (
-            <Image
-              src={qrCodeDataUrl}
-              alt="Add device QR Code"
-              width={256}
-              height={256}
-              style={{ objectFit: 'contain' }}
-              unoptimized
-            />
+            <div className="flex flex-col items-center">
+              <Image
+                src={qrCodeDataUrl}
+                alt="Add device QR Code"
+                width={256}
+                height={256}
+                style={{ objectFit: 'contain' }}
+                unoptimized
+              />
+              {/* Info: (20251202 - Tzuhan) [Debug Info] 顯示 Session ID */}
+              <p className="mt-2 font-mono text-xs text-gray-400">Session ID: {sessionId}</p>
+            </div>
           )}
 
           {/* Info: (20251202 - Tzuhan) 顯示候選裝置資訊 */}
           {candidate && (
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-xl font-semibold text-green-600">✔️ 裝置已連線</p>
-              <p className="text-sm text-gray-500">{candidate.deviceName}</p>
-              <p className="break-all px-4 font-mono text-xs text-gray-400">
-                Key: {candidate.pubKeyX.slice(0, 10)}...
+            <div className="mt-4 w-full rounded border border-gray-200 bg-gray-50 p-4 text-left">
+              <p className="text-center text-xl font-semibold text-green-600">✔️ 裝置已連線</p>
+              <p className="text-center text-sm font-bold text-gray-700">
+                {candidate.deviceName || 'Unknown Device'}
               </p>
+
+              <div className="mt-4 border-t border-gray-200 pt-2">
+                <p className="mb-1 text-xs font-bold text-gray-500">📋 Debug Info:</p>
+                <div className="space-y-1 break-all font-mono text-[10px] text-gray-600">
+                  <p>
+                    <span className="font-semibold text-blue-600">X:</span> {candidate.pubKeyX}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-blue-600">Y:</span> {candidate.pubKeyY}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-gray-500">Session:</span> {sessionId}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Info: (20251202 - Tzuhan) 批准按鈕 */}
         {candidate && (
           <button
             onClick={handleApproveDevice}

@@ -24,6 +24,9 @@ function SetupNewDeviceInternal() {
   const [isLoading, setIsLoading] = useState(false);
   const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
 
+  //  Info: (20251202 - Tzuhan) [PoC 4 Debug] 儲存本地生成的公鑰以供顯示
+  const [debugKeyInfo, setDebugKeyInfo] = useState<{ x: string; y: string } | null>(null);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
@@ -42,11 +45,9 @@ function SetupNewDeviceInternal() {
         }
 
         const options = apiResponse.payload;
-
         if (urlChallenge) {
           options.challenge = urlChallenge;
         }
-
         setRegistrationOptions(options);
         setStatusMessage('請點擊下方按鈕以設定此裝置');
       } catch (err) {
@@ -61,24 +62,26 @@ function SetupNewDeviceInternal() {
       setError('無效的連結 (Missing Session ID)');
       setStatusMessage('錯誤');
     }
-  }, [sessionId]);
+  }, [sessionId, urlChallenge]);
 
   const handleStartRegistration = useCallback(async () => {
     if (!registrationOptions || !sessionId) return;
-
     setIsLoading(true);
     setError(null);
 
     try {
       setStatusMessage('請依照瀏覽器提示建立 Passkey...');
       const registration = await fido2ClientService.startRegistration(registrationOptions);
-
       const coords = parsePublicKeyCoordinates(registration.response.attestationObject);
       if (!coords) throw new Error('無法解析 Passkey 公鑰。');
 
+      const xStr = toBigInt(coords.x).toString();
+      const yStr = toBigInt(coords.y).toString();
+
+      setDebugKeyInfo({ x: xStr, y: yStr });
+
       setStatusMessage('正在傳送公鑰給管理員裝置...');
 
-      // Info: (20251202 - Tzuhan) 呼叫後端，傳送候選公鑰
       const res = await fetch(`${origin}${routes.pairing.complete()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,8 +89,8 @@ function SetupNewDeviceInternal() {
           sessionId,
           fido2Registration: registration,
           candidatePublicKey: {
-            x: toBigInt(coords.x).toString(),
-            y: toBigInt(coords.y).toString(),
+            x: xStr,
+            y: yStr,
           },
         }),
       });
@@ -97,7 +100,7 @@ function SetupNewDeviceInternal() {
         throw new Error(result.message || '傳送失敗。');
       }
 
-      setStatusMessage('✅ 公鑰已傳送！請回到舊裝置 (管理員) 上點擊「批准」以完成授權...');
+      setStatusMessage('✅ 公鑰已傳送！請回到舊裝置 (管理員) 上點擊「批准」...');
       setIsWaitingForApproval(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '未知錯誤';
@@ -107,19 +110,12 @@ function SetupNewDeviceInternal() {
     }
   }, [registrationOptions, sessionId]);
 
-  // Pusher 監聽 (只負責聽成功訊號)
   useEffect(() => {
     if (!sessionId) return;
-
     const pusherClient = getPusherInstance();
     const channelName = `private-login-session-${sessionId}`;
     const channel = pusherClient.subscribe(channelName);
 
-    channel.bind('pusher:subscription_succeeded', () => {
-      console.log('Pusher connected');
-    });
-
-    // Info: (20251202 - Tzuhan) s監聽授權成功 (Device A 完成鏈上交易後觸發)
     channel.bind('device-added-success', async (data: { dewt: string }) => {
       if (data && data.dewt) {
         setStatusMessage('🎉 授權成功！正在登入...');
@@ -164,8 +160,23 @@ function SetupNewDeviceInternal() {
         )}
 
         {isWaitingForApproval && (
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex flex-col items-center justify-center gap-4">
             <div className="size-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>
+
+            {/*  Info: (20251202 - Tzuhan) [Debug Info] 顯示已傳送的公鑰 */}
+            {debugKeyInfo && (
+              <div className="w-full rounded border border-blue-200 bg-blue-50 p-4 text-left">
+                <p className="mb-1 text-xs font-bold text-blue-800">📤 Sent Public Key (Debug):</p>
+                <div className="space-y-1 break-all font-mono text-[10px] text-blue-900">
+                  <p>
+                    <strong>X:</strong> {debugKeyInfo.x}
+                  </p>
+                  <p>
+                    <strong>Y:</strong> {debugKeyInfo.y}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

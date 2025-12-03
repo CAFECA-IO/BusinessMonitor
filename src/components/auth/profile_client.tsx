@@ -71,8 +71,6 @@ export default function ProfileClient() {
   const [isShowScanner, setIsShowScanner] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isKeyLoading, setIsKeyLoading] = useState<boolean>(false);
-
-  // 裝置列表
   const [devices, setDevices] = useState<IAuthenticator[]>([]);
 
   const router = useRouter();
