@@ -34,7 +34,6 @@ import {
   http,
   parseAbi,
   encodeAbiParameters,
-  encodeFunctionData,
   keccak256,
   type Address,
   type Hex,
@@ -85,6 +84,7 @@ export default function ProfileClient() {
   const [error, setError] = useState<string | null>(null);
   const [isKeyLoading, setIsKeyLoading] = useState<boolean>(false);
   const [devices, setDevices] = useState<IAuthenticator[]>([]);
+  const [isScwDeployed, setIsScwDeployed] = useState<boolean>(false);
 
   const router = useRouter();
   const { user: authUser, isLoading: isAuthLoading, logout, refetchUser } = useAuth();
@@ -116,19 +116,32 @@ export default function ProfileClient() {
     router.push(BM_URL.LOGIN);
   };
 
-  // 1. 載入裝置列表
+  // Info: (20251203 - Tzuhan) 1. 載入裝置列表與檢查部署狀態
   useEffect(() => {
     if (user?.authenticators) {
       setDevices(user.authenticators.map((d) => ({ ...d, verificationStatus: 'idle' })));
     }
+
+    // Info: (20251203 - Tzuhan) [PoC 4 UX] 檢查合約是否已部署
+    const checkDeploymentStatus = async () => {
+      if (user?.blockchainAddress) {
+        try {
+          const client = createPublicClient({ transport: http(RPC_URL) });
+          const code = await client.getCode({ address: user.blockchainAddress as Address });
+          // Info: (20251203 - Tzuhan) 如果 code 存在且不為 0x，代表已部署
+          setIsScwDeployed(code !== undefined && code !== '0x');
+        } catch (e) {
+          console.warn('Failed to check SCW status', e);
+        }
+      }
+    };
+    checkDeploymentStatus();
   }, [user]);
 
-  // 2. [PoC 4] Pusher 即時監聽：當新裝置加入成功，自動刷新列表
+  // Info: (20251203 - Tzuhan) 2. Pusher 即時監聽 (監聽用戶個人頻道)
   useEffect(() => {
     if (!user?.id) return;
     const pusher = getPusherInstance();
-    // 假設後端會推送到 private-user-{id} 頻道
-    // 這裡需要確保後端有實作此邏輯，否則只能靠手動刷新
     const channelName = `private-user-${user.id}`;
     const channel = pusher.subscribe(channelName);
 
@@ -143,7 +156,7 @@ export default function ProfileClient() {
     };
   }, [user?.id, refetchUser]);
 
-  // 3. 驗證裝置是否在鏈上
+  // Info: (20251203 - Tzuhan) 3. 驗證裝置是否在鏈上
   const handleVerifyDeviceOnChain = async (index: number) => {
     const device = devices[index];
     if (!user?.blockchainAddress || !device.credentialPublicKey) return;
@@ -162,7 +175,10 @@ export default function ProfileClient() {
       );
       const hash = keccak256(encoded);
 
+      console.log(`Verifying Key on SCW ${user.blockchainAddress}`, { x: keys.x, y: keys.y, hash });
+
       const client = createPublicClient({ transport: http(RPC_URL) });
+      // Info: (20251203 - Tzuhan) 如果合約還沒部署，讀取會失敗，這也是一種檢查方式
       const isAuthorized = await client.readContract({
         address: user.blockchainAddress as Address,
         abi: scwAbi,
@@ -174,164 +190,13 @@ export default function ProfileClient() {
       setDevices([...newDevices]);
     } catch (e) {
       console.error('Verification error:', e);
+      // Info: (20251203 - Tzuhan) 如果報錯是因為合約未部署，我們可以視為「未授權」或特別標示
       newDevices[index].verificationStatus = 'failed';
       setDevices([...newDevices]);
     }
   };
 
-  // 4. [PoC 4] 移除裝置 (發送 removeSigner 交易)
-  const handleRemoveDevice = async (device: IAuthenticator) => {
-    if (!confirm(`確定要移除裝置 "${device.label}" 嗎？這將發送區塊鏈交易。`)) return;
-    if (!user?.blockchainAddress) return;
-
-    setIsKeyLoading(true);
-    setKeyStatus('正在準備移除裝置...');
-    setError(null);
-
-    try {
-      // A. 解析要移除的目標公鑰
-      const targetKeys = parseCoseKey(device.credentialPublicKey);
-      if (!targetKeys) throw new Error('無法解析目標裝置公鑰');
-
-      const client = createPublicClient({ transport: http(RPC_URL) });
-      const scwAddr = user.blockchainAddress as Address;
-
-      // B. 建構 UserOp: removeSigner
-      const innerCallData = encodeFunctionData({
-        abi: scwAbi,
-        functionName: 'removeSigner',
-        args: [targetKeys.x, targetKeys.y],
-      });
-
-      const userOpCallData = encodeFunctionData({
-        abi: scwAbi,
-        functionName: 'execute',
-        args: [scwAddr, BigInt(0), innerCallData],
-      });
-
-      const nonce = await client.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
-        functionName: 'getNonce',
-        args: [scwAddr, BigInt(0)],
-      });
-
-      const userOp: UserOperation = {
-        sender: scwAddr,
-        nonce,
-        initCode: '0x', // 假設能執行移除，合約肯定已部署
-        callData: userOpCallData,
-        callGasLimit: BigInt(100_000),
-        verificationGasLimit: BigInt(500_000),
-        preVerificationGas: BigInt(50_000),
-        maxFeePerGas: BigInt(0), // Gasless
-        maxPriorityFeePerGas: BigInt(0),
-        paymasterAndData: '0x',
-        signature: '0x',
-      };
-
-      // C. 計算 Hash 並簽名 (使用當前操作的裝置)
-      const userOpTuple = {
-        ...userOp,
-        sender: scwAddr as `0x${string}`,
-        initCode: '0x' as `0x${string}`,
-        callData: '0x' as `0x${string}`,
-        paymasterAndData: '0x' as `0x${string}`,
-        signature: '0x' as `0x${string}`,
-      };
-      const userOpHash = await client.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
-        functionName: 'getUserOpHash',
-        args: [userOpTuple],
-      });
-
-      setKeyStatus('請使用您的 Passkey (FaceID/指紋) 確認移除...');
-      const assertion = (await navigator.credentials.get({
-        publicKey: {
-          challenge: Buffer.from(userOpHash.slice(2), 'hex'),
-          rpId: window.location.hostname,
-          userVerification: 'required',
-          allowCredentials: [], // 允許使用當前裝置簽名
-        },
-      })) as PublicKeyCredential;
-
-      const response = assertion.response as AuthenticatorAssertionResponse;
-
-      // 取得當前簽名者的公鑰 (用於打包簽名)
-      // 我們需要知道「現在是誰在簽名」，以便合約驗證
-      let signerX = BigInt(0);
-      let signerY = BigInt(0);
-
-      const currentCredId = assertion.id;
-      const currentAuth = user.authenticators?.find((a) => a.credentialID === currentCredId);
-
-      if (currentAuth) {
-        const keys = parseCoseKey(currentAuth.credentialPublicKey);
-        if (keys) {
-          signerX = keys.x;
-          signerY = keys.y;
-        }
-      } else {
-        // Fallback to initKey (如果是初始裝置且不在列表中)
-        const initKey = user.initPublicKey as { x: string; y: string };
-        if (initKey) {
-          signerX = BigInt(initKey.x);
-          signerY = BigInt(initKey.y);
-        }
-      }
-
-      if (signerX === BigInt(0)) throw new Error('無法識別當前簽名裝置，請重試');
-
-      const packedSignature = packWebAuthnSignature(
-        new Uint8Array(response.authenticatorData),
-        new TextDecoder().decode(response.clientDataJSON),
-        new Uint8Array(response.signature),
-        signerX,
-        signerY
-      );
-
-      // D. 發送交易
-      setKeyStatus('正在提交移除請求...');
-      const signedUserOpJson: UserOperationJson = {
-        ...userOp,
-        nonce: `0x${userOp.nonce.toString(16)}`,
-        callGasLimit: `0x${userOp.callGasLimit.toString(16)}`,
-        verificationGasLimit: `0x${userOp.verificationGasLimit.toString(16)}`,
-        preVerificationGas: `0x${userOp.preVerificationGas.toString(16)}`,
-        maxFeePerGas: `0x${userOp.maxFeePerGas.toString(16)}`,
-        maxPriorityFeePerGas: `0x${userOp.maxPriorityFeePerGas.toString(16)}`,
-        signature: packedSignature,
-      };
-
-      const res = await fetch('/api/v1/bundler', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userOp: signedUserOpJson, entryPointAddress: ENTRY_POINT_ADDRESS }),
-      });
-
-      const result: BundlerResponse = await res.json();
-
-      if (result.payload?.transactionHash && result.payload?.status === 'success') {
-        setKeyStatus(`✅ 移除成功！(Tx: ${result.payload.transactionHash.slice(0, 8)}...)`);
-
-        // 注意：這裡只是鏈上移除，後端 DB 的 Authenticator 還在
-        // 如果要同步刪除 DB，需要呼叫後端 DELETE API
-        // 為了體驗，我們先手動從前端列表隱藏
-        // setDevices(prev => prev.filter(d => d.id !== device.id));
-        await refetchUser(); // 重新抓取 (假設後端有同步機制或暫時保留紀錄)
-      } else {
-        throw new Error(result.payload?.error || '交易失敗');
-      }
-    } catch (err: unknown) {
-      setError((err as Error).message);
-      setKeyStatus('❌ 移除失敗');
-    } finally {
-      setIsKeyLoading(false);
-    }
-  };
-
-  // Info: (20251128 - Tzuhan) 初始化錢包 (針對還沒有 SCW 地址的舊用戶)
+  // (20251128 - Tzuhan) 初始化錢包 (針對還沒有 SCW 地址的舊用戶)
   const handleInitializeWallet = async () => {
     if (!user) return;
     setIsKeyLoading(true);
@@ -390,9 +255,11 @@ export default function ProfileClient() {
         }),
       });
 
-      if (!updateRes.ok) console.warn('Backend update failed.');
+      if (!updateRes.ok) throw new Error('更新資料庫失敗');
 
       setKeyStatus(`✅ 錢包初始化成功！地址: ${scwAddress}`);
+      // 初始化後，雖然有地址但鏈上還沒部署，所以 isScwDeployed 仍為 false
+      // 這裡可以不手動設 true，讓 useEffect 自動判斷
       await refetchUser();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '發生未知錯誤';
@@ -402,7 +269,7 @@ export default function ProfileClient() {
     }
   };
 
-  // Info: (20251128 - Tzuhan) 真實交易測試 (包含 Lazy Deployment 與 簽名驗證)
+  // 真實交易測試 (Lazy Deployment)
   const handleTestSignature = async () => {
     if (!user?.blockchainAddress) {
       setError('找不到錢包地址，請先初始化。');
@@ -455,8 +322,8 @@ export default function ProfileClient() {
         initCode,
         callData: '0x', // Info: (20251128 - Tzuhan) 空操作測試
         callGasLimit: BigInt(100_000),
-        verificationGasLimit: isDeployed ? BigInt(500_000) : BigInt(2_000_000), // Info: (20251128 - Tzuhan) 部署需要較多 Gas
-        preVerificationGas: BigInt(50_000),
+        verificationGasLimit: isDeployed ? BigInt(500_000) : BigInt(3_500_000),
+        preVerificationGas: BigInt(100_000),
         maxFeePerGas: BigInt(0), // Info: (20251128 - Tzuhan) Gasless: Relayer 全額買單
         maxPriorityFeePerGas: BigInt(0),
         paymasterAndData: '0x',
@@ -531,11 +398,10 @@ export default function ProfileClient() {
       const result: BundlerResponse = await res.json();
 
       if (result.payload?.transactionHash && result.payload?.status === 'success') {
-        setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash})`);
-        // Info: (20251128 - Tzuhan) 如果是第一次部署，重新整理用戶資料以更新狀態
-        if (!isDeployed) {
-          await refetchUser();
-        }
+        setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash.slice(0, 8)}...)`);
+        // 更新部署狀態
+        setIsScwDeployed(true);
+        if (!isDeployed) await refetchUser();
       } else {
         throw new Error(result.payload?.error || '交易失敗');
       }
@@ -555,7 +421,6 @@ export default function ProfileClient() {
     );
   }
 
-  // 渲染裝置列表
   const deviceListSection = (
     <div className="mt-8 w-full">
       <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800">
@@ -582,7 +447,6 @@ export default function ProfileClient() {
                 </p>
               </div>
             </div>
-
             <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
               {device.verificationStatus === 'verified' && (
                 <span className="flex items-center gap-1 rounded bg-green-50 px-2 py-1 text-xs font-bold text-green-600">
@@ -594,19 +458,18 @@ export default function ProfileClient() {
                   <FaTimesCircle /> Unauthorized
                 </span>
               )}
-
               <button
                 onClick={() => handleVerifyDeviceOnChain(idx)}
                 disabled={device.verificationStatus === 'loading'}
                 className="flex items-center gap-2 rounded border border-gray-300 bg-white px-3 py-1.5 text-xs hover:bg-gray-100 disabled:opacity-50"
               >
-                {device.verificationStatus === 'loading' && <FaSpinner className="animate-spin" />}
+                {device.verificationStatus === 'loading' && <FaSpinner className="animate-spin" />}{' '}
                 Check
               </button>
-
               <button
-                onClick={() => handleRemoveDevice(device)}
-                disabled={isKeyLoading}
+                disabled
+                // onClick={() => handleRemoveDevice(device)}
+                // disabled={isKeyLoading}
                 className="flex items-center gap-2 rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-600 hover:bg-red-100 disabled:opacity-50"
               >
                 <FaTrash /> 移除
@@ -628,19 +491,36 @@ export default function ProfileClient() {
           <div className="space-y-6">
             <div>
               <p className="text-sm font-medium text-gray-500">您的智能合約錢包地址</p>
-              <p className="break-all rounded border border-green-100 bg-green-50 p-2 font-mono text-lg font-bold text-green-600">
-                {user.blockchainAddress}
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="break-all rounded border border-green-100 bg-green-50 p-2 font-mono text-lg font-bold text-green-600">
+                  {user.blockchainAddress}
+                </p>
+                {/* 狀態標籤 */}
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${isScwDeployed ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}
+                >
+                  {isScwDeployed ? '已啟用 (Active)' : '待啟用 (Pending)'}
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* [PoC 4 UX] 動態按鈕文字 */}
               <button
-                onClick={handleTestSignature} // [Fix] 請確保您有實作此函式 (同前)
+                onClick={handleTestSignature}
                 disabled={isKeyLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700 disabled:bg-gray-400"
+                className={`flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-base font-semibold text-white shadow-sm disabled:bg-gray-400 ${
+                  isScwDeployed
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
               >
                 {isKeyLoading ? <FaSpinner className="animate-spin" /> : null}
-                Test Signature
+                {isKeyLoading
+                  ? '處理中...'
+                  : isScwDeployed
+                    ? '發送測試交易 (Sign)'
+                    : '啟用錢包 (Activate Wallet)'}
               </button>
 
               <Link href={BM_URL.ADD_DEVICE} className="w-full">
@@ -650,7 +530,6 @@ export default function ProfileClient() {
               </Link>
             </div>
 
-            {/* 插入裝置列表 */}
             {deviceListSection}
           </div>
         ) : (
@@ -662,7 +541,7 @@ export default function ProfileClient() {
               </p>
             </div>
             <button
-              onClick={handleInitializeWallet} // [Fix] 請確保您有實作此函式 (同前)
+              onClick={handleInitializeWallet}
               disabled={isKeyLoading}
               className="w-full rounded-lg bg-purple-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-purple-700 disabled:bg-gray-400"
             >
