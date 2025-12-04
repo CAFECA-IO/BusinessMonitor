@@ -56,6 +56,10 @@ export interface IWebAuthnRepository {
     status: 'COMPLETED' | 'AUTHORIZED',
     identityId: string
   ): Promise<DevicePairingSession>;
+  updateSessionCandidateData(
+    sessionId: string,
+    candidateData: Prisma.InputJsonValue
+  ): Promise<void>;
 }
 
 class WebAuthnRepository implements IWebAuthnRepository {
@@ -82,7 +86,18 @@ class WebAuthnRepository implements IWebAuthnRepository {
         blockchainAddress: true,
         initPublicKey: true,
         deploymentSalt: true,
-        derivationNonce: true,
+        // derivationNonce: true,
+        createdAt: true,
+        updatedAt: true,
+        authenticators: {
+          select: {
+            id: true,
+            label: true,
+            credentialPublicKey: true,
+            createdAt: true,
+            counter: true,
+          },
+        },
       },
     });
   }
@@ -115,7 +130,18 @@ class WebAuthnRepository implements IWebAuthnRepository {
         blockchainAddress: true,
         initPublicKey: true,
         deploymentSalt: true,
-        derivationNonce: true,
+        // derivationNonce: true,
+        createdAt: true,
+        updatedAt: true,
+        authenticators: {
+          select: {
+            id: true,
+            label: true,
+            credentialPublicKey: true,
+            createdAt: true,
+            counter: true,
+          },
+        },
       },
     });
   }
@@ -154,6 +180,16 @@ class WebAuthnRepository implements IWebAuthnRepository {
     });
   }
 
+  public async updateSessionCandidateData(
+    sessionId: string,
+    candidateData: Prisma.InputJsonValue
+  ): Promise<void> {
+    await prisma.devicePairingSession.update({
+      where: { id: sessionId },
+      data: { pendingCandidateData: candidateData },
+    });
+  }
+
   public async updateIdentityAccount(
     id: string,
     data: IUpdateIdentityData
@@ -180,7 +216,18 @@ class WebAuthnRepository implements IWebAuthnRepository {
         blockchainAddress: true,
         initPublicKey: true,
         deploymentSalt: true,
-        derivationNonce: true,
+        // derivationNonce: true,
+        createdAt: true,
+        updatedAt: true,
+        authenticators: {
+          select: {
+            id: true,
+            label: true,
+            credentialPublicKey: true,
+            createdAt: true,
+            counter: true,
+          },
+        },
       },
     });
   }

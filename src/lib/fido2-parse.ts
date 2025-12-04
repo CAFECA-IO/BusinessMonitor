@@ -124,3 +124,37 @@ export function parsePublicKeyCoordinates(attestationObjectBase64: string): ICoo
     return null;
   }
 }
+
+/**
+ * Info: (20251203 - Tzuhan) 解析單獨的 COSE Key (Base64URL 格式)
+ * 用於從資料庫取回公鑰後，還原成 BigInt 座標供合約驗證使用
+ */
+export const parseCoseKey = (coseBase64: string): { x: bigint; y: bigint } | null => {
+  try {
+    const base64 = coseBase64.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(base64);
+    const buffer = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buffer[i] = bin.charCodeAt(i);
+
+    if (buffer.length < 64) return null;
+
+    const xBytes = buffer.slice(buffer.length - 64, buffer.length - 32);
+    const yBytes = buffer.slice(buffer.length - 32);
+
+    const xHex =
+      '0x' +
+      Array.from(xBytes)
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+    const yHex =
+      '0x' +
+      Array.from(yBytes)
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+
+    return { x: BigInt(xHex), y: BigInt(yHex) };
+  } catch (e) {
+    console.error('COSE Parse error', e);
+    return null;
+  }
+};

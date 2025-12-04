@@ -4,7 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaChartBar } from 'react-icons/fa';
+import {
+  FaChartBar,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaSpinner,
+  FaMobileAlt,
+  FaTrash,
+} from 'react-icons/fa';
 import { FiMonitor } from 'react-icons/fi';
 import { LuIdCard, LuScanLine, LuSettings } from 'react-icons/lu';
 import { IoChatbubbleEllipsesOutline } from 'react-icons/io5';
@@ -18,13 +25,25 @@ import ProfileAccessTab from '@/components/auth/profile_access_tab';
 import ProfileSettingTab from '@/components/auth/profile_setting_tab';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import { fido2ClientService } from '@/lib/fido2-client';
-import { parsePublicKeyCoordinates } from '@/lib/fido2-parse';
+import { parsePublicKeyCoordinates, parseCoseKey } from '@/lib/fido2-parse';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { getInitCode } from '@/lib/aa-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
-import { createPublicClient, http, parseAbi, type Address, type Hex } from 'viem';
+import {
+  createPublicClient,
+  http,
+  parseAbi,
+  encodeAbiParameters,
+  keccak256,
+  type Address,
+  type Hex,
+} from 'viem';
+import { getPusherInstance } from '@/lib/pusher_client';
 import type { IApiResponse } from '@/lib/response';
 import type { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
+import { RPC_URL } from '@/constants/config';
+import { IAuthenticator, IExtendedUser } from '@/interfaces/auth';
+import { toBigInt } from '@/lib/common';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -33,7 +52,6 @@ if (!origin) {
 
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
 const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 const factoryAbi = parseAbi([
   'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',
@@ -44,18 +62,12 @@ const entryPointAbi = parseAbi([
   'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
 ]);
 
-const toBigInt = (base64Url: string) => {
-  try {
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const bin = atob(base64);
-    let hex = '0x';
-    for (let i = 0; i < bin.length; i++) hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
-    return BigInt(hex);
-  } catch (e) {
-    console.error('Base64 conversion error:', e);
-    return BigInt(0);
-  }
-};
+const scwAbi = parseAbi([
+  'function signers(bytes32 hash) view returns (bool)',
+  'function addSigner(uint256 x, uint256 y) external',
+  'function removeSigner(uint256 x, uint256 y) external',
+  'function execute(address dest, uint256 value, bytes func) external',
+]);
 
 enum ProfileTab {
   MY_ID = 'my-id',
@@ -71,9 +83,13 @@ export default function ProfileClient() {
   const [isShowScanner, setIsShowScanner] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isKeyLoading, setIsKeyLoading] = useState<boolean>(false);
-  const router = useRouter();
+  const [devices, setDevices] = useState<IAuthenticator[]>([]);
+  const [isScwDeployed, setIsScwDeployed] = useState<boolean>(false);
 
-  const { user, isLoading: isAuthLoading, logout, refetchUser } = useAuth();
+  const router = useRouter();
+  const { user: authUser, isLoading: isAuthLoading, logout, refetchUser } = useAuth();
+
+  const user = authUser as IExtendedUser | null;
 
   const userTitle = 'Digital Citizen';
   const bgColor =
@@ -98,6 +114,86 @@ export default function ProfileClient() {
   const handleLogout = () => {
     logout();
     router.push(BM_URL.LOGIN);
+  };
+
+  // Info: (20251203 - Tzuhan) 1. 載入裝置列表與檢查部署狀態
+  useEffect(() => {
+    if (user?.authenticators) {
+      setDevices(user.authenticators.map((d) => ({ ...d, verificationStatus: 'idle' })));
+    }
+
+    // Info: (20251203 - Tzuhan) [PoC 4 UX] 檢查合約是否已部署
+    const checkDeploymentStatus = async () => {
+      if (user?.blockchainAddress) {
+        try {
+          const client = createPublicClient({ transport: http(RPC_URL) });
+          const code = await client.getCode({ address: user.blockchainAddress as Address });
+          // Info: (20251203 - Tzuhan) 如果 code 存在且不為 0x，代表已部署
+          setIsScwDeployed(code !== undefined && code !== '0x');
+        } catch (e) {
+          console.warn('Failed to check SCW status', e);
+        }
+      }
+    };
+    checkDeploymentStatus();
+  }, [user]);
+
+  // Info: (20251203 - Tzuhan) 2. Pusher 即時監聽 (監聽用戶個人頻道)
+  useEffect(() => {
+    if (!user?.id) return;
+    const pusher = getPusherInstance();
+    const channelName = `private-user-${user.id}`;
+    const channel = pusher.subscribe(channelName);
+
+    channel.bind('user-updated', () => {
+      console.log('User updated event received, refreshing...');
+      refetchUser();
+    });
+
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(channelName);
+    };
+  }, [user?.id, refetchUser]);
+
+  // Info: (20251203 - Tzuhan) 3. 驗證裝置是否在鏈上
+  const handleVerifyDeviceOnChain = async (index: number) => {
+    const device = devices[index];
+    if (!user?.blockchainAddress || !device.credentialPublicKey) return;
+
+    const newDevices = [...devices];
+    newDevices[index].verificationStatus = 'loading';
+    setDevices(newDevices);
+
+    try {
+      const keys = parseCoseKey(device.credentialPublicKey);
+      if (!keys) throw new Error('Invalid Public Key Format');
+
+      const encoded = encodeAbiParameters(
+        [{ type: 'uint256' }, { type: 'uint256' }],
+        [keys.x, keys.y]
+      );
+      const hash = keccak256(encoded);
+
+      console.log(`Verifying Key on SCW ${user.blockchainAddress}`, { x: keys.x, y: keys.y, hash });
+
+      const client = createPublicClient({ transport: http(RPC_URL) });
+      // Info: (20251203 - Tzuhan) 如果合約還沒部署，讀取會失敗，這也是一種檢查方式
+      const isAuthorized = await client.readContract({
+        address: user.blockchainAddress as Address,
+        abi: scwAbi,
+        functionName: 'signers',
+        args: [hash],
+      });
+
+      newDevices[index].verificationStatus = isAuthorized ? 'verified' : 'failed';
+      setDevices([...newDevices]);
+    } catch (e) {
+      console.error('Verification error:', e);
+      // Info: (20251203 - Tzuhan) 如果報錯是因為合約未部署，我們可以視為「未授權」或特別標示
+      newDevices[index].verificationStatus = 'failed';
+      setDevices([...newDevices]);
+    }
   };
 
   // Info: (20251128 - Tzuhan) 初始化錢包 (針對還沒有 SCW 地址的舊用戶)
@@ -149,7 +245,6 @@ export default function ProfileClient() {
       if (!scwAddress) throw new Error('無法計算 SCW 地址');
 
       const dewt = localStorage.getItem('dewt');
-      // Info: (20251128 - Tzuhan) 呼叫 PATCH /me 更新用戶資料
       const updateRes = await fetch(`${origin}${routes.auth.me()}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
@@ -163,6 +258,8 @@ export default function ProfileClient() {
       if (!updateRes.ok) throw new Error('更新資料庫失敗');
 
       setKeyStatus(`✅ 錢包初始化成功！地址: ${scwAddress}`);
+      // Info: (20251203 - Tzuhan) 初始化後，雖然有地址但鏈上還沒部署，所以 isScwDeployed 仍為 false
+      // Info: (20251203 - Tzuhan) 這裡可以不手動設 true，讓 useEffect 自動判斷
       await refetchUser();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '發生未知錯誤';
@@ -172,7 +269,7 @@ export default function ProfileClient() {
     }
   };
 
-  // Info: (20251128 - Tzuhan) 真實交易測試 (包含 Lazy Deployment 與 簽名驗證)
+  // Info: (20251203 - Tzuhan) 真實交易測試 (Lazy Deployment)
   const handleTestSignature = async () => {
     if (!user?.blockchainAddress) {
       setError('找不到錢包地址，請先初始化。');
@@ -225,8 +322,8 @@ export default function ProfileClient() {
         initCode,
         callData: '0x', // Info: (20251128 - Tzuhan) 空操作測試
         callGasLimit: BigInt(100_000),
-        verificationGasLimit: isDeployed ? BigInt(500_000) : BigInt(2_000_000), // Info: (20251128 - Tzuhan) 部署需要較多 Gas
-        preVerificationGas: BigInt(50_000),
+        verificationGasLimit: isDeployed ? BigInt(500_000) : BigInt(3_500_000),
+        preVerificationGas: BigInt(100_000),
         maxFeePerGas: BigInt(0), // Info: (20251128 - Tzuhan) Gasless: Relayer 全額買單
         maxPriorityFeePerGas: BigInt(0),
         paymasterAndData: '0x',
@@ -268,7 +365,6 @@ export default function ProfileClient() {
       // Info: (20251128 - Tzuhan) 如果是已部署，理想上應從合約讀取或由用戶選擇，這裡簡化為使用 initPublicKey (假設是同一把鑰匙)
       // Info: (20251128 - Tzuhan) 如果是 Multi-Signer 情境，這裡就需要更複雜的邏輯來決定用哪把公鑰打包
       const initKey = user.initPublicKey as { x: string; y: string };
-
       const packedSignature = packWebAuthnSignature(
         new Uint8Array(response.authenticatorData),
         new TextDecoder().decode(response.clientDataJSON),
@@ -302,11 +398,10 @@ export default function ProfileClient() {
       const result: BundlerResponse = await res.json();
 
       if (result.payload?.transactionHash && result.payload?.status === 'success') {
-        setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash.slice(0, 10)}...)`);
-        // Info: (20251128 - Tzuhan) 如果是第一次部署，重新整理用戶資料以更新狀態
-        if (!isDeployed) {
-          await refetchUser();
-        }
+        setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash.slice(0, 8)}...)`);
+        // Info: (20251203 - Tzuhan) 更新部署狀態
+        setIsScwDeployed(true);
+        if (!isDeployed) await refetchUser();
       } else {
         throw new Error(result.payload?.error || '交易失敗');
       }
@@ -318,11 +413,6 @@ export default function ProfileClient() {
     }
   };
 
-  useEffect(() => {
-    if (isAuthLoading) return;
-    if (!user) router.replace(BM_URL.LOGIN);
-  }, [user, isAuthLoading, router]);
-
   if (isAuthLoading || !user) {
     return (
       <div className="flex w-full grow flex-col items-center justify-center p-4">
@@ -331,55 +421,138 @@ export default function ProfileClient() {
     );
   }
 
+  const deviceListSection = (
+    <div className="mt-8 w-full">
+      <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800">
+        <FiMonitor /> 已綁定裝置 (Devices)
+      </h3>
+      <div className="space-y-3">
+        {devices.length === 0 && <p className="text-sm text-gray-500">尚無裝置</p>}
+        {devices.map((device, idx) => (
+          <div
+            key={device.id}
+            className="flex flex-col items-start justify-between gap-4 rounded-lg border border-gray-100 bg-gray-50 p-4 sm:flex-row sm:items-center"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-white p-2 text-blue-500 shadow-sm">
+                <FaMobileAlt />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{device.label || `Device ${idx + 1}`}</p>
+                <p className="text-xs text-gray-500">
+                  Added: {new Date(device.createdAt).toLocaleDateString()}
+                </p>
+                <p className="mt-1 w-32 truncate font-mono text-[10px] text-gray-400 sm:w-48">
+                  Key: {device.credentialPublicKey.slice(0, 20)}...
+                </p>
+              </div>
+            </div>
+            <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
+              {device.verificationStatus === 'verified' && (
+                <span className="flex items-center gap-1 rounded bg-green-50 px-2 py-1 text-xs font-bold text-green-600">
+                  <FaCheckCircle /> On-Chain
+                </span>
+              )}
+              {device.verificationStatus === 'failed' && (
+                <span className="flex items-center gap-1 rounded bg-red-50 px-2 py-1 text-xs font-bold text-red-600">
+                  <FaTimesCircle /> Unauthorized
+                </span>
+              )}
+              <button
+                onClick={() => handleVerifyDeviceOnChain(idx)}
+                disabled={device.verificationStatus === 'loading'}
+                className="flex items-center gap-2 rounded border border-gray-300 bg-white px-3 py-1.5 text-xs hover:bg-gray-100 disabled:opacity-50"
+              >
+                {device.verificationStatus === 'loading' && <FaSpinner className="animate-spin" />}{' '}
+                Check
+              </button>
+              <button
+                disabled
+                // onClick={() => handleRemoveDevice(device)}
+                // disabled={isKeyLoading}
+                className="flex items-center gap-2 rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-600 hover:bg-red-100 disabled:opacity-50"
+              >
+                <FaTrash /> 移除
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const blockchainSection = (
     <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
-      <h2 className="text-2xl font-bold tracking-tight text-gray-900">區塊鏈身分 (SCW)</h2>
+      <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gray-900">
+        <LuIdCard className="text-purple-600" /> 區塊鏈身分 (SCW)
+      </h2>
       <div className="mt-6 border-t border-gray-200 pt-6">
         {user.blockchainAddress ? (
           <div className="space-y-6">
             <div>
               <p className="text-sm font-medium text-gray-500">您的智能合約錢包地址</p>
-              <p className="break-all font-mono text-lg font-bold text-green-600">
-                {user.blockchainAddress}
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="break-all rounded border border-green-100 bg-green-50 p-2 font-mono text-lg font-bold text-green-600">
+                  {user.blockchainAddress}
+                </p>
+                {/* Info: (20251203 - Tzuhan) 狀態標籤 */}
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${isScwDeployed ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}
+                >
+                  {isScwDeployed ? '已啟用 (Active)' : '待啟用 (Pending)'}
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {/* Info: (20251128 - Tzuhan) 測試簽名按鈕 */}
+              {/* Info: (20251203 - Tzuhan) [PoC 4 UX] 動態按鈕文字 */}
               <button
                 onClick={handleTestSignature}
                 disabled={isKeyLoading}
-                className="w-full rounded-lg bg-blue-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700 disabled:bg-gray-400"
+                className={`flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-base font-semibold text-white shadow-sm disabled:bg-gray-400 ${
+                  isScwDeployed
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
               >
-                {isKeyLoading ? '處理中...' : '發送測試交易 (上鏈驗證)'}
+                {isKeyLoading ? <FaSpinner className="animate-spin" /> : null}
+                {isKeyLoading
+                  ? '處理中...'
+                  : isScwDeployed
+                    ? '發送測試交易 (Sign)'
+                    : '啟用錢包 (Activate Wallet)'}
               </button>
 
-              {/* Info: (20251128 - Tzuhan) 管理裝置按鈕 */}
-              <Link href="/poc/multi-signer" className="w-full">
+              <Link href={BM_URL.ADD_DEVICE} className="w-full">
                 <button className="w-full rounded-lg bg-gray-800 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-gray-900">
-                  管理多重裝置
+                  新增裝置 (Add Device)
                 </button>
               </Link>
             </div>
+
+            {deviceListSection}
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-gray-600">
-              您尚未初始化區塊鏈錢包。請點擊下方按鈕來綁定您的 Passkey 並生成錢包地址。
-            </p>
+            <div className="rounded-lg border border-yellow-100 bg-yellow-50 p-4">
+              <p className="font-medium text-gray-700">您尚未初始化區塊鏈錢包。</p>
+              <p className="mt-1 text-sm text-gray-500">
+                點擊下方按鈕，系統將為您自動部署一個專屬的智能合約錢包 (Gasless)。
+              </p>
+            </div>
             <button
               onClick={handleInitializeWallet}
               disabled={isKeyLoading}
               className="w-full rounded-lg bg-purple-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-purple-700 disabled:bg-gray-400"
             >
-              {isKeyLoading ? '初始化中...' : '初始化錢包 (Initialize SCW)'}
+              {isKeyLoading ? '初始化中...' : '立即初始化'}
             </button>
           </div>
         )}
 
         {(keyStatus || error) && (
           <div
-            className={`mt-4 rounded-lg p-4 ${error ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}
+            className={`mt-4 rounded-lg p-4 ${error ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}
           >
             <p className="text-sm font-medium">{error ? `Error: ${error}` : keyStatus}</p>
           </div>
@@ -389,13 +562,13 @@ export default function ProfileClient() {
   );
 
   const displayedNavbar = (
-    <div className="grid w-full grid-cols-5 gap-8px rounded-t-radius-s bg-white px-16px pb-16px pt-8px">
+    <div className="grid w-full grid-cols-5 gap-8px rounded-t-radius-s bg-white px-16px pb-16px pt-8px shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       <button
         type="button"
         onClick={myIdClickHandler}
         className="flex flex-col items-center gap-4px px-8px py-4px"
       >
-        <LuIdCard size={24} className="text-text-primary" />
+        <LuIdCard size={24} className={myIdTextColor} />
         <p className={`text-xs font-medium ${myIdTextColor}`}>My ID</p>
       </button>
       <button
@@ -403,7 +576,7 @@ export default function ProfileClient() {
         onClick={messageClickHandler}
         className="flex flex-col items-center gap-4px px-8px py-4px"
       >
-        <IoChatbubbleEllipsesOutline size={24} className="text-text-primary" />
+        <IoChatbubbleEllipsesOutline size={24} className={messageTextColor} />
         <p className={`text-xs font-medium ${messageTextColor}`}>Message</p>
       </button>
       <button type="button" onClick={toggleScanner} className={scanBtnStyle}>
@@ -414,7 +587,7 @@ export default function ProfileClient() {
         onClick={accessClickHandler}
         className="flex flex-col items-center gap-4px px-8px py-4px"
       >
-        <FiMonitor size={24} className="text-text-primary" />
+        <FiMonitor size={24} className={accessTextColor} />
         <p className={`text-xs font-medium ${accessTextColor}`}>Access</p>
       </button>
       <button
@@ -422,54 +595,58 @@ export default function ProfileClient() {
         onClick={settingClickHandler}
         className="flex flex-col items-center gap-4px px-8px py-4px"
       >
-        <LuSettings size={24} className="text-text-primary" />
+        <LuSettings size={24} className={settingTextColor} />
         <p className={`text-xs font-medium ${settingTextColor}`}>Setting</p>
       </button>
     </div>
   );
 
   const displayedProfileTab = (
-    <div className="relative w-full flex-1">
-      <div className="absolute z-0 h-1/2 w-full">
+    <div className="relative w-full flex-1 overflow-y-auto pb-20">
+      <div className="absolute z-0 h-80 w-full">
         <Image
           src="/elements/profile_cover.svg"
           fill
-          objectFit="cover"
-          objectPosition="bottom"
+          className="object-cover object-bottom"
           alt="wave_shape_cover"
         />
       </div>
 
-      <div className="flex h-full flex-col">
+      <div className="flex min-h-full flex-col">
         <div className="z-10 flex w-full items-center justify-between px-16px py-20px">
           <Link href={BM_URL.BUSINESS_MONITOR}>
-            <button type="button" className="p-10px text-text-primary">
+            <button type="button" className="p-10px text-white transition hover:text-gray-200">
               <FaChartBar size={24} />
             </button>
           </Link>
-          <button type="button" onClick={handleLogout} className="p-10px text-text-primary">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="p-10px text-white transition hover:text-gray-200"
+          >
             <PiSignOut size={24} />
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col items-center justify-start gap-24px pt-20px">
+        <div className="flex flex-1 flex-col items-center justify-start gap-24px px-4 pt-20px">
           <div className="relative flex flex-col items-center">
-            <div className="size-180px overflow-hidden rounded-full border-4 border-white shadow-md">
+            <div className="size-180px overflow-hidden rounded-full border-4 border-white bg-white shadow-md">
               <Image
                 src={user.photo ?? DEFAULT_USER_AVATAR}
                 width={183}
                 height={183}
                 alt="user_avatar"
+                className="object-cover"
               />
             </div>
-            <div className="-translate-y-10px rounded-radius-s bg-surface-brand px-12px py-6px text-sm font-medium text-text-invert">
+            <div className="-translate-y-10px rounded-radius-s bg-surface-brand px-12px py-6px text-sm font-medium text-text-invert shadow-sm">
               {userTitle}
             </div>
           </div>
-          <h2 className="text-h5 font-bold">{user.name ?? '-'}</h2>
+          <h2 className="text-h5 font-bold text-gray-800">{user.name ?? 'Anonymous'}</h2>
 
-          {/* Info: (20251128 - Tzuhan) 插入區塊鏈錢包區塊 */}
-          <div className="w-full max-w-2xl px-4 pb-20">{blockchainSection}</div>
+          {/* Info: (20251203 - Tzuhan) SCW Block */}
+          <div className="w-full max-w-2xl">{blockchainSection}</div>
         </div>
       </div>
     </div>
@@ -487,9 +664,9 @@ export default function ProfileClient() {
     );
 
   return (
-    <div className={`${bgColor} relative flex min-h-[dvh] w-full grow flex-col items-center`}>
+    <div className={`${bgColor} relative flex h-screen w-full flex-col overflow-hidden`}>
       {displayedTab}
-      {displayedNavbar}
+      <div className="absolute bottom-0 z-50 w-full">{displayedNavbar}</div>
       {isShowScanner && <QRCodeScanner onClose={toggleScanner} />}
     </div>
   );

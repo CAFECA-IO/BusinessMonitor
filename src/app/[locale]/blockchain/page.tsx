@@ -27,6 +27,8 @@ import type {
   RegisterOptions,
   AuthenticateOptions,
 } from '@passwordless-id/webauthn/dist/esm/types';
+import { RPC_URL } from '@/constants/config';
+import { toBigInt } from 'ethers';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -35,26 +37,11 @@ if (!origin) {
 
 // Info: (20251128 - Tzuhan) Factory 設定
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 // Info: (20251128 - Tzuhan) Factory ABI
 const factoryAbi = parseAbi([
   'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',
 ]);
-
-// Info: (20251128 - Tzuhan) 輔助函式
-const toBigInt = (base64Url: string) => {
-  try {
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const bin = atob(base64);
-    let hex = '0x';
-    for (let i = 0; i < bin.length; i++) hex += bin.charCodeAt(i).toString(16).padStart(2, '0');
-    return BigInt(hex);
-  } catch (e) {
-    console.error('Base64 conversion error:', e);
-    return BigInt(0);
-  }
-};
 
 enum ProfileTab {
   MY_ID = 'my-id',
@@ -153,9 +140,7 @@ export default function ProfileClient() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
         body: JSON.stringify({
-          // 這裡嘗試更新 SCW 地址，需確保後端 Validator 允許此欄位
-          // 如果後端尚未支援，這裡僅為演示前端邏輯
-          // blockchainAddress: scwAddress
+          blockchainAddress: scwAddress,
         }),
       });
 
@@ -229,9 +214,9 @@ export default function ProfileClient() {
               </button>
 
               {/* Info: (20251128 - Tzuhan) 管理裝置按鈕 */}
-              <Link href="/poc/multi-signer" className="w-full">
+              <Link href={BM_URL.ADD_DEVICE} className="w-full">
                 <button className="w-full rounded-lg bg-gray-800 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-gray-900">
-                  管理裝置 (Multi-Signer)
+                  新增裝置 (Add Device)
                 </button>
               </Link>
             </div>

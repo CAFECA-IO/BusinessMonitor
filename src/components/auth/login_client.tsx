@@ -16,6 +16,7 @@ import MessageModal from '@/components/auth/message_modal';
 // Info: (20251128 - Tzuhan) 引入新依賴
 import { createPublicClient, http, type Address } from 'viem';
 import { getInitCode } from '@/lib/aa-utils';
+import { RPC_URL } from '@/constants/config';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -24,7 +25,6 @@ if (!origin) {
 
 // Info: (20251128 - Tzuhan) 環境變數
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';
 
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
@@ -113,7 +113,7 @@ export default function LoginClient() {
           const client = createPublicClient({ transport: http(RPC_URL) });
 
           // Info: (20251128 - Tzuhan) 2. 檢查鏈上是否已部署
-          const code = await client.getBytecode({ address: scwAddress });
+          const code = await client.getCode({ address: scwAddress });
 
           // Info: (20251128 - Tzuhan) 如果未部署 (code 為 undefined 或 0x)，則觸發部署交易
           if (!code || code === '0x') {

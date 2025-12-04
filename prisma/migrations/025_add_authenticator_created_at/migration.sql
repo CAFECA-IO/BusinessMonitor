@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "public"."authenticator" ADD COLUMN     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE "public"."identity_account" DROP COLUMN "derivation_nonce",
+ADD COLUMN     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

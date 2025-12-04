@@ -85,16 +85,33 @@ export async function GET(request: NextRequest) {
 
     log.info('Fetching user data for identity', { identityId });
 
-    const identityAccount = await webAuthnRepo.findIdentityAccountById(identityId);
+    const identityAccount = (await webAuthnRepo.findIdentityAccountById(
+      identityId
+    )) as IdentityAccount & {
+      authenticators: Array<{
+        id: string;
+        credentialID: string;
+        credentialPublicKey: string;
+        label: string | null;
+        createdAt: Date;
+        counter: bigint;
+      }>;
+    };
 
     if (!identityAccount) {
       throw new AppError(ApiCode.NOT_FOUND, `User with ID ${identityId} not found.`);
     }
 
-    const safeUserData: Pick<
-      IdentityAccount,
-      'id' | 'name' | 'email' | 'photo' | 'blockchainAddress' | 'initPublicKey' | 'deploymentSalt'
-    > = {
+    const authenticators = identityAccount.authenticators.map((auth) => ({
+      id: auth.id,
+      credentialID: auth.credentialID,
+      credentialPublicKey: auth.credentialPublicKey,
+      label: auth.label,
+      createdAt: auth.createdAt.toISOString(),
+      counter: auth.counter.toString(),
+    }));
+
+    const safeUserData = {
       id: identityAccount.id,
       name: identityAccount.name,
       email: identityAccount.email,
@@ -102,6 +119,7 @@ export async function GET(request: NextRequest) {
       blockchainAddress: identityAccount.blockchainAddress,
       initPublicKey: identityAccount.initPublicKey,
       deploymentSalt: identityAccount.deploymentSalt,
+      authenticators,
     };
 
     return jsonOk(safeUserData);
