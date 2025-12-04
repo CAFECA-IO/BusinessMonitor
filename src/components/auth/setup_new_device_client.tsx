@@ -118,7 +118,7 @@ function SetupNewDeviceInternal() {
       setError(errorMessage);
       setIsLoading(false);
     }
-  }, [registrationOptions, sessionId]);
+  }, [deviceName, registrationOptions, sessionId]);
 
   useEffect(() => {
     if (!sessionId) return;

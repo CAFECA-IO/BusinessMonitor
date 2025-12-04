@@ -539,18 +539,17 @@ export default function ProfileClient() {
         signature: packedSignature,
       };
 
-      // [修正] 改為呼叫專用的 Remove API
       setKeyStatus('正在提交移除請求 (雙重刪除)...');
+
+      const dewt = localStorage.getItem('dewt');
 
       const res = await fetch(routes.auth.authenticators.remove(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // 這裡不用 Authorization header，因為它是 cookie-based 或 middleware 處理
-        // 但如果是 middleware 處理，需要確保 fetch 時帶上 cookie (browser default)
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
         body: JSON.stringify({
           userOp: signedUserOpJson,
           entryPointAddress: ENTRY_POINT_ADDRESS,
-          authenticatorId: device.id, // 傳入 ID 以供 DB 刪除
+          authenticatorId: device.id,
         }),
       });
 
