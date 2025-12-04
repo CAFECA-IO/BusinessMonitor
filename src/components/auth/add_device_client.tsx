@@ -112,8 +112,7 @@ export default function AddDeviceClient() {
         signature: '0x',
       };
 
-      // Info: (20251202 - Tzuhan) 4. 計算 Hash
-      // 確保型別正確轉型為 Hex
+      // Info: (20251202 - Tzuhan) 4. 計算 Hash 並確保型別為 Hex
       const userOpTuple = {
         ...userOp,
         sender: userOp.sender as Address,
@@ -144,9 +143,11 @@ export default function AddDeviceClient() {
 
       const response = assertion.response as AuthenticatorAssertionResponse;
 
-      // Info: (20251202 - Tzuhan) 需要當前使用者的 initPublicKey 來打包簽名
-      // Info: (20251202 - Tzuhan) (假設 user.initPublicKey 是 {x, y} 格式)
-      // 注意：這裡假設 A 是用 initKey 簽名。如果是多裝置情境，理想上應該讓用戶選鑰匙或從 LocalStorage 讀取
+      /**
+       * Info: (20251202 - Tzuhan) 需要當前使用者的 initPublicKey 來打包簽名
+       * user.initPublicKey 是 {x, y} 格式
+       * 注意：這裡假設 A 是用 initKey 簽名。如果是多裝置情境，理想上應該讓用戶選鑰匙或從 LocalStorage 讀取
+       */
       const ownerKey = user.initPublicKey as { x: string; y: string } | null;
       if (!ownerKey?.x || !ownerKey?.y) throw new Error('無法取得您的公鑰資訊');
 
