@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/auth_context';
 import { parsePublicKeyCoordinates } from '@/lib/fido2-parse';
 import type { IApiResponse } from '@/lib/response';
 import { toBigInt } from '@/lib/common';
+import { UAParser } from 'ua-parser-js';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -23,6 +24,7 @@ function SetupNewDeviceInternal() {
   const [registrationOptions, setRegistrationOptions] = useState<RegisterOptions | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
+  const [deviceName, setDeviceName] = useState('');
 
   //  Info: (20251202 - Tzuhan) [PoC 4 Debug] 儲存本地生成的公鑰以供顯示
   const [debugKeyInfo, setDebugKeyInfo] = useState<{ x: string; y: string } | null>(null);
@@ -32,6 +34,13 @@ function SetupNewDeviceInternal() {
   const sessionId = searchParams.get('sessionId');
   const urlChallenge = searchParams.get('challenge');
   const { login } = useAuth();
+
+  useEffect(() => {
+    const parser = new UAParser();
+    const os = parser.getOS().name || 'Unknown OS';
+    const browser = parser.getBrowser().name || 'Unknown Browser';
+    setDeviceName(`${os} - ${browser}`);
+  }, []);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -91,6 +100,7 @@ function SetupNewDeviceInternal() {
           candidatePublicKey: {
             x: xStr,
             y: yStr,
+            deviceName,
           },
         }),
       });
