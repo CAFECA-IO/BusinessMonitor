@@ -196,7 +196,7 @@ export default function ProfileClient() {
     }
   };
 
-  // (20251128 - Tzuhan) 初始化錢包 (針對還沒有 SCW 地址的舊用戶)
+  // Info: (20251128 - Tzuhan) 初始化錢包 (針對還沒有 SCW 地址的舊用戶)
   const handleInitializeWallet = async () => {
     if (!user) return;
     setIsKeyLoading(true);
@@ -258,8 +258,8 @@ export default function ProfileClient() {
       if (!updateRes.ok) throw new Error('更新資料庫失敗');
 
       setKeyStatus(`✅ 錢包初始化成功！地址: ${scwAddress}`);
-      // 初始化後，雖然有地址但鏈上還沒部署，所以 isScwDeployed 仍為 false
-      // 這裡可以不手動設 true，讓 useEffect 自動判斷
+      // Info: (20251203 - Tzuhan) 初始化後，雖然有地址但鏈上還沒部署，所以 isScwDeployed 仍為 false
+      // Info: (20251203 - Tzuhan) 這裡可以不手動設 true，讓 useEffect 自動判斷
       await refetchUser();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '發生未知錯誤';
@@ -269,7 +269,7 @@ export default function ProfileClient() {
     }
   };
 
-  // 真實交易測試 (Lazy Deployment)
+  // Info: (20251203 - Tzuhan) 真實交易測試 (Lazy Deployment)
   const handleTestSignature = async () => {
     if (!user?.blockchainAddress) {
       setError('找不到錢包地址，請先初始化。');
@@ -399,7 +399,7 @@ export default function ProfileClient() {
 
       if (result.payload?.transactionHash && result.payload?.status === 'success') {
         setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash.slice(0, 8)}...)`);
-        // 更新部署狀態
+        // Info: (20251203 - Tzuhan) 更新部署狀態
         setIsScwDeployed(true);
         if (!isDeployed) await refetchUser();
       } else {
@@ -495,7 +495,7 @@ export default function ProfileClient() {
                 <p className="break-all rounded border border-green-100 bg-green-50 p-2 font-mono text-lg font-bold text-green-600">
                   {user.blockchainAddress}
                 </p>
-                {/* 狀態標籤 */}
+                {/* Info: (20251203 - Tzuhan) 狀態標籤 */}
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-bold ${isScwDeployed ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}
                 >
@@ -505,7 +505,7 @@ export default function ProfileClient() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {/* [PoC 4 UX] 動態按鈕文字 */}
+              {/* Info: (20251203 - Tzuhan) [PoC 4 UX] 動態按鈕文字 */}
               <button
                 onClick={handleTestSignature}
                 disabled={isKeyLoading}
@@ -645,7 +645,7 @@ export default function ProfileClient() {
           </div>
           <h2 className="text-h5 font-bold text-gray-800">{user.name ?? 'Anonymous'}</h2>
 
-          {/* SCW Block */}
+          {/* Info: (20251203 - Tzuhan) SCW Block */}
           <div className="w-full max-w-2xl">{blockchainSection}</div>
         </div>
       </div>
