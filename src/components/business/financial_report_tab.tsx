@@ -12,23 +12,29 @@ const InvestmentAdvisoryReportViewer = dynamic(
   { ssr: false }
 );
 
-const BalanceSheetViewer: React.FC<{ businessId: string }> = () => {
+const BalanceSheetViewer: React.FC<{ businessId: string; activePeriod: IPeriod }> = () => {
   return <div>No Balance Sheet Data</div>;
 };
 
-const CashFlowStatementViewer: React.FC<{ businessId: string }> = () => {
+const CashFlowStatementViewer: React.FC<{ businessId: string; activePeriod: IPeriod }> = () => {
   return <div>No Cash Flow Statement Data</div>;
 };
 
-const IncomeStatementViewer: React.FC<{ businessId: string }> = () => {
+const IncomeStatementViewer: React.FC<{ businessId: string; activePeriod: IPeriod }> = () => {
   return <div>No Income Statement Data</div>;
 };
 
-const ProfitabilityAnalysisReportViewer: React.FC<{ businessId: string }> = () => {
+const ProfitabilityAnalysisReportViewer: React.FC<{
+  businessId: string;
+  activePeriod: IPeriod;
+}> = () => {
   return <div>No Profitability Analysis Report Data</div>;
 };
 
-const SolvencyAnalysisReportViewer: React.FC<{ businessId: string }> = () => {
+const SolvencyAnalysisReportViewer: React.FC<{
+  businessId: string;
+  activePeriod: IPeriod;
+}> = () => {
   return <div>No Solvency Analysis Report Data</div>;
 };
 
@@ -99,17 +105,17 @@ const FinancialReportTab: React.FC<IFinancialReportTabProps> = ({ businessId }) 
 
   const reportContent =
     currentTab === FinancialReportType.BALANCE_SHEET ? (
-      <BalanceSheetViewer businessId={businessId} />
+      <BalanceSheetViewer businessId={businessId} activePeriod={selectedPeriod} />
     ) : currentTab === FinancialReportType.CASH_FLOW ? (
-      <CashFlowStatementViewer businessId={businessId} />
+      <CashFlowStatementViewer businessId={businessId} activePeriod={selectedPeriod} />
     ) : currentTab === FinancialReportType.INCOME_STATEMENT ? (
-      <IncomeStatementViewer businessId={businessId} />
+      <IncomeStatementViewer businessId={businessId} activePeriod={selectedPeriod} />
     ) : currentTab === FinancialReportType.PROFITABILITY ? (
-      <ProfitabilityAnalysisReportViewer businessId={businessId} />
+      <ProfitabilityAnalysisReportViewer businessId={businessId} activePeriod={selectedPeriod} />
     ) : currentTab === FinancialReportType.INVESTMENT ? (
-      <InvestmentAdvisoryReportViewer businessId={businessId} />
+      <InvestmentAdvisoryReportViewer businessId={businessId} activePeriod={selectedPeriod} />
     ) : currentTab === FinancialReportType.SOLVENCY ? (
-      <SolvencyAnalysisReportViewer businessId={businessId} />
+      <SolvencyAnalysisReportViewer businessId={businessId} activePeriod={selectedPeriod} />
     ) : null;
 
   return (
