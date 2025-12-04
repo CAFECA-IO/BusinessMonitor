@@ -507,7 +507,7 @@ model Authenticator {
   identityAccountId   String          @map("identity_account_id")
   counter             BigInt          @map("counter") @default(0)
   algorithm           WebAuthnAlgo    @map("algorithm")  @default(ES256)
-  userHandle          String          @unique @map("user_handle") // 核心欄位，用於實現無使用者名稱登入
+  userHandle          String          @unique @map("user_handle") // Info: (20251128 - Tzuhan) 核心欄位，用於實現無使用者名稱登入
   createdAt           DateTime        @default(now()) @map("created_at")
 
   identityAccount     IdentityAccount @relation(fields: [identityAccountId], references: [id])
