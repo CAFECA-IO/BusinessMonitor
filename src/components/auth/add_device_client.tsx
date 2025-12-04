@@ -196,10 +196,9 @@ export default function AddDeviceClient() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
         body: JSON.stringify({
           sessionId,
-          challenge: 'poc4-authorized', // Info: (20251202 - Tzuhan) 這裡 challenge 不重要了，因為已經上鏈
+          action: 'confirm_add_device', // Info: (20251204 - Tzuhan) 明確指定動作
         }),
       });
-
       // Info: (20251202 - Tzuhan) 手動觸發成功通知給 B (如果是 PoC 演示)
       // Info: (20251202 - Tzuhan) 在正式版中，應該由後端監聽鏈上事件或由 authorize API 觸發
       // Info: (20251202 - Tzuhan) 這裡我們先假設 authorize API 會處理，或者 B 會因為 sessionId 狀態改變而完成

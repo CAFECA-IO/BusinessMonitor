@@ -60,6 +60,8 @@ export interface IWebAuthnRepository {
     sessionId: string,
     candidateData: Prisma.InputJsonValue
   ): Promise<void>;
+  findAuthenticatorById(id: string): Promise<Authenticator | null>;
+  deleteAuthenticator(id: string): Promise<void>;
 }
 
 class WebAuthnRepository implements IWebAuthnRepository {
@@ -230,6 +232,13 @@ class WebAuthnRepository implements IWebAuthnRepository {
         },
       },
     });
+  }
+  public async findAuthenticatorById(id: string): Promise<Authenticator | null> {
+    return prisma.authenticator.findUnique({ where: { id } });
+  }
+
+  public async deleteAuthenticator(id: string): Promise<void> {
+    await prisma.authenticator.delete({ where: { id } });
   }
 }
 

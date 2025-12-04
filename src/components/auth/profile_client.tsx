@@ -37,6 +37,7 @@ import {
   keccak256,
   type Address,
   type Hex,
+  encodeFunctionData,
 } from 'viem';
 import { getPusherInstance } from '@/lib/pusher_client';
 import type { IApiResponse } from '@/lib/response';
@@ -413,6 +414,162 @@ export default function ProfileClient() {
     }
   };
 
+  // Info: (20251204 - Tzuhan) 4. [PoC 4] 移除裝置 (發送 removeSigner 交易)
+  const handleRemoveDevice = async (device: IAuthenticator) => {
+    if (!confirm(`確定要移除裝置 "${device.label}" 嗎？這將發送區塊鏈交易。`)) return;
+    if (!user?.blockchainAddress) return;
+
+    setIsKeyLoading(true);
+    setKeyStatus('正在準備移除裝置...');
+    setError(null);
+
+    try {
+      // Info: (20251204 - Tzuhan) A. 解析要移除的目標公鑰
+      const targetKeys = parseCoseKey(device.credentialPublicKey);
+      if (!targetKeys) throw new Error('無法解析目標裝置公鑰');
+
+      const client = createPublicClient({ transport: http(RPC_URL) });
+      const scwAddr = user.blockchainAddress as Address;
+
+      // Info: (20251204 - Tzuhan) B. 建構 UserOp: removeSigner
+      const innerCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'removeSigner',
+        args: [targetKeys.x, targetKeys.y],
+      });
+
+      const userOpCallData = encodeFunctionData({
+        abi: scwAbi,
+        functionName: 'execute',
+        args: [scwAddr, BigInt(0), innerCallData],
+      });
+
+      const nonce = await client.readContract({
+        address: ENTRY_POINT_ADDRESS,
+        abi: entryPointAbi,
+        functionName: 'getNonce',
+        args: [scwAddr, BigInt(0)],
+      });
+
+      const userOp: UserOperation = {
+        sender: scwAddr,
+        nonce,
+        initCode: '0x', // Info: (20251204 - Tzuhan) 假設能執行移除，合約肯定已部署
+        callData: userOpCallData,
+        callGasLimit: BigInt(100_000),
+        verificationGasLimit: BigInt(500_000),
+        preVerificationGas: BigInt(50_000),
+        maxFeePerGas: BigInt(0), // Info: (20251204 - Tzuhan) Gasless
+        maxPriorityFeePerGas: BigInt(0),
+        paymasterAndData: '0x',
+        signature: '0x',
+      };
+
+      // Info: (20251204 - Tzuhan) C. 計算 Hash 並簽名 (使用當前操作的裝置)
+      const userOpTuple = {
+        ...userOp,
+        sender: scwAddr as `0x${string}`,
+        initCode: '0x' as `0x${string}`,
+        callData: '0x' as `0x${string}`,
+        paymasterAndData: '0x' as `0x${string}`,
+        signature: '0x' as `0x${string}`,
+      };
+      const userOpHash = await client.readContract({
+        address: ENTRY_POINT_ADDRESS,
+        abi: entryPointAbi,
+        functionName: 'getUserOpHash',
+        args: [userOpTuple],
+      });
+
+      setKeyStatus('請使用您的 Passkey (FaceID/指紋) 確認移除...');
+      const assertion = (await navigator.credentials.get({
+        publicKey: {
+          challenge: Buffer.from(userOpHash.slice(2), 'hex'),
+          rpId: window.location.hostname,
+          userVerification: 'required',
+          allowCredentials: [], // Info: (20251204 - Tzuhan) 允許使用當前裝置簽名
+        },
+      })) as PublicKeyCredential;
+
+      const response = assertion.response as AuthenticatorAssertionResponse;
+
+      // Info: (20251204 - Tzuhan) 取得當前簽名者的公鑰 (用於打包簽名)
+      // Info: (20251204 - Tzuhan) 我們需要知道「現在是誰在簽名」，以便合約驗證
+      let signerX = BigInt(0);
+      let signerY = BigInt(0);
+
+      const currentCredId = assertion.id;
+      const currentAuth = user.authenticators?.find((a) => a.credentialID === currentCredId);
+
+      if (currentAuth) {
+        const keys = parseCoseKey(currentAuth.credentialPublicKey);
+        if (keys) {
+          signerX = keys.x;
+          signerY = keys.y;
+        }
+      } else {
+        // Info: (20251204 - Tzuhan) Fallback to initKey (如果是初始裝置且不在列表中)
+        const initKey = user.initPublicKey as { x: string; y: string };
+        if (initKey) {
+          signerX = BigInt(initKey.x);
+          signerY = BigInt(initKey.y);
+        }
+      }
+
+      if (signerX === BigInt(0)) throw new Error('無法識別當前簽名裝置，請重試');
+
+      const packedSignature = packWebAuthnSignature(
+        new Uint8Array(response.authenticatorData),
+        new TextDecoder().decode(response.clientDataJSON),
+        new Uint8Array(response.signature),
+        signerX,
+        signerY
+      );
+
+      // Info: (20251204 - Tzuhan) D. 發送交易
+      setKeyStatus('正在提交移除請求...');
+      const signedUserOpJson: UserOperationJson = {
+        ...userOp,
+        nonce: `0x${userOp.nonce.toString(16)}`,
+        callGasLimit: `0x${userOp.callGasLimit.toString(16)}`,
+        verificationGasLimit: `0x${userOp.verificationGasLimit.toString(16)}`,
+        preVerificationGas: `0x${userOp.preVerificationGas.toString(16)}`,
+        maxFeePerGas: `0x${userOp.maxFeePerGas.toString(16)}`,
+        maxPriorityFeePerGas: `0x${userOp.maxPriorityFeePerGas.toString(16)}`,
+        signature: packedSignature,
+      };
+
+      // [修正] 改為呼叫專用的 Remove API
+      setKeyStatus('正在提交移除請求 (雙重刪除)...');
+
+      const res = await fetch(routes.auth.authenticators.remove(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // 這裡不用 Authorization header，因為它是 cookie-based 或 middleware 處理
+        // 但如果是 middleware 處理，需要確保 fetch 時帶上 cookie (browser default)
+        body: JSON.stringify({
+          userOp: signedUserOpJson,
+          entryPointAddress: ENTRY_POINT_ADDRESS,
+          authenticatorId: device.id, // 傳入 ID 以供 DB 刪除
+        }),
+      });
+
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        setKeyStatus(`✅ 移除成功！(Tx: ${result.payload.transactionHash.slice(0, 8)}...)`);
+        await refetchUser(); // Info: (20251203 - Tzuhan) 重新抓取 (假設後端有同步機制或暫時保留紀錄)
+      } else {
+        throw new Error(result.message || result.payload?.details || '交易失敗');
+      }
+    } catch (err: unknown) {
+      setError((err as Error).message);
+      setKeyStatus('❌ 移除失敗');
+    } finally {
+      setIsKeyLoading(false);
+    }
+  };
+
   if (isAuthLoading || !user) {
     return (
       <div className="flex w-full grow flex-col items-center justify-center p-4">
@@ -467,9 +624,8 @@ export default function ProfileClient() {
                 Check
               </button>
               <button
-                disabled
-                // onClick={() => handleRemoveDevice(device)}
-                // disabled={isKeyLoading}
+                onClick={() => handleRemoveDevice(device)}
+                disabled={isKeyLoading}
                 className="flex items-center gap-2 rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-600 hover:bg-red-100 disabled:opacity-50"
               >
                 <FaTrash /> 移除
