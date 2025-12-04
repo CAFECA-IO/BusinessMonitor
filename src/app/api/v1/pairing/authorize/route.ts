@@ -10,10 +10,17 @@ import { verifyAuthentication } from '@/lib/fido2-server';
 import { webAuthnRepo } from '@/repositories/webauthn.repo';
 import type { AuthenticationJSON } from '@passwordless-id/webauthn/dist/esm/types';
 import { Authenticator } from '@prisma/client';
+import { bundlerService } from '@/services/bundler.service';
+import { UserOperationJson } from '@/validators';
 
 // Info: (20251204 - Tzuhan) 定義請求 Payload，支援兩種 Action
 type AuthorizePayload =
-  | { action: 'confirm_add_device'; sessionId: string }
+  | {
+      action: 'confirm_add_device';
+      sessionId: string;
+      userOp: UserOperationJson;
+      entryPointAddress: string;
+    }
   | { action: 'authorize_login'; sessionId: string; fido2Assertion: AuthenticationJSON };
 
 export async function POST(request: NextRequest) {
@@ -41,6 +48,14 @@ export async function POST(request: NextRequest) {
 
     // Info: (20251204 - Tzuhan) 3. 根據 Action 分流處理
     if (action === 'confirm_add_device') {
+      const { userOp, entryPointAddress } = body;
+      logger.info('[Authorize] Sending AddSigner UserOp to Bundler...');
+      const bundlerResult = await bundlerService.sendUserOp(userOp, entryPointAddress);
+
+      if (bundlerResult.status !== 'success') {
+        throw new AppError(ApiCode.SERVER_ERROR, 'Blockchain transaction failed.');
+      }
+      logger.info(`[Authorize] On-chain success! Tx: ${bundlerResult.transactionHash}`);
       // =================================================================
       // 情境 A: 新增裝置 (鏈上交易已完成，後端同步 DB)
       // =================================================================
