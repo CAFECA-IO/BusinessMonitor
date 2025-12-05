@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       }
       logger.info(`[Authorize] On-chain success! Tx: ${bundlerResult.transactionHash}`);
       // =================================================================
-      // 情境 A: 新增裝置 (鏈上交易已完成，後端同步 DB)
+      // Info: (20251204 - Tzuhan) 情境 A: 新增裝置 (鏈上交易已完成，後端同步 DB)
       // =================================================================
       if (!session.pendingCandidateData) {
         throw new AppError(ApiCode.VALIDATION_ERROR, 'No pending device data found.');
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       });
     } else if (action === 'authorize_login') {
       // =================================================================
-      // 情境 B: 跨裝置登入 (驗證 FIDO2 簽名)
+      // Info: (20251204 - Tzuhan) 情境 B: 跨裝置登入 (驗證 FIDO2 簽名)
       // =================================================================
       const { fido2Assertion } = body;
       if (!fido2Assertion) {
