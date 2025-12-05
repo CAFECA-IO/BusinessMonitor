@@ -43,7 +43,7 @@ const entryPointAbi = parseAbi([
 interface ICandidateKey {
   pubKeyX: string;
   pubKeyY: string;
-  deviceName?: string;
+  label?: string;
 }
 
 export default function AddDeviceClient() {
@@ -131,7 +131,7 @@ export default function AddDeviceClient() {
       });
 
       // Info: (20251202 - Tzuhan) 5. 喚起本機 Passkey (Signer A) 簽名
-      setStatusMessage(`請使用您的 Passkey 授權新增裝置：${candidate.deviceName || 'New Device'}`);
+      setStatusMessage(`請使用您的 Passkey 授權新增裝置：${candidate.label || 'New Device'}`);
 
       const assertion = (await navigator.credentials.get({
         publicKey: {
@@ -257,7 +257,7 @@ export default function AddDeviceClient() {
     channel.bind('client-candidate-ready', (data: ICandidateKey) => {
       console.log('Received candidate key:', data);
       setCandidate(data);
-      setStatusMessage(`新裝置請求加入：${data.deviceName || 'Unknown Device'}`);
+      setStatusMessage(`新裝置請求加入：${data.label || 'Unknown Device'}`);
       setIsLoading(false); // Info: (20251202 - Tzuhan) 解除 Loading 讓按鈕可按
     });
 
@@ -301,7 +301,7 @@ export default function AddDeviceClient() {
             <div className="mt-4 w-full rounded border border-gray-200 bg-gray-50 p-4 text-left">
               <p className="text-center text-xl font-semibold text-green-600">✔️ 裝置已連線</p>
               <p className="text-center text-sm font-bold text-gray-700">
-                {candidate.deviceName || 'Unknown Device'}
+                {candidate.label || 'Unknown Device'}
               </p>
 
               <div className="mt-4 border-t border-gray-200 pt-2">

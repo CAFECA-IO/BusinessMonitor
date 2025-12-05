@@ -16,7 +16,7 @@ interface IPairingCompleteBody {
   candidatePublicKey?: {
     x: string;
     y: string;
-    deviceName: string;
+    label: string;
   };
 }
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         userHandle: registrationInfo.user.id,
         pubKeyX: candidatePublicKey.x,
         pubKeyY: candidatePublicKey.y,
-        deviceName: candidatePublicKey.deviceName,
+        label: candidatePublicKey.label,
       };
 
       await webAuthnRepo.updateSessionCandidateData(sessionId, candidateData);
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       await pusherServer.trigger(channelName, 'client-candidate-ready', {
         pubKeyX: candidatePublicKey.x,
         pubKeyY: candidatePublicKey.y,
-        deviceName: candidatePublicKey.deviceName,
+        label: candidatePublicKey.label,
       });
 
       return jsonOk({

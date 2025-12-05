@@ -25,7 +25,11 @@ import ProfileAccessTab from '@/components/auth/profile_access_tab';
 import ProfileSettingTab from '@/components/auth/profile_setting_tab';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import { fido2ClientService } from '@/lib/fido2-client';
-import { parsePublicKeyCoordinates, parseCoseKey } from '@/lib/fido2-parse';
+import {
+  parsePublicKeyCoordinates,
+  convertCoordsToKey,
+  extractXYFromSPKI,
+} from '@/lib/fido2-parse';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { getInitCode } from '@/lib/aa-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
@@ -45,6 +49,7 @@ import type { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
 import { RPC_URL } from '@/constants/config';
 import { IAuthenticator, IExtendedUser } from '@/interfaces/auth';
 import { toBigInt } from '@/lib/common';
+import { logger } from '@/lib/logger';
 
 const origin = process.env.NEXT_PUBLIC_ORIGIN;
 if (!origin) {
@@ -167,19 +172,23 @@ export default function ProfileClient() {
     setDevices(newDevices);
 
     try {
-      const keys = parseCoseKey(device.credentialPublicKey);
+      // Info: (20251204 - Tzuhan) [Fix] 非同步取得座標
+      const keys = extractXYFromSPKI(device.credentialPublicKey);
       if (!keys) throw new Error('Invalid Public Key Format');
 
       const encoded = encodeAbiParameters(
         [{ type: 'uint256' }, { type: 'uint256' }],
-        [keys.x, keys.y]
+        [keys.x_bigint, keys.y_bigint]
       );
       const hash = keccak256(encoded);
 
-      console.log(`Verifying Key on SCW ${user.blockchainAddress}`, { x: keys.x, y: keys.y, hash });
+      console.log(`Verifying Key on SCW ${user.blockchainAddress}`, {
+        x: keys.x_bigint,
+        y: keys.y_bigint,
+        hash,
+      });
 
       const client = createPublicClient({ transport: http(RPC_URL) });
-      // Info: (20251203 - Tzuhan) 如果合約還沒部署，讀取會失敗，這也是一種檢查方式
       const isAuthorized = await client.readContract({
         address: user.blockchainAddress as Address,
         abi: scwAbi,
@@ -219,19 +228,22 @@ export default function ProfileClient() {
       // Info: (20251128 - Tzuhan) 2. Passkey 註冊
       const credential = await fido2ClientService.startRegistration(options);
 
-      // Info: (20251128 - Tzuhan) 3. 計算 SCW 地址
+      // Info: (20251128 - Tzuhan) 3. 計算 SCW 地址 & 轉換金鑰格式
       let scwAddress = '';
       let pubKeyXStr = '';
       let pubKeyYStr = '';
       const salt = '0';
+      let publicKeyString = '';
 
       if (FACTORY_ADDRESS) {
         const coords = parsePublicKeyCoordinates(credential.response.attestationObject);
         if (coords) {
+          // A. 轉為 BigInt 字串供合約計算地址
           const pubKeyX = toBigInt(coords.x);
           const pubKeyY = toBigInt(coords.y);
           pubKeyXStr = pubKeyX.toString();
           pubKeyYStr = pubKeyY.toString();
+          publicKeyString = await convertCoordsToKey(pubKeyXStr, pubKeyYStr);
 
           const client = createPublicClient({ transport: http(RPC_URL) });
           scwAddress = await client.readContract({
@@ -244,6 +256,7 @@ export default function ProfileClient() {
       }
 
       if (!scwAddress) throw new Error('無法計算 SCW 地址');
+      if (!publicKeyString) throw new Error('無法轉換公鑰格式');
 
       const dewt = localStorage.getItem('dewt');
       const updateRes = await fetch(`${origin}${routes.auth.me()}`, {
@@ -253,14 +266,20 @@ export default function ProfileClient() {
           blockchainAddress: scwAddress,
           initPublicKey: { x: pubKeyXStr, y: pubKeyYStr },
           deploymentSalt: salt,
+          newAuthenticator: {
+            credentialID: credential.id,
+            credentialPublicKey: publicKeyString,
+            counter: 0,
+            algorithm: 'ES256',
+            userHandle: options.user.id,
+            label: user.name || 'Initial Key (Wallet Owner)',
+          },
         }),
       });
 
       if (!updateRes.ok) throw new Error('更新資料庫失敗');
 
       setKeyStatus(`✅ 錢包初始化成功！地址: ${scwAddress}`);
-      // 初始化後，雖然有地址但鏈上還沒部署，所以 isScwDeployed 仍為 false
-      // 這裡可以不手動設 true，讓 useEffect 自動判斷
       await refetchUser();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '發生未知錯誤';
@@ -321,11 +340,11 @@ export default function ProfileClient() {
         sender: scwAddr,
         nonce,
         initCode,
-        callData: '0x', // Info: (20251128 - Tzuhan) 空操作測試
+        callData: '0x',
         callGasLimit: BigInt(100_000),
         verificationGasLimit: isDeployed ? BigInt(500_000) : BigInt(3_500_000),
         preVerificationGas: BigInt(100_000),
-        maxFeePerGas: BigInt(0), // Info: (20251128 - Tzuhan) Gasless: Relayer 全額買單
+        maxFeePerGas: BigInt(0),
         maxPriorityFeePerGas: BigInt(0),
         paymasterAndData: '0x',
         signature: '0x',
@@ -355,16 +374,14 @@ export default function ProfileClient() {
           challenge: Buffer.from(userOpHash.slice(2), 'hex'),
           rpId: window.location.hostname,
           userVerification: 'required',
-          allowCredentials: [], // Info: (20251128 - Tzuhan) 允許使用任意註冊過的 Passkey
+          allowCredentials: [],
         },
       })) as PublicKeyCredential;
 
       const response = assertion.response as AuthenticatorAssertionResponse;
 
-      // Info: (20251128 - Tzuhan) 這裡需要公鑰來打包簽名。
-      // Info: (20251128 - Tzuhan) 如果是新部署，用 initPublicKey。
-      // Info: (20251128 - Tzuhan) 如果是已部署，理想上應從合約讀取或由用戶選擇，這裡簡化為使用 initPublicKey (假設是同一把鑰匙)
-      // Info: (20251128 - Tzuhan) 如果是 Multi-Signer 情境，這裡就需要更複雜的邏輯來決定用哪把公鑰打包
+      // Info: (20251128 - Tzuhan) 這裡先暫時使用 initPublicKey 來簽署
+      // 在多裝置情境下，應該要判斷 credentialID 對應哪把 key
       const initKey = user.initPublicKey as { x: string; y: string };
       const packedSignature = packWebAuthnSignature(
         new Uint8Array(response.authenticatorData),
@@ -400,7 +417,6 @@ export default function ProfileClient() {
 
       if (result.payload?.transactionHash && result.payload?.status === 'success') {
         setKeyStatus(`✅ 交易成功！(Tx: ${result.payload.transactionHash.slice(0, 8)}...)`);
-        // 更新部署狀態
         setIsScwDeployed(true);
         if (!isDeployed) await refetchUser();
       } else {
@@ -425,7 +441,10 @@ export default function ProfileClient() {
 
     try {
       // Info: (20251204 - Tzuhan) A. 解析要移除的目標公鑰
-      const targetKeys = parseCoseKey(device.credentialPublicKey);
+      const targetKeys = extractXYFromSPKI(device.credentialPublicKey);
+      logger.info(
+        `Removing device with keys: X=${targetKeys?.x_bigint}, Y=${targetKeys?.y_bigint}, pubKey=${device.credentialPublicKey}`
+      );
       if (!targetKeys) throw new Error('無法解析目標裝置公鑰');
 
       const client = createPublicClient({ transport: http(RPC_URL) });
@@ -435,7 +454,7 @@ export default function ProfileClient() {
       const innerCallData = encodeFunctionData({
         abi: scwAbi,
         functionName: 'removeSigner',
-        args: [targetKeys.x, targetKeys.y],
+        args: [targetKeys.x_bigint, targetKeys.y_bigint],
       });
 
       const userOpCallData = encodeFunctionData({
@@ -454,12 +473,12 @@ export default function ProfileClient() {
       const userOp: UserOperation = {
         sender: scwAddr,
         nonce,
-        initCode: '0x', // Info: (20251204 - Tzuhan) 假設能執行移除，合約肯定已部署
+        initCode: '0x',
         callData: userOpCallData,
         callGasLimit: BigInt(100_000),
         verificationGasLimit: BigInt(500_000),
         preVerificationGas: BigInt(50_000),
-        maxFeePerGas: BigInt(0), // Info: (20251204 - Tzuhan) Gasless
+        maxFeePerGas: BigInt(0),
         maxPriorityFeePerGas: BigInt(0),
         paymasterAndData: '0x',
         signature: '0x',
@@ -469,10 +488,10 @@ export default function ProfileClient() {
       const userOpTuple = {
         ...userOp,
         sender: scwAddr as `0x${string}`,
-        initCode: '0x' as `0x${string}`,
-        callData: '0x' as `0x${string}`,
-        paymasterAndData: '0x' as `0x${string}`,
-        signature: '0x' as `0x${string}`,
+        initCode: userOp.initCode as `0x${string}`,
+        callData: userOp.callData as `0x${string}`,
+        paymasterAndData: userOp.paymasterAndData as `0x${string}`,
+        signature: userOp.signature as `0x${string}`,
       };
       const userOpHash = await client.readContract({
         address: ENTRY_POINT_ADDRESS,
@@ -487,29 +506,33 @@ export default function ProfileClient() {
           challenge: Buffer.from(userOpHash.slice(2), 'hex'),
           rpId: window.location.hostname,
           userVerification: 'required',
-          allowCredentials: [], // Info: (20251204 - Tzuhan) 允許使用當前裝置簽名
+          allowCredentials: [],
         },
       })) as PublicKeyCredential;
 
       const response = assertion.response as AuthenticatorAssertionResponse;
+      logger.info(`Assertion obtained =${JSON.stringify(assertion)}`);
 
-      // Info: (20251204 - Tzuhan) 取得當前簽名者的公鑰 (用於打包簽名)
-      // Info: (20251204 - Tzuhan) 我們需要知道「現在是誰在簽名」，以便合約驗證
+      // Info: (20251205 - Tzuhan) (20251204 - Tzuhan) 取得當前簽名者的公鑰
       let signerX = BigInt(0);
       let signerY = BigInt(0);
 
       const currentCredId = assertion.id;
       const currentAuth = user.authenticators?.find((a) => a.credentialID === currentCredId);
+      logger.info(`Current signing device credential ID: ${currentCredId}`);
+      logger.info(`user.authenticators = ${JSON.stringify(user.authenticators)}`);
 
       if (currentAuth) {
-        const keys = parseCoseKey(currentAuth.credentialPublicKey);
+        const keys = extractXYFromSPKI(currentAuth.credentialPublicKey);
+        logger.info(`Current signing device keys: X=${keys?.x_bigint}, Y=${keys?.y_bigint}`);
         if (keys) {
-          signerX = keys.x;
-          signerY = keys.y;
+          signerX = keys.x_bigint;
+          signerY = keys.y_bigint;
         }
       } else {
-        // Info: (20251204 - Tzuhan) Fallback to initKey (如果是初始裝置且不在列表中)
+        // Info: (20251205 - Tzuhan) Fallback to initKey
         const initKey = user.initPublicKey as { x: string; y: string };
+        logger.info(`Fallback to initKey: X=${initKey?.x}, Y=${initKey?.y}`);
         if (initKey) {
           signerX = BigInt(initKey.x);
           signerY = BigInt(initKey.y);
@@ -557,7 +580,7 @@ export default function ProfileClient() {
 
       if (res.ok && result.success) {
         setKeyStatus(`✅ 移除成功！(Tx: ${result.payload.transactionHash.slice(0, 8)}...)`);
-        await refetchUser(); // Info: (20251203 - Tzuhan) 重新抓取 (假設後端有同步機制或暫時保留紀錄)
+        await refetchUser();
       } else {
         throw new Error(result.message || result.payload?.details || '交易失敗');
       }
@@ -650,7 +673,6 @@ export default function ProfileClient() {
                 <p className="break-all rounded border border-green-100 bg-green-50 p-2 font-mono text-lg font-bold text-green-600">
                   {user.blockchainAddress}
                 </p>
-                {/* 狀態標籤 */}
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-bold ${isScwDeployed ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}
                 >
@@ -660,7 +682,6 @@ export default function ProfileClient() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {/* [PoC 4 UX] 動態按鈕文字 */}
               <button
                 onClick={handleTestSignature}
                 disabled={isKeyLoading}

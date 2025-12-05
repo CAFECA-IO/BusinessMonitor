@@ -24,7 +24,7 @@ function SetupNewDeviceInternal() {
   const [registrationOptions, setRegistrationOptions] = useState<RegisterOptions | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
-  const [deviceName, setDeviceName] = useState('');
+  const [label, setLabel] = useState('');
 
   //  Info: (20251202 - Tzuhan) [PoC 4 Debug] 儲存本地生成的公鑰以供顯示
   const [debugKeyInfo, setDebugKeyInfo] = useState<{ x: string; y: string } | null>(null);
@@ -39,7 +39,7 @@ function SetupNewDeviceInternal() {
     const parser = new UAParser();
     const os = parser.getOS().name || 'Unknown OS';
     const browser = parser.getBrowser().name || 'Unknown Browser';
-    setDeviceName(`${os} - ${browser}`);
+    setLabel(`${os} - ${browser}`);
   }, []);
 
   useEffect(() => {
@@ -100,7 +100,7 @@ function SetupNewDeviceInternal() {
           candidatePublicKey: {
             x: xStr,
             y: yStr,
-            deviceName,
+            label,
           },
         }),
       });
@@ -118,7 +118,7 @@ function SetupNewDeviceInternal() {
       setError(errorMessage);
       setIsLoading(false);
     }
-  }, [deviceName, registrationOptions, sessionId]);
+  }, [label, registrationOptions, sessionId]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -151,7 +151,7 @@ function SetupNewDeviceInternal() {
   return (
     <div className="flex grow flex-col items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl border bg-white p-8 text-center shadow-lg">
-        <h1 className="text-2xl font-bold">設定新裝置 (Device B)</h1>
+        <h1 className="text-2xl font-bold">設定新裝置 ({label})</h1>
         <div className="mt-6">
           <p className="text-gray-600">{statusMessage}</p>
           {error && <p className="mt-2 text-red-500">{error}</p>}
