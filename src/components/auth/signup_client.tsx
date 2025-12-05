@@ -145,7 +145,7 @@ export default function SignupClient() {
       const verifyPayload = {
         ...registration,
         authenticatorLabel:
-          registration.user.displayName || registration.user.name || 'Primary Device',
+          `${registration.user.displayName || registration.user.name}'s Device` || 'Primary Device',
         // Info: (20251128 - Tzuhan) 額外欄位，後端需修改以接收這些資料
         scwData: scwAddress
           ? {

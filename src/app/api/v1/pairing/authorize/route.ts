@@ -91,7 +91,10 @@ export async function POST(request: NextRequest) {
         dewt,
       });
 
-      return jsonOk({ message: 'Device added successfully.' });
+      return jsonOk({
+        message: 'Device added successfully.',
+        transactionHash: bundlerResult.transactionHash,
+      });
     } else if (action === 'authorize_login') {
       // =================================================================
       // 情境 B: 跨裝置登入 (驗證 FIDO2 簽名)
