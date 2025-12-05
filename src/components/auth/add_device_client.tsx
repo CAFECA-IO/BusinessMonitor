@@ -10,7 +10,7 @@ import { getPusherInstance } from '@/lib/pusher_client';
 import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
-import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
+import { UserOperation, UserOperationJson } from '@/validators';
 import {
   createPublicClient,
   http,
@@ -43,7 +43,7 @@ const entryPointAbi = parseAbi([
 interface ICandidateKey {
   pubKeyX: string;
   pubKeyY: string;
-  deviceName?: string;
+  label?: string;
 }
 
 export default function AddDeviceClient() {
@@ -130,7 +130,7 @@ export default function AddDeviceClient() {
       });
 
       // Info: (20251202 - Tzuhan) 5. 喚起本機 Passkey (Signer A) 簽名
-      setStatusMessage(`請使用您的 Passkey 授權新增裝置：${candidate.deviceName || 'New Device'}`);
+      setStatusMessage(`請使用您的 Passkey 授權新增裝置：${candidate.label || 'New Device'}`);
 
       const assertion = (await navigator.credentials.get({
         publicKey: {
@@ -172,39 +172,30 @@ export default function AddDeviceClient() {
         signature: packedSignature,
       };
 
-      const bundlerRes = await fetch('/api/v1/bundler', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userOp: signedUserOpJson,
-          entryPointAddress: ENTRY_POINT_ADDRESS,
-        }),
-      });
-
-      const bundlerResult: BundlerResponse = await bundlerRes.json();
-      if (!bundlerResult.success || !bundlerResult.payload?.transactionHash) {
-        throw new Error(bundlerResult.payload?.error || 'Transaction failed');
-      }
-
       // Info: (20251202 - Tzuhan) 7. 交易成功，通知後端同步狀態 (這會觸發 Device B 跳轉)
       setStatusMessage('✅ 鏈上授權成功！正在同步資料...');
 
       const dewt = localStorage.getItem('dewt');
       // Info: (20251202 - Tzuhan) 這裡複用 authorize 接口，但可以帶入額外資訊告知後端這是 PoC 4 流程
       // Info: (20251202 - Tzuhan) 或者後端 pairing/authorize 需要升級來發送 'device-added-success'
-      await fetch(`${origin}${routes.pairing.authorize()}`, {
+      const authRes = await fetch(`${origin}${routes.pairing.authorize()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
         body: JSON.stringify({
           sessionId,
-          challenge: 'poc4-authorized', // Info: (20251202 - Tzuhan) 這裡 challenge 不重要了，因為已經上鏈
+          action: 'confirm_add_device',
+          userOp: signedUserOpJson, // Info: (20251204 - Tzuhan) 傳送簽名後的 UserOp
+          entryPointAddress: ENTRY_POINT_ADDRESS,
         }),
       });
 
-      // Info: (20251202 - Tzuhan) 手動觸發成功通知給 B (如果是 PoC 演示)
-      // Info: (20251202 - Tzuhan) 在正式版中，應該由後端監聽鏈上事件或由 authorize API 觸發
-      // Info: (20251202 - Tzuhan) 這裡我們先假設 authorize API 會處理，或者 B 會因為 sessionId 狀態改變而完成
-      alert(`成功新增裝置！交易 Hash: ${bundlerResult.payload.transactionHash.slice(0, 10)}...`);
+      const authResult = await authRes.json();
+
+      if (!authRes.ok || !authResult.success) {
+        throw new Error(authResult.message || '授權失敗');
+      }
+
+      alert(`成功新增裝置！交易 Hash: ${authResult.payload.transactionHash?.slice(0, 10)}...`);
       setCandidate(null);
       router.push(BM_URL.PROFILE);
     } catch (err: unknown) {
@@ -267,7 +258,7 @@ export default function AddDeviceClient() {
     channel.bind('client-candidate-ready', (data: ICandidateKey) => {
       console.log('Received candidate key:', data);
       setCandidate(data);
-      setStatusMessage(`新裝置請求加入：${data.deviceName || 'Unknown Device'}`);
+      setStatusMessage(`新裝置請求加入：${data.label || 'Unknown Device'}`);
       setIsLoading(false); // Info: (20251202 - Tzuhan) 解除 Loading 讓按鈕可按
     });
 
@@ -311,7 +302,7 @@ export default function AddDeviceClient() {
             <div className="mt-4 w-full rounded border border-gray-200 bg-gray-50 p-4 text-left">
               <p className="text-center text-xl font-semibold text-green-600">✔️ 裝置已連線</p>
               <p className="text-center text-sm font-bold text-gray-700">
-                {candidate.deviceName || 'Unknown Device'}
+                {candidate.label || 'Unknown Device'}
               </p>
 
               <div className="mt-4 border-t border-gray-200 pt-2">

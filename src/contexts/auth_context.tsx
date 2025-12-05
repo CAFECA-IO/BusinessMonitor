@@ -1,12 +1,12 @@
 'use client';
 
 import { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
-import type { IdentityAccount } from '@prisma/client';
 import { routes } from '@/config/api_routes';
 import { logger } from '@/lib/logger';
+import { IExtendedUser } from '@/interfaces/auth';
 
 interface IAuthContext {
-  user: IdentityAccount | null;
+  user: IExtendedUser | null;
   isLoading: boolean;
   login: (dewt: string) => Promise<void>;
   logout: () => void;
@@ -25,7 +25,7 @@ if (!origin) {
 }
 
 export function AuthProvider({ children }: IAuthProviderProps) {
-  const [user, setUser] = useState<IdentityAccount | null>(null);
+  const [user, setUser] = useState<IExtendedUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const logout = useCallback(() => {
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: IAuthProviderProps) {
 
         const userData = await res.json();
         logger.debug(`Fetched user data: ${userData}`);
-        setUser(userData.payload as IdentityAccount);
+        setUser(userData.payload as IExtendedUser);
       } catch (error) {
         logger.warn(`Auth check/fetch failed, logging out. ${{ error: String(error) }}`);
         logout();

@@ -193,6 +193,12 @@ export const routes = {
       verify: () => `${API_PREFIX}/secure/webauthn`,
     },
 
+    // Info: (20251203 - Tzuhan) [PoC 4] 裝置/驗證器管理
+    authenticators: {
+      // Info: (20251203 - Tzuhan) POST /api/v1/secure/authenticators/remove
+      remove: () => `${API_PREFIX}/secure/authenticators/remove`,
+    },
+
     // Info: (20250911 - Tzuhan) FIDO2 註冊流程 (專用)
     register: {
       // Info: (20250911 - Tzuhan) POST /api/v1/secure/register/challenge (取得註冊選項)

@@ -5,7 +5,7 @@ import { loggerFromRequest } from '@/lib/logger';
 import { webAuthnRepo, type IUpdateIdentityData } from '@/repositories/webauthn.repo'; // [修正 1] 引入型別
 import { AppError } from '@/lib/error';
 import { updateProfileSchema } from '@/validators';
-import type { IdentityAccount } from '@prisma/client';
+import type { IdentityAccount, WebAuthnAlgo } from '@prisma/client';
 
 export async function PATCH(req: NextRequest) {
   const log = loggerFromRequest(req);
@@ -20,7 +20,7 @@ export async function PATCH(req: NextRequest) {
     if (!parseResult.success) {
       throw new AppError(ApiCode.VALIDATION_ERROR, parseResult.error.message);
     }
-    const dataToUpdate = parseResult.data;
+    const { newAuthenticator, ...dataToUpdate } = parseResult.data;
 
     if (Object.keys(dataToUpdate).length === 0) {
       throw new AppError(ApiCode.VALIDATION_ERROR, 'No fields provided for update.');
@@ -28,12 +28,29 @@ export async function PATCH(req: NextRequest) {
 
     log.info('Updating user profile', { identityId, data: dataToUpdate });
 
-    const updatedUser = await webAuthnRepo.updateIdentityAccount(
+    let updatedUser = await webAuthnRepo.updateIdentityAccount(
       identityId,
       dataToUpdate as IUpdateIdentityData
     );
 
     log.info('User profile updated successfully', { identityId });
+
+    if (newAuthenticator) {
+      log.info('Adding initial authenticator to DB', {
+        credentialID: newAuthenticator.credentialID,
+      });
+      await webAuthnRepo.addAuthenticatorToIdentity(identityId, {
+        credentialID: newAuthenticator.credentialID,
+        credentialPublicKey: newAuthenticator.credentialPublicKey,
+        counter: newAuthenticator.counter,
+        algorithm: newAuthenticator.algorithm as WebAuthnAlgo,
+        userHandle: newAuthenticator.userHandle || identityId,
+      });
+
+      // Info: (20251205 - Tzuhan) 重新讀取 user 以便回傳最新的 authenticators 列表
+      const refreshedUser = await webAuthnRepo.findIdentityAccountById(identityId);
+      if (refreshedUser) updatedUser = refreshedUser;
+    }
 
     const safeUserData = {
       id: updatedUser.id,
