@@ -178,13 +178,13 @@ export default function ProfileClient() {
 
       const encoded = encodeAbiParameters(
         [{ type: 'uint256' }, { type: 'uint256' }],
-        [keys.x_bigint, keys.y_bigint]
+        [keys.x, keys.y]
       );
       const hash = keccak256(encoded);
 
       console.log(`Verifying Key on SCW ${user.blockchainAddress}`, {
-        x: keys.x_bigint,
-        y: keys.y_bigint,
+        x: keys.x,
+        y: keys.y,
         hash,
       });
 
@@ -443,7 +443,7 @@ export default function ProfileClient() {
       // Info: (20251204 - Tzuhan) A. 解析要移除的目標公鑰
       const targetKeys = extractXYFromSPKI(device.credentialPublicKey);
       logger.info(
-        `Removing device with keys: X=${targetKeys?.x_bigint}, Y=${targetKeys?.y_bigint}, pubKey=${device.credentialPublicKey}`
+        `Removing device with keys: X=${targetKeys?.x}, Y=${targetKeys?.y}, pubKey=${device.credentialPublicKey}`
       );
       if (!targetKeys) throw new Error('無法解析目標裝置公鑰');
 
@@ -454,7 +454,7 @@ export default function ProfileClient() {
       const innerCallData = encodeFunctionData({
         abi: scwAbi,
         functionName: 'removeSigner',
-        args: [targetKeys.x_bigint, targetKeys.y_bigint],
+        args: [targetKeys.x, targetKeys.y],
       });
 
       const userOpCallData = encodeFunctionData({
@@ -524,10 +524,10 @@ export default function ProfileClient() {
 
       if (currentAuth) {
         const keys = extractXYFromSPKI(currentAuth.credentialPublicKey);
-        logger.info(`Current signing device keys: X=${keys?.x_bigint}, Y=${keys?.y_bigint}`);
+        logger.info(`Current signing device keys: X=${keys?.x}, Y=${keys?.y}`);
         if (keys) {
-          signerX = keys.x_bigint;
-          signerY = keys.y_bigint;
+          signerX = keys.x;
+          signerY = keys.y;
         }
       } else {
         // Info: (20251205 - Tzuhan) Fallback to initKey

@@ -146,9 +146,7 @@ export function extractXYFromSPKI(spkiBase64: string) {
   const yBuffer = buffer.subarray(start + 1 + 32, start + 1 + 32 + 32);
 
   return {
-    x_hex: '0x' + xBuffer.toString('hex'),
-    y_hex: '0x' + yBuffer.toString('hex'),
-    x_bigint: BigInt('0x' + xBuffer.toString('hex')),
-    y_bigint: BigInt('0x' + yBuffer.toString('hex')),
+    x: BigInt('0x' + xBuffer.toString('hex')),
+    y: BigInt('0x' + yBuffer.toString('hex')),
   };
 }
