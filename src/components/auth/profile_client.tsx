@@ -238,7 +238,7 @@ export default function ProfileClient() {
       if (FACTORY_ADDRESS) {
         const coords = parsePublicKeyCoordinates(credential.response.attestationObject);
         if (coords) {
-          // A. 轉為 BigInt 字串供合約計算地址
+          // Info: (20251205 - Tzuhan) A. 轉為 BigInt 字串供合約計算地址
           const pubKeyX = toBigInt(coords.x);
           const pubKeyY = toBigInt(coords.y);
           pubKeyXStr = pubKeyX.toString();
@@ -380,8 +380,10 @@ export default function ProfileClient() {
 
       const response = assertion.response as AuthenticatorAssertionResponse;
 
-      // Info: (20251128 - Tzuhan) 這裡先暫時使用 initPublicKey 來簽署
-      // 在多裝置情境下，應該要判斷 credentialID 對應哪把 key
+      /**
+       * Info: (20251128 - Tzuhan) 這裡先暫時使用 initPublicKey 來簽署
+       * 在多裝置情境下，應該要判斷 credentialID 對應哪把 key
+       */
       const initKey = user.initPublicKey as { x: string; y: string };
       const packedSignature = packWebAuthnSignature(
         new Uint8Array(response.authenticatorData),
