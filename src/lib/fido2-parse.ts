@@ -128,7 +128,8 @@ export function extractXYFromSPKI(spkiBase64: string) {
   // Info: (20251205 - Tzuhan) 2. 解碼為 Buffer
   const buffer = Buffer.from(base64, 'base64');
 
-  /* Info: (20251205 - Tzuhan) 3. 定位公鑰位置
+  /**
+   * Info: (20251205 - Tzuhan) 3. 定位公鑰位置
    * P-256 的 SPKI Header 固定為 26 bytes。
    * 第 27 byte (index 26) 通常是 0x04 (代表未壓縮的座標點 format)
    * 檢查標頭長度與格式標記 (0x04)
