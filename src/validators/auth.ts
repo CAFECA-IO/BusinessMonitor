@@ -9,4 +9,17 @@ export const updateProfileSchema = z.object({
   blockchainAddress: z.string().startsWith('0x').length(42).optional(),
   initPublicKey: jsonValueSchema.optional(), // { x: string, y: string }
   deploymentSalt: z.string().optional(),
+  newAuthenticator: z
+    .object({
+      credentialID: z.string(),
+      credentialPublicKey: z.string(),
+      counter: z
+        .number()
+        .or(z.string())
+        .transform((val) => Number(val)),
+      algorithm: z.enum(['ES256', 'RS256', 'EdDSA']).default('ES256'),
+      userHandle: z.string().optional(),
+      label: z.string().optional(),
+    })
+    .optional(),
 });

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     // Info: (20251128 - Tzuhan) 支援新的 Payload 格式: { action, credential, scwData }
     // 同時相容舊格式 (直接傳送 credential object)
     const fido2Response = body.credential || body;
-    const scwData = body.scwData; // Info: (20251128 - Tzuhan) 可選的 SCW 資料
+    const { authenticatorLabel, scwData } = body; // Info: (20251128 - Tzuhan) 可選的 SCW 資料
 
     const sessionCookie = cookieStore.get('webauthn-session');
     if (!sessionCookie?.value) {
@@ -27,7 +27,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Info: (20251128 - Tzuhan) 將 scwData 傳遞給 Service
-    const result = await webAuthnService.loginOrRegister(fido2Response, challenge, scwData);
+    const result = await webAuthnService.loginOrRegister(
+      fido2Response,
+      challenge,
+      authenticatorLabel,
+      scwData
+    );
 
     cookieStore.delete('webauthn-session');
 

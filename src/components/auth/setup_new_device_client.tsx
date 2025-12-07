@@ -23,6 +23,7 @@ function SetupNewDeviceInternal() {
   const [registrationOptions, setRegistrationOptions] = useState<RegisterOptions | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
+  const [label, setLabel] = useState('New Device');
 
   //  Info: (20251202 - Tzuhan) [PoC 4 Debug] 儲存本地生成的公鑰以供顯示
   const [debugKeyInfo, setDebugKeyInfo] = useState<{ x: string; y: string } | null>(null);
@@ -48,6 +49,9 @@ function SetupNewDeviceInternal() {
         if (urlChallenge) {
           options.challenge = urlChallenge;
         }
+        if (typeof options.user === 'object' && (options.user.name || options.user.displayName)) {
+          setLabel(`${options.user.displayName || options.user.name}'s Device`);
+        }
         setRegistrationOptions(options);
         setStatusMessage('請點擊下方按鈕以設定此裝置');
       } catch (err) {
@@ -72,6 +76,7 @@ function SetupNewDeviceInternal() {
     try {
       setStatusMessage('請依照瀏覽器提示建立 Passkey...');
       const registration = await fido2ClientService.startRegistration(registrationOptions);
+
       const coords = parsePublicKeyCoordinates(registration.response.attestationObject);
       if (!coords) throw new Error('無法解析 Passkey 公鑰。');
 
@@ -91,6 +96,7 @@ function SetupNewDeviceInternal() {
           candidatePublicKey: {
             x: xStr,
             y: yStr,
+            label,
           },
         }),
       });
@@ -108,7 +114,7 @@ function SetupNewDeviceInternal() {
       setError(errorMessage);
       setIsLoading(false);
     }
-  }, [registrationOptions, sessionId]);
+  }, [label, registrationOptions, sessionId]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -141,7 +147,7 @@ function SetupNewDeviceInternal() {
   return (
     <div className="flex grow flex-col items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl border bg-white p-8 text-center shadow-lg">
-        <h1 className="text-2xl font-bold">設定新裝置 (Device B)</h1>
+        <h1 className="text-2xl font-bold">設定新裝置 ({label})</h1>
         <div className="mt-6">
           <p className="text-gray-600">{statusMessage}</p>
           {error && <p className="mt-2 text-red-500">{error}</p>}

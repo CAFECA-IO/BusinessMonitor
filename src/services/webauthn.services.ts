@@ -42,10 +42,11 @@ class WebAuthnService {
   public async loginOrRegister(
     fido2Response: RegistrationJSON | AuthenticationJSON,
     expectedChallenge: string,
+    authenticatorLabel?: string,
     scwData?: IScwData // Info: (20251128 - Tzuhan) 新增可選參數
   ): Promise<ILoginResult> {
     if (isRegistrationJSON(fido2Response)) {
-      return this.handleRegistration(fido2Response, expectedChallenge, scwData);
+      return this.handleRegistration(fido2Response, expectedChallenge, authenticatorLabel, scwData);
     }
     return this.handleAuthentication(fido2Response, expectedChallenge);
   }
@@ -53,6 +54,7 @@ class WebAuthnService {
   private async handleRegistration(
     registrationData: RegistrationJSON,
     expectedChallenge: string,
+    authenticatorLabel?: string,
     scwData?: IScwData // Info: (20251128 - Tzuhan) 接收 SCW 資料
   ): Promise<ILoginResult> {
     const verification = await verifyRegistration(registrationData, expectedChallenge);
@@ -68,13 +70,13 @@ class WebAuthnService {
       blockchainAddress: scwData?.address,
       initPublicKey: scwData?.initPublicKey,
       deploymentSalt: scwData?.deploymentSalt,
-
       credential: {
         credentialID,
         credentialPublicKey,
         counter: verification.authenticator.counter,
         algorithm: WebAuthnAlgo[algorithm as keyof typeof WebAuthnAlgo],
         userHandle,
+        label: authenticatorLabel,
       },
     };
 

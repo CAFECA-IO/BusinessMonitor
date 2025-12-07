@@ -62,29 +62,30 @@ function ApproveDeviceInternal() {
     setStatusMessage('請使用此裝置的 Passkey 進行身分驗證...');
 
     try {
-      // Info: (20251009 - Tzuhan) 步驟 1: 獲取此「舊裝置」的登入選項
-      const optionsRes = await fetch(`${origin}${routes.auth.webauthn.options()}`);
-      if (!optionsRes.ok) throw new Error('無法獲取驗證選項。');
+      // Info: (20251203 - Tzuhan) 1. 獲取 Challenge (直接使用 Session 的 Challenge)
+      // 這裡使用 QR Code 裡的 challenge，確保簽署的是同一個
       const options = {
         challenge: challenge!,
         userVerification: 'required' as const,
+        // Todo: (20251204 - Tzuhan) 這裡可以限制只允許當前使用者的 Authenticator，但為求簡便先不設限制
       };
 
-      // Info: (20251009 - Tzuhan) 步驟 2: 在此「舊裝置」上執行 FIDO2 登入
-      const authentication = await fido2ClientService.startLogin(options);
+      // Info: (20251203 - Tzuhan) 2. FIDO2 簽名
+      const assertion = await fido2ClientService.startLogin(options);
 
-      // Info: (20251009 - Tzuhan) 步驟 3: 將登入結果和 sessionId 一起發送到後端進行批准
+      // Info: (20251203 - Tzuhan) 3. 呼叫統一授權 API
       setStatusMessage('正在傳送批准資訊...');
       const dewt = localStorage.getItem('dewt'); // Info: (20251009 - Tzuhan) 舊裝置必須是登入狀態
       if (!dewt) throw new Error('您必須在此裝置上登入才能批准新裝置。');
 
-      const approveRes = await fetch(`${origin}${routes.auth.verifyQrLogin()}`, {
+      const approveRes = await fetch(`${origin}${routes.pairing.authorize()}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${dewt}`,
-        },
-        body: JSON.stringify({ sessionId, fido2Assertion: authentication }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
+        body: JSON.stringify({
+          sessionId,
+          action: 'authorize_login',
+          fido2Assertion: assertion,
+        }),
       });
 
       const result = await approveRes.json();
@@ -92,8 +93,7 @@ function ApproveDeviceInternal() {
         throw new Error(result.message || '批准失敗。');
       }
 
-      setStatusMessage('✅ 批准成功！新裝置現在可以繼續設定了。');
-      // Info: (20251009 - Tzuhan) 可選：短暫延遲後關閉此頁面或跳轉
+      setStatusMessage('✅ 批准成功！');
       setTimeout(() => router.push('/profile'), 2000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
@@ -102,7 +102,7 @@ function ApproveDeviceInternal() {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, router]);
+  }, [challenge, sessionId, router]);
 
   const handleDeny = () => {
     // Info: (20251009 - Tzuhan) 可選：通知後端此 session 已被拒絕

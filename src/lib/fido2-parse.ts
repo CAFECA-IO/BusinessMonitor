@@ -1,4 +1,6 @@
 import { decode } from 'cbor-js';
+import { importJWK, exportJWK } from 'jose';
+import { Buffer } from 'buffer';
 
 // Info: (20251112 - Tzuhan) 建立介面，符合 IPascalCase 規範
 export interface ICoordinates {
@@ -37,13 +39,9 @@ function base64UrlToArrayBuffer(base64Url: string): ArrayBuffer {
  * 將 ArrayBuffer 或 Uint8Array 轉換為 Base64URL 字串
  */
 export function bufferToBase64Url(buffer: ArrayBuffer | Uint8Array): string {
-  // Info: (20251112 - Tzuhan) 如果是 ArrayBuffer，則建立一個檢視整個緩衝區的 Uint8Array。
-  // Info: (20251112 - Tzuhan) 如果是 Uint8Array，則 'bytes' 將是該視圖 (尊重 offset 和 length)。
   const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer;
 
   let binary = '';
-  // Info: (20251112 - Tzuhan) 迭代 Uint8Array 的 .length (視圖的長度)，
-  // Info: (20251112 - Tzuhan) 而不是 .buffer.byteLength (底層緩衝區的長度)。
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
@@ -54,32 +52,19 @@ export function bufferToBase64Url(buffer: ArrayBuffer | Uint8Array): string {
  * Info: (20251112 - Tzuhan)
  * [PoC 1.2 核心實作]
  * 解析 Attestation Object 並提取 P-256 x, y 座標。
- * @param attestationObjectBase64 - 來自 RegistrationJSON.response.attestationObject 的 base64url 字串
- * @returns {ICoordinates | null}
  */
 export function parsePublicKeyCoordinates(attestationObjectBase64: string): ICoordinates | null {
   try {
-    // Info: (20251112 - Tzuhan) 1. ... (解析 attestationObject) ...
     const attestationObject = base64UrlToArrayBuffer(attestationObjectBase64);
     const attestation = decode(attestationObject) as IAttestationObject;
 
-    // Info: (20251112 - Tzuhan) 2. 提取 authData
     const authData = attestation.authData;
-    console.log(
-      `[DEBUG] authData type: ${authData.constructor.name}, length: ${authData.byteLength}`
-    );
-
-    // Info: (20251112 - Tzuhan) 3. 手動解析 authData 緩衝區
     const dataView = new DataView(authData.buffer, authData.byteOffset, authData.byteLength);
 
     const flags = dataView.getUint8(32);
-    console.log(`[DEBUG] Correct Flags byte: ${flags}`);
-
     const attestedCredentialDataPresent = (flags & (1 << 6)) !== 0;
-    console.log(`[DEBUG] Attested Credential Data Present: ${attestedCredentialDataPresent}`);
 
     if (!attestedCredentialDataPresent) {
-      console.error('[DEBUG] No Attested Credential Data found in authData.');
       return null;
     }
 
@@ -92,14 +77,11 @@ export function parsePublicKeyCoordinates(attestationObjectBase64: string): ICoo
     const cosePublicKeyBuffer = authData.slice(offset);
 
     const cosePublicKey = decode(cosePublicKeyBuffer.buffer) as ICosePublicKey;
-    console.log('[DEBUG] Decoded COSE Public Key Object:', cosePublicKey);
 
-    // Info: (20251112 - Tzuhan) 6. 提取 x, y 座標
     const alg = cosePublicKey[3] as number;
     const crv = cosePublicKey[-1] as number;
 
     if (alg !== -7 || crv !== 1) {
-      console.error(`[DEBUG] COSE key is not P-256/ES26 (alg: ${alg}, crv: ${crv}).`);
       return null;
     }
 
@@ -107,7 +89,6 @@ export function parsePublicKeyCoordinates(attestationObjectBase64: string): ICoo
     const yRaw = cosePublicKey[-3] as ArrayBuffer | Uint8Array;
 
     if (!xRaw || !yRaw) {
-      console.error('[DEBUG] COSE key is missing x(-2) or y(-3) coordinates.');
       return null;
     }
 
@@ -115,46 +96,58 @@ export function parsePublicKeyCoordinates(attestationObjectBase64: string): ICoo
       x: bufferToBase64Url(xRaw),
       y: bufferToBase64Url(yRaw),
     };
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('[DEBUG] Failed to parse attestationObject:', error.message, error.stack);
-    } else {
-      console.error('[DEBUG] Failed to parse attestationObject: An unknown error occurred.');
-    }
+  } catch (error) {
+    console.error('[DEBUG] Failed to parse attestationObject:', error);
     return null;
   }
 }
 
 /**
- * Info: (20251203 - Tzuhan) 解析單獨的 COSE Key (Base64URL 格式)
- * 用於從資料庫取回公鑰後，還原成 BigInt 座標供合約驗證使用
+ * Info: (20251204 - Tzuhan) [Fix] 將 Base64URL 座標轉換為 JWK JSON 字串
+ * 用途：註冊時，將座標轉為標準字串格式存入 DB
  */
-export const parseCoseKey = (coseBase64: string): { x: bigint; y: bigint } | null => {
-  try {
-    const base64 = coseBase64.replace(/-/g, '+').replace(/_/g, '/');
-    const bin = atob(base64);
-    const buffer = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) buffer[i] = bin.charCodeAt(i);
+export async function convertCoordsToKey(x: string, y: string): Promise<string> {
+  const jwkInput = {
+    kty: 'EC',
+    crv: 'P-256',
+    x: x,
+    y: y,
+    ext: true,
+  };
 
-    if (buffer.length < 64) return null;
+  const keyLike = await importJWK(jwkInput, 'ES256');
+  const jwkOutput = await exportJWK(keyLike);
 
-    const xBytes = buffer.slice(buffer.length - 64, buffer.length - 32);
-    const yBytes = buffer.slice(buffer.length - 32);
+  return JSON.stringify(jwkOutput);
+}
 
-    const xHex =
-      '0x' +
-      Array.from(xBytes)
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-    const yHex =
-      '0x' +
-      Array.from(yBytes)
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
+export function extractXYFromSPKI(spkiBase64: string) {
+  // Info: (20251205 - Tzuhan) 1. 處理 Base64URL 格式 (將 - 轉為 +, _ 轉為 /): WebAuthn 輸出的通常是 Base64URL，但 Node.js 的 Buffer 容錯率高，為了保險起見，我們標準化它。
+  const base64 = spkiBase64.replace(/-/g, '+').replace(/_/g, '/');
 
-    return { x: BigInt(xHex), y: BigInt(yHex) };
-  } catch (e) {
-    console.error('COSE Parse error', e);
-    return null;
+  // Info: (20251205 - Tzuhan) 2. 解碼為 Buffer
+  const buffer = Buffer.from(base64, 'base64');
+
+  /**
+   * Info: (20251205 - Tzuhan) 3. 定位公鑰位置
+   * P-256 的 SPKI Header 固定為 26 bytes。
+   * 第 27 byte (index 26) 通常是 0x04 (代表未壓縮的座標點 format)
+   * 檢查標頭長度與格式標記 (0x04)
+   * 直接找最後的 65 bytes (1 byte prefix + 32 byte X + 32 byte Y)
+   */
+  const keyLength = 65;
+  const start = buffer.length - keyLength;
+
+  if (buffer[start] !== 0x04) {
+    throw new Error('Public key is not in uncompressed format (0x04)');
   }
-};
+
+  // Info: (20251205 - Tzuhan) 4. 切割 X 和 Y，跳過 0x04，取接下來的 32 bytes 為 X，再接下來 32 bytes 為 Y
+  const xBuffer = buffer.subarray(start + 1, start + 1 + 32);
+  const yBuffer = buffer.subarray(start + 1 + 32, start + 1 + 32 + 32);
+
+  return {
+    x: BigInt('0x' + xBuffer.toString('hex')),
+    y: BigInt('0x' + yBuffer.toString('hex')),
+  };
+}

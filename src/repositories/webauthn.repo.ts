@@ -13,13 +13,13 @@ export interface ICreateIdentityData {
   blockchainAddress?: string;
   initPublicKey?: Prisma.InputJsonValue; // Info: (20251128 - Tzuhan) 對應 Json 類型
   deploymentSalt?: string;
-
   credential: {
     credentialID: string;
     credentialPublicKey: string;
     counter: number;
     algorithm: WebAuthnAlgo;
     userHandle: string;
+    label?: string;
   };
 }
 
@@ -60,6 +60,8 @@ export interface IWebAuthnRepository {
     sessionId: string,
     candidateData: Prisma.InputJsonValue
   ): Promise<void>;
+  findAuthenticatorById(id: string): Promise<Authenticator | null>;
+  deleteAuthenticator(id: string): Promise<void>;
 }
 
 class WebAuthnRepository implements IWebAuthnRepository {
@@ -73,7 +75,19 @@ class WebAuthnRepository implements IWebAuthnRepository {
     return prisma.devicePairingSession.findUnique({ where: { id } });
   }
 
-  public async findIdentityAccountById(id: string): Promise<IdentityAccount | null> {
+  public async findIdentityAccountById(id: string): Promise<
+    | (IdentityAccount & {
+        authenticators: Array<{
+          id: string;
+          credentialID: string;
+          credentialPublicKey: string;
+          label: string | null;
+          createdAt: Date;
+          counter: bigint;
+        }>;
+      })
+    | null
+  > {
     return prisma.identityAccount.findUnique({
       where: { id },
       select: {
@@ -93,6 +107,7 @@ class WebAuthnRepository implements IWebAuthnRepository {
           select: {
             id: true,
             label: true,
+            credentialID: true,
             credentialPublicKey: true,
             createdAt: true,
             counter: true,
@@ -117,7 +132,6 @@ class WebAuthnRepository implements IWebAuthnRepository {
         blockchainAddress: data.blockchainAddress,
         initPublicKey: data.initPublicKey ?? Prisma.DbNull,
         deploymentSalt: data.deploymentSalt,
-
         authenticators: { create: { ...data.credential } },
       },
       select: {
@@ -230,6 +244,13 @@ class WebAuthnRepository implements IWebAuthnRepository {
         },
       },
     });
+  }
+  public async findAuthenticatorById(id: string): Promise<Authenticator | null> {
+    return prisma.authenticator.findUnique({ where: { id } });
+  }
+
+  public async deleteAuthenticator(id: string): Promise<void> {
+    await prisma.authenticator.delete({ where: { id } });
   }
 }
 
