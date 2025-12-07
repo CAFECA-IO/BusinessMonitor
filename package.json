@@ -68,7 +68,7 @@
     "pusher": "^5.2.0",
     "pusher-js": "^8.4.0",
     "qrcode": "^1.5.4",
-    "react": "19.1.0",
+    "react": "19.1.2",
     "react-apexcharts": "^1.7.0",
     "react-dom": "19.1.0",
     "react-i18next": "^15.6.1",
