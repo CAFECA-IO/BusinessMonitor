@@ -836,7 +836,7 @@ export default function ProfileClient() {
     ) : currentTab === ProfileTab.MESSAGE ? (
       <ProfileMessageTab />
     ) : currentTab === ProfileTab.ACCESS ? (
-      <ProfileAccessTab />
+      <ProfileAccessTab devices={devices} handleRemoveDevice={handleRemoveDevice} />
     ) : (
       <ProfileSettingTab />
     );
