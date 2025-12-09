@@ -62,6 +62,7 @@ const ProfileAccessTab: React.FC<{
   const toggleLogoutModal = () => setIsLogoutModalOpen((prev) => !prev);
 
   const clickLogoutAll = () => {
+    setPreLogoutDevice(null); // Info: (20251209 - Julian) 設定為 null 代表 logout all
     setIsLogoutModalOpen(true);
   };
 

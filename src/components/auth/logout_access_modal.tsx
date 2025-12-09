@@ -12,7 +12,7 @@ const LogoutAccessModal: React.FC<{
   // ToDo: (20251208 - Julian) Maybe need to move to context file
   handleRemoveDevice: (device: IAuthenticator) => Promise<void>;
   onClose: () => void;
-}> = ({ preLogoutDevice,handleRemoveDevice, onClose }) => {
+}> = ({ preLogoutDevice, handleRemoveDevice, onClose }) => {
   const [logoutSuccess, setLogoutSuccess] = useState<boolean>(false);
 
   useEffect(() => {
@@ -29,9 +29,9 @@ const LogoutAccessModal: React.FC<{
   // ToDo: (20251031 - Julian) Implement actual logout functionality
   const handleLogoutSingle = () => {
     if (!preLogoutDevice) return;
-    handleRemoveDevice(preLogoutDevice);
-    // console.log(`Logout from ${preLogoutDevice.credentialID} on ${preLogoutDevice.label}`);
-    // setLogoutSuccess(true);
+
+    handleRemoveDevice(preLogoutDevice); // Info: (20251209 - Julian) 移除裝置
+    setLogoutSuccess(true); // Info: (20251209 - Julian) 顯示成功動畫
   };
   const handleLogoutAll = () => {
     // ToDo: (20251208 - Julian) Implement actual logout from all functionality
