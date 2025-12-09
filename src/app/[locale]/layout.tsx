@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Noto_Sans_TC, Jost } from 'next/font/google';
+import Script from 'next/script';
 import '@/styles/globals.css';
 import TranslationsProvider from '@/components/translation/translations_provider';
 import initTranslations from '@/lib/i18n';
@@ -55,6 +56,23 @@ export default async function RootLayout({ children, params }: Readonly<IRootLay
 
   return (
     <html lang="tw">
+      {/* Info: (20251209 - Julian) GA-code */}
+      <head>
+        <Script
+          id="ga-script"
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-5X6ZLFNDZ2"
+        ></Script>
+        <Script id="ga-script">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-5X6ZLFNDZ2');
+          `}
+        </Script>
+      </head>
+
       <AuthProvider>
         <body className={`${notoSansTC.className} ${jost.className} antialiased`}>
           <TranslationsProvider locale={locale} resources={resources} namespaces={I18N_NAMESPACES}>

@@ -5,17 +5,26 @@ import Image from 'next/image';
 import { PiSignOut } from 'react-icons/pi';
 import { DEFAULT_USER_AVATAR } from '@/constants/display';
 import { timestampToString } from '@/lib/common';
-import { IAccess } from '@/interfaces/access';
 import LogoutAccessModal from '@/components/auth/logout_access_modal';
+import { IAuthenticator } from '@/interfaces/auth';
 
 const AccessItem: React.FC<{
-  access: IAccess;
+  device: IAuthenticator;
   logoutHandler: () => void;
-}> = ({ access, logoutHandler }) => {
-  const { platformPic, platformName, loginDevice, loginTimestamp } = access;
+}> = ({ device, logoutHandler }) => {
+  const {
+    // id,
+    // credentialID,
+    // credentialPublicKey,
+    label,
+    createdAt,
+    // counter,
+    // verificationStatus
+  } = device;
 
-  const platformImgSrc = platformPic || DEFAULT_USER_AVATAR;
+  const platformImgSrc = DEFAULT_USER_AVATAR;
 
+  const loginTimestamp = new Date(createdAt).getTime() / 1000;
   const loginTimeStr = timestampToString(loginTimestamp);
   const formattedLoginTime = `Login Time: ${loginTimeStr.formattedDate} ${loginTimeStr.time}`;
 
@@ -26,8 +35,8 @@ const AccessItem: React.FC<{
       </div>
       <div className="flex flex-1 flex-col">
         <div className="flex max-w-220px items-center gap-8px text-base font-bold">
-          <p className="whitespace-nowrap text-text-primary">{platformName}</p>
-          <p className="truncate whitespace-nowrap text-text-secondary">{loginDevice}</p>
+          <p className="whitespace-nowrap text-text-primary">{label}</p>
+          {/* <p className="truncate whitespace-nowrap text-text-secondary">{credentialID}</p> */}
         </div>
         <p className="whitespace-nowrap text-sm font-medium text-text-secondary">
           {formattedLoginTime}
@@ -40,34 +49,37 @@ const AccessItem: React.FC<{
   );
 };
 
-const ProfileAccessTab: React.FC = () => {
-  const [accessData /* setAccessData */] = useState<IAccess[]>([]);
+const ProfileAccessTab: React.FC<{
+  devices?: IAuthenticator[];
+  handleRemoveDevice?: (device: IAuthenticator) => Promise<void>;
+}> = ({ devices, handleRemoveDevice }) => {
+  const [preLogoutDevice, setPreLogoutDevice] = useState<IAuthenticator | null>(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
-  const [preLogoutAccess, setPreLogoutAccess] = useState<IAccess | null>(null);
 
-  const loginAccessCount = accessData.length;
+  const loginAccessCount = devices ? devices.length : 0;
   const isShowList = loginAccessCount > 0;
 
   const toggleLogoutModal = () => setIsLogoutModalOpen((prev) => !prev);
 
   const clickLogoutAll = () => {
-    setPreLogoutAccess(null); // Info: (20251031 - Julian) 沒有 preLogoutAccess -> 表示是 Logout All
+    setPreLogoutDevice(null); // Info: (20251209 - Julian) 設定為 null 代表 logout all
     setIsLogoutModalOpen(true);
   };
 
-  const accessList = isShowList ? (
-    accessData.map((access) => {
-      const logoutHandler = () => {
-        setPreLogoutAccess(access); // Info: (20251031 - Julian) 設定要 logout 的 access
-        setIsLogoutModalOpen(true);
-      };
-      return <AccessItem key={access.id} access={access} logoutHandler={logoutHandler} />;
-    })
-  ) : (
-    <div className="flex items-center justify-center text-text-secondary">
-      No active sessions found.
-    </div>
-  );
+  const accessList =
+    devices && isShowList ? (
+      devices.map((device) => {
+        const logoutHandler = () => {
+          setPreLogoutDevice(device); // Info: (20251031 - Julian) 設定要 logout 的 access
+          setIsLogoutModalOpen(true);
+        };
+        return <AccessItem key={device.id} device={device} logoutHandler={logoutHandler} />;
+      })
+    ) : (
+      <div className="flex items-center justify-center text-text-secondary">
+        No active sessions found.
+      </div>
+    );
 
   return (
     <>
@@ -101,8 +113,12 @@ const ProfileAccessTab: React.FC = () => {
         </div>
       </div>
 
-      {isLogoutModalOpen && (
-        <LogoutAccessModal preLogoutAccess={preLogoutAccess} onClose={toggleLogoutModal} />
+      {isLogoutModalOpen && handleRemoveDevice && (
+        <LogoutAccessModal
+          preLogoutDevice={preLogoutDevice}
+          handleRemoveDevice={handleRemoveDevice}
+          onClose={toggleLogoutModal}
+        />
       )}
     </>
   );

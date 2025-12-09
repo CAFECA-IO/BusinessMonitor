@@ -5,12 +5,14 @@ import { HiOutlineDeviceTablet } from 'react-icons/hi';
 import { IoGlobeOutline } from 'react-icons/io5';
 import Button from '@/components/common/button';
 import AnimationModal, { AnimationType } from '@/components/common/animation_modal';
-import { IAccess } from '@/interfaces/access';
+import { IAuthenticator } from '@/interfaces/auth';
 
 const LogoutAccessModal: React.FC<{
-  preLogoutAccess: IAccess | null;
+  preLogoutDevice: IAuthenticator | null;
+  // ToDo: (20251208 - Julian) Maybe need to move to context file
+  handleRemoveDevice: (device: IAuthenticator) => Promise<void>;
   onClose: () => void;
-}> = ({ preLogoutAccess, onClose }) => {
+}> = ({ preLogoutDevice, handleRemoveDevice, onClose }) => {
   const [logoutSuccess, setLogoutSuccess] = useState<boolean>(false);
 
   useEffect(() => {
@@ -26,32 +28,34 @@ const LogoutAccessModal: React.FC<{
 
   // ToDo: (20251031 - Julian) Implement actual logout functionality
   const handleLogoutSingle = () => {
-    if (!preLogoutAccess) return;
-    console.log(`Logout from ${preLogoutAccess.platformName} on ${preLogoutAccess.loginDevice}`);
-    setLogoutSuccess(true);
+    if (!preLogoutDevice) return;
+
+    handleRemoveDevice(preLogoutDevice); // Info: (20251209 - Julian) 移除裝置
+    setLogoutSuccess(true); // Info: (20251209 - Julian) 顯示成功動畫
   };
   const handleLogoutAll = () => {
-    console.log('Logout from all platforms');
-    setLogoutSuccess(true);
+    // ToDo: (20251208 - Julian) Implement actual logout from all functionality
+    // setLogoutSuccess(true);
   };
 
-  const modalContent = preLogoutAccess ? (
+  const modalContent = preLogoutDevice ? (
     <>
       <p className="text-base font-medium text-text-secondary">Logging out from:</p>
       <div className="flex flex-col gap-24px text-sm font-medium text-text-primary">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-20px">
           <div className="flex items-center gap-4px">
             <IoGlobeOutline size={20} />
-            <p>Platform:</p>
+            {/* <p>Platform:</p> */}
+            <p className="whitespace-nowrap">Credential ID:</p>
           </div>
-          <p>{preLogoutAccess.platformName}</p>
+          <p className="break-all">{preLogoutDevice.credentialID}</p>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-20px">
           <div className="flex items-center gap-4px">
             <HiOutlineDeviceTablet size={20} />
             <p>Device Info:</p>
           </div>
-          <p className="w-150px text-right">{preLogoutAccess.loginDevice}</p>
+          <p className="w-150px text-right">{preLogoutDevice.label}</p>
         </div>
       </div>
     </>
@@ -63,7 +67,7 @@ const LogoutAccessModal: React.FC<{
     </>
   );
 
-  const logoutBtn = preLogoutAccess ? (
+  const logoutBtn = preLogoutDevice ? (
     <Button type="button" variant="primary" onClick={handleLogoutSingle}>
       Log out
     </Button>
