@@ -3,8 +3,8 @@ import { routes } from '@/config/api_routes';
 
 const agent = getAgent();
 
-const companyId = 291652;
-const nonExistentCompanyId = 37759808;
+const companyId = 1;
+const nonExistentCompanyId = 999999999;
 
 describe('Company Detail APIs (integration, black-box)', () => {
   it('GET /companies/:id/basic → 200 基本資訊', async () => {

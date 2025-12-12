@@ -20,7 +20,7 @@ describe('GET /api/v1/companies/search (integration, black-box)', () => {
   });
 
   it('200：以名稱關鍵字搜尋（僅透過 API 探測關鍵字）', async () => {
-    const url = routes.companies.search({ q: '台積電', page: 1, pageSize: 10 });
+    const url = routes.companies.search({ q: '台灣積體電路', page: 1, pageSize: 10 });
     const res = await agent.get(url).expect(200);
     expect(res.body.success).toBe(true);
     expect(res.body.code).toBe('OK');
@@ -39,7 +39,7 @@ describe('GET /api/v1/companies/search (integration, black-box)', () => {
   });
 
   it('200：統編全等應排第一（從環境變數注入 IT_SAMPLE_REGNO）', async () => {
-    const regno = process.env.IT_SAMPLE_REGNO ?? '98888889';
+    const regno = process.env.IT_SAMPLE_REGNO ?? '22099131';
     const url = routes.companies.search({ q: regno, page: 1, pageSize: 10 });
     const res = await agent.get(url).expect(200);
     const items = res.body.payload.items as Array<{ registrationNo: string }>;

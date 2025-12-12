@@ -5,8 +5,8 @@ import { subDays, format } from 'date-fns';
 
 const agent = getAgent();
 
-const companyId = 291652;
-const nonExistentCompanyId = 37759808;
+const companyId = 1;
+const nonExistentCompanyId = 999999999;
 
 describe('GET /api/v1/companies/:id/market (Final Integration Test)', () => {
   let latestTradingDate: Date | null = null;

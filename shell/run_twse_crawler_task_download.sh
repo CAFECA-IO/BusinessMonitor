@@ -31,7 +31,7 @@ base_data_folder=${1:-"private/data/twse_data"}
 mkdir -p "$base_data_folder"
 
 # Info: (20251015 - Tzuhan) 步驟 2: 智慧決定開始日期
-default_start="20240101" # Info: (20251015 - Tzuhan) 設定一個較合理的預設起始日
+default_start="20251201" # Info: (20251015 - Tzuhan) 設定一個較合理的預設起始日
 end_date=$(date "+%Y%m%d")
 start_date=""
 
