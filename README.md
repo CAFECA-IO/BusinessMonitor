@@ -61,7 +61,7 @@ npm run dev                    # http://localhost:3000
 
 本專案包含自動化爬蟲與匯入腳本，可從證交所 (TWSE) 與公開資訊觀測站 (MOPS) 獲取資料。
 
-細節可以參考 `doc/deployment.md`
+細節可以參考 `docs/deployment.md`
 
 **1. 下載市場行情資料 (Crawler)**
 
