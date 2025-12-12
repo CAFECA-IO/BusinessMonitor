@@ -243,18 +243,37 @@ async function importOneFile(
   const priceDataMap = new Map(prices.map((p) => [p.symbol, p]));
 
   if (newSymbols.size > 0) {
+    // Info: (20251030 - Tzuhan) 等待所有爬蟲完成
     console.log(
-      `[INFO] 在 ${path.basename(filePath)} 發現 ${newSymbols.size} 個新代號，開始並行爬取 MOPS...`
-    );
-    const mopsFetchPromises = Array.from(newSymbols).map((symbol) =>
-      fetchCompanyDataBySymbol(symbol).then((companyInfo) => ({
-        symbol,
-        companyInfo,
-      }))
+      `[INFO] 在 ${path.basename(filePath)} 發現 ${newSymbols.size} 個新代號，開始分批爬取 MOPS (避免 EADDRNOTAVAIL)...`
     );
 
-    // Info: (20251030 - Tzuhan) 等待所有爬蟲完成
-    const mopsFetchResults = await Promise.all(mopsFetchPromises);
+    const mopsFetchResults: { symbol: string; companyInfo: Prisma.CompanyCreateInput | null }[] =
+      [];
+    const symbolArray = Array.from(newSymbols);
+    const BATCH_SIZE = 10; // 每次只處理 10 個請求
+    const DELAY_MS = 500; // 每批處理完休息 0.5 秒
+    for (let i = 0; i < symbolArray.length; i += BATCH_SIZE) {
+      const batchSymbols = symbolArray.slice(i, i + BATCH_SIZE);
+      console.log(
+        `   -> 處理批次 ${Math.floor(i / BATCH_SIZE) + 1} / ${Math.ceil(symbolArray.length / BATCH_SIZE)} ...`
+      );
+
+      const batchPromises = batchSymbols.map((symbol) =>
+        fetchCompanyDataBySymbol(symbol).then((companyInfo) => ({
+          symbol,
+          companyInfo,
+        }))
+      );
+
+      const batchResults = await Promise.all(batchPromises);
+      mopsFetchResults.push(...batchResults);
+
+      // 休息一下，讓系統釋放連接埠，也避免被 MOPS 封鎖 IP
+      if (i + BATCH_SIZE < symbolArray.length) {
+        await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+      }
+    }
 
     // Info: (20251030 - Tzuhan) --- 步驟 2: (準備) 整理要寫入資料庫的資料 ---
     const regNoSet = new Set<string>();
