@@ -243,7 +243,7 @@ async function importOneFile(
   const priceDataMap = new Map(prices.map((p) => [p.symbol, p]));
 
   if (newSymbols.size > 0) {
-    // Info: (20251030 - Tzuhan) 等待所有爬蟲完成
+    // Info: (20251212 - Tzuhan) 等待所有爬蟲完成
     console.log(
       `[INFO] 在 ${path.basename(filePath)} 發現 ${newSymbols.size} 個新代號，開始分批爬取 MOPS (避免 EADDRNOTAVAIL)...`
     );
@@ -251,8 +251,8 @@ async function importOneFile(
     const mopsFetchResults: { symbol: string; companyInfo: Prisma.CompanyCreateInput | null }[] =
       [];
     const symbolArray = Array.from(newSymbols);
-    const BATCH_SIZE = 10; // 每次只處理 10 個請求
-    const DELAY_MS = 500; // 每批處理完休息 0.5 秒
+    const BATCH_SIZE = 10; // Info: (20251212 - Tzuhan) 每次只處理 10 個請求
+    const DELAY_MS = 500; // Info: (20251212 - Tzuhan) 每批處理完休息 0.5 秒
     for (let i = 0; i < symbolArray.length; i += BATCH_SIZE) {
       const batchSymbols = symbolArray.slice(i, i + BATCH_SIZE);
       console.log(
@@ -269,7 +269,7 @@ async function importOneFile(
       const batchResults = await Promise.all(batchPromises);
       mopsFetchResults.push(...batchResults);
 
-      // 休息一下，讓系統釋放連接埠，也避免被 MOPS 封鎖 IP
+      // Info: (20251212 - Tzuhan) 休息一下，讓系統釋放連接埠，也避免被 MOPS 封鎖 IP
       if (i + BATCH_SIZE < symbolArray.length) {
         await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
       }
