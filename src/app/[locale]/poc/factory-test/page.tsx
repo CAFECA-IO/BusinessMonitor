@@ -6,18 +6,11 @@ import { bufferToBase64Url, parsePublicKeyCoordinates } from '@/lib/fido2-parse'
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { getInitCode, factoryAbi } from '@/lib/aa-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
-import { createPublicClient, http, parseAbi, type Hex, type Address } from 'viem';
-import { RPC_URL } from '@/constants/config';
+import { type Hex, type Address } from 'viem';
+import { publicClient } from '@/lib/viem';
+import { CONTRACT_ADDRESSES, ABIS } from '@/config/contracts';
 import { toBigInt } from '@/lib/common';
 
-// Info: (20251126 - Tzuhan) 環境變數讀取
-const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
-const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
-
-const entryPointAbi = parseAbi([
-  'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
-  'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
-]);
 type StatusType = 'idle' | 'loading' | 'success' | 'error';
 
 export default function FactoryTestPage() {
@@ -63,15 +56,15 @@ export default function FactoryTestPage() {
 
   // Info: (20251126 - Tzuhan) --- 步驟 2: 計算 Counterfactual Address (預測地址) ---
   const calculateAddress = async (x: bigint, y: bigint) => {
-    if (!FACTORY_ADDRESS) return addLog('❌ Factory Address not set in .env');
+    if (!CONTRACT_ADDRESSES.FACTORY) return addLog('❌ Factory Address not set in .env');
 
     try {
-      const client = createPublicClient({ transport: http(RPC_URL) });
+      const client = publicClient;
       const salt = BigInt(0); // Info: (20251126 - Tzuhan) 為了測試方便，固定 Salt 為 0
 
       addLog('[2] Calculating deterministic address via Factory...');
       const address = await client.readContract({
-        address: FACTORY_ADDRESS,
+        address: CONTRACT_ADDRESSES.FACTORY,
         abi: factoryAbi,
         functionName: 'getAddress',
         args: [x, y, salt],
@@ -97,7 +90,7 @@ export default function FactoryTestPage() {
     setStatusType('loading');
 
     try {
-      const client = createPublicClient({ transport: http(RPC_URL) });
+      const client = publicClient;
       const salt = BigInt(0);
 
       // Info: (20251126 - Tzuhan) ★★★ Lazy Deployment 核心邏輯 ★★★
@@ -106,8 +99,8 @@ export default function FactoryTestPage() {
       let initCode: Hex = '0x';
       if (!isDeployed) {
         addLog('[3] 偵測到新帳戶，準備 initCode 進行 Lazy Deployment...');
-        if (!FACTORY_ADDRESS) throw new Error('Factory Address missing');
-        initCode = getInitCode(FACTORY_ADDRESS, pubKey.x, pubKey.y, salt);
+        if (!CONTRACT_ADDRESSES.FACTORY) throw new Error('Factory Address missing');
+        initCode = getInitCode(CONTRACT_ADDRESSES.FACTORY, pubKey.x, pubKey.y, salt);
       } else {
         addLog('[3] 帳戶已存在，直接發送交易...');
       }
@@ -116,8 +109,8 @@ export default function FactoryTestPage() {
       let nonce = BigInt(0);
       if (isDeployed) {
         nonce = await client.readContract({
-          address: ENTRY_POINT_ADDRESS,
-          abi: entryPointAbi,
+          address: CONTRACT_ADDRESSES.ENTRY_POINT,
+          abi: ABIS.ENTRY_POINT,
           functionName: 'getNonce',
           args: [scwAddress, BigInt(0)],
         });
@@ -149,8 +142,8 @@ export default function FactoryTestPage() {
         signature: '0x' as `0x${string}`,
       };
       const userOpHash = await client.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
+        address: CONTRACT_ADDRESSES.ENTRY_POINT,
+        abi: ABIS.ENTRY_POINT,
         functionName: 'getUserOpHash',
         args: [userOpTuple],
       });
@@ -194,7 +187,10 @@ export default function FactoryTestPage() {
       const res = await fetch('/api/v1/bundler', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userOp: userOpJson, entryPointAddress: ENTRY_POINT_ADDRESS }),
+        body: JSON.stringify({
+          userOp: userOpJson,
+          entryPointAddress: CONTRACT_ADDRESSES.ENTRY_POINT,
+        }),
       });
 
       const result: BundlerResponse = await res.json();

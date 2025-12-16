@@ -21,27 +21,18 @@ import { DEFAULT_USER_AVATAR } from '@/constants/display';
 // Info: (20251128 - Tzuhan) 用於 SCW 操作與 Passkey 處理
 import { fido2ClientService } from '@/lib/fido2-client';
 import { parsePublicKeyCoordinates, bufferToBase64Url } from '@/lib/fido2-parse';
-import { createPublicClient, http, parseAbi, type Address } from 'viem';
 import type { IApiResponse } from '@/lib/response';
 import type {
   RegisterOptions,
   AuthenticateOptions,
 } from '@passwordless-id/webauthn/dist/esm/types';
-import { RPC_URL } from '@/constants/config';
+import { publicClient } from '@/lib/viem';
+import { ORIGIN, CONTRACT_ADDRESSES, ABIS } from '@/config/contracts';
 import { toBigInt } from 'ethers';
 
-const origin = process.env.NEXT_PUBLIC_ORIGIN;
-if (!origin) {
+if (!ORIGIN) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
-
-// Info: (20251128 - Tzuhan) Factory 設定
-const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
-
-// Info: (20251128 - Tzuhan) Factory ABI
-const factoryAbi = parseAbi([
-  'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',
-]);
 
 enum ProfileTab {
   MY_ID = 'my-id',
@@ -114,16 +105,16 @@ export default function ProfileClient() {
       let scwAddress = '';
       const salt = '0';
 
-      if (FACTORY_ADDRESS) {
+      if (CONTRACT_ADDRESSES.FACTORY) {
         const coords = parsePublicKeyCoordinates(credential.response.attestationObject);
         if (coords) {
           const pubKeyX = toBigInt(coords.x).toString();
           const pubKeyY = toBigInt(coords.y).toString();
 
-          const client = createPublicClient({ transport: http(RPC_URL) });
+          const client = publicClient;
           scwAddress = await client.readContract({
-            address: FACTORY_ADDRESS,
-            abi: factoryAbi,
+            address: CONTRACT_ADDRESSES.FACTORY,
+            abi: ABIS.FACTORY,
             functionName: 'getAddress',
             args: [BigInt(pubKeyX), BigInt(pubKeyY), BigInt(salt)],
           });

@@ -1,13 +1,7 @@
-import { createWalletClient, http, createPublicClient, parseAbi } from 'viem';
+import { createWalletClient, http, createPublicClient } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { userOperationSchema } from '@/validators';
-
-const entryPointAbi = parseAbi([
-  'struct UserOperation { address sender; uint256 nonce; bytes initCode; bytes callData; uint256 callGasLimit; uint256 verificationGasLimit; uint256 preVerificationGas; uint256 maxFeePerGas; uint256 maxPriorityFeePerGas; bytes paymasterAndData; bytes signature; }',
-  'function handleOps(UserOperation[] calldata ops, address payable beneficiary)',
-  'function getSenderAddress(bytes calldata initCode) external view returns (address)',
-  'error FailedOp(uint256 opIndex, string reason)',
-]);
+import { ABIS } from '@/config/contracts';
 
 const RELAYER_PRIVATE_KEY = process.env.ISUNCOIN_PRIVATE_KEY as `0x${string}` | undefined;
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
@@ -60,7 +54,7 @@ export class BundlerService {
     const { request } = await publicClient.simulateContract({
       account: relayerAccount,
       address: entryPointAddress as `0x${string}`,
-      abi: entryPointAbi,
+      abi: ABIS.ENTRY_POINT,
       functionName: 'handleOps',
       args: [ops, beneficiary],
       chain: publicClient.chain,

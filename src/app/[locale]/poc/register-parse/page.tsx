@@ -11,18 +11,9 @@ import type {
 } from '@passwordless-id/webauthn/dist/esm/types';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
-import { createPublicClient, http, parseAbi } from 'viem';
-import { RPC_URL } from '@/constants/config';
+import { publicClient } from '@/lib/viem';
+import { CONTRACT_ADDRESSES, ABIS } from '@/config/contracts';
 import { toBigInt } from '@/lib/common';
-
-// Info: (20251121 - Tzuhan) 環境變數讀取
-const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as `0x${string}`;
-const SCW_ADDRESS = (process.env.NEXT_PUBLIC_SCW_ADDRESS || '') as `0x${string}`;
-
-const entryPointAbi = parseAbi([
-  'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
-  'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
-]);
 
 type IApiSuccessResponse = IApiResponse<RegisterOptions>;
 type StatusType = 'idle' | 'loading' | 'success' | 'error';
@@ -135,24 +126,20 @@ export default function PocRegisterAndParsePage() {
     setStatusType('loading');
     addLog('[PoC 3a] 開始 E2E 測試：產生真實 UserOp 並簽名');
 
-    if (!ENTRY_POINT_ADDRESS || !SCW_ADDRESS) {
+    if (!CONTRACT_ADDRESSES.ENTRY_POINT || !CONTRACT_ADDRESSES.SCW) {
       addLog('❌ 錯誤：請先設定合約地址');
       setIsLoading(false);
       return;
     }
 
     try {
-      const publicClient = createPublicClient({
-        transport: http(RPC_URL),
-      });
-
       // Info: (20251120 - Tzuhan) 1. 從鏈上獲取最新的 Nonce
       addLog('[PoC 3a] 1. Fetching Nonce from EntryPoint...');
       const nonce = await publicClient.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
+        address: CONTRACT_ADDRESSES.ENTRY_POINT,
+        abi: ABIS.ENTRY_POINT,
         functionName: 'getNonce',
-        args: [SCW_ADDRESS, BigInt(0)],
+        args: [CONTRACT_ADDRESSES.SCW, BigInt(0)],
       });
       addLog(`[PoC 3a] Nonce: ${nonce}`);
 
@@ -161,7 +148,7 @@ export default function PocRegisterAndParsePage() {
        * 這是用戶宣告「我要做什麼」以及「我願意付多少錢」的地方。
        */
       const unsignedUserOp: UserOperation = {
-        sender: SCW_ADDRESS,
+        sender: CONTRACT_ADDRESSES.SCW,
         nonce: nonce,
         initCode: '0x',
         callData: '0x', // Info: (20251124 - Tzuhan) 目前為空操作 (不轉帳)
@@ -194,7 +181,7 @@ export default function PocRegisterAndParsePage() {
        */
       const userOpTuple = {
         ...unsignedUserOp,
-        sender: SCW_ADDRESS as `0x${string}`,
+        sender: CONTRACT_ADDRESSES.SCW as `0x${string}`,
         initCode: '0x' as `0x${string}`,
         callData: '0x' as `0x${string}`,
         paymasterAndData: '0x' as `0x${string}`,
@@ -202,8 +189,8 @@ export default function PocRegisterAndParsePage() {
       };
 
       const userOpHash = await publicClient.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
+        address: CONTRACT_ADDRESSES.ENTRY_POINT,
+        abi: ABIS.ENTRY_POINT,
         functionName: 'getUserOpHash',
         args: [userOpTuple],
       });
@@ -262,7 +249,7 @@ export default function PocRegisterAndParsePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userOp: signedUserOpJson,
-          entryPointAddress: ENTRY_POINT_ADDRESS,
+          entryPointAddress: CONTRACT_ADDRESSES.ENTRY_POINT,
         }),
       });
 
@@ -297,7 +284,7 @@ export default function PocRegisterAndParsePage() {
     addLog('[PoC 2.4 / 2.5] Starting Bundler E2E Test...');
 
     // Info: (20251118 - Tzuhan) (地址檢查現在會通過)
-    if (!ENTRY_POINT_ADDRESS || !SCW_ADDRESS) {
+    if (!CONTRACT_ADDRESSES.ENTRY_POINT || !CONTRACT_ADDRESSES.SCW) {
       const err = 'FATAL ERROR: Addresses are not set';
       addLog(err);
       setStatusMessage('❌ Error: 請在程式碼中設定合約地址');
@@ -309,7 +296,7 @@ export default function PocRegisterAndParsePage() {
     try {
       // Info: (20251118 - Tzuhan) 1. 建構一個 BigInt 版本的 UserOperation
       const mockUserOp: UserOperation = {
-        sender: SCW_ADDRESS as `0x${string}`,
+        sender: CONTRACT_ADDRESSES.SCW as `0x${string}`,
         nonce: BigInt(0),
         initCode: '0x',
         callData: '0x',
@@ -352,7 +339,7 @@ export default function PocRegisterAndParsePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userOp: userOpForJson,
-          entryPointAddress: ENTRY_POINT_ADDRESS,
+          entryPointAddress: CONTRACT_ADDRESSES.ENTRY_POINT,
         }),
       });
 

@@ -15,21 +15,14 @@ import Button from '@/components/common/button';
 
 // Info: (20251128 - Tzuhan) 引入新依賴
 import { parsePublicKeyCoordinates } from '@/lib/fido2-parse';
-import { createPublicClient, http, parseAbi, type Address } from 'viem';
-import { RPC_URL } from '@/constants/config';
+
+import { publicClient } from '@/lib/viem';
+import { ORIGIN, CONTRACT_ADDRESSES, ABIS } from '@/config/contracts';
 import { toBigInt } from '@/lib/common';
 
-const origin = process.env.NEXT_PUBLIC_ORIGIN;
-if (!origin) {
+if (!ORIGIN) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
-
-// Info: (20251128 - Tzuhan) Factory 設定
-const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
-
-const factoryAbi = parseAbi([
-  'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',
-]);
 
 export default function SignupClient() {
   // ToDo: (20251016 - Julian) Default avatar image path
@@ -110,7 +103,7 @@ export default function SignupClient() {
       let pubKeyYStr = '';
       const salt = '0';
 
-      if (FACTORY_ADDRESS) {
+      if (CONTRACT_ADDRESSES.FACTORY) {
         try {
           const coords = parsePublicKeyCoordinates(registration.response.attestationObject);
           if (coords) {
@@ -121,12 +114,12 @@ export default function SignupClient() {
             pubKeyXStr = pubKeyX.toString();
             pubKeyYStr = pubKeyY.toString();
 
-            const client = createPublicClient({ transport: http(RPC_URL) });
+            const client = publicClient;
 
             // Info: (20251128 - Tzuhan) 呼叫工廠預測地址
             const address = await client.readContract({
-              address: FACTORY_ADDRESS,
-              abi: factoryAbi,
+              address: CONTRACT_ADDRESSES.FACTORY,
+              abi: ABIS.FACTORY,
               functionName: 'getAddress',
               args: [pubKeyX, pubKeyY, BigInt(salt)],
             });
