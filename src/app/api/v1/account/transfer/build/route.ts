@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // 1. 驗證請求參數
+    // Info: (20251216 - Tzuhan) 1. 驗證請求參數
     const parseResult = transferBodySchema.safeParse(body);
     if (!parseResult.success) {
       return jsonFail(ApiCode.VALIDATION_ERROR, parseResult.error.issues[0].message);
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       throw new Error('EntryPoint address not configured');
     }
 
-    // 2. 取得 Nonce (使用共用 Client 與 ABI)
+    // Info: (20251216 - Tzuhan) 2. 取得 Nonce (使用共用 Client 與 ABI)
     const nonce = await publicClient.readContract({
       address: CONTRACT_ADDRESSES.ENTRY_POINT,
       abi: ABIS.ENTRY_POINT,
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       args: [sender as `0x${string}`, BigInt(0)],
     });
 
-    // 3. 編碼 CallData (呼叫 SCW 的 execute)
+    // Info: (20251216 - Tzuhan) 3. 編碼 CallData (呼叫 SCW 的 execute)
     const amountWei = parseEther(amount);
     const callData = encodeFunctionData({
       abi: ABIS.SCW,
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     log.info(`[Transfer Build] Built UserOp for ${sender}, Nonce: ${nonce}`);
 
-    // 4. 回傳 UserOp 物件
+    // Info: (20251216 - Tzuhan) 4. 回傳 UserOp 物件
     return jsonOk({
       userOp: {
         sender,
