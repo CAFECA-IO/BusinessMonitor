@@ -118,7 +118,7 @@ export default function LoginClient() {
             setStatusMessage('正在初始化您的區塊鏈帳戶 (首次登入)...');
 
             // Info: (20251128 - Tzuhan) 準備 initCode
-            const initKey = userData.initPublicKey; // { x: "...", y: "..." }
+            const initKey = userData.initPublicKey; // Info: (20251216 - Tzuhan) 格式為 { x: "...", y: "..." }
             if (initKey && initKey.x && initKey.y) {
               const initCode = getInitCode(
                 CONTRACT_ADDRESSES.FACTORY,
