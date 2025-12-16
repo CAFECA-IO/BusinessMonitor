@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const log = loggerFromRequest(req);
   const { searchParams } = new URL(req.url);
 
-  // 1. 驗證參數
+  // Info: (20251216 - Tzuhan) 1. 驗證參數
   const parseResult = querySchema.safeParse({
     address: searchParams.get('address'),
   });
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   const { address } = parseResult.data;
 
   try {
-    // 2. 使用共用 Client 查詢
+    // Info: (20251216 - Tzuhan) 2. 使用共用 Client 查詢
     const balanceWei = await publicClient.getBalance({
       address: address as `0x${string}`,
     });
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     return jsonOk({
       symbol: 'iSunCoin',
       balance: formatEther(balanceWei),
-      wei: balanceWei, // jsonOk 會自動轉 String 處理 BigInt
+      wei: balanceWei, // Info: (20251216 - Tzuhan) jsonOk 會自動轉 String 處理 BigInt
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
