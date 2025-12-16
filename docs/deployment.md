@@ -117,7 +117,7 @@ npm run dev
 
 ### 步驟 5.2：功能驗證
 
-  * 在搜尋框輸入 **`台灣積體電路`**。
+  * 在搜尋框輸入 **`台灣大哥大`**。
   * 應能看到台積電的 K 線圖與股價資訊。
 
 前往 [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000)。

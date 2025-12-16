@@ -148,27 +148,6 @@ model RelatedCompany {
   @@unique([companyId, relatedCompanyId])
   @@map("related_company")
 }
-
-/* Deprecate: (20250925 - Tzuhan) replaced by MarketDailyPrice*/
-/**
-model StockPrice {
-  id         Int      @id @default(autoincrement())
-  companyId  Int      @map("company_id")
-  date       DateTime @map("date")
-  openPrice  Decimal? @map("open_price") @db.Decimal(30, 8)
-  highPrice  Decimal? @map("high_price") @db.Decimal(30, 8)
-  lowPrice   Decimal? @map("low_price") @db.Decimal(30, 8)
-  closePrice Decimal? @map("close_price") @db.Decimal(30, 8)
-  volume     Int?     @map("volume")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  company    Company  @relation(fields: [companyId], references: [id])
-
-  @@index([companyId, date])
-  @@map("stock_price")
-}
-*/
-
 model MarketIndicator {
   id                Int      @id @default(autoincrement())
   companyId         Int      @map("company_id")

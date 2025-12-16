@@ -8,5 +8,3 @@ export const CAFECA_FACEBOOK_LINK = process.env.NEXT_PUBLIC_CAFECA_FACEBOOK_LINK
 export const CAFECA_TWITTER_LINK = process.env.NEXT_PUBLIC_CAFECA_TWITTER_LINK ?? '';
 export const CAFECA_LINKEDIN_LINK = process.env.NEXT_PUBLIC_CAFECA_LINKEDIN_LINK ?? '';
 export const CAFECA_GITHUB_LINK = process.env.NEXT_PUBLIC_CAFECA_GITHUB_LINK ?? '';
-
-export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.isuncoin.com';

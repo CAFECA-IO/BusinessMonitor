@@ -14,17 +14,14 @@ import Button from '@/components/common/button';
 import MessageModal from '@/components/auth/message_modal';
 
 // Info: (20251128 - Tzuhan) 引入新依賴
-import { createPublicClient, http, type Address } from 'viem';
+import { type Address } from 'viem';
 import { getInitCode } from '@/lib/aa-utils';
-import { RPC_URL } from '@/constants/config';
+import { publicClient } from '@/lib/viem';
+import { ORIGIN, CONTRACT_ADDRESSES } from '@/config/contracts';
 
-const origin = process.env.NEXT_PUBLIC_ORIGIN;
-if (!origin) {
+if (!ORIGIN) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
-
-// Info: (20251128 - Tzuhan) 環境變數
-const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
 
 export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
@@ -108,9 +105,9 @@ export default function LoginClient() {
         const meData = await meRes.json();
         const userData = meData.payload;
 
-        if (userData && userData.blockchainAddress && FACTORY_ADDRESS) {
+        if (userData && userData.blockchainAddress && CONTRACT_ADDRESSES.FACTORY) {
           const scwAddress = userData.blockchainAddress as Address;
-          const client = createPublicClient({ transport: http(RPC_URL) });
+          const client = publicClient;
 
           // Info: (20251128 - Tzuhan) 2. 檢查鏈上是否已部署
           const code = await client.getCode({ address: scwAddress });
@@ -124,7 +121,7 @@ export default function LoginClient() {
             const initKey = userData.initPublicKey; // { x: "...", y: "..." }
             if (initKey && initKey.x && initKey.y) {
               const initCode = getInitCode(
-                FACTORY_ADDRESS,
+                CONTRACT_ADDRESSES.FACTORY,
                 BigInt(initKey.x),
                 BigInt(initKey.y),
                 BigInt(userData.deploymentSalt || 0)

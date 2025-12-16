@@ -241,4 +241,14 @@ export const routes = {
     // Info: (20251023 - Tzuhan) POST /api/v1/upload
     file: () => `${API_PREFIX}/upload`,
   },
+
+  account: {
+    // GET /api/v1/account/balance?address=...
+    balance: (address: string) => withQuery(`${API_PREFIX}/account/balance`, { address }),
+
+    transfer: {
+      // POST /api/v1/account/transfer/build
+      build: () => `${API_PREFIX}/account/transfer/build`,
+    },
+  },
 } as const;

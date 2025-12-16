@@ -5,32 +5,10 @@ import { fido2ClientService } from '@/lib/fido2-client';
 import { bufferToBase64Url, parsePublicKeyCoordinates } from '@/lib/fido2-parse';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
-import {
-  createPublicClient,
-  http,
-  parseAbi,
-  encodeFunctionData,
-  type Hex,
-  type Address,
-} from 'viem';
-import { RPC_URL } from '@/constants/config';
+import { encodeFunctionData, type Hex } from 'viem';
+import { publicClient } from '@/lib/viem';
+import { CONTRACT_ADDRESSES, ABIS } from '@/config/contracts';
 import { toBigInt } from '@/lib/common';
-
-// Info: (20251127 - Tzuhan) 環境變數
-const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
-const SCW_ADDRESS = (process.env.NEXT_PUBLIC_SCW_ADDRESS || '') as Address;
-
-// Info: (20251127 - Tzuhan) ABI 定義
-const scwAbi = parseAbi([
-  'function addSigner(uint256 x, uint256 y) external',
-  'function removeSigner(uint256 x, uint256 y) external',
-  'function execute(address dest, uint256 value, bytes func) external',
-]);
-
-const entryPointAbi = parseAbi([
-  'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
-  'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
-]);
 
 export default function MultiSignerPage() {
   const [logs, setLogs] = useState<string[]>([]);
@@ -70,21 +48,21 @@ export default function MultiSignerPage() {
 
   // Info: (20251127 - Tzuhan) 2. 授權新鑰匙 (Signer A 簽名)
   const handleAddSigner = async () => {
-    if (!newSigner || !SCW_ADDRESS) return addLog('❌ Missing setup');
+    if (!newSigner || !CONTRACT_ADDRESSES.SCW) return addLog('❌ Missing setup');
     setIsLoading(true);
     try {
       addLog('[2] Authorizing New Signer (Add)...');
 
       const innerCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'addSigner',
         args: [newSigner.x, newSigner.y],
       });
 
       const userOpCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'execute',
-        args: [SCW_ADDRESS, BigInt(0), innerCallData],
+        args: [CONTRACT_ADDRESSES.SCW, BigInt(0), innerCallData],
       });
 
       /**
@@ -121,9 +99,9 @@ export default function MultiSignerPage() {
       addLog('[3] Testing New Signer (Signer B)...');
       // Info: (20251127 - Tzuhan) 發送一個空交易，證明 B 能控制帳戶
       const userOpCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'execute',
-        args: [SCW_ADDRESS, BigInt(0), '0x'],
+        args: [CONTRACT_ADDRESSES.SCW, BigInt(0), '0x'],
       });
 
       await sendUserOp(userOpCallData, newSigner, 'Signer B (New)');
@@ -137,21 +115,21 @@ export default function MultiSignerPage() {
 
   // Info: (20251127 - Tzuhan) 4. 移除新鑰匙 (Signer A 簽名)
   const handleRemoveSigner = async () => {
-    if (!newSigner || !SCW_ADDRESS) return addLog('❌ Missing setup');
+    if (!newSigner || !CONTRACT_ADDRESSES.SCW) return addLog('❌ Missing setup');
     setIsLoading(true);
     try {
       addLog('[4] Revoking Signer B (Remove)...');
 
       const innerCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'removeSigner',
         args: [newSigner.x, newSigner.y],
       });
 
       const userOpCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'execute',
-        args: [SCW_ADDRESS, BigInt(0), innerCallData],
+        args: [CONTRACT_ADDRESSES.SCW, BigInt(0), innerCallData],
       });
 
       const signerAX = BigInt(process.env.NEXT_PUBLIC_SCW_OWNER_PUBLIC_KEY_X || '0');
@@ -174,9 +152,9 @@ export default function MultiSignerPage() {
     try {
       addLog('[5] Testing Signer B again (Should Fail)...');
       const userOpCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'execute',
-        args: [SCW_ADDRESS, BigInt(0), '0x'],
+        args: [CONTRACT_ADDRESSES.SCW, BigInt(0), '0x'],
       });
 
       // Info: (20251127 - Tzuhan) 嘗試用已移除的 B 簽名
@@ -202,18 +180,18 @@ export default function MultiSignerPage() {
     signerPubKey: { x: bigint; y: bigint },
     signerName: string
   ) => {
-    const client = createPublicClient({ transport: http(RPC_URL) });
+    const client = publicClient;
 
     // Info: (20251127 - Tzuhan) 1. Get Nonce
     const nonce = await client.readContract({
-      address: ENTRY_POINT_ADDRESS,
-      abi: entryPointAbi,
+      address: CONTRACT_ADDRESSES.ENTRY_POINT,
+      abi: ABIS.ENTRY_POINT,
       functionName: 'getNonce',
-      args: [SCW_ADDRESS, BigInt(0)],
+      args: [CONTRACT_ADDRESSES.SCW, BigInt(0)],
     });
 
     const userOp: UserOperation = {
-      sender: SCW_ADDRESS,
+      sender: CONTRACT_ADDRESSES.SCW,
       nonce,
       initCode: '0x', // Info: (20251127 - Tzuhan) 假設已部署
       callData,
@@ -228,12 +206,12 @@ export default function MultiSignerPage() {
 
     // Info: (20251127 - Tzuhan) 3. Hash
     const userOpHash = await client.readContract({
-      address: ENTRY_POINT_ADDRESS,
-      abi: entryPointAbi,
+      address: CONTRACT_ADDRESSES.ENTRY_POINT,
+      abi: ABIS.ENTRY_POINT,
       functionName: 'getUserOpHash',
       args: [
         {
-          sender: SCW_ADDRESS as `0x${string}`,
+          sender: CONTRACT_ADDRESSES.SCW as `0x${string}`,
           nonce,
           initCode: '0x' as `0x${string}`,
           callData: callData as `0x${string}`,
@@ -291,7 +269,10 @@ export default function MultiSignerPage() {
     const res = await fetch('/api/v1/bundler', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userOp: signedUserOpJson, entryPointAddress: ENTRY_POINT_ADDRESS }),
+      body: JSON.stringify({
+        userOp: signedUserOpJson,
+        entryPointAddress: CONTRACT_ADDRESSES.ENTRY_POINT,
+      }),
     });
     const result: BundlerResponse = await res.json();
 

@@ -33,47 +33,19 @@ import {
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { getInitCode } from '@/lib/aa-utils';
 import { UserOperation, UserOperationJson, BundlerResponse } from '@/validators';
-import {
-  createPublicClient,
-  http,
-  parseAbi,
-  encodeAbiParameters,
-  keccak256,
-  type Address,
-  type Hex,
-  encodeFunctionData,
-} from 'viem';
+import { encodeAbiParameters, keccak256, type Address, type Hex, encodeFunctionData } from 'viem';
 import { getPusherInstance } from '@/lib/pusher_client';
 import type { IApiResponse } from '@/lib/response';
 import type { RegisterOptions } from '@passwordless-id/webauthn/dist/esm/types';
-import { RPC_URL } from '@/constants/config';
 import { IAuthenticator, IExtendedUser } from '@/interfaces/auth';
 import { toBigInt } from '@/lib/common';
 import { logger } from '@/lib/logger';
+import { publicClient } from '@/lib/viem';
+import { ORIGIN, CONTRACT_ADDRESSES, ABIS } from '@/config/contracts';
 
-const origin = process.env.NEXT_PUBLIC_ORIGIN;
-if (!origin) {
+if (!ORIGIN) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
-
-const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_SCW_FACTORY_ADDRESS || '') as Address;
-const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
-
-const factoryAbi = parseAbi([
-  'function getAddress(uint256 pubKeyX, uint256 pubKeyY, uint256 salt) external view returns (address)',
-]);
-
-const entryPointAbi = parseAbi([
-  'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
-  'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
-]);
-
-const scwAbi = parseAbi([
-  'function signers(bytes32 hash) view returns (bool)',
-  'function addSigner(uint256 x, uint256 y) external',
-  'function removeSigner(uint256 x, uint256 y) external',
-  'function execute(address dest, uint256 value, bytes func) external',
-]);
 
 enum ProfileTab {
   MY_ID = 'my-id',
@@ -132,7 +104,7 @@ export default function ProfileClient() {
     const checkDeploymentStatus = async () => {
       if (user?.blockchainAddress) {
         try {
-          const client = createPublicClient({ transport: http(RPC_URL) });
+          const client = publicClient;
           const code = await client.getCode({ address: user.blockchainAddress as Address });
           // Info: (20251203 - Tzuhan) 如果 code 存在且不為 0x，代表已部署
           setIsScwDeployed(code !== undefined && code !== '0x');
@@ -188,10 +160,10 @@ export default function ProfileClient() {
         hash,
       });
 
-      const client = createPublicClient({ transport: http(RPC_URL) });
+      const client = publicClient;
       const isAuthorized = await client.readContract({
         address: user.blockchainAddress as Address,
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'signers',
         args: [hash],
       });
@@ -235,7 +207,7 @@ export default function ProfileClient() {
       const salt = '0';
       let publicKeyString = '';
 
-      if (FACTORY_ADDRESS) {
+      if (CONTRACT_ADDRESSES.FACTORY) {
         const coords = parsePublicKeyCoordinates(credential.response.attestationObject);
         if (coords) {
           // Info: (20251205 - Tzuhan) A. 轉為 BigInt 字串供合約計算地址
@@ -245,10 +217,10 @@ export default function ProfileClient() {
           pubKeyYStr = pubKeyY.toString();
           publicKeyString = await convertCoordsToKey(pubKeyXStr, pubKeyYStr);
 
-          const client = createPublicClient({ transport: http(RPC_URL) });
+          const client = publicClient;
           scwAddress = await client.readContract({
-            address: FACTORY_ADDRESS,
-            abi: factoryAbi,
+            address: CONTRACT_ADDRESSES.FACTORY,
+            abi: ABIS.FACTORY,
             functionName: 'getAddress',
             args: [pubKeyX, pubKeyY, BigInt(salt)],
           });
@@ -295,7 +267,7 @@ export default function ProfileClient() {
       setError('找不到錢包地址，請先初始化。');
       return;
     }
-    if (!FACTORY_ADDRESS || !ENTRY_POINT_ADDRESS) {
+    if (!CONTRACT_ADDRESSES.FACTORY || !CONTRACT_ADDRESSES.ENTRY_POINT) {
       setError('系統設定錯誤：缺少合約地址。');
       return;
     }
@@ -305,7 +277,7 @@ export default function ProfileClient() {
     setError(null);
 
     try {
-      const client = createPublicClient({ transport: http(RPC_URL) });
+      const client = publicClient;
       const scwAddr = user.blockchainAddress as Address;
 
       // Info: (20251128 - Tzuhan) 1. 檢查合約狀態 (Lazy Deployment)
@@ -324,12 +296,17 @@ export default function ProfileClient() {
           throw new Error('無法取得初始化公鑰，請重新初始化錢包。');
         }
 
-        initCode = getInitCode(FACTORY_ADDRESS, BigInt(initKey.x), BigInt(initKey.y), salt);
+        initCode = getInitCode(
+          CONTRACT_ADDRESSES.FACTORY,
+          BigInt(initKey.x),
+          BigInt(initKey.y),
+          salt
+        );
       } else {
         setKeyStatus('帳戶已部署，準備發送交易...');
         nonce = await client.readContract({
-          address: ENTRY_POINT_ADDRESS,
-          abi: entryPointAbi,
+          address: CONTRACT_ADDRESSES.ENTRY_POINT,
+          abi: ABIS.ENTRY_POINT,
           functionName: 'getNonce',
           args: [scwAddr, BigInt(0)],
         });
@@ -360,8 +337,8 @@ export default function ProfileClient() {
         signature: '0x' as `0x${string}`,
       };
       const userOpHash = await client.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
+        address: CONTRACT_ADDRESSES.ENTRY_POINT,
+        abi: ABIS.ENTRY_POINT,
         functionName: 'getUserOpHash',
         args: [userOpTuple],
       });
@@ -411,7 +388,7 @@ export default function ProfileClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userOp: signedUserOpJson,
-          entryPointAddress: ENTRY_POINT_ADDRESS,
+          entryPointAddress: CONTRACT_ADDRESSES.ENTRY_POINT,
         }),
       });
 
@@ -449,25 +426,25 @@ export default function ProfileClient() {
       );
       if (!targetKeys) throw new Error('無法解析目標裝置公鑰');
 
-      const client = createPublicClient({ transport: http(RPC_URL) });
+      const client = publicClient;
       const scwAddr = user.blockchainAddress as Address;
 
       // Info: (20251204 - Tzuhan) B. 建構 UserOp: removeSigner
       const innerCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'removeSigner',
         args: [targetKeys.x, targetKeys.y],
       });
 
       const userOpCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'execute',
         args: [scwAddr, BigInt(0), innerCallData],
       });
 
       const nonce = await client.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
+        address: CONTRACT_ADDRESSES.ENTRY_POINT,
+        abi: ABIS.ENTRY_POINT,
         functionName: 'getNonce',
         args: [scwAddr, BigInt(0)],
       });
@@ -496,8 +473,8 @@ export default function ProfileClient() {
         signature: userOp.signature as `0x${string}`,
       };
       const userOpHash = await client.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
+        address: CONTRACT_ADDRESSES.ENTRY_POINT,
+        abi: ABIS.ENTRY_POINT,
         functionName: 'getUserOpHash',
         args: [userOpTuple],
       });
@@ -573,7 +550,7 @@ export default function ProfileClient() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${dewt}` },
         body: JSON.stringify({
           userOp: signedUserOpJson,
-          entryPointAddress: ENTRY_POINT_ADDRESS,
+          entryPointAddress: CONTRACT_ADDRESSES.ENTRY_POINT,
           authenticatorId: device.id,
         }),
       });

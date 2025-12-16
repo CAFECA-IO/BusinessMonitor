@@ -11,34 +11,13 @@ import { BM_URL } from '@/constants/url';
 import { useAuth } from '@/contexts/auth_context';
 import { packWebAuthnSignature } from '@/lib/webauthn-utils';
 import { UserOperation, UserOperationJson } from '@/validators';
-import {
-  createPublicClient,
-  http,
-  parseAbi,
-  encodeFunctionData,
-  type Address,
-  type Hex,
-} from 'viem';
-import { RPC_URL } from '@/constants/config';
+import { encodeFunctionData, type Address, type Hex } from 'viem';
+import { publicClient } from '@/lib/viem';
+import { ORIGIN, CONTRACT_ADDRESSES, ABIS } from '@/config/contracts';
 
-const origin = process.env.NEXT_PUBLIC_ORIGIN;
-if (!origin) {
+if (!ORIGIN) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
 }
-
-// Info: (20251202 - Tzuhan) 區塊鏈參數
-const ENTRY_POINT_ADDRESS = (process.env.NEXT_PUBLIC_ENTRY_POINT_ADDRESS || '') as Address;
-
-// Info: (20251202 - Tzuhan) ABI
-const scwAbi = parseAbi([
-  'function addSigner(uint256 x, uint256 y) external',
-  'function execute(address dest, uint256 value, bytes func) external',
-]);
-
-const entryPointAbi = parseAbi([
-  'function getNonce(address sender, uint192 key) external view returns (uint256 nonce)',
-  'function getUserOpHash((address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) external view returns (bytes32)',
-]);
 
 interface ICandidateKey {
   pubKeyX: string;
@@ -73,26 +52,26 @@ export default function AddDeviceClient() {
     setError(null);
 
     try {
-      const client = createPublicClient({ transport: http(RPC_URL) });
+      const client = publicClient;
       const scwAddress = user.blockchainAddress as Address;
 
       // Info: (20251202 - Tzuhan) 1. 準備 CallData: SCW.execute(SCW, 0, addSigner(B))
       const innerCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'addSigner',
         args: [BigInt(candidate.pubKeyX), BigInt(candidate.pubKeyY)],
       });
 
       const userOpCallData = encodeFunctionData({
-        abi: scwAbi,
+        abi: ABIS.SCW,
         functionName: 'execute',
         args: [scwAddress, BigInt(0), innerCallData],
       });
 
       // Info: (20251202 - Tzuhan) 2. 取得 Nonce
       const nonce = await client.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
+        address: CONTRACT_ADDRESSES.ENTRY_POINT,
+        abi: ABIS.ENTRY_POINT,
         functionName: 'getNonce',
         args: [scwAddress, BigInt(0)],
       });
@@ -123,8 +102,8 @@ export default function AddDeviceClient() {
       };
 
       const userOpHash = await client.readContract({
-        address: ENTRY_POINT_ADDRESS,
-        abi: entryPointAbi,
+        address: CONTRACT_ADDRESSES.ENTRY_POINT,
+        abi: ABIS.ENTRY_POINT,
         functionName: 'getUserOpHash',
         args: [userOpTuple],
       });
@@ -185,7 +164,7 @@ export default function AddDeviceClient() {
           sessionId,
           action: 'confirm_add_device',
           userOp: signedUserOpJson, // Info: (20251204 - Tzuhan) 傳送簽名後的 UserOp
-          entryPointAddress: ENTRY_POINT_ADDRESS,
+          entryPointAddress: CONTRACT_ADDRESSES.ENTRY_POINT,
         }),
       });
 
