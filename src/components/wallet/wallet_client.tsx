@@ -342,7 +342,7 @@ export default function WalletClient() {
               </div>
               <p className="mb-2 break-all text-xs text-green-600">Hash: {txHash}</p>
               <a
-                href={`${EXTERNAL_URL.BAIFA_EXPLORER}/tx/${txHash}`}
+                href={`${EXTERNAL_URL.BAIFA_EXPLORER}/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex w-full items-center justify-center gap-2 rounded-md border border-green-200 bg-white py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-50"

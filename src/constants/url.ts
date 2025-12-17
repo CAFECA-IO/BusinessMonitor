@@ -19,6 +19,6 @@ export const BM_URL = {
 
 export const EXTERNAL_URL = {
   BAIFA_EXPLORER:
-    `${process.env.NEXT_PUBLIC_BAIFA_EXPLORER}/en/app/chains/${process.env.NEXT_PUBLIC_ISUNCOIN_CHAIN_ID}/transaction/` ||
+    `${process.env.NEXT_PUBLIC_BAIFA_EXPLORER}/en/app/chains/${process.env.NEXT_PUBLIC_ISUNCOIN_CHAIN_ID}/transaction` ||
     'https://baifa.io/en/app/chains/8017/transaction/',
 };
