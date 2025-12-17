@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaWallet, FaPaperPlane, FaArrowLeft, FaSpinner } from 'react-icons/fa';
+import {
+  FaWallet,
+  FaPaperPlane,
+  FaArrowLeft,
+  FaSpinner,
+  FaCheckCircle,
+  FaExternalLinkAlt,
+} from 'react-icons/fa';
 import { useAuth } from '@/contexts/auth_context';
 import { IExtendedUser } from '@/interfaces/auth';
 import { publicClient } from '@/lib/viem';
@@ -12,6 +19,7 @@ import { extractXYFromSPKI } from '@/lib/fido2-parse';
 import { type Address } from 'viem';
 import { UserOperationJson } from '@/validators';
 import { routes } from '@/config/api_routes';
+import { EXTERNAL_URL } from '@/constants/url';
 
 export default function WalletClient() {
   const router = useRouter();
@@ -23,6 +31,8 @@ export default function WalletClient() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  // Info: (20251217 - Tzuhan) 新增 txHash 狀態
+  const [txHash, setTxHash] = useState<string | null>(null);
 
   // Info: (20251217 - Tzuhan) 查詢餘額
   const fetchBalance = useCallback(async () => {
@@ -51,6 +61,7 @@ export default function WalletClient() {
 
     setIsLoading(true);
     setError(null);
+    setTxHash(null);
     setStatus('正在建構交易...');
 
     try {
@@ -172,6 +183,9 @@ export default function WalletClient() {
       const bundleResult = await bundleRes.json();
 
       if (bundleResult.success && bundleResult.payload?.status === 'success') {
+        // Info: (20251217 - Tzuhan) 交易成功，設定 TxHash
+        const hash = bundleResult.payload.transactionHash;
+        setTxHash(hash);
         setStatus(`✅ 轉帳成功！`);
         setAmount('');
         setToAddress('');
@@ -264,7 +278,8 @@ export default function WalletClient() {
                 placeholder="0x..."
                 value={toAddress}
                 onChange={(e) => setToAddress(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                disabled={isLoading}
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:bg-gray-100"
                 aria-label="Recipient Address"
               />
             </div>
@@ -285,7 +300,8 @@ export default function WalletClient() {
                   placeholder="0.0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 pr-12 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  disabled={isLoading}
+                  className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 pr-12 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:bg-gray-100"
                   aria-label="Amount"
                 />
                 <span className="absolute right-3 top-3 text-sm font-bold text-gray-400">iSun</span>
@@ -303,11 +319,36 @@ export default function WalletClient() {
           </form>
 
           {/* Status Message */}
-          {(status || error) && (
-            <div
-              className={`mt-4 rounded-lg p-3 text-sm ${error ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}
-            >
-              <p className="font-medium">{error || status}</p>
+          {status && status !== 'success' && (
+            <div className="mt-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
+              <p className="flex items-center gap-2 font-medium">
+                <FaSpinner className="animate-spin" /> {status}
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+              <p className="font-medium">Error: {error}</p>
+            </div>
+          )}
+
+          {/* Info: (20251217 - Tzuhan) 交易成功顯示區塊 */}
+          {txHash && (
+            <div className="mt-4 rounded-lg border border-green-100 bg-green-50 p-4">
+              <div className="mb-2 flex items-center gap-2 text-green-700">
+                <FaCheckCircle size={18} />
+                <span className="font-bold">交易成功！(Transfer Sent)</span>
+              </div>
+              <p className="mb-2 break-all text-xs text-green-600">Hash: {txHash}</p>
+              <a
+                href={`${EXTERNAL_URL.BAIFA_EXPLORER}/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-md border border-green-200 bg-white py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-50"
+              >
+                在區塊鏈瀏覽器查看 <FaExternalLinkAlt />
+              </a>
             </div>
           )}
         </div>
