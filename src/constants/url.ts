@@ -16,3 +16,9 @@ export const BM_URL = {
   // Info: (20251009 - Tzuhan) --- 登入後的設定/個人資料區 (User Profile / Settings) ---
   PROFILE: '/profile', // Info: (20251009 - Tzuhan) (建議新增) 登入後的個人資料主頁
 };
+
+export const EXTERNAL_URL = {
+  BAIFA_EXPLORER:
+    `${process.env.NEXT_PUBLIC_BAIFA_EXPLORER}/en/app/chains/${process.env.NEXT_PUBLIC_ISUNCOIN_CHAIN_ID}/transaction` ||
+    'https://baifa.io/en/app/chains/8017/transaction/',
+};
