@@ -30,7 +30,8 @@ export async function apiMiddleware(req: NextRequest) {
     '/api/v1/pairing/complete',
     '/api/v1/pusher/auth',
     '/api/v1/upload',
-    '/api/v1/bundler', // Info: (20251120 - Tzuhan) <-- [新增] 將 Bundler 加入白名單，允許未登入訪問 (因為是 SCW 驗證簽名)
+    '/api/v1/bundler',
+    '/api/v1/account',
   ];
 
   if (publicRoutes.some((path) => pathname.startsWith(path))) {

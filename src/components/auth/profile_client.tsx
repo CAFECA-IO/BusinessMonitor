@@ -42,6 +42,7 @@ import { toBigInt } from '@/lib/common';
 import { logger } from '@/lib/logger';
 import { publicClient } from '@/lib/viem';
 import { ORIGIN, CONTRACT_ADDRESSES, ABIS } from '@/config/contracts';
+import { FaWallet } from 'react-icons/fa6';
 
 if (!ORIGIN) {
   throw new Error('NEXT_PUBLIC_ORIGIN is not set in the environment variables.');
@@ -661,6 +662,14 @@ export default function ProfileClient() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Info: (20251216 - Tzuhan) 1. 錢包頁面按鈕 (New) */}
+              <Link href="/wallet" className="w-full sm:col-span-2">
+                <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 px-5 py-4 text-lg font-bold text-white shadow-md hover:from-purple-700 hover:to-blue-700">
+                  <FaWallet /> 我的錢包 (Wallet & Transfer)
+                </button>
+              </Link>
+
+              {/* Info: (20251216 - Tzuhan) 2. 測試交易按鈕 (Existing) */}
               <button
                 onClick={handleTestSignature}
                 disabled={isKeyLoading}
@@ -678,6 +687,7 @@ export default function ProfileClient() {
                     : '啟用錢包 (Activate Wallet)'}
               </button>
 
+              {/* Info: (20251216 - Tzuhan) 3. 新增裝置按鈕 (Existing) */}
               <Link href={BM_URL.ADD_DEVICE} className="w-full">
                 <button className="w-full rounded-lg bg-gray-800 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-gray-900">
                   新增裝置 (Add Device)
