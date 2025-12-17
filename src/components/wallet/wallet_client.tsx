@@ -319,7 +319,7 @@ export default function WalletClient() {
           </form>
 
           {/* Status Message */}
-          {status && status !== 'success' && (
+          {status && !status.includes('成功') && (
             <div className="mt-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
               <p className="flex items-center gap-2 font-medium">
                 <FaSpinner className="animate-spin" /> {status}
