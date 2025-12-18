@@ -63,7 +63,14 @@ const PostItem: React.FC<IPostItemProps> = ({ post }) => {
   };
 
   const isShowAvatar = userAvatar ? (
-    <Image src={userAvatar} width={80} height={80} alt="user_avatar" className="shrink-0" />
+    <Image
+      src={userAvatar}
+      width={80}
+      height={80}
+      alt="user_avatar"
+      className="shrink-0"
+      unoptimized
+    />
   ) : (
     <div className="size-80px overflow-hidden rounded-full bg-surface-background"></div>
   );
