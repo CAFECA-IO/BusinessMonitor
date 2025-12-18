@@ -57,12 +57,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const fullFileUrl = `${STORAGE_API_GET_BASE_URL}/${hash}`;
+    const viewUrl = `${STORAGE_API_GET_BASE_URL}/${hash}`;
+    // const viewUrl = `/api/v1/view/${hash}`;
 
     return jsonOk({
       name,
       size,
-      url: fullFileUrl,
+      url: viewUrl,
     });
   } catch (err) {
     log.error('Upload API failed', {

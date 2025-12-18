@@ -235,7 +235,7 @@ export default function WalletClient() {
             <p className="mb-1 text-sm font-medium text-purple-100">Total Balance</p>
             <div className="flex items-baseline gap-2">
               <h2 className="text-4xl font-bold">{balance}</h2>
-              <span className="text-lg font-medium">iSun</span>
+              <span className="text-lg font-medium">ISC</span>
             </div>
 
             <div className="mt-6 flex items-center justify-between">
@@ -304,7 +304,7 @@ export default function WalletClient() {
                   className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 pr-12 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:bg-gray-100"
                   aria-label="Amount"
                 />
-                <span className="absolute right-3 top-3 text-sm font-bold text-gray-400">iSun</span>
+                <span className="absolute right-3 top-3 text-sm font-bold text-gray-400">ISC</span>
               </div>
             </div>
 

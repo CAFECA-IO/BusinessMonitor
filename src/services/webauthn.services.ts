@@ -65,7 +65,7 @@ class WebAuthnService {
       throw new AppError(ApiCode.VALIDATION_ERROR, ERROR_MESSAGES.USER_HANDLE_MISSING);
 
     const creationData: ICreateIdentityData = {
-      name: `User ${userHandle.substring(0, 6)}`,
+      name: registrationData.user.name,
       // Info: (20251128 - Tzuhan) 將 SCW 資料填入
       blockchainAddress: scwData?.address,
       initPublicKey: scwData?.initPublicKey,

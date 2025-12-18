@@ -84,7 +84,7 @@ const ProfileSettingTab: React.FC = () => {
         {/* Info: (20251022 - Julian) Profile */}
         <div className="flex items-center gap-16px py-12px">
           <div className="size-66px overflow-hidden rounded-full">
-            <Image src={userImg} width={66} height={66} alt="user_avatar" />
+            <Image src={userImg} width={66} height={66} alt="user_avatar" unoptimized />
           </div>
           <p className="text-base font-bold text-text-primary">{user?.name ?? '-'}</p>
           <div className="rounded-radius-s bg-surface-brand px-12px py-6px text-xs font-medium text-text-invert">
@@ -183,7 +183,7 @@ const ProfileSettingTab: React.FC = () => {
         <p className="text-lg font-bold text-text-brand">Profile</p>
         <div className="flex items-center justify-between">
           <div className="relative size-66px">
-            <Image src={userImg} width={66} height={66} alt="user_avatar" />
+            <Image src={userImg} width={66} height={66} alt="user_avatar" unoptimized />
           </div>
           <button
             type="button"

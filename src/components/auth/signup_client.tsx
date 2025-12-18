@@ -289,7 +289,7 @@ export default function SignupClient() {
         <div className="mt-40px flex flex-col items-center gap-20px">
           <div className="relative">
             <div className="relative size-150px overflow-hidden rounded-full">
-              <Image src={avatarUrl} fill objectFit="contain" alt="new_avatar" />
+              <Image src={avatarUrl} alt="new_avatar" fill className="object-contain" unoptimized />
             </div>
             <div className="absolute bottom-0 right-0">
               <Button
