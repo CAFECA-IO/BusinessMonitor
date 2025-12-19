@@ -108,6 +108,7 @@ const Navbar: React.FC = () => {
                 width={40}
                 height={40}
                 alt="user_avatar"
+                unoptimized
               />
             </button>
             {isUserOpen && (

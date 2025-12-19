@@ -802,6 +802,7 @@ export default function ProfileClient() {
                 height={183}
                 alt="user_avatar"
                 className="object-cover"
+                unoptimized
               />
             </div>
             <div className="-translate-y-10px rounded-radius-s bg-surface-brand px-12px py-6px text-sm font-medium text-text-invert shadow-sm">

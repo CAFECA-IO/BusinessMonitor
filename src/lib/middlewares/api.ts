@@ -32,6 +32,7 @@ export async function apiMiddleware(req: NextRequest) {
     '/api/v1/upload',
     '/api/v1/bundler',
     '/api/v1/account',
+    '/api/v1/view',
   ];
 
   if (publicRoutes.some((path) => pathname.startsWith(path))) {

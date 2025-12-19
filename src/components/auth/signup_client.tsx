@@ -31,7 +31,6 @@ export default function SignupClient() {
   const [name, setName] = useState<string>('');
   const [isNameValid, setIsNameValid] = useState<boolean>(true);
   const [avatarUrl, setAvatarUrl] = useState<string>(defaultAvatar);
-  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   const [randomBtnLoading, setRandomBtnLoading] = useState<boolean>(false);
   const [agreed, setAgreed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -163,23 +162,20 @@ export default function SignupClient() {
       // Info: (20251008 - Tzuhan) 步驟 4: 註冊成功
       setStatusMessage('✅ 註冊成功！正在為您登入...');
       await login(verifyData.payload.dewt);
-
-      if (uploadedAvatarUrl) {
-        setStatusMessage('正在更新頭像...');
-        try {
-          const updateRes = await fetch(`${origin}${routes.auth.me()}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${verifyData.payload.dewt}`,
-            },
-            body: JSON.stringify({ photo: uploadedAvatarUrl }),
-          });
-          if (!updateRes.ok) console.warn('Avatar update failed.');
-          else await refetchUser();
-        } catch (updateErr) {
-          console.warn('Error updating avatar:', updateErr);
-        }
+      setStatusMessage('正在更新頭像...');
+      try {
+        const updateRes = await fetch(`${origin}${routes.auth.me()}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${verifyData.payload.dewt}`,
+          },
+          body: JSON.stringify({ photo: avatarUrl }),
+        });
+        if (!updateRes.ok) console.warn('Avatar update failed.');
+        else await refetchUser();
+      } catch (updateErr) {
+        console.warn('Error updating avatar:', updateErr);
       }
 
       setTimeout(() => router.push(BM_URL.PROFILE), 2000);
@@ -192,7 +188,7 @@ export default function SignupClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [name, login, uploadedAvatarUrl, refetchUser, router]);
+  }, [name, login, avatarUrl, refetchUser, router]);
 
   const canSubmit = name.trim() !== '' && agreed && !isLoading && isFidoAvailable;
   const isSubmitDisabled = !(canSubmit && isNameValid);
@@ -220,7 +216,6 @@ export default function SignupClient() {
     setIsUploading(true);
     setError(null);
     setStatusMessage('正在上傳照片...');
-    setUploadedAvatarUrl(null);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -241,7 +236,6 @@ export default function SignupClient() {
       if (!newAvatarUrl) throw new Error('Upload successful but response missing url.');
 
       setAvatarUrl(newAvatarUrl);
-      setUploadedAvatarUrl(newAvatarUrl);
       setStatusMessage('照片上傳成功！');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤。';
@@ -289,7 +283,7 @@ export default function SignupClient() {
         <div className="mt-40px flex flex-col items-center gap-20px">
           <div className="relative">
             <div className="relative size-150px overflow-hidden rounded-full">
-              <Image src={avatarUrl} fill objectFit="contain" alt="new_avatar" />
+              <Image src={avatarUrl} alt="new_avatar" fill className="object-contain" unoptimized />
             </div>
             <div className="absolute bottom-0 right-0">
               <Button
