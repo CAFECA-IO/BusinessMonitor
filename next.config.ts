@@ -19,6 +19,15 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/member/:path*',
+        destination: 'https://isunfa.com',
+        permanent: true,
+      },
+    ];
+  },
   images: {
     // Info: (20251021 - Julian) 允許來自 avatar.cafeca.io 的遠端圖片
     remotePatterns: [
